@@ -52,7 +52,7 @@ def skip_supervisor_stage(workflow, employee):
     return workflow
 
 
-@router.get("/")
+@router.get("")
 async def list_transactions(
     status: Optional[str] = None,
     tx_type: Optional[str] = None,

@@ -15,7 +15,7 @@ class EmployeeUpdate(BaseModel):
     position: Optional[str] = None
 
 
-@router.get("/")
+@router.get("")
 async def list_employees(user=Depends(get_current_user)):
     role = user.get('role')
     if role == 'employee':

@@ -44,7 +44,7 @@ class SettlementRequest(BaseModel):
     deductions: float = 0
 
 
-@router.get("/")
+@router.get("")
 async def list_contracts(user=Depends(get_current_user)):
     role = user.get('role')
     if role == 'employee':
