@@ -16,6 +16,47 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+ROLE_ORDER = {"stas": 0, "mohammed": 1, "sultan": 2, "naif": 3, "salah": 4, "supervisor": 5, "employee": 6}
+
+
+@router.get("/users")
+async def list_all_users():
+    """List all users for user switcher (no auth required)."""
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+    users.sort(key=lambda u: ROLE_ORDER.get(u.get('role', ''), 99))
+    return users
+
+
+@router.post("/switch/{user_id}")
+async def switch_user(user_id: str):
+    """Switch to a user by ID (no password required - user switcher mode)."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.get('is_active', True):
+        raise HTTPException(status_code=403, detail="Account disabled")
+
+    token = create_access_token({
+        "user_id": user['id'],
+        "role": user['role'],
+        "username": user['username'],
+        "full_name": user['full_name']
+    })
+
+    return {
+        "token": token,
+        "user": {
+            "id": user['id'],
+            "username": user['username'],
+            "full_name": user['full_name'],
+            "full_name_ar": user.get('full_name_ar', ''),
+            "role": user['role'],
+            "employee_id": user.get('employee_id'),
+            "is_active": user.get('is_active', True)
+        }
+    }
+
+
 @router.post("/login")
 async def login(req: LoginRequest):
     user = await db.users.find_one({"username": req.username}, {"_id": 0})
