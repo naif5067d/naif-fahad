@@ -1,0 +1,150 @@
+{
+  "theme": {
+    "mode": "system",
+    "toggle": true,
+    "style": "swiss_international"
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Public Sans, system-ui, sans-serif",
+      "body": "Inter, system-ui, sans-serif",
+      "arabic": "IBM Plex Sans Arabic, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold tracking-tight",
+      "p": "text-base leading-relaxed text-muted-foreground",
+      "small": "text-sm font-medium leading-none"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "light": "#0F172A",
+        "dark": "#F8FAFC",
+        "description": "Deep Slate for commanding headers in light mode, crisp white in dark mode."
+      },
+      "brand_accent": {
+        "default": "#2563EB",
+        "hover": "#1D4ED8",
+        "description": "Royal Blue for primary actions (Buttons, Links, Active States). Trustworthy & Corporate."
+      },
+      "background": {
+        "light": "#FFFFFF",
+        "dark": "#020617",
+        "description": "Pure white for clarity, deep slate-black for dark mode (avoiding pure #000)."
+      },
+      "surface": {
+        "light": "#F8FAFC",
+        "dark": "#0F172A",
+        "description": "Subtle contrast for sidebars and card backgrounds."
+      },
+      "status": {
+        "success": "#10B981",
+        "warning": "#F59E0B",
+        "error": "#EF4444",
+        "info": "#3B82F6"
+      }
+    },
+    "tokens": {
+      "border": "1px solid hsl(var(--border))",
+      "radius": "0.5rem"
+    }
+  },
+  "layout": {
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "mobile_summary": "grid grid-cols-1 gap-4",
+      "bento_grid": "grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[minmax(180px,auto)]"
+    },
+    "spacing": {
+      "page_padding": "p-4 md:p-8",
+      "section_gap": "gap-8",
+      "component_padding": "p-6"
+    },
+    "container": {
+      "max_width": "max-w-7xl mx-auto",
+      "centered": "flex flex-col items-center justify-center min-h-screen"
+    }
+  },
+  "components": {
+    "tables": {
+      "style": "clean_banking",
+      "density": "compact",
+      "features": [
+        "Sticky Headers",
+        "Row Actions Dropdown",
+        "Right-aligned Numbers",
+        "Zebra Striping (Subtle)",
+        "Mobile Stacked View"
+      ]
+    },
+    "cards": {
+      "style": "flat_bordered",
+      "shadow": "none",
+      "border": "border border-border",
+      "radius": "rounded-lg"
+    },
+    "buttons": {
+      "primary": "bg-brand_accent text-white hover:bg-brand_accent/90 rounded-md shadow-sm font-medium",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md font-medium",
+      "ghost": "hover:bg-accent hover:text-accent-foreground rounded-md"
+    },
+    "inputs": {
+      "style": "bordered_clean",
+      "bg": "bg-background",
+      "border": "border-input",
+      "focus": "ring-2 ring-brand_accent/20 border-brand_accent"
+    }
+  },
+  "image_urls": {
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1770009971150-f50bc7d373a4?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Abstract Architectural Structure",
+      "category": "hero"
+    },
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1769636929261-e913ed023c83?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Male Employee",
+        "category": "user"
+      },
+      {
+        "url": "https://images.pexels.com/photos/33871730/pexels-photo-33871730.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Female Employee Hijab",
+        "category": "user"
+      },
+      {
+        "url": "https://images.pexels.com/photos/14589344/pexels-photo-14589344.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "alt": "Executive Portrait",
+        "category": "user"
+      }
+    ],
+    "placeholders": {
+      "map": "https://images.unsplash.com/photo-1730314736953-f62ed0bc80e5?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-200 ease-in-out",
+    "hover_effects": "hover:translate-y-[-1px]",
+    "page_transition": "animate-in fade-in slide-in-from-bottom-4 duration-500"
+  },
+  "instructions_to_main_agent": [
+    "IMPERATIVE: Implement 'Dark Mode' toggle immediately. Use Tailwind 'dark:' prefix for all colors.",
+    "IMPERATIVE: Use 'Public Sans' for Headings and 'Inter' for Body. Import them via Google Fonts in index.html.",
+    "IMPERATIVE: Support RTL layout direction. Use 'dir=rtl' on the root html tag when Arabic is selected. Use logical properties (ms-, me-, ps-, pe-) or Tailwind's rtl: variants.",
+    "CRITICAL: Do not use 'Card' components for everything. Use 'Table' for data lists. Use 'Card' only for Summary Metrics (max 3).",
+    "CRITICAL: Mobile-First. Ensure tables have horizontal scroll or turn into 'Cards' on mobile.",
+    "Anti-Pattern: Avoid gradients. Use flat, high-contrast colors.",
+    "Data-Test-ID: Add 'data-testid' to all interactive elements (buttons, inputs, links)."
+  ],
+  "UNIVERSAL_GUIDELINES": [
+    "No gradients",
+    "No rounded full buttons (use rounded-md)",
+    "Use 1px borders for everything to mimic banking/enterprise feel",
+    "Use sonner for toasts",
+    "Prioritize shadcn/ui components but customize them to match the Swiss International Style"
+  ]
+}
