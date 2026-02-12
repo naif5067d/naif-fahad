@@ -60,7 +60,7 @@ async def get_employee_contracts(employee_id: str, user=Depends(get_current_user
     return await db.contracts.find({"employee_id": employee_id}, {"_id": 0}).sort("version", -1).to_list(50)
 
 
-@router.post("/")
+@router.post("")
 async def create_contract(req: ContractCreate, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
