@@ -2,8 +2,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, UserCircle, ChevronDown, Check } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
@@ -27,19 +27,76 @@ const PATHS = {
   employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
 };
 
+const ROLE_COLORS = {
+  stas: 'bg-red-500/15 text-red-700 dark:text-red-400 ring-red-500/20',
+  mohammed: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 ring-purple-500/20',
+  sultan: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 ring-amber-500/20',
+  naif: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 ring-cyan-500/20',
+  salah: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-emerald-500/20',
+  supervisor: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 ring-blue-500/20',
+  employee: 'bg-slate-500/15 text-slate-700 dark:text-slate-400 ring-slate-500/20',
+};
+
+const ROLE_LABELS = {
+  stas: 'STAS',
+  mohammed: 'CEO',
+  sultan: 'Ops Admin',
+  naif: 'Ops Strategic',
+  salah: 'Finance',
+  supervisor: 'Supervisor',
+  employee: 'Employee',
+};
+
+const ROLE_LABELS_AR = {
+  stas: 'ستاس',
+  mohammed: 'الرئيس التنفيذي',
+  sultan: 'مدير العمليات',
+  naif: 'العمليات الاستراتيجية',
+  salah: 'المالية',
+  supervisor: 'مشرف',
+  employee: 'موظف',
+};
+
 export default function AppLayout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, allUsers, switchUser, fetchAllUsers } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+  const switcherRef = useRef(null);
 
   const role = user?.role || 'employee';
   const items = NAV_ITEMS[role] || NAV_ITEMS.employee;
 
   const displayName = role === 'stas' ? 'STAS' : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
-  const roleLabel = role === 'stas' ? 'STAS' : t(`roles.${role}`);
+  const roleLabel = role === 'stas' ? 'STAS' : (lang === 'ar' ? ROLE_LABELS_AR[role] : ROLE_LABELS[role]);
+
+  useEffect(() => {
+    if (allUsers.length === 0) fetchAllUsers();
+  }, [allUsers.length, fetchAllUsers]);
+
+  // Close switcher on click outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target)) {
+        setSwitcherOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleSwitch = async (u) => {
+    if (u.id === user?.id || switching) return;
+    setSwitching(true);
+    await switchUser(u.id);
+    setSwitcherOpen(false);
+    setSwitching(false);
+    navigate('/');
+  };
 
   const navContent = (
     <nav className="flex flex-col h-full">
@@ -71,20 +128,18 @@ export default function AppLayout({ children }) {
           );
         })}
       </div>
-      <div className="border-t border-border p-3 space-y-1">
+
+      {/* Current user display at bottom */}
+      <div className="border-t border-border p-3">
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-            {(user?.full_name || 'U')[0]}
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 ${ROLE_COLORS[role] || ROLE_COLORS.employee}`}>
+            {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         </div>
-        <button data-testid="logout-btn" onClick={logout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-colors">
-          <LogOut size={16} />
-          <span>{t('nav.logout')}</span>
-        </button>
       </div>
     </nav>
   );
@@ -120,11 +175,68 @@ export default function AppLayout({ children }) {
               <Menu size={20} />
             </button>
             <div className="hidden md:block" />
-            <div className="flex items-center gap-1">
+
+            <div className="flex items-center gap-1.5">
+              {/* User Switcher */}
+              <div className="relative" ref={switcherRef}>
+                <button
+                  data-testid="user-switcher-btn"
+                  onClick={() => setSwitcherOpen(!switcherOpen)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg hover:bg-muted border border-border transition-all"
+                >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-1 ${ROLE_COLORS[role] || ROLE_COLORS.employee}`}>
+                    {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
+                  </div>
+                  <span className="hidden sm:inline text-xs font-medium truncate max-w-[100px]">{displayName}</span>
+                  <ChevronDown size={12} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {switcherOpen && (
+                  <div className="absolute top-full mt-1.5 end-0 w-72 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
+                    <div className="px-3 py-2.5 border-b border-border bg-muted/30">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
+                      </p>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto py-1">
+                      {allUsers.filter(u => u.is_active !== false).map(u => {
+                        const isActive = u.id === user?.id;
+                        const uRole = u.role;
+                        const uName = uRole === 'stas' ? 'STAS' : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
+                        const uRoleLabel = uRole === 'stas' ? 'STAS' : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
+                        return (
+                          <button
+                            key={u.id}
+                            data-testid={`switch-to-${u.username}`}
+                            onClick={() => handleSwitch(u)}
+                            disabled={switching}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${
+                              isActive ? 'bg-primary/5' : 'hover:bg-muted/60'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 flex-shrink-0 ${ROLE_COLORS[uRole] || ROLE_COLORS.employee}`}>
+                              {uRole === 'stas' ? 'S' : (u.full_name || 'U')[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm truncate ${isActive ? 'font-semibold text-primary' : 'font-medium'}`}>{uName}</p>
+                              <p className="text-[11px] text-muted-foreground">{uRoleLabel}</p>
+                            </div>
+                            {isActive && <Check size={16} className="text-primary flex-shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Language toggle */}
               <button data-testid="toggle-lang" onClick={toggleLang} className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md hover:bg-muted text-muted-foreground transition-colors" title={t('lang.toggle')}>
                 <Globe size={14} />
-                <span>{t('lang.toggle')}</span>
+                <span className="hidden sm:inline">{t('lang.toggle')}</span>
               </button>
+
+              {/* Theme toggle */}
               <button data-testid="toggle-theme" onClick={toggleTheme} className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors" title={t('theme.toggle')}>
                 {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
               </button>
