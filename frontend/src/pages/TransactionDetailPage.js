@@ -1,0 +1,134 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Download, Clock, CheckCircle, XCircle, Circle } from 'lucide-react';
+import api from '@/lib/api';
+import { toast } from 'sonner';
+
+export default function TransactionDetailPage() {
+  const { id } = useParams();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [tx, setTx] = useState(null);
+
+  useEffect(() => {
+    api.get(`/api/transactions/${id}`).then(r => setTx(r.data)).catch(() => navigate('/transactions'));
+  }, [id, navigate]);
+
+  if (!tx) return <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>;
+
+  const downloadPdf = async () => {
+    try {
+      const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a'); a.href = url; a.download = `${tx.ref_no}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { toast.error('PDF download failed'); }
+  };
+
+  const getStatusClass = (status) => {
+    if (status === 'executed') return 'status-executed';
+    if (status === 'rejected') return 'status-rejected';
+    if (status?.startsWith('pending')) return 'status-pending';
+    return 'status-created';
+  };
+
+  const getTimelineIcon = (event) => {
+    if (event === 'executed') return <CheckCircle size={16} className="text-emerald-500" />;
+    if (event === 'rejected') return <XCircle size={16} className="text-red-500" />;
+    if (event === 'approved') return <CheckCircle size={16} className="text-blue-500" />;
+    return <Circle size={16} className="text-muted-foreground" />;
+  };
+
+  return (
+    <div className="space-y-6" data-testid="transaction-detail-page">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')} data-testid="back-btn">
+          <ArrowLeft size={16} className="me-1" /> {t('common.back')}
+        </Button>
+      </div>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight font-mono">{tx.ref_no}</h1>
+          <p className="text-sm text-muted-foreground capitalize">{tx.type?.replace(/_/g, ' ')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`status-badge ${getStatusClass(tx.status)}`}>{t(`status.${tx.status}`) || tx.status}</span>
+          <Button variant="outline" size="sm" onClick={downloadPdf} data-testid="download-pdf-btn">
+            <Download size={14} className="me-1" /> PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Transaction Data */}
+      <div className="border border-border rounded-lg p-4 md:p-6 space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Transaction Details</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {Object.entries(tx.data || {}).map(([key, val]) => (
+            <div key={key} className="flex flex-col">
+              <span className="text-xs text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
+              <span className="text-sm font-medium">{String(val)}</span>
+            </div>
+          ))}
+        </div>
+        {tx.pdf_hash && (
+          <div className="pt-3 border-t border-border mt-3">
+            <span className="text-xs text-muted-foreground">PDF Hash: </span>
+            <span className="text-xs font-mono">{tx.pdf_hash}</span>
+            <br />
+            <span className="text-xs text-muted-foreground">Integrity ID: </span>
+            <span className="text-xs font-mono">{tx.integrity_id}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Timeline */}
+      <div className="border border-border rounded-lg p-4 md:p-6">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('transactions.timeline')}</h2>
+        <div className="space-y-4">
+          {(tx.timeline || []).map((ev, i) => (
+            <div key={i} className="flex gap-3" data-testid={`timeline-event-${i}`}>
+              <div className="flex flex-col items-center">
+                {getTimelineIcon(ev.event)}
+                {i < tx.timeline.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
+              </div>
+              <div className="flex-1 pb-4">
+                <p className="text-sm font-medium capitalize">{ev.event}</p>
+                <p className="text-xs text-muted-foreground">{ev.actor_name} - {ev.timestamp?.slice(0, 19)}</p>
+                {ev.note && <p className="text-xs text-muted-foreground mt-0.5">{ev.note}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Approval Chain */}
+      {tx.approval_chain?.length > 0 && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <div className="p-4 md:p-6 pb-0">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('transactions.approvalChain')}</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="hr-table">
+              <thead><tr><th>Stage</th><th>Approver</th><th>Status</th><th>Date</th><th>Note</th></tr></thead>
+              <tbody>
+                {tx.approval_chain.map((a, i) => (
+                  <tr key={i}>
+                    <td className="capitalize text-sm">{a.stage}</td>
+                    <td className="text-sm">{a.approver_name}</td>
+                    <td><span className={`status-badge ${a.status === 'approve' ? 'status-executed' : a.status === 'reject' ? 'status-rejected' : 'status-pending'}`}>{a.status}</span></td>
+                    <td className="text-xs text-muted-foreground">{a.timestamp?.slice(0, 19)}</td>
+                    <td className="text-xs">{a.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
