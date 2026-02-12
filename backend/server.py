@@ -20,7 +20,7 @@ from routes.contracts import router as contracts_router
 from routes.stas import router as stas_router
 from seed import seed_database
 
-app = FastAPI(title="DAR AL CODE HR OS")
+app = FastAPI(title="DAR AL CODE HR OS", redirect_slashes=False)
 
 app.include_router(auth_router)
 app.include_router(dashboard_router)
