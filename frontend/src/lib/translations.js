@@ -25,8 +25,10 @@ export const translations = {
       refNo: "Ref No", type: "Type", status: "Status", employee: "Employee",
       stage: "Current Stage", date: "Date", actions: "Actions",
       approve: "Approve", reject: "Reject", viewDetail: "View Detail",
-      downloadPdf: "Download PDF", timeline: "Timeline", approvalChain: "Approval Chain",
-      noTransactions: "No transactions found"
+      downloadPdf: "Download PDF", previewPdf: "Preview PDF", timeline: "Timeline", 
+      approvalChain: "Approval Chain", noTransactions: "No transactions found",
+      actionNote: "Note (optional)", transactionAction: "Transaction Action",
+      details: "Transaction Details"
     },
     leave: {
       title: "Leave Management", requestLeave: "Request Leave",
@@ -35,7 +37,8 @@ export const translations = {
       reason: "Reason", submit: "Submit Request",
       annual: "Annual", sick: "Sick", emergency: "Emergency",
       workingDays: "Working Days", remaining: "Remaining",
-      holidays: "Public Holidays"
+      holidays: "Public Holidays", holidayName: "Holiday Name",
+      fillAllFields: "Please fill all fields"
     },
     attendance: {
       title: "Attendance", checkIn: "Check In", checkOut: "Check Out",
@@ -43,35 +46,55 @@ export const translations = {
       gpsRequired: "GPS location is required for attendance",
       noGps: "GPS not available on this device",
       checkedIn: "Checked In", checkedOut: "Checked Out",
-      notCheckedIn: "Not Checked In"
+      notCheckedIn: "Not Checked In",
+      workLocation: "Work Location", hq: "HQ", project: "Project",
+      selectLocation: "Select work location", insideLocation: "Inside Location",
+      outsideLocation: "Outside Location", distance: "Distance",
+      gpsStatus: "GPS Status", valid: "Valid", invalid: "Invalid",
+      date: "Date", time: "Time"
     },
     finance: {
       title: "60 Code Finance", codes: "Finance Codes", statement: "Statement",
       createTransaction: "Create Finance Transaction", code: "Code",
-      amount: "Amount", description: "Description"
+      amount: "Amount", description: "Description", category: "Category",
+      earnings: "Earnings", deductions: "Deductions", loans: "Loans",
+      other: "Other", selectCode: "Select finance code"
     },
     contracts: {
       title: "Contracts", create: "Create Contract", settlement: "Settlement",
       salary: "Salary", type: "Type", version: "Version",
-      startDate: "Start Date", endDate: "End Date"
+      startDate: "Start Date", endDate: "End Date", content: "Content",
+      noContracts: "No contracts found"
     },
     employees: {
       title: "Employees", manage: "Manage Employees",
       name: "Name", department: "Department", position: "Position",
-      status: "Status", active: "Active", inactive: "Inactive"
+      status: "Status", active: "Active", inactive: "Inactive",
+      supervisor: "Supervisor", joinDate: "Join Date", noEmployees: "No employees found"
     },
     stas: {
       mirror: "STAS Mirror", preChecks: "Pre-Checks", traceLinks: "Trace Links (Veins)",
       beforeAfter: "Before / After Projection", execute: "Execute",
       allPass: "All checks passed", hasFails: "Some checks failed",
       executing: "Executing...", executed: "Executed",
-      pass: "PASS", fail: "FAIL"
+      pass: "PASS", fail: "FAIL", pendingExecution: "Pending Execution",
+      selectTransaction: "Select a transaction to view its mirror",
+      maintenance: "System Maintenance", purgeTransactions: "Purge Transactions",
+      purgeUsers: "Purge Non-Admin Users", confirmPurge: "Type CONFIRM to proceed",
+      purgeWarning: "This action cannot be undone!",
+      holidayManagement: "Holiday Management", addHoliday: "Add Holiday",
+      holidayDate: "Holiday Date", holidayNameEn: "Name (English)",
+      holidayNameAr: "Name (Arabic)", deleteHoliday: "Delete",
+      archivedUsers: "Archived Users", archiveUser: "Archive", restoreUser: "Restore",
+      noArchivedUsers: "No archived users"
     },
     common: {
       save: "Save", cancel: "Cancel", confirm: "Confirm", delete: "Delete",
       edit: "Edit", view: "View", close: "Close", loading: "Loading...",
       search: "Search", filter: "Filter", noData: "No data",
-      back: "Back", next: "Next", submit: "Submit"
+      back: "Back", next: "Next", submit: "Submit", add: "Add",
+      all: "All", success: "Success", error: "Error", warning: "Warning",
+      preview: "Preview", download: "Download", actions: "Actions"
     },
     roles: {
       employee: "Employee", supervisor: "Supervisor",
@@ -82,10 +105,15 @@ export const translations = {
       created: "Created", pending_supervisor: "Pending Supervisor",
       pending_ops: "Pending Ops", pending_finance: "Pending Finance",
       pending_ceo: "Pending CEO", pending_stas: "Pending STAS",
-      executed: "Executed", rejected: "Rejected"
+      executed: "Executed", rejected: "Rejected", completed: "Completed"
     },
     theme: { light: "Light", dark: "Dark", toggle: "Toggle Theme" },
-    lang: { toggle: "العربية", current: "English" }
+    lang: { toggle: "العربية", current: "English" },
+    settings: {
+      title: "Settings", appearance: "Appearance", language: "Language",
+      profile: "Profile", username: "Username", role: "Role", 
+      employeeId: "Employee ID"
+    }
   },
   ar: {
     app: { name: "دار الكود - نظام الموارد البشرية", company: "شركة دار الكود للاستشارات الهندسية" },
@@ -113,8 +141,10 @@ export const translations = {
       refNo: "رقم المرجع", type: "النوع", status: "الحالة", employee: "الموظف",
       stage: "المرحلة الحالية", date: "التاريخ", actions: "الإجراءات",
       approve: "موافقة", reject: "رفض", viewDetail: "عرض التفاصيل",
-      downloadPdf: "تحميل PDF", timeline: "الجدول الزمني", approvalChain: "سلسلة الموافقات",
-      noTransactions: "لا توجد معاملات"
+      downloadPdf: "تحميل PDF", previewPdf: "معاينة PDF", timeline: "الجدول الزمني", 
+      approvalChain: "سلسلة الموافقات", noTransactions: "لا توجد معاملات",
+      actionNote: "ملاحظة (اختياري)", transactionAction: "إجراء المعاملة",
+      details: "تفاصيل المعاملة"
     },
     leave: {
       title: "إدارة الإجازات", requestLeave: "طلب إجازة",
@@ -123,7 +153,8 @@ export const translations = {
       reason: "السبب", submit: "إرسال الطلب",
       annual: "سنوية", sick: "مرضية", emergency: "طارئة",
       workingDays: "أيام العمل", remaining: "المتبقي",
-      holidays: "العطل الرسمية"
+      holidays: "العطل الرسمية", holidayName: "اسم العطلة",
+      fillAllFields: "يرجى ملء جميع الحقول"
     },
     attendance: {
       title: "الحضور", checkIn: "تسجيل الدخول", checkOut: "تسجيل الخروج",
@@ -131,35 +162,55 @@ export const translations = {
       gpsRequired: "موقع GPS مطلوب للحضور",
       noGps: "GPS غير متوفر على هذا الجهاز",
       checkedIn: "تم تسجيل الدخول", checkedOut: "تم تسجيل الخروج",
-      notCheckedIn: "لم يتم تسجيل الدخول"
+      notCheckedIn: "لم يتم تسجيل الدخول",
+      workLocation: "موقع العمل", hq: "المقر الرئيسي", project: "المشروع",
+      selectLocation: "اختر موقع العمل", insideLocation: "داخل الموقع",
+      outsideLocation: "خارج الموقع", distance: "المسافة",
+      gpsStatus: "حالة GPS", valid: "صالح", invalid: "غير صالح",
+      date: "التاريخ", time: "الوقت"
     },
     finance: {
       title: "المالية - 60 رمز", codes: "رموز المالية", statement: "كشف الحساب",
       createTransaction: "إنشاء معاملة مالية", code: "الرمز",
-      amount: "المبلغ", description: "الوصف"
+      amount: "المبلغ", description: "الوصف", category: "الفئة",
+      earnings: "مستحقات", deductions: "خصومات", loans: "سلف",
+      other: "أخرى", selectCode: "اختر رمز المالية"
     },
     contracts: {
       title: "العقود", create: "إنشاء عقد", settlement: "التسوية",
       salary: "الراتب", type: "النوع", version: "الإصدار",
-      startDate: "تاريخ البداية", endDate: "تاريخ النهاية"
+      startDate: "تاريخ البداية", endDate: "تاريخ النهاية", content: "المحتوى",
+      noContracts: "لا توجد عقود"
     },
     employees: {
       title: "الموظفين", manage: "إدارة الموظفين",
       name: "الاسم", department: "القسم", position: "المنصب",
-      status: "الحالة", active: "نشط", inactive: "غير نشط"
+      status: "الحالة", active: "نشط", inactive: "غير نشط",
+      supervisor: "المشرف", joinDate: "تاريخ الانضمام", noEmployees: "لا يوجد موظفين"
     },
     stas: {
       mirror: "مرآة ستاس", preChecks: "الفحوصات المسبقة", traceLinks: "روابط التتبع (العروق)",
       beforeAfter: "الإسقاط قبل / بعد", execute: "تنفيذ",
       allPass: "جميع الفحوصات ناجحة", hasFails: "بعض الفحوصات فاشلة",
       executing: "جارٍ التنفيذ...", executed: "تم التنفيذ",
-      pass: "ناجح", fail: "فاشل"
+      pass: "ناجح", fail: "فاشل", pendingExecution: "معاملات معلقة للتنفيذ",
+      selectTransaction: "اختر معاملة لعرض مرآتها",
+      maintenance: "صيانة النظام", purgeTransactions: "حذف المعاملات",
+      purgeUsers: "حذف المستخدمين غير الإداريين", confirmPurge: "اكتب CONFIRM للمتابعة",
+      purgeWarning: "هذا الإجراء لا يمكن التراجع عنه!",
+      holidayManagement: "إدارة العطل", addHoliday: "إضافة عطلة",
+      holidayDate: "تاريخ العطلة", holidayNameEn: "الاسم (إنجليزي)",
+      holidayNameAr: "الاسم (عربي)", deleteHoliday: "حذف",
+      archivedUsers: "المستخدمين المؤرشفين", archiveUser: "أرشفة", restoreUser: "استعادة",
+      noArchivedUsers: "لا يوجد مستخدمين مؤرشفين"
     },
     common: {
       save: "حفظ", cancel: "إلغاء", confirm: "تأكيد", delete: "حذف",
       edit: "تعديل", view: "عرض", close: "إغلاق", loading: "جارٍ التحميل...",
       search: "بحث", filter: "تصفية", noData: "لا توجد بيانات",
-      back: "رجوع", next: "التالي", submit: "إرسال"
+      back: "رجوع", next: "التالي", submit: "إرسال", add: "إضافة",
+      all: "الكل", success: "نجاح", error: "خطأ", warning: "تحذير",
+      preview: "معاينة", download: "تحميل", actions: "إجراءات"
     },
     roles: {
       employee: "موظف", supervisor: "مشرف",
@@ -170,9 +221,14 @@ export const translations = {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
       pending_ops: "بانتظار العمليات", pending_finance: "بانتظار المالية",
       pending_ceo: "بانتظار الرئيس", pending_stas: "بانتظار ستاس",
-      executed: "تم التنفيذ", rejected: "مرفوض"
+      executed: "تم التنفيذ", rejected: "مرفوض", completed: "مكتمل"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
-    lang: { toggle: "English", current: "العربية" }
+    lang: { toggle: "English", current: "العربية" },
+    settings: {
+      title: "الإعدادات", appearance: "المظهر", language: "اللغة",
+      profile: "الملف الشخصي", username: "اسم المستخدم", role: "الدور",
+      employeeId: "رقم الموظف"
+    }
   }
 };
