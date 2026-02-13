@@ -10,11 +10,13 @@ import api from '@/lib/api';
 const STATUS_COLORS = {
   executed: '#16A34A',      // Green - completed
   rejected: '#DC2626',      // Red - rejected/cancelled
+  cancelled: '#DC2626',     // Red - cancelled
   pending_supervisor: '#1D4ED8', // Supervisor blue
   pending_ops: '#F97316',   // Sultan orange
   pending_finance: '#0D9488', // Salah teal
   pending_ceo: '#B91C1C',   // Mohammed red
   pending_stas: '#7C3AED',  // STAS purple
+  pending_employee_accept: '#3B82F6', // Employee blue
 };
 
 const STAT_CONFIG = {
