@@ -4,7 +4,7 @@ from typing import Optional
 from database import db
 from utils.auth import get_current_user, require_roles
 from routes.transactions import get_next_ref_no
-from utils.workflow import WORKFLOW_MAP, should_skip_supervisor_stage, build_workflow_for_transaction
+from utils.workflow import WORKFLOW_MAP, can_initiate_transaction
 from datetime import datetime, timezone
 import uuid
 
@@ -17,39 +17,64 @@ class FinanceTransactionRequest(BaseModel):
     amount: float
     description: str
     tx_type: str = "credit"  # credit or debit
-
-
-class AddFinanceCodeRequest(BaseModel):
-    code: int
-    name: str
-    name_ar: str
-    category: str
+    code_name: Optional[str] = None  # For new codes: user provides name
+    code_name_ar: Optional[str] = None
+    code_category: Optional[str] = None
 
 
 @router.get("/codes")
 async def list_finance_codes(user=Depends(get_current_user)):
-    codes = await db.finance_codes.find({"is_active": True}, {"_id": 0}).sort("code", 1).to_list(100)
+    codes = await db.finance_codes.find({"is_active": True}, {"_id": 0}).sort("code", 1).to_list(200)
     return codes
+
+
+@router.get("/codes/lookup/{code}")
+async def lookup_finance_code(code: int, user=Depends(get_current_user)):
+    """Lookup a finance code by number. Returns the code definition if found."""
+    code_doc = await db.finance_codes.find_one({"code": code, "is_active": True}, {"_id": 0})
+    if code_doc:
+        return {"found": True, "code": code_doc}
+    return {"found": False, "code": None}
 
 
 @router.post("/transaction")
 async def create_finance_transaction(req: FinanceTransactionRequest, user=Depends(get_current_user)):
+    """Create a financial custody (60 Code) transaction. Sultan only."""
     role = user.get('role')
-    if role not in ('sultan', 'naif', 'salah', 'stas'):
-        raise HTTPException(status_code=403, detail="Only ops/finance/stas can create finance transactions")
+
+    # Validate initiation permission - Sultan only
+    perm = await can_initiate_transaction('finance_60', role, user['user_id'])
+    if not perm['valid']:
+        raise HTTPException(status_code=403, detail=perm['error_detail'])
 
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
+    # Lookup finance code - auto-create if not found
     code_doc = await db.finance_codes.find_one({"code": req.code, "is_active": True}, {"_id": 0})
+
     if not code_doc:
-        raise HTTPException(status_code=404, detail="Finance code not found or inactive")
+        # Code doesn't exist - require name and create it
+        if not req.code_name:
+            raise HTTPException(status_code=400, detail="Code not found. Provide code_name to define it.")
+
+        code_doc = {
+            "id": str(uuid.uuid4()),
+            "code": req.code,
+            "name": req.code_name,
+            "name_ar": req.code_name_ar or req.code_name,
+            "category": req.code_category or "other",
+            "is_active": True,
+            "created_by": user['user_id'],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.finance_codes.insert_one(code_doc)
+        code_doc.pop('_id', None)
 
     ref_no = await get_next_ref_no()
-    base_workflow = WORKFLOW_MAP["finance_60"][:]
-    skip_supervisor = await should_skip_supervisor_stage(emp, user['user_id'])
-    workflow = build_workflow_for_transaction(base_workflow, skip_supervisor)
+    # Finance 60 workflow: finance (Salah) → ceo (Mohammed) → stas
+    workflow = WORKFLOW_MAP["finance_60"][:]
     first_stage = workflow[0]
     now = datetime.now(timezone.utc).isoformat()
 
@@ -68,6 +93,7 @@ async def create_finance_transaction(req: FinanceTransactionRequest, user=Depend
             "tx_type": req.tx_type,
             "description": req.description,
             "employee_name": emp['full_name'],
+            "employee_name_ar": emp.get('full_name_ar', ''),
         },
         "current_stage": first_stage,
         "workflow": workflow,
@@ -76,7 +102,7 @@ async def create_finance_transaction(req: FinanceTransactionRequest, user=Depend
             "actor": user['user_id'],
             "actor_name": user.get('full_name', ''),
             "timestamp": now,
-            "note": f"Finance 60: Code {req.code} - {code_doc['name']} - {req.amount} SAR",
+            "note": f"Financial Custody: Code {req.code} - {code_doc['name']} - {req.amount} SAR",
             "stage": "created"
         }],
         "approval_chain": [],
@@ -99,13 +125,18 @@ async def get_finance_statement(employee_id: str, user=Depends(get_current_user)
 
 
 @router.post("/codes/add")
-async def request_add_finance_code(req: AddFinanceCodeRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
-    if req.code <= 60:
-        raise HTTPException(status_code=400, detail="Codes 1-60 are reserved in the official catalog")
+async def request_add_finance_code(req: dict, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    code = req.get('code')
+    name = req.get('name')
+    name_ar = req.get('name_ar', '')
+    category = req.get('category', 'other')
 
-    existing = await db.finance_codes.find_one({"code": req.code})
+    if not code or not name:
+        raise HTTPException(status_code=400, detail="code and name are required")
+
+    existing = await db.finance_codes.find_one({"code": code})
     if existing:
-        raise HTTPException(status_code=400, detail=f"Code {req.code} already exists")
+        raise HTTPException(status_code=400, detail=f"Code {code} already exists")
 
     ref_no = await get_next_ref_no()
     now = datetime.now(timezone.utc).isoformat()
@@ -117,10 +148,10 @@ async def request_add_finance_code(req: AddFinanceCodeRequest, user=Depends(requ
         "created_by": user['user_id'],
         "employee_id": None,
         "data": {
-            "code": req.code,
-            "name": req.name,
-            "name_ar": req.name_ar,
-            "category": req.category,
+            "code": code,
+            "name": name,
+            "name_ar": name_ar,
+            "category": category,
         },
         "current_stage": "ops",
         "workflow": ["ops", "stas"],
@@ -129,7 +160,7 @@ async def request_add_finance_code(req: AddFinanceCodeRequest, user=Depends(requ
             "actor": user['user_id'],
             "actor_name": user.get('full_name', ''),
             "timestamp": now,
-            "note": f"Request to add finance code {req.code}: {req.name}",
+            "note": f"Request to add finance code {code}: {name}",
             "stage": "created"
         }],
         "approval_chain": [],
