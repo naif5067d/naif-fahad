@@ -123,10 +123,15 @@ export default function TransactionDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight font-mono">{tx.ref_no}</h1>
-          <p className="text-sm text-muted-foreground capitalize">{tx.type?.replace(/_/g, ' ')}</p>
+          <p className="text-sm text-muted-foreground">{getTranslatedType(tx.type)}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`status-badge ${getStatusClass(tx.status)}`}>{t(`status.${tx.status}`) || tx.status}</span>
+          <span 
+            className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+            style={getStatusStyle(tx.status)}
+          >
+            {t(`status.${tx.status}`) || tx.status}
+          </span>
           <Button variant="outline" size="sm" onClick={previewPdf} data-testid="preview-pdf-btn">
             <Eye size={14} className="me-1" /> {t('common.preview')}
           </Button>
@@ -138,12 +143,12 @@ export default function TransactionDetailPage() {
 
       {/* Transaction Data */}
       <div className="border border-border rounded-lg p-4 md:p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Transaction Details</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('transactions.details')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {Object.entries(tx.data || {}).map(([key, val]) => (
+          {Object.entries(tx.data || {}).filter(([key]) => !(key === 'employee_name_ar' && lang !== 'ar') && !(key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar)).map(([key, val]) => (
             <div key={key} className="flex flex-col">
-              <span className="text-xs text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-              <span className="text-sm font-medium">{String(val)}</span>
+              <span className="text-xs text-muted-foreground">{getTranslatedKey(key)}</span>
+              <span className="text-sm font-medium">{getTranslatedValue(key, val)}</span>
             </div>
           ))}
         </div>
