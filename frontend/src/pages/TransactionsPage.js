@@ -163,6 +163,8 @@ export default function TransactionsPage() {
             <SelectItem value="all">{t('common.all')}</SelectItem>
             <SelectItem value="leave_request">{t('txTypes.leave_request')}</SelectItem>
             <SelectItem value="finance_60">{t('txTypes.finance_60')}</SelectItem>
+            <SelectItem value="tangible_custody">{t('txTypes.tangible_custody')}</SelectItem>
+            <SelectItem value="tangible_custody_return">{t('txTypes.tangible_custody_return')}</SelectItem>
             <SelectItem value="settlement">{t('txTypes.settlement')}</SelectItem>
             <SelectItem value="contract">{t('txTypes.contract')}</SelectItem>
             <SelectItem value="warning">{t('txTypes.warning')}</SelectItem>
