@@ -125,13 +125,32 @@ class TestFinance60Code:
             pytest.skip("No employees available")
         employee = employees_list[0]
         
-        payload = {
-            "employee_id": employee['id'],
-            "code": 100,  # Use a common code
-            "amount": 5000.0,
-            "description": "TEST_Finance60_Sultan",
-            "tx_type": "credit"
-        }
+        # First get an existing code
+        codes_resp = api_client.get(f"{BASE_URL}/api/finance/codes", headers=auth_headers(token))
+        codes = codes_resp.json()
+        
+        if codes:
+            # Use existing code
+            existing_code = codes[0]['code']
+            payload = {
+                "employee_id": employee['id'],
+                "code": existing_code,
+                "amount": 5000.0,
+                "description": "TEST_Finance60_Sultan",
+                "tx_type": "credit"
+            }
+        else:
+            # No existing codes, create with new code definition
+            payload = {
+                "employee_id": employee['id'],
+                "code": 100,
+                "amount": 5000.0,
+                "description": "TEST_Finance60_Sultan",
+                "tx_type": "credit",
+                "code_name": "Test Basic Allowance",
+                "code_name_ar": "بدل اختباري",
+                "code_category": "earnings"
+            }
         
         response = api_client.post(f"{BASE_URL}/api/finance/transaction", json=payload, headers=auth_headers(token))
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
@@ -143,7 +162,6 @@ class TestFinance60Code:
         assert tx['status'] == 'pending_finance'
         
         print(f"✓ Sultan created finance_60 {tx['ref_no']} with workflow {tx['workflow']}")
-        return tx
     
     def test_naif_denied_creating_finance_60(self, api_client, users_map, employees_list):
         """Naif should be DENIED (403) from creating finance_60"""
