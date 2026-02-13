@@ -28,7 +28,9 @@ export const translations = {
       downloadPdf: "Download PDF", previewPdf: "Preview PDF", timeline: "Timeline", 
       approvalChain: "Approval Chain", noTransactions: "No transactions found",
       actionNote: "Note (optional)", transactionAction: "Transaction Action",
-      details: "Transaction Details"
+      details: "Transaction Details",
+      escalate: "Escalate to CEO", escalated: "Escalated",
+      acceptCustody: "Accept", rejectCustody: "Reject"
     },
     leave: {
       title: "Leave Management", requestLeave: "Request Leave",
@@ -104,13 +106,15 @@ export const translations = {
     },
     txTypes: {
       leave_request: "Leave Request",
-      finance_60: "Finance Transaction",
+      finance_60: "Financial Custody (60 Code)",
       settlement: "Settlement",
       contract: "Contract",
       warning: "Warning",
       asset: "Asset",
       attendance_correction: "Attendance Correction",
-      add_finance_code: "Add Finance Code"
+      add_finance_code: "Add Finance Code",
+      tangible_custody: "Tangible Custody",
+      tangible_custody_return: "Custody Return"
     },
     stages: {
       supervisor: "Supervisor",
@@ -119,13 +123,17 @@ export const translations = {
       ceo: "CEO",
       stas: "STAS",
       executed: "Executed",
-      rejected: "Rejected"
+      rejected: "Rejected",
+      employee_accept: "Employee Acceptance",
+      cancelled: "Cancelled"
     },
     status: {
       created: "Created", pending_supervisor: "Pending Supervisor",
       pending_ops: "Pending Ops", pending_finance: "Pending Finance",
       pending_ceo: "Pending CEO", pending_stas: "Pending STAS",
-      executed: "Executed", rejected: "Rejected", completed: "Completed"
+      pending_employee_accept: "Pending Employee",
+      executed: "Executed", rejected: "Rejected", completed: "Completed",
+      cancelled: "Cancelled"
     },
     theme: { light: "Light", dark: "Dark", toggle: "Toggle Theme" },
     lang: { toggle: "العربية", current: "English" },
