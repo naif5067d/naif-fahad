@@ -58,10 +58,12 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({});
   const [recentTxs, setRecentTxs] = useState([]);
+  const [nextHoliday, setNextHoliday] = useState(null);
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => {});
     api.get('/api/transactions').then(r => setRecentTxs(r.data.slice(0, 8))).catch(() => {});
+    api.get('/api/dashboard/next-holiday').then(r => setNextHoliday(r.data)).catch(() => {});
   }, []);
 
   const role = user?.role || 'employee';
