@@ -19,7 +19,7 @@ try:
     pdfmetrics.registerFont(TTFont('NotoArabic', os.path.join(FONTS_DIR, 'NotoSansArabic-Regular.ttf')))
     pdfmetrics.registerFont(TTFont('NotoArabicBold', os.path.join(FONTS_DIR, 'NotoSansArabic-Bold.ttf')))
     ARABIC_FONT_AVAILABLE = True
-except:
+except Exception:
     ARABIC_FONT_AVAILABLE = False
 
 
@@ -35,7 +35,7 @@ def process_arabic_text(text):
         try:
             reshaped = arabic_reshaper.reshape(text_str)
             return get_display(reshaped)
-        except:
+        except Exception:
             return text_str
     return text_str
 
