@@ -1,143 +1,105 @@
 # DAR AL CODE HR OS - Product Requirements Document
 
 ## Original Problem Statement
-Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system for an engineering consultancy. The system must follow strict guidelines inspired by NIST RBAC, WCAG 2.2, Event Sourcing, Apple HIG, Material Design, and OWASP.
+Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system for an engineering consultancy (Dar Al Code). Strict RBAC, immutable transaction records, Arabic-first UI.
 
 ## Core Architecture
+- **Backend:** FastAPI + MongoDB + JWT RBAC
+- **Frontend:** React + Tailwind CSS + shadcn/ui
+- **Rule:** Any transaction not executed by STAS is not considered valid
 
-### Backend Stack
-- **Framework**: FastAPI (Python)
-- **Database**: MongoDB
-- **Authentication**: JWT with Role-Based Access Control (RBAC)
-- **PDF Generation**: ReportLab with Arabic font support (NotoSansArabic)
+## User Roles
 
-### Frontend Stack
-- **Framework**: React.js
-- **Styling**: Tailwind CSS + shadcn/ui components
-- **HTTP Client**: Axios
-- **State Management**: React Context (Auth, Language, Theme)
-
-### Key Principles
-- Every action is an immutable transaction recorded in append-only ledgers
-- Employee profiles are read-only aggregations
-- Strict role-based access control (NIST-style)
-- **Core Rule: Any transaction not executed by STAS is not considered valid**
-
-## User Roles (RBAC)
-
-| Role | Username | Description |
+| Role | Username | Permissions |
 |------|----------|-------------|
-| STAS | stas | System Executor - highest privilege |
-| CEO | mohammed | Chief Executive Officer - Escalated approvals only |
-| Ops Admin | sultan | Operations Administrator |
-| Ops Strategic | naif | Operations Strategic |
-| Finance | salah | Finance Manager |
-| Supervisor | supervisor1 | Team Supervisor |
-| Employee | employee1, employee2 | Regular employees |
+| STAS | stas | System Executor - final authority |
+| CEO | mohammed | Escalated approvals only (accept/reject) |
+| Ops Admin | sultan | Operations, creates custodies, escalates |
+| Ops Strategic | naif | Operations support, creates tangible custody |
+| Finance | salah | Audit financial custodies, edit codes |
+| Supervisor | supervisor1 | Team leave approvals |
+| Employee | employee1/2 | Self-service, accept/reject custody |
 
-## Phase 1 - Core Implementation ✅ COMPLETE
-## Phase 2 - Stabilization Patch ✅ COMPLETE (2026-02-13)
-## Phase 3 - UI/UX Enhancement + Work Locations ✅ COMPLETE (2026-02-13)
+## Implemented Features
 
-## Phase 4 - P0 Business Logic ✅ COMPLETE (2026-02-13)
+### Phase 1-3 ✅ Core + UI (2026-02-13)
+- RBAC, transactions, ledger systems
+- Arabic localization, RTL PDF support
+- Status color-coding by approver role
+- Work Locations backend
 
-### 1. Escalation System ✅
-- Sultan/Naif can "escalate" transactions from ops stage to CEO (Mohammed)
-- When escalated: Sultan's permissions freeze for that transaction
-- Mohammed can only: Accept (→ STAS) or Reject (→ back to ops)
-- Mohammed does NOT edit or execute
-- **Workflow:** Employee → Supervisor → Sultan → [Escalate] → Mohammed → STAS
+### Phase 4 ✅ P0 Business Logic (2026-02-13)
+- Escalation system (Sultan → Mohammed → STAS)
+- Tangible custody lifecycle
+- Financial custody (old version)
 
-### 2. Financial Custody (60 Code) ✅
-- **Created by Sultan ONLY** (Naif cannot create)
-- **Manual code input** (not dropdown): type code number, auto-lookup shows definition if found
-- If code is new → user defines it and it's saved automatically
-- **Workflow:** Sultan creates → `["finance", "ceo", "stas"]`
-  - Salah (Finance) audits and can edit
-  - Mohammed (CEO) approves
-  - STAS executes (final, immutable)
-- **API:** POST /api/finance/transaction, GET /api/finance/codes/lookup/{code}
+### Phase 5 ✅ Financial Custody V2 + Code Mgmt (2026-02-13)
 
-### 3. Tangible Custody ✅
-- **Created by Sultan or Naif** (NOT Mohammed)
-- Sent to employee for acceptance
-- **Reject → cancelled immediately**
-- **Accept → STAS → recorded in custody_ledger**
-- **Return flow:** Sultan presses "Received" → STAS → removed from employee
-- **Active custody blocks settlement (مخالصة)**
-- **Workflow:** `["employee_accept", "stas"]`
-- **Return Workflow:** `["stas"]`
-- **API:** POST /api/custody/tangible, POST /api/custody/tangible/return, GET /api/custody/all
+#### Financial Custody (60 Code) - Administrative
+- **No employee linkage** - purely administrative
+- **Creation:** Sultan / Naif / Mohammed
+- **Expense tracking:** Sultan adds expenses (code + amount), running balance
+- **Manual code input:** Type code → auto-lookup → if new, define it
+- **Workflow:** Created → Received (active) → [Add expenses] → Submit Audit → Salah audits/edits → Mohammed approves → STAS executes
+- **Carry-forward:** Remaining balance auto-carries to next custody
+- **API:** `/api/financial-custody/*`
 
-### 4. Mohammed's Role ✅
-- Sees ONLY escalated transactions and finance_60/settlement requiring approval
-- Does NOT see regular transactions
-- Does NOT edit data
-- Accept → STAS, Reject → back to ops
+#### Finance Code Management
+- Codes 1-60 pre-seeded, 61+ user-created
+- Edit codes: Sultan, Naif, Salah, STAS
+- API: `PUT /api/finance/codes/{id}`, `POST /api/finance/codes/add`
+
+#### Dashboard → "لوحتي" (My Board)
+- Renamed for all users
+- Next upcoming holiday card for everyone
+
+#### Leave Visibility
+- Holidays table hidden from employees
+- Only admin sees full leave management
+
+## Key API Endpoints
+
+### Financial Custody
+- `POST /api/financial-custody` - Create
+- `POST /api/financial-custody/{id}/receive` - Receive
+- `POST /api/financial-custody/{id}/expense` - Add expense
+- `DELETE /api/financial-custody/{id}/expense/{eid}` - Remove expense
+- `POST /api/financial-custody/{id}/submit-audit` - Send to Salah
+- `POST /api/financial-custody/{id}/audit` - Salah audits
+- `POST /api/financial-custody/{id}/approve` - Mohammed approves
+- `POST /api/financial-custody/{id}/execute` - STAS executes
+
+### Transactions (Escalation)
+- `POST /api/transactions/{id}/action` - approve/reject/escalate
+
+### Tangible Custody
+- `POST /api/custody/tangible` - Create (Sultan/Naif)
+- `POST /api/custody/tangible/return` - Return (Sultan)
 
 ## Database Collections
 - `users`, `employees`, `transactions`
 - `leave_ledger`, `finance_ledger`, `attendance_ledger`
-- `public_holidays`, `holidays` (manual)
-- `contracts`, `finance_codes`, `counters`
-- `work_locations`
-- `custody_ledger` (NEW - tangible custody records)
-
-## API Endpoints
-
-### Auth
-- `GET /api/auth/users` - List active users
-- `POST /api/auth/switch/{user_id}` - Switch user
-- `GET /api/auth/me` - Current user
-
-### Transactions
-- `GET /api/transactions` - List transactions (role-filtered)
-- `POST /api/transactions/{id}/action` - Approve/Reject/Escalate
-- `GET /api/transactions/{id}/pdf` - PDF download
-
-### Leave
-- `POST /api/leave/request` - Create leave request
-- `GET /api/leave/balance` - Balance breakdown
-
-### Finance
-- `POST /api/finance/transaction` - Create financial custody (Sultan only)
-- `GET /api/finance/codes/lookup/{code}` - Manual code lookup
-- `GET /api/finance/codes` - List all finance codes
-- `GET /api/finance/statement/{employee_id}` - Finance statement
-
-### Custody
-- `POST /api/custody/tangible` - Create tangible custody (Sultan/Naif)
-- `POST /api/custody/tangible/return` - Return custody (Sultan)
-- `GET /api/custody/employee/{id}` - Employee's custodies
-- `GET /api/custody/all` - All custodies
-- `GET /api/custody/check-clearance/{id}` - Check clearance eligibility
-
-### STAS
-- `GET /api/stas/pending` - Pending executions
-- `POST /api/stas/execute/{id}` - Execute transaction
-- Holiday & maintenance CRUD
-
-### Work Locations
-- CRUD at `/api/work-locations`
+- `public_holidays`, `holidays`, `contracts`, `finance_codes`, `counters`
+- `work_locations`, `custody_ledger`, `custody_financial`
 
 ## Upcoming Tasks
 
 ### P1 - High Priority
-- Employee Profile Card (بطاقة الموظف): attendance, custody, transactions view
-- Mohammed CEO Dashboard: dedicated view for escalated transactions
-- Supervisor Assignment UI (Sultan/Naif can assign supervisors)
+- Employee Profile Card (بطاقة الموظف)
+- Mohammed CEO Dashboard (escalated transactions view)
+- Supervisor Assignment UI
+- New Transaction Types (detailed leave + attendance types)
 - Contract Deletion for STAS
-- New Transaction Types (Leave subtypes, Attendance subtypes)
 
 ### P2 - Medium Priority
 - Complete Work Locations Map Feature (Leaflet)
 - PDF Formatting Improvement
-- Geofencing validation for attendance check-in
+- Geofencing for attendance
 
 ### Future
-- Contract versioning and snapshots
+- Contract versioning & snapshots
 - Warning & Asset ledger transactions
 
 ---
 Last Updated: 2026-02-13
-Version: 5.0 (Phase 4 - P0 Business Logic Complete)
+Version: 6.0
