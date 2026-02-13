@@ -95,12 +95,25 @@ export default function TransactionsPage() {
     return stageRoles[tx.current_stage]?.includes(user?.role) && !['executed', 'rejected'].includes(tx.status);
   };
 
-  const getStatusClass = (status) => {
-    if (status === 'executed') return 'status-executed';
-    if (status === 'rejected') return 'status-rejected';
-    if (status?.startsWith('pending')) return 'status-pending';
-    return 'status-created';
+  // Get status style with fixed colors
+  const getStatusStyle = (status) => {
+    if (status === 'executed') {
+      return { backgroundColor: `${STATUS_COLORS.executed}15`, color: STATUS_COLORS.executed, borderColor: `${STATUS_COLORS.executed}30` };
+    }
+    if (status === 'rejected') {
+      return { backgroundColor: `${STATUS_COLORS.rejected}15`, color: STATUS_COLORS.rejected, borderColor: `${STATUS_COLORS.rejected}30` };
+    }
+    if (status?.startsWith('pending')) {
+      return { backgroundColor: `${STATUS_COLORS.pending}15`, color: STATUS_COLORS.pending, borderColor: `${STATUS_COLORS.pending}30` };
+    }
+    return { backgroundColor: '#3B82F615', color: '#3B82F6', borderColor: '#3B82F630' };
   };
+
+  // Get translated type
+  const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
+  
+  // Get translated stage
+  const getTranslatedStage = (stage) => t(`stages.${stage}`) || stage;
 
   // Get actionable transactions for mobile bar
   const actionableTx = selectedForAction ? transactions.find(tx => tx.id === selectedForAction && canAct(tx)) : null;
