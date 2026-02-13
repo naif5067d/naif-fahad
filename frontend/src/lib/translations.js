@@ -172,7 +172,9 @@ export const translations = {
       downloadPdf: "تحميل PDF", previewPdf: "معاينة PDF", timeline: "الجدول الزمني", 
       approvalChain: "سلسلة الموافقات", noTransactions: "لا توجد معاملات",
       actionNote: "ملاحظة (اختياري)", transactionAction: "إجراء المعاملة",
-      details: "تفاصيل المعاملة"
+      details: "تفاصيل المعاملة",
+      escalate: "تصعيد للرئيس التنفيذي", escalated: "تم التصعيد",
+      acceptCustody: "قبول", rejectCustody: "رفض"
     },
     leave: {
       title: "إدارة الإجازات", requestLeave: "طلب إجازة",
@@ -248,13 +250,15 @@ export const translations = {
     },
     txTypes: {
       leave_request: "طلب إجازة",
-      finance_60: "معاملة مالية",
+      finance_60: "عهدة مالية (60 رمز)",
       settlement: "تسوية",
       contract: "عقد",
       warning: "إنذار",
       asset: "أصول",
       attendance_correction: "تصحيح حضور",
-      add_finance_code: "إضافة رمز مالي"
+      add_finance_code: "إضافة رمز مالي",
+      tangible_custody: "عهدة ملموسة",
+      tangible_custody_return: "إرجاع عهدة"
     },
     stages: {
       supervisor: "المشرف",
@@ -263,13 +267,17 @@ export const translations = {
       ceo: "الرئيس التنفيذي",
       stas: "ستاس",
       executed: "منفذة",
-      rejected: "مرفوضة"
+      rejected: "مرفوضة",
+      employee_accept: "قبول الموظف",
+      cancelled: "ملغاة"
     },
     status: {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
       pending_ops: "بانتظار العمليات", pending_finance: "بانتظار المالية",
       pending_ceo: "بانتظار الرئيس", pending_stas: "بانتظار ستاس",
-      executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة"
+      pending_employee_accept: "بانتظار الموظف",
+      executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة",
+      cancelled: "ملغاة"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
     lang: { toggle: "English", current: "العربية" },
