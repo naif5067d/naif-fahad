@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from typing import Optional
 from database import db
 from utils.auth import get_current_user, require_roles
 from utils.pdf import generate_transaction_pdf
@@ -7,6 +9,16 @@ import uuid
 import hashlib
 
 router = APIRouter(prefix="/api/stas", tags=["stas"])
+
+
+class HolidayCreate(BaseModel):
+    name: str
+    name_ar: str
+    date: str  # YYYY-MM-DD
+
+
+class PurgeRequest(BaseModel):
+    confirm: bool = False
 
 
 async def run_pre_checks(tx):
