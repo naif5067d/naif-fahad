@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import db
 from utils.auth import get_current_user
+from utils.attendance_rules import validate_check_in, validate_check_out
 from datetime import datetime, timezone
 import uuid
 
@@ -20,7 +21,7 @@ class CheckOutRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     gps_available: bool = False
-    work_location: Optional[str] = None  # HQ or Project
+    work_location: Optional[str] = None
 
 
 GEOFENCE_CENTER = {"lat": 24.7136, "lng": 46.6753}  # Riyadh default
@@ -39,21 +40,24 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 @router.post("/check-in")
 async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
-    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
-    if not emp:
-        raise HTTPException(status_code=400, detail="Not registered as employee")
-
+    """
+    Check-in with server-side validation:
+    - Employee must be active with contract
+    - Work location validated
+    - Working hours checked (warning only)
+    """
+    # Validate using attendance rules
+    validation = await validate_check_in(user['user_id'], req.work_location)
+    
+    if not validation['valid']:
+        error = validation['error']
+        raise HTTPException(status_code=400, detail=error['message'])
+    
+    emp = validation['employee']
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
-    existing = await db.attendance_ledger.find_one({
-        "employee_id": emp['id'],
-        "date": today,
-        "type": "check_in"
-    })
-    if existing:
-        raise HTTPException(status_code=400, detail="Already checked in today")
-
+    # Calculate GPS validity
     gps_valid = False
     distance = None
     if req.gps_available and req.latitude and req.longitude:
@@ -72,8 +76,10 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "gps_valid": gps_valid,
         "distance_km": round(distance, 2) if distance else None,
         "work_location": req.work_location,
+        "warnings": validation.get('warnings', []),
         "created_at": now.isoformat()
     }
+    
     await db.attendance_ledger.insert_one(entry)
     entry.pop('_id', None)
     return entry
@@ -81,25 +87,24 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
 
 @router.post("/check-out")
 async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
-    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
-    if not emp:
-        raise HTTPException(status_code=400, detail="Not registered as employee")
-
+    """
+    Check-out with server-side validation:
+    - Must have checked in today
+    - Cannot checkout twice
+    """
+    # Validate using attendance rules
+    validation = await validate_check_out(user['user_id'])
+    
+    if not validation['valid']:
+        error = validation['error']
+        raise HTTPException(status_code=400, detail=error['message'])
+    
+    emp = validation['employee']
+    checkin = validation['checkin']
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
-    checkin = await db.attendance_ledger.find_one({
-        "employee_id": emp['id'], "date": today, "type": "check_in"
-    })
-    if not checkin:
-        raise HTTPException(status_code=400, detail="No check-in found for today")
-
-    existing_out = await db.attendance_ledger.find_one({
-        "employee_id": emp['id'], "date": today, "type": "check_out"
-    })
-    if existing_out:
-        raise HTTPException(status_code=400, detail="Already checked out today")
-
+    # Calculate GPS validity
     gps_valid = False
     distance = None
     if req.gps_available and req.latitude and req.longitude:
@@ -120,6 +125,7 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
         "work_location": req.work_location or checkin.get('work_location', 'HQ'),
         "created_at": now.isoformat()
     }
+    
     await db.attendance_ledger.insert_one(entry)
     entry.pop('_id', None)
     return entry
@@ -130,6 +136,7 @@ async def get_today_attendance(user=Depends(get_current_user)):
     emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
     if not emp:
         return {"check_in": None, "check_out": None}
+    
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     checkin = await db.attendance_ledger.find_one(
         {"employee_id": emp['id'], "date": today, "type": "check_in"}, {"_id": 0}
