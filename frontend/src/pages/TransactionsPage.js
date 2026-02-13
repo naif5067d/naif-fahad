@@ -96,7 +96,13 @@ export default function TransactionsPage() {
 
   const canAct = (tx) => {
     const stageRoles = { supervisor: ['supervisor'], ops: ['sultan', 'naif'], finance: ['salah'], ceo: ['mohammed'], stas: ['stas'] };
-    return stageRoles[tx.current_stage]?.includes(user?.role) && !['executed', 'rejected'].includes(tx.status);
+    // Employee can act on employee_accept stage if they are the assigned employee
+    if (tx.current_stage === 'employee_accept' && user?.role === 'employee') return true;
+    return stageRoles[tx.current_stage]?.includes(user?.role) && !['executed', 'rejected', 'cancelled'].includes(tx.status);
+  };
+
+  const canEscalate = (tx) => {
+    return tx.current_stage === 'ops' && ['sultan', 'naif'].includes(user?.role) && !['executed', 'rejected', 'cancelled'].includes(tx.status);
   };
 
   // Get status style with role-based colors
