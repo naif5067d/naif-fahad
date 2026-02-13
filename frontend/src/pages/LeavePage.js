@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, Plus, Badge } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function LeavePage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user } = useAuth();
   const [balance, setBalance] = useState({});
   const [holidays, setHolidays] = useState([]);
@@ -30,18 +30,18 @@ export default function LeavePage() {
 
   const handleSubmit = async () => {
     if (!form.start_date || !form.end_date || !form.reason) {
-      toast.error('Please fill all fields');
+      toast.error(t('leave.fillAllFields'));
       return;
     }
     setSubmitting(true);
     try {
       const res = await api.post('/api/leave/request', form);
-      toast.success(`Leave request created: ${res.data.ref_no}`);
+      toast.success(`${lang === 'ar' ? 'تم إنشاء طلب الإجازة' : 'Leave request created'}: ${res.data.ref_no}`);
       setDialogOpen(false);
       setForm({ leave_type: 'annual', start_date: '', end_date: '', reason: '' });
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to submit');
+      toast.error(err.response?.data?.detail || t('common.error'));
     } finally {
       setSubmitting(false);
     }
@@ -116,12 +116,29 @@ export default function LeavePage() {
         <div className="border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="hr-table" data-testid="holidays-table">
-              <thead><tr><th>Date</th><th>Holiday</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>{t('transactions.date')}</th>
+                  <th>{t('leave.holidayName')}</th>
+                  <th className="hidden sm:table-cell">{lang === 'ar' ? 'المصدر' : 'Source'}</th>
+                </tr>
+              </thead>
               <tbody>
-                {holidays.map(h => (
-                  <tr key={h.id}>
+                {holidays.length === 0 ? (
+                  <tr><td colSpan={3} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
+                ) : holidays.map(h => (
+                  <tr key={h.id || h.date}>
                     <td className="font-mono text-xs">{h.date}</td>
-                    <td className="text-sm">{h.name}</td>
+                    <td className="text-sm">{lang === 'ar' ? h.name_ar : h.name}</td>
+                    <td className="hidden sm:table-cell">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        h.source === 'manual' 
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' 
+                          : 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300'
+                      }`}>
+                        {h.source === 'manual' ? (lang === 'ar' ? 'يدوي' : 'Manual') : (lang === 'ar' ? 'نظام' : 'System')}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
