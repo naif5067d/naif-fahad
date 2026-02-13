@@ -1,0 +1,263 @@
+<analysis>**original_problem_statement:**
+The user wants to build DAR AL CODE HR OS, a mobile-first, enterprise-grade HR operating system for an engineering consultancy. The system must be built following strict guidelines inspired by NIST RBAC, WCAG 2.2, Event Sourcing, Apple HIG, Material Design, and OWASP.
+
+**PRODUCT REQUIREMENTS (LOCKED):**
+
+**Phase 1 (Initial Build - Mostly Complete):**
+-   **Core Concept:** Every action is an immutable transaction recorded in append-only ledgers. Employee profiles are read-only aggregations.
+-   **RBAC (NIST-style):**
+    -   **Roles:** Employee, Supervisor, Sultan (Ops Admin), Naif (Ops/Strategic), Salah (Finance), Mohammed (CEO), STAS (System Executor).
+    -   **Rules:** No self-signup. Only STAS manages users. Access is strictly role-based.
+-   **Transactions & Workflow:**
+    -   Each transaction has a unique , immutable timeline, approval chain, and status.
+    -   **Workflow:** Created → Supervisor → Ops Admin → Finance → CEO → STAS Execute.
+    -   Generates a hashed A4 PDF for every transaction.
+-   **Append-only Ledgers:** Leave, Finance, Attendance, Warning, Asset.
+-   **STAS Mirror:** A special view for the STAS role to verify transactions with pre-checks, before/after projections, and trace links before final execution.
+-   **Leave & Attendance:** GPS-based attendance, leave balance validation, and public holiday compensation.
+-   **Contracts & Settlement:** Editable contracts, STAS-managed templates, and a strict settlement workflow.
+-   **UI/UX:** Apple-inspired clean design, mobile-first, responsive, with perfect Light/Dark modes and full Arabic RTL support.
+
+**Phase 2 (Stabilization Patch - Current Task):**
+1.  **Approval Routing Fix:** The workflow must correctly skip the supervisor step if the requester is the supervisor or has no supervisor.
+2.  **Full Language Switch:** UI must be 100% Arabic or 100% English based on selection, with no mixed languages.
+3.  **PDF Arabic Rendering:** PDFs must embed an Arabic font to render correctly and include a Preview button in the UI.
+4.  **Mobile Decision Bar:** Approve/Reject/Execute buttons must be in a sticky footer on mobile views.
+5.  **Attendance Compliance:** Add a Work Location dropdown (HQ/Project) before check-in.
+6.  **Manual Holiday Calendar:** STAS must have a settings panel to manually add/remove holidays, which affects leave calculations.
+7.  **STAS Maintenance Tools:** Add STAS-only functions to purge transactions or users, and ensure disabled users are archived and hidden from the user switcher.
+
+**User's preferred language**: English and Arabic. The user provides technical requirements in English and UI feedback in Arabic. The application itself requires full localization for both. The next agent should respond in English for technical discussions unless the user initiates in Arabic.
+
+**what currently exists?**
+A full-stack HR OS application has been built using React for the frontend and FastAPI/MongoDB for the backend.
+-   **Backend:** All API routes for authentication, transactions, leave, finance, etc., are implemented. A data seeding script creates all necessary users, roles, and initial data. JWT-based authentication is in place.
+-   **Frontend:** The UI is built with components for a dashboard, transaction lists, leave requests, STAS mirror, and more. It supports light/dark modes and has a basic structure for RTL.
+-   **Key Feature:** A user-switching dropdown in the header has replaced the traditional login page, allowing instant role changes for testing and admin purposes.
+
+**Last working item**:
+-   Last item agent was working: The agent had just received a 7-point Stabilization Patch request from the user. The last action was to create a plan and view the files that would need to be modified to implement these fixes.
+-   Status: NOT STARTED
+-   Agent Testing Done: N
+-   Which testing method agent to use? both
+-   User Testing Done: N
+
+**All Pending/In progress Issue list**:
+The following 7 issues form the Stabilization Patch and are the highest priority.
+
+-   **Issue 1: Approval Routing Fix (P0)**
+-   **Issue 2: Full Language Switch (Localization Lock) (P1)**
+-   **Issue 3: PDF Arabic Rendering + Preview (P1)**
+-   **Issue 4: Mobile Decision Bar (Critical Usability Fix) (P0)**
+-   **Issue 5: Attendance Minimum Compliance (P1)**
+-   **Issue 6: Manual Holiday Calendar (Administrative Override) (P1)**
+-   **Issue 7: STAS Maintenance Tools (Governance Control) (P0)**
+
+**Issues Detail:**
+-   **Issue 1: Approval Routing Fix**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   Modify the transaction creation logic in  and other relevant transaction routes.
+        -   Add conditional logic to check if  or if .
+        -   If true, bypass the 'Supervisor' step and set the transaction's next approver to 'Sultan' (Ops Admin).
+    -   **Why fix this issue and what will be achieved with the fix?** To correct a critical flaw in the business workflow, ensuring requests are not stuck and supervisors cannot approve their own requests.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test backend/both after fix?** backend
+    -   **Blocked on other issue:** None.
+
+-   **Issue 2: Full Language Switch (Localization Lock)**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   Create a comprehensive translation file (e.g., ).
+        -   Audit all frontend components (, ) for hardcoded English strings.
+        -   Replace all static text (labels, buttons, statuses, alerts) with calls to the translation function based on the current language context.
+    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's strict requirement for full UI localization, providing a seamless experience for Arabic-speaking users.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None.
+
+-   **Issue 3: PDF Arabic Rendering + Preview**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   **Backend:** Find and install a suitable Arabic font (e.g., Amiri, Noto Sans Arabic). Update  to register and embed this font using .
+        -   **Frontend:** In transaction view components (e.g., , ), add a Preview button next to the Download PDF button. This may involve fetching the PDF as a blob and displaying it in a modal or new tab.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure official documents (PDFs) are correctly rendered in Arabic and to improve usability by allowing previews.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None.
+
+-   **Issue 4: Mobile Decision Bar**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   Identify transaction detail pages (, transaction approval views).
+        -   Create a new React component for the decision bar.
+        -   Use CSS to make this component  on mobile screen sizes ( queries).
+        -   Move the Approve/Reject/Execute buttons into this bar.
+    -   **Why fix this issue and what will be achieved with the fix?** To fix a critical mobile usability issue, allowing users to make decisions without scrolling.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None.
+
+-   **Issue 5: Attendance Minimum Compliance**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   **Frontend:** In the attendance check-in component (), add a dropdown with options 'HQ' and 'Project'.
+        -   **Backend:** Update the attendance check-in endpoint in  to accept a  field and save it to the .
+        -   Add logic to display Inside location / Outside location status (this will be basic for now, without a real map).
+    -   **Why fix this issue and what will be achieved with the fix?** To add a required compliance step to the attendance flow.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None.
+
+-   **Issue 6: Manual Holiday Calendar**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   **Backend:** Create new STAS-only endpoints in  to add/remove dates from a  collection in MongoDB.
+        -   Modify the leave calculation logic in  to query this collection and factor in manual holidays.
+        -   **Frontend:** Create a new settings page for STAS ( or a new component) with a calendar interface to manage these holidays.
+    -   **Why fix this issue and what will be achieved with the fix?** To give administrators control over the working calendar, which is essential for accurate leave and attendance management.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None.
+
+-   **Issue 7: STAS Maintenance Tools**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        -   **Backend:** Create new STAS-only endpoints in  for  and . Implement the logic to delete records from multiple collections while preserving admin users.
+        -   Update the user disable logic to set an  flag.
+        -   **Frontend:** Update the user switcher in  to filter out users where  is true. Create a new System Maintenance panel for STAS with buttons to trigger the purge actions.
+    -   **Why fix this issue and what will be achieved with the fix?** To provide essential administrative and governance tools for system resets and user management.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None.
+
+**In progress Task List**:
+None. The agent is about to start the Stabilization Patch as a new set of tasks.
+
+**Upcoming and Future Tasks**
+The 7-point stabilization patch is the immediate upcoming task list. Future tasks derived from the original problem statement include:
+-   Full implementation of contract versioning and snapshots.
+-   Full implementation of the detailed employee settlement workflow.
+-   Expanding the Project location for attendance with geofencing and map integration.
+-   Building out the remaining ledgers (Warning, Asset) with corresponding transaction types.
+
+**Completed work in this session**
+-   **Application Scaffolding:** Built the complete full-stack application structure (FastAPI backend, React frontend).
+-   **Authentication & RBAC:** Implemented JWT authentication and a user-switching mechanism. Seeded all required user roles.
+-   **Core Backend APIs:** Created API endpoints for all major modules: auth, dashboard, employees, transactions, leave, attendance, finance, contracts, and STAS.
+-   **Core Frontend UI:** Developed pages and components for Login (now removed), Dashboard, Transactions, Leave, Attendance, STAS Mirror, and basic navigation.
+-   **Styling:** Implemented Light/Dark modes and basic RTL support.
+-   **Bug Fix:** Resolved a critical backend issue where API routes with a trailing slash caused 307 redirects and broke authenticated requests. ( vs ).
+-   **User Request:** Removed the login page and implemented a user-switcher dropdown in the header for easy role-testing, as requested by the user.
+
+**Earlier issues found/mentioned but not fixed**
+The 7 items in the **All Pending/In progress Issue list** are the current set of known, unfixed issues requested by the user.
+
+**Known issue recurrence from previous fork**
+None. This is the first session.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Backend:** FastAPI, Python, MongoDB (via )
+-   **Frontend:** React.js, Tailwind CSS, shadcn/ui (components), 
+-   **Authentication:** Custom JSON Web Tokens (JWT) with Role-Based Access Control (RBAC).
+-   **Architecture:** RESTful API, Single Page Application (SPA).
+-   **Core Principles:** Append-only ledgers, event sourcing (conceptual), immutability.
+-   **Tooling:**  for PDF generation.
+
+**key DB schema**
+-   : {username, email, role, hashed_password, disabled, is_archived}
+-   : {user_id, name, supervisor_id, work_calendar, ...}
+-   : {ref_no, type, created_by, status, approvers, workflow, timeline_events, ...}
+-   : {transaction_id, employee_id, date, type ('annual', 'sick'), amount, ...}
+-   : {transaction_id, employee_id, code, amount, ...}
+-   : {employee_id, check_in_time, check_out_time, work_location, ...}
+-   : {employee_id, content, version, created_at, ...}
+-   : {code, description, ...}
+-   : {date, description, type ('public', 'manual')}
+
+**changes in tech stack**
+None.
+
+**All files of reference**
+-   : Main FastAPI app, includes all routers.
+-   : All business logic for API endpoints is modularized here.
+-   : Core JWT creation and dependency for RBAC.
+-   : Main application component with all routing logic.
+-   : Manages user state, token, and the new user-switching logic.
+-   : Contains the main layout with header, sidebar, and the user-switcher dropdown.
+-   : Individual screens for each module.
+-   : The Product Requirements Document updated by the agent.
+
+**Areas that need refactoring**:
+The user has explicitly forbidden refactoring. However, the task to implement Full Language Switch will involve moving hardcoded strings from components to a central translation file, which is a form of code improvement.
+
+**key api endpoints**
+-   : Switches user without a password.
+-   : Lists all active users for the switcher.
+-   : Lists all transactions visible to the current user.
+-   : Creates a new leave request transaction.
+-   : Fetches summary data for the dashboard cards.
+-   : Executes a transaction after pre-checks pass.
+
+**Critical Info for New Agent**
+-   **Stabilization Patch Focus:** Your ONLY goal is to implement the 7-point stabilization patch. Do NOT add new features, refactor, or redesign the UI. Follow the patch requirements precisely.
+-   **No Login Page:** The application uses a user-switcher in the header for authentication. Do not re-implement a login page.
+-   **User Specificity:** The user has provided LOCKED requirements. Do not deviate. The system is meant to be a real-world, enterprise-grade tool, not a demo.
+-   **Trailing Slash Issue:** The previous agent fixed a bug where FastAPI  redirects on routes missing a trailing slash would cause auth headers to be dropped. All routes were updated to handle requests with and without the slash (e.g., using  within an  prefix). Be mindful of this if adding new routes.
+
+**documents and test reports created in this job**
+-   
+-   
+
+**Last 10 User Messages and any pending HUMAN messages**
+10. : Requests to remove the login page and use a user switcher instead, reflecting existing users.
+9. : Acknowledges in Arabic and confirms it will remove the login page and add a user switcher.
+8. : Provides a plan to implement the user switcher (backend endpoint, frontend context update, UI icon).
+7. : Implements the backend endpoint to list and switch users.
+6. : Updates the  to handle the new switching logic.
+5. : Updates  to add the user switcher icon and dropdown.
+4. : Updates  to remove the login page route.
+3. : Provides a new, detailed 7-point list of Stabilization Patch requirements, overriding the previous finish goal. (This is the current task).
+2. : Creates and shares a new plan based on the 7 stabilization patch items.
+1. : Starts executing the plan by viewing all relevant files that need to be patched.
+
+**Project Health Check:**
+-   **Broken:**
+    -   The approval workflow logic is flawed (supervisors can approve their own requests).
+    -   UI localization is incomplete (mix of English and Arabic).
+    -   PDFs render Arabic text as squares.
+    -   Mobile usability is poor for decision-making.
+    -   Key administrative functions (holiday override, data purge) are missing.
+-   **Mocked:** None.
+
+**3rd Party Integrations**
+-   None. User explicitly locked this requirement for the current phase.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES, it was used once after the initial build.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None.
+-   **Known regressions:** None identified, but the 7-point patch list details existing bugs/missing features.
+
+**Credentials to test flow:**
+No passwords are required. Use the user-switcher dropdown in the top-right header to switch between the following seeded roles:
+-   **** (Regular employee)
+-   **** (Supervisor)
+-   **** (Ops Admin)
+-   **** (Ops/Strategic)
+-   **** (Finance)
+-   **** (CEO)
+-   **** (System Executor)
+
+**What agent forgot to execute**
+The agent was about to  the initial build but was correctly interrupted by the user with new, overriding requirements (the stabilization patch). The initial implementation missed several business logic edge cases and usability features that are now the focus of the current task list.</analysis>
