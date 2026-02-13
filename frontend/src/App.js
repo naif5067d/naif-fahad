@@ -53,6 +53,7 @@ function AppRoutes() {
       <Route path="/attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'salah', 'stas']}><FinancePage /></ProtectedRoute>} />
       <Route path="/contracts" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'employee', 'supervisor']}><ContractsPage /></ProtectedRoute>} />
+      <Route path="/work-locations" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><WorkLocationsPage /></ProtectedRoute>} />
       <Route path="/stas-mirror" element={<ProtectedRoute allowedRoles={['stas']}><STASMirrorPage /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
