@@ -120,7 +120,20 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Recent Transactions Table */}
+      {/* Next Holiday Card (for all users) */}
+      {nextHoliday && (
+        <Card className="border border-border shadow-none bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20" data-testid="next-holiday-card">
+          <CardContent className="py-3 flex items-center gap-3">
+            <CalendarDays size={20} className="text-amber-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t('dashboard.nextHoliday')}</p>
+              <p className="text-sm font-semibold">{lang === 'ar' ? nextHoliday.name_ar || nextHoliday.name : nextHoliday.name} - <span className="font-mono">{nextHoliday.date}</span></p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Transactions Table - hidden from employees */}
       <div>
         <h2 className="text-lg font-semibold mb-3">{t('dashboard.recentTransactions')}</h2>
         <div className="border border-border rounded-lg overflow-hidden">
