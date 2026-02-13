@@ -13,12 +13,14 @@ class CheckInRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     gps_available: bool = False
+    work_location: str = "HQ"  # HQ or Project
 
 
 class CheckOutRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     gps_available: bool = False
+    work_location: Optional[str] = None  # HQ or Project
 
 
 GEOFENCE_CENTER = {"lat": 24.7136, "lng": 46.6753}  # Riyadh default
@@ -69,6 +71,7 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "gps_available": req.gps_available,
         "gps_valid": gps_valid,
         "distance_km": round(distance, 2) if distance else None,
+        "work_location": req.work_location,
         "created_at": now.isoformat()
     }
     await db.attendance_ledger.insert_one(entry)
@@ -114,6 +117,7 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
         "gps_available": req.gps_available,
         "gps_valid": gps_valid,
         "distance_km": round(distance, 2) if distance else None,
+        "work_location": req.work_location or checkin.get('work_location', 'HQ'),
         "created_at": now.isoformat()
     }
     await db.attendance_ledger.insert_one(entry)
