@@ -325,4 +325,30 @@ async def seed_database(db):
     # Initialize transaction counter
     await db.counters.insert_one({"id": "transaction_ref", "seq": 0})
 
+    # Create active contracts for all employees
+    now = datetime.now(timezone.utc).isoformat()
+    contracts = []
+    for emp in SEED_EMPLOYEES:
+        contracts.append({
+            "id": str(uuid.uuid4()),
+            "employee_id": emp["id"],
+            "contract_type": "full_time",
+            "version": 1,
+            "start_date": "2025-01-01",
+            "end_date": None,  # Indefinite
+            "salary": 10000 if emp.get("user_id") in ["uid-supervisor1", "uid-sultan", "uid-naif", "uid-salah", "uid-mohammed"] else 5000,
+            "housing_allowance": 1000,
+            "transport_allowance": 500,
+            "other_allowances": 0,
+            "probation_months": 3,
+            "notice_period_days": 30,
+            "notes": "Standard employment contract",
+            "is_active": True,
+            "is_snapshot": False,
+            "transaction_id": None,
+            "created_by": "uid-stas",
+            "created_at": now,
+        })
+    await db.contracts.insert_many(contracts)
+
     return {"message": "Database seeded successfully", "seeded": True}
