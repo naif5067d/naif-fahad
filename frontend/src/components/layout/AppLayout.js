@@ -2,29 +2,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, UserCircle, ChevronDown, Check } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, UserCircle, ChevronDown, Check, MapPin } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'contracts', 'employees'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'contracts', 'employees'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'contracts', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'contracts', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'finance'],
   mohammed: ['dashboard', 'transactions'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'leave', 'attendance', 'finance', 'contracts', 'employees'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'leave', 'attendance', 'finance', 'contracts', 'employees', 'workLocations'],
 };
 
 const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
   attendance: Clock, finance: DollarSign, contracts: FileSignature,
-  employees: Users, settings: Settings, stasMirror: Shield,
+  employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
 };
 
 const PATHS = {
   dashboard: '/', transactions: '/transactions', leave: '/leave',
   attendance: '/attendance', finance: '/finance', contracts: '/contracts',
   employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
+  workLocations: '/work-locations',
 };
 
 const ROLE_COLORS = {
