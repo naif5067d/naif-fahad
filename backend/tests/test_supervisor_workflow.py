@@ -131,8 +131,8 @@ class TestSupervisorWorkflowFix:
         
         leave_data = {
             "leave_type": "sick",
-            "start_date": "2026-07-20",
-            "end_date": "2026-07-21",
+            "start_date": "2026-08-20",
+            "end_date": "2026-08-21",
             "reason": "TEST: employee1 leave - should go to pending_supervisor"
         }
         
