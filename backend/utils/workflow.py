@@ -66,7 +66,9 @@ async def should_skip_supervisor_stage(employee, requester_user_id: str) -> bool
     Determine if supervisor stage should be skipped.
     Skip if:
     1. Employee has no supervisor assigned
-    2. Requester IS the supervisor of the employee
+    2. Requester IS the supervisor (self-supervision scenario)
+    3. Employee's actual supervisor is NOT a 'supervisor' role (e.g., ops/sultan)
+       In this case, the workflow should go directly to 'ops' stage
     """
     if not employee:
         return True
@@ -75,9 +77,23 @@ async def should_skip_supervisor_stage(employee, requester_user_id: str) -> bool
     if not employee.get('supervisor_id'):
         return True
     
-    # Check if requester is the supervisor
-    supervisor = await get_employee_supervisor(employee)
-    if supervisor and supervisor.get('user_id') == requester_user_id:
+    # Get the supervisor's employee record
+    supervisor_emp = await get_employee_supervisor(employee)
+    if not supervisor_emp:
+        return True
+    
+    # Check if requester is the supervisor (self-approval prevention)
+    if supervisor_emp.get('user_id') == requester_user_id:
+        return True
+    
+    # Get the supervisor's user record to check their role
+    supervisor_user = await db.users.find_one({"id": supervisor_emp.get('user_id')}, {"_id": 0})
+    if not supervisor_user:
+        return True
+    
+    # If the supervisor has a role OTHER than 'supervisor' (e.g., sultan, naif),
+    # skip the supervisor stage - it will go directly to 'ops'
+    if supervisor_user.get('role') != 'supervisor':
         return True
     
     return False
