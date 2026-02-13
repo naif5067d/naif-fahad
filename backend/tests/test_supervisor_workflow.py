@@ -74,8 +74,8 @@ class TestSupervisorWorkflowFix:
         # Create leave request
         leave_data = {
             "leave_type": "annual",
-            "start_date": "2026-07-15",
-            "end_date": "2026-07-16",
+            "start_date": "2026-08-15",
+            "end_date": "2026-08-16",
             "reason": "TEST: supervisor1 leave - should skip supervisor stage and go to pending_ops"
         }
         
