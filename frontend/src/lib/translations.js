@@ -5,7 +5,8 @@ export const translations = {
       dashboard: "Dashboard", transactions: "Transactions", leave: "Leave",
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
       employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
-      logout: "Logout", profile: "Profile", workLocations: "Work Locations"
+      logout: "Logout", profile: "Profile", workLocations: "Work Locations",
+      custody: "Tangible Custody"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
@@ -149,7 +150,8 @@ export const translations = {
       dashboard: "لوحة القيادة", transactions: "المعاملات", leave: "الإجازات",
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
       employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
-      logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل"
+      logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
+      custody: "العهد الملموسة"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
