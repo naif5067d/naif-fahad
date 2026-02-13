@@ -21,8 +21,11 @@ ROLE_ORDER = {"stas": 0, "mohammed": 1, "sultan": 2, "naif": 3, "salah": 4, "sup
 
 @router.get("/users")
 async def list_all_users():
-    """List all users for user switcher (no auth required)."""
-    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+    """List all users for user switcher (no auth required). Excludes archived users."""
+    users = await db.users.find(
+        {"$or": [{"is_archived": {"$ne": True}}, {"is_archived": {"$exists": False}}]},
+        {"_id": 0, "password_hash": 0}
+    ).to_list(100)
     users.sort(key=lambda u: ROLE_ORDER.get(u.get('role', ''), 99))
     return users
 
