@@ -182,10 +182,17 @@ export default function TransactionsPage() {
                   onClick={() => canAct(tx) && setSelectedForAction(tx.id)}
                 >
                   <td className="font-mono text-xs">{tx.ref_no}</td>
-                  <td className="text-sm capitalize">{tx.type?.replace(/_/g, ' ')}</td>
-                  <td className="hidden md:table-cell text-sm">{tx.data?.employee_name || '-'}</td>
-                  <td><span className={`status-badge ${getStatusClass(tx.status)}`}>{t(`status.${tx.status}`) || tx.status}</span></td>
-                  <td className="hidden sm:table-cell text-xs text-muted-foreground">{tx.current_stage}</td>
+                  <td className="text-sm">{getTranslatedType(tx.type)}</td>
+                  <td className="hidden md:table-cell text-sm">{lang === 'ar' ? (tx.data?.employee_name_ar || tx.data?.employee_name) : tx.data?.employee_name || '-'}</td>
+                  <td>
+                    <span 
+                      className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                      style={getStatusStyle(tx.status)}
+                    >
+                      {t(`status.${tx.status}`) || tx.status}
+                    </span>
+                  </td>
+                  <td className="hidden sm:table-cell text-xs text-muted-foreground">{getTranslatedStage(tx.current_stage)}</td>
                   <td className="hidden md:table-cell text-xs text-muted-foreground">{tx.created_at?.slice(0, 10)}</td>
                   <td>
                     <div className="flex items-center gap-1">
