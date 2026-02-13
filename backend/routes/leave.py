@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from database import db
 from utils.auth import get_current_user
-from routes.transactions import get_next_ref_no, skip_supervisor_stage, WORKFLOW_MAP
+from routes.transactions import get_next_ref_no, skip_supervisor_stage, check_if_requester_is_supervisor, WORKFLOW_MAP
 from datetime import datetime, timezone, timedelta
 import uuid
 
@@ -90,7 +90,14 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
 
     ref_no = await get_next_ref_no()
     base_workflow = WORKFLOW_MAP["leave_request"][:]
-    workflow = skip_supervisor_stage(base_workflow, emp)
+    
+    # Check if requester is their own supervisor (skip supervisor approval)
+    should_skip_supervisor = await check_if_requester_is_supervisor(emp, user['user_id'])
+    if should_skip_supervisor:
+        workflow = [s for s in base_workflow if s != 'supervisor']
+    else:
+        workflow = base_workflow[:]
+    
     first_stage = workflow[0]
     now = datetime.now(timezone.utc).isoformat()
 

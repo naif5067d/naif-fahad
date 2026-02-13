@@ -46,10 +46,45 @@ async def get_next_ref_no():
     return f"TXN-{year}-{seq:04d}"
 
 
-def skip_supervisor_stage(workflow, employee):
-    if not employee or not employee.get('supervisor_id'):
+def skip_supervisor_stage(workflow, employee, requester_user_id=None):
+    """
+    Skip supervisor stage if:
+    1. Employee has no supervisor_id assigned, OR
+    2. The requester IS the supervisor (they would be approving their own request)
+    """
+    if not employee:
         return [s for s in workflow if s != 'supervisor']
+    
+    # No supervisor assigned
+    if not employee.get('supervisor_id'):
+        return [s for s in workflow if s != 'supervisor']
+    
+    # Check if requester is the supervisor - they can't approve their own requests
+    if requester_user_id and employee.get('supervisor_id'):
+        # If the requester's employee_id matches the supervisor_id, skip supervisor stage
+        if employee.get('id') == employee.get('supervisor_id'):
+            return [s for s in workflow if s != 'supervisor']
+    
     return workflow
+
+
+async def check_if_requester_is_supervisor(employee, requester_user_id):
+    """
+    Check if the requester is also the supervisor of this employee.
+    This prevents supervisors from having to approve their own requests.
+    """
+    if not employee or not employee.get('supervisor_id'):
+        return True  # No supervisor, skip
+    
+    supervisor_id = employee.get('supervisor_id')
+    
+    # Get the supervisor's employee record
+    from database import db
+    supervisor = await db.employees.find_one({"id": supervisor_id}, {"_id": 0})
+    if supervisor and supervisor.get('user_id') == requester_user_id:
+        return True  # Requester IS the supervisor, skip
+    
+    return False
 
 
 @router.get("")
