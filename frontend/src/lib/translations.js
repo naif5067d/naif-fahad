@@ -148,11 +148,11 @@ export const translations = {
   ar: {
     app: { name: "دار الكود - نظام الموارد البشرية", company: "شركة دار الكود للاستشارات الهندسية" },
     nav: {
-      dashboard: "لوحة القيادة", transactions: "المعاملات", leave: "الإجازات",
+      dashboard: "لوحتي", transactions: "المعاملات", leave: "الإجازات",
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
       employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
-      custody: "العهد الملموسة"
+      custody: "العهد الملموسة", financialCustody: "العهد المالية"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
