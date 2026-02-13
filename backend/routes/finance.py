@@ -125,7 +125,10 @@ async def get_finance_statement(employee_id: str, user=Depends(get_current_user)
 
 
 @router.post("/codes/add")
-async def request_add_finance_code(req: dict, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+async def request_add_finance_code(req: dict, user=Depends(get_current_user)):
+    role = user.get('role')
+    if role not in ('stas', 'sultan', 'naif', 'salah'):
+        raise HTTPException(status_code=403, detail="Not authorized")
     code = req.get('code')
     name = req.get('name')
     name_ar = req.get('name_ar', '')
@@ -138,37 +141,50 @@ async def request_add_finance_code(req: dict, user=Depends(require_roles('stas',
     if existing:
         raise HTTPException(status_code=400, detail=f"Code {code} already exists")
 
-    ref_no = await get_next_ref_no()
-    now = datetime.now(timezone.utc).isoformat()
-    tx = {
+    code_doc = {
         "id": str(uuid.uuid4()),
-        "ref_no": ref_no,
-        "type": "add_finance_code",
-        "status": "pending_ops",
+        "code": code,
+        "name": name,
+        "name_ar": name_ar or name,
+        "category": category,
+        "is_active": True,
         "created_by": user['user_id'],
-        "employee_id": None,
-        "data": {
-            "code": code,
-            "name": name,
-            "name_ar": name_ar,
-            "category": category,
-        },
-        "current_stage": "ops",
-        "workflow": ["ops", "stas"],
-        "timeline": [{
-            "event": "created",
-            "actor": user['user_id'],
-            "actor_name": user.get('full_name', ''),
-            "timestamp": now,
-            "note": f"Request to add finance code {code}: {name}",
-            "stage": "created"
-        }],
-        "approval_chain": [],
-        "pdf_hash": None,
-        "integrity_id": None,
-        "created_at": now,
-        "updated_at": now,
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
-    await db.transactions.insert_one(tx)
-    tx.pop('_id', None)
-    return tx
+    await db.finance_codes.insert_one(code_doc)
+    code_doc.pop('_id', None)
+    return code_doc
+
+
+@router.put("/codes/{code_id}")
+async def update_finance_code(code_id: str, req: dict, user=Depends(get_current_user)):
+    """Edit a finance code - Sultan, Naif, Salah, STAS can edit."""
+    role = user.get('role')
+    if role not in ('stas', 'sultan', 'naif', 'salah'):
+        raise HTTPException(status_code=403, detail="Not authorized to edit codes")
+
+    code_doc = await db.finance_codes.find_one({"id": code_id})
+    if not code_doc:
+        raise HTTPException(status_code=404, detail="Code not found")
+
+    update = {}
+    if 'name' in req:
+        update['name'] = req['name']
+    if 'name_ar' in req:
+        update['name_ar'] = req['name_ar']
+    if 'code' in req:
+        # Check for duplicate
+        dup = await db.finance_codes.find_one({"code": req['code'], "id": {"$ne": code_id}})
+        if dup:
+            raise HTTPException(status_code=400, detail=f"Code {req['code']} already exists")
+        update['code'] = req['code']
+    if 'category' in req:
+        update['category'] = req['category']
+
+    if update:
+        update['updated_at'] = datetime.now(timezone.utc).isoformat()
+        update['updated_by'] = user['user_id']
+        await db.finance_codes.update_one({"id": code_id}, {"$set": update})
+
+    result = await db.finance_codes.find_one({"id": code_id}, {"_id": 0})
+    return result
