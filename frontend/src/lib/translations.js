@@ -141,7 +141,7 @@ export const translations = {
       dashboard: "لوحة القيادة", transactions: "المعاملات", leave: "الإجازات",
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
       employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
-      logout: "تسجيل الخروج", profile: "الملف الشخصي"
+      logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
