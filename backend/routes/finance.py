@@ -48,7 +48,8 @@ async def create_finance_transaction(req: FinanceTransactionRequest, user=Depend
 
     ref_no = await get_next_ref_no()
     base_workflow = WORKFLOW_MAP["finance_60"][:]
-    workflow = skip_supervisor_stage(base_workflow, emp)
+    skip_supervisor = await should_skip_supervisor_stage(emp, user['user_id'])
+    workflow = build_workflow_for_transaction(base_workflow, skip_supervisor)
     first_stage = workflow[0]
     now = datetime.now(timezone.utc).isoformat()
 
