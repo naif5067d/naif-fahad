@@ -112,14 +112,37 @@ async def update_contract(contract_id: str, req: ContractUpdate, user=Depends(re
 
 @router.post("/settlement")
 async def create_settlement(req: SettlementRequest, user=Depends(require_roles('sultan', 'naif'))):
+    """
+    Settlement workflow:
+    - Only Sultan (Ops Admin) can initiate
+    - Mohammed (CEO) must approve
+    - STAS executes and locks the account
+    """
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+    
+    # Check employee is active
+    if not emp.get('is_active', True):
+        raise HTTPException(status_code=400, detail="Employee is already inactive")
+    
+    # Check for existing pending settlement
+    existing = await db.transactions.find_one({
+        "employee_id": req.employee_id,
+        "type": "settlement",
+        "status": {"$nin": ["executed", "rejected"]}
+    })
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Pending settlement exists: {existing['ref_no']}"
+        )
 
     ref_no = await get_next_ref_no()
     now = datetime.now(timezone.utc).isoformat()
     total = req.final_salary + req.leave_encashment + req.eos_amount + req.other_payments - req.deductions
 
+    # Settlement workflow: Sultan → Mohammed (CEO) → STAS
     tx = {
         "id": str(uuid.uuid4()),
         "ref_no": ref_no,
@@ -128,7 +151,8 @@ async def create_settlement(req: SettlementRequest, user=Depends(require_roles('
         "created_by": user['user_id'],
         "employee_id": req.employee_id,
         "data": {
-            "employee_name": emp['full_name'],
+            "employee_name": emp.get('full_name', ''),
+            "employee_name_ar": emp.get('full_name_ar', ''),
             "reason": req.reason,
             "settlement_text": req.settlement_text,
             "final_salary": req.final_salary,
@@ -139,16 +163,23 @@ async def create_settlement(req: SettlementRequest, user=Depends(require_roles('
             "total_settlement": total,
         },
         "current_stage": "ceo",
-        "workflow": ["ceo", "stas"],
+        "workflow": ["ceo", "stas"],  # Sultan initiates, then CEO, then STAS
         "timeline": [{
             "event": "created",
             "actor": user['user_id'],
             "actor_name": user.get('full_name', ''),
             "timestamp": now,
-            "note": f"Settlement for {emp['full_name']} - Total: {total} SAR",
+            "note": f"Settlement initiated for {emp.get('full_name', '')} - Total: {total} SAR",
             "stage": "created"
         }],
-        "approval_chain": [],
+        "approval_chain": [{
+            "stage": "ops",
+            "approver_id": user['user_id'],
+            "approver_name": user.get('full_name', ''),
+            "status": "initiated",
+            "timestamp": now,
+            "note": "Settlement initiated by Operations"
+        }],
         "pdf_hash": None,
         "integrity_id": None,
         "created_at": now,
