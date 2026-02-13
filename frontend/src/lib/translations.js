@@ -15,11 +15,11 @@ export const translations = {
       noSignup: "Contact STAS administrator for account access"
     },
     dashboard: {
-      welcome: "Welcome", pendingApprovals: "Pending Approvals",
+      welcome: "My Board", pendingApprovals: "Pending Approvals",
       leaveBalance: "Leave Balance", teamSize: "Team Size",
       totalEmployees: "Total Employees", pendingExecution: "Pending Execution",
       totalTransactions: "Total Transactions", recentTransactions: "Recent Transactions",
-      pendingFinance: "Pending Finance", days: "days"
+      pendingFinance: "Pending Finance", days: "days", nextHoliday: "Next Holiday"
     },
     transactions: {
       title: "Transactions", inbox: "Inbox", all: "All Transactions",
