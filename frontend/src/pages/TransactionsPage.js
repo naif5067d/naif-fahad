@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Download, Check, X as XIcon, Search, Eye } from 'lucide-react';
+import { FileText, Download, Check, X as XIcon, Search, Eye, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function TransactionsPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
@@ -20,6 +20,7 @@ export default function TransactionsPage() {
   const [actionDialog, setActionDialog] = useState(null);
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedForAction, setSelectedForAction] = useState(null);
 
   const fetchTxs = () => {
     const params = {};
@@ -41,12 +42,13 @@ export default function TransactionsPage() {
     setLoading(true);
     try {
       await api.post(`/api/transactions/${actionDialog.id}/action`, { action, note });
-      toast.success(action === 'approve' ? 'Approved' : 'Rejected');
+      toast.success(action === 'approve' ? t('transactions.approve') : t('transactions.reject'));
       setActionDialog(null);
       setNote('');
+      setSelectedForAction(null);
       fetchTxs();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Action failed');
+      toast.error(err.response?.data?.detail || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,15 @@ export default function TransactionsPage() {
       const a = document.createElement('a');
       a.href = url; a.download = `${tx.ref_no}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch { toast.error('PDF download failed'); }
+    } catch { toast.error(t('transactions.downloadPdf') + ' failed'); }
+  };
+
+  const previewPdf = async (tx) => {
+    try {
+      const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+    } catch { toast.error(t('transactions.previewPdf') + ' failed'); }
   };
 
   const canAct = (tx) => {
@@ -74,8 +84,11 @@ export default function TransactionsPage() {
     return 'status-created';
   };
 
+  // Get actionable transactions for mobile bar
+  const actionableTx = selectedForAction ? transactions.find(tx => tx.id === selectedForAction && canAct(tx)) : null;
+
   return (
-    <div className="space-y-4" data-testid="transactions-page">
+    <div className={`space-y-4 ${actionableTx ? 'pb-24 md:pb-4' : ''}`} data-testid="transactions-page">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">{t('transactions.title')}</h1>
       </div>
@@ -89,25 +102,25 @@ export default function TransactionsPage() {
         <Select value={filter.status} onValueChange={v => setFilter(f => ({ ...f, status: v === 'all' ? '' : v }))}>
           <SelectTrigger className="w-full sm:w-44" data-testid="tx-filter-status"><SelectValue placeholder={t('transactions.status')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="pending_supervisor">Pending Supervisor</SelectItem>
-            <SelectItem value="pending_ops">Pending Ops</SelectItem>
-            <SelectItem value="pending_finance">Pending Finance</SelectItem>
-            <SelectItem value="pending_ceo">Pending CEO</SelectItem>
-            <SelectItem value="pending_stas">Pending STAS</SelectItem>
-            <SelectItem value="executed">Executed</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="all">{t('common.all')}</SelectItem>
+            <SelectItem value="pending_supervisor">{t('status.pending_supervisor')}</SelectItem>
+            <SelectItem value="pending_ops">{t('status.pending_ops')}</SelectItem>
+            <SelectItem value="pending_finance">{t('status.pending_finance')}</SelectItem>
+            <SelectItem value="pending_ceo">{t('status.pending_ceo')}</SelectItem>
+            <SelectItem value="pending_stas">{t('status.pending_stas')}</SelectItem>
+            <SelectItem value="executed">{t('status.executed')}</SelectItem>
+            <SelectItem value="rejected">{t('status.rejected')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filter.type} onValueChange={v => setFilter(f => ({ ...f, type: v === 'all' ? '' : v }))}>
           <SelectTrigger className="w-full sm:w-44" data-testid="tx-filter-type"><SelectValue placeholder={t('transactions.type')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="leave_request">Leave Request</SelectItem>
-            <SelectItem value="finance_60">Finance 60</SelectItem>
-            <SelectItem value="settlement">Settlement</SelectItem>
-            <SelectItem value="contract">Contract</SelectItem>
-            <SelectItem value="warning">Warning</SelectItem>
+            <SelectItem value="all">{t('common.all')}</SelectItem>
+            <SelectItem value="leave_request">{lang === 'ar' ? 'طلب إجازة' : 'Leave Request'}</SelectItem>
+            <SelectItem value="finance_60">{lang === 'ar' ? 'معاملة مالية' : 'Finance 60'}</SelectItem>
+            <SelectItem value="settlement">{lang === 'ar' ? 'تسوية' : 'Settlement'}</SelectItem>
+            <SelectItem value="contract">{lang === 'ar' ? 'عقد' : 'Contract'}</SelectItem>
+            <SelectItem value="warning">{lang === 'ar' ? 'إنذار' : 'Warning'}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -131,7 +144,12 @@ export default function TransactionsPage() {
               {filtered.length === 0 ? (
                 <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">{t('transactions.noTransactions')}</td></tr>
               ) : filtered.map(tx => (
-                <tr key={tx.id} data-testid={`tx-row-${tx.ref_no}`}>
+                <tr 
+                  key={tx.id} 
+                  data-testid={`tx-row-${tx.ref_no}`}
+                  className={selectedForAction === tx.id ? 'bg-primary/5' : ''}
+                  onClick={() => canAct(tx) && setSelectedForAction(tx.id)}
+                >
                   <td className="font-mono text-xs">{tx.ref_no}</td>
                   <td className="text-sm capitalize">{tx.type?.replace(/_/g, ' ')}</td>
                   <td className="hidden md:table-cell text-sm">{tx.data?.employee_name || '-'}</td>
@@ -140,23 +158,28 @@ export default function TransactionsPage() {
                   <td className="hidden md:table-cell text-xs text-muted-foreground">{tx.created_at?.slice(0, 10)}</td>
                   <td>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/transactions/${tx.id}`)} data-testid={`view-tx-${tx.ref_no}`}>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); navigate(`/transactions/${tx.id}`); }} data-testid={`view-tx-${tx.ref_no}`}>
                         <Eye size={14} />
                       </Button>
                       {canAct(tx) && user?.role !== 'stas' && (
                         <>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-600" onClick={() => setActionDialog(tx)} data-testid={`approve-tx-${tx.ref_no}`}>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-600 hidden sm:flex" onClick={(e) => { e.stopPropagation(); setActionDialog(tx); }} data-testid={`approve-tx-${tx.ref_no}`}>
                             <Check size={14} />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => { setActionDialog(tx); }} data-testid={`reject-tx-${tx.ref_no}`}>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hidden sm:flex" onClick={(e) => { e.stopPropagation(); setActionDialog(tx); }} data-testid={`reject-tx-${tx.ref_no}`}>
                             <XIcon size={14} />
                           </Button>
                         </>
                       )}
                       {tx.status === 'executed' && (
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => downloadPdf(tx)} data-testid={`pdf-tx-${tx.ref_no}`}>
-                          <Download size={14} />
-                        </Button>
+                        <>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); previewPdf(tx); }} data-testid={`preview-tx-${tx.ref_no}`}>
+                            <FileText size={14} />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); downloadPdf(tx); }} data-testid={`pdf-tx-${tx.ref_no}`}>
+                            <Download size={14} />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -171,24 +194,51 @@ export default function TransactionsPage() {
       <Dialog open={!!actionDialog} onOpenChange={() => { setActionDialog(null); setNote(''); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Transaction Action: {actionDialog?.ref_no}</DialogTitle>
+            <DialogTitle>{t('transactions.transactionAction')}: {actionDialog?.ref_no}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Note (optional)</label>
-              <Input data-testid="action-note" value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note..." />
+              <label className="text-sm font-medium">{t('transactions.actionNote')}</label>
+              <Input data-testid="action-note" value={note} onChange={e => setNote(e.target.value)} placeholder={t('transactions.actionNote')} />
             </div>
             <div className="flex gap-3">
               <Button data-testid="confirm-approve" onClick={() => handleAction('approve')} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={loading}>
-                <Check size={16} className="me-1" /> {t('transactions.approve')}
+                {loading ? <Loader2 size={16} className="me-1 animate-spin" /> : <Check size={16} className="me-1" />} {t('transactions.approve')}
               </Button>
               <Button data-testid="confirm-reject" variant="destructive" onClick={() => handleAction('reject')} className="flex-1" disabled={loading}>
-                <XIcon size={16} className="me-1" /> {t('transactions.reject')}
+                {loading ? <Loader2 size={16} className="me-1 animate-spin" /> : <XIcon size={16} className="me-1" />} {t('transactions.reject')}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Decision Bar */}
+      {actionableTx && user?.role !== 'stas' && (
+        <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border p-4 shadow-lg z-40" data-testid="mobile-decision-bar">
+          <div className="text-center mb-2">
+            <p className="text-sm font-medium">{actionableTx.ref_no}</p>
+            <p className="text-xs text-muted-foreground">{actionableTx.data?.employee_name}</p>
+          </div>
+          <div className="flex gap-3 max-w-lg mx-auto">
+            <Button 
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setActionDialog(actionableTx)}
+              data-testid="mobile-approve-btn"
+            >
+              <Check size={16} className="me-1" /> {t('transactions.approve')}
+            </Button>
+            <Button 
+              variant="destructive"
+              className="flex-1"
+              onClick={() => setActionDialog(actionableTx)}
+              data-testid="mobile-reject-btn"
+            >
+              <XIcon size={16} className="me-1" /> {t('transactions.reject')}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
