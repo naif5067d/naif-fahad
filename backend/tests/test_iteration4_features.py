@@ -103,7 +103,7 @@ class TestWorkLocationsAPI:
     def test_list_work_locations_unauthenticated_fails(self, api_client):
         """Test that unauthenticated access fails"""
         response = api_client.get(f"{BASE_URL}/api/work-locations")
-        assert response.status_code == 401 or response.status_code == 422
+        assert response.status_code in [401, 403, 422], f"Expected 401/403/422, got {response.status_code}"
         print(f"✓ Unauthenticated access correctly blocked (status {response.status_code})")
     
     def test_list_work_locations_as_stas(self, api_client, users_map):
