@@ -6,6 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, CalendarDays, Users, Shield, DollarSign, Clock } from 'lucide-react';
 import api from '@/lib/api';
 
+// Fixed status colors
+const STATUS_COLORS = {
+  executed: '#16A34A',
+  pending: '#EAB308',
+  rejected: '#DC2626',
+};
+
 const STAT_CONFIG = {
   employee: [
     { key: 'leave_balance', icon: CalendarDays, label: 'dashboard.leaveBalance', suffix: 'dashboard.days', color: 'text-blue-600 dark:text-blue-400' },
