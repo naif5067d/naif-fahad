@@ -142,7 +142,10 @@ export default function AppLayout({ children }) {
       {/* Current user display at bottom */}
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 ${ROLE_COLORS[role] || ROLE_COLORS.employee}`}>
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1"
+            style={getRoleBadgeStyle(role)}
+          >
             {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
           </div>
           <div className="flex-1 min-w-0">
