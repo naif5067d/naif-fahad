@@ -227,7 +227,16 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
         })
 
     elif tx_type == 'settlement':
+        # Check for active tangible custody - blocks clearance
         if emp_id:
+            active_custody = await db.custody_ledger.count_documents(
+                {"employee_id": emp_id, "status": "active"}
+            )
+            if active_custody > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot execute settlement: Employee has {active_custody} unreturned custody item(s)"
+                )
             await db.employees.update_one({"id": emp_id}, {"$set": {"is_active": False}})
             await db.users.update_one({"employee_id": emp_id}, {"$set": {"is_active": False}})
             contract = await db.contracts.find_one(
@@ -251,6 +260,33 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             "is_active": True,
             "created_at": now
         })
+
+    elif tx_type == 'tangible_custody':
+        # Record custody in custody_ledger
+        await db.custody_ledger.insert_one({
+            "id": str(uuid.uuid4()),
+            "employee_id": emp_id,
+            "transaction_id": tx['id'],
+            "item_name": data.get('item_name', ''),
+            "item_name_ar": data.get('item_name_ar', ''),
+            "serial_number": data.get('serial_number', ''),
+            "estimated_value": data.get('estimated_value', 0),
+            "description": data.get('description', ''),
+            "employee_name": data.get('employee_name', ''),
+            "employee_name_ar": data.get('employee_name_ar', ''),
+            "status": "active",
+            "assigned_at": now,
+            "created_at": now
+        })
+
+    elif tx_type == 'tangible_custody_return':
+        # Remove custody from employee
+        custody_id = data.get('custody_id')
+        if custody_id:
+            await db.custody_ledger.update_one(
+                {"id": custody_id},
+                {"$set": {"status": "returned", "returned_at": now, "return_transaction_id": tx['id']}}
+            )
 
     # Generate PDF
     emp = await db.employees.find_one({"id": emp_id}, {"_id": 0}) if emp_id else None
