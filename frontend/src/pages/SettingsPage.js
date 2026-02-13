@@ -12,10 +12,10 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl" data-testid="settings-page">
-      <h1 className="text-2xl font-bold tracking-tight">{t('nav.settings')}</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
 
       <Card className="border border-border shadow-none">
-        <CardHeader><CardTitle className="text-base">{t('theme.toggle')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('settings.appearance')}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -31,7 +31,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="border border-border shadow-none">
-        <CardHeader><CardTitle className="text-base">{lang === 'ar' ? 'اللغة' : 'Language'}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('settings.language')}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -46,12 +46,21 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="border border-border shadow-none">
-        <CardHeader><CardTitle className="text-base">{t('nav.profile')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('settings.profile')}</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Username</span><span className="font-medium">{user?.username}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Role</span><span className="font-medium">{user?.role === 'stas' ? 'STAS' : t(`roles.${user?.role}`)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Employee ID</span><span className="font-medium">{user?.employee_id || '-'}</span></div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('settings.username')}</span>
+              <span className="font-medium">{user?.username}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('settings.role')}</span>
+              <span className="font-medium">{user?.role === 'stas' ? 'STAS' : t(`roles.${user?.role}`)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('settings.employeeId')}</span>
+              <span className="font-medium">{user?.employee_id || '-'}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
