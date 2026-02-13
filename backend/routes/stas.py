@@ -305,3 +305,130 @@ async def get_pending_executions(user=Depends(require_roles('stas'))):
         {"current_stage": "stas", "status": {"$nin": ["executed", "rejected"]}}, {"_id": 0}
     ).sort("created_at", -1).to_list(500)
     return txs
+
+
+
+# ==================== HOLIDAY MANAGEMENT ====================
+
+@router.get("/holidays")
+async def get_manual_holidays(user=Depends(require_roles('stas'))):
+    """Get all manual holidays added by STAS"""
+    holidays = await db.holidays.find({}, {"_id": 0}).sort("date", 1).to_list(500)
+    return holidays
+
+
+@router.post("/holidays")
+async def add_holiday(req: HolidayCreate, user=Depends(require_roles('stas'))):
+    """Add a manual holiday"""
+    existing = await db.holidays.find_one({"date": req.date})
+    if existing:
+        raise HTTPException(status_code=400, detail="Holiday already exists for this date")
+    
+    holiday = {
+        "id": str(uuid.uuid4()),
+        "name": req.name,
+        "name_ar": req.name_ar,
+        "date": req.date,
+        "year": int(req.date[:4]),
+        "created_by": user['user_id'],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.holidays.insert_one(holiday)
+    holiday.pop('_id', None)
+    return holiday
+
+
+@router.delete("/holidays/{holiday_id}")
+async def delete_holiday(holiday_id: str, user=Depends(require_roles('stas'))):
+    """Delete a manual holiday"""
+    result = await db.holidays.delete_one({"id": holiday_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Holiday not found")
+    return {"message": "Holiday deleted"}
+
+
+# ==================== MAINTENANCE TOOLS ====================
+
+PROTECTED_USERNAMES = ['stas', 'mohammed', 'sultan', 'naif', 'salah']
+
+
+@router.post("/maintenance/purge-transactions")
+async def purge_transactions(req: PurgeRequest, user=Depends(require_roles('stas'))):
+    """Purge all transactions (STAS only). Requires confirm=true."""
+    if not req.confirm:
+        raise HTTPException(status_code=400, detail="Must set confirm=true to purge")
+    
+    # Delete all transactions
+    tx_result = await db.transactions.delete_many({})
+    # Reset transaction counter
+    await db.counters.update_one({"id": "transaction_ref"}, {"$set": {"seq": 0}})
+    # Clear ledgers
+    leave_result = await db.leave_ledger.delete_many({"transaction_id": {"$ne": None}})
+    finance_result = await db.finance_ledger.delete_many({})
+    
+    return {
+        "message": "Transactions purged",
+        "deleted": {
+            "transactions": tx_result.deleted_count,
+            "leave_ledger_entries": leave_result.deleted_count,
+            "finance_ledger_entries": finance_result.deleted_count
+        }
+    }
+
+
+@router.post("/maintenance/purge-users")
+async def purge_users(req: PurgeRequest, user=Depends(require_roles('stas'))):
+    """Purge non-admin users (STAS only). Preserves STAS, CEO, ops, finance roles."""
+    if not req.confirm:
+        raise HTTPException(status_code=400, detail="Must set confirm=true to purge")
+    
+    # Delete non-protected users
+    user_result = await db.users.delete_many({"username": {"$nin": PROTECTED_USERNAMES}})
+    emp_result = await db.employees.delete_many({"user_id": {"$nin": [
+        u['user_id'] for u in await db.users.find({"username": {"$in": PROTECTED_USERNAMES}}, {"user_id": 1, "_id": 0}).to_list(10)
+    ]}})
+    
+    return {
+        "message": "Non-admin users purged",
+        "deleted": {
+            "users": user_result.deleted_count,
+            "employees": emp_result.deleted_count
+        }
+    }
+
+
+@router.post("/users/{user_id}/archive")
+async def archive_user(user_id: str, user=Depends(require_roles('stas'))):
+    """Archive (disable) a user. Archived users won't appear in user switcher."""
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target['username'] in PROTECTED_USERNAMES:
+        raise HTTPException(status_code=403, detail="Cannot archive protected admin users")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_active": False, "is_archived": True, "archived_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": f"User {target['username']} archived"}
+
+
+@router.post("/users/{user_id}/restore")
+async def restore_user(user_id: str, user=Depends(require_roles('stas'))):
+    """Restore an archived user"""
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_active": True, "is_archived": False}, "$unset": {"archived_at": ""}}
+    )
+    return {"message": f"User {target['username']} restored"}
+
+
+@router.get("/users/archived")
+async def get_archived_users(user=Depends(require_roles('stas'))):
+    """Get list of archived users"""
+    users = await db.users.find({"is_archived": True}, {"_id": 0, "password_hash": 0}).to_list(100)
+    return users
