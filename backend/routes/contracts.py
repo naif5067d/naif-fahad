@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from typing import Optional
 from database import db
 from utils.auth import get_current_user, require_roles
-from routes.transactions import get_next_ref_no, WORKFLOW_MAP
+from routes.transactions import get_next_ref_no
+from utils.workflow import WORKFLOW_MAP
 from datetime import datetime, timezone
 import uuid
 
