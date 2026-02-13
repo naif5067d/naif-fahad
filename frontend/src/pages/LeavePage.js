@@ -27,6 +27,7 @@ export default function LeavePage() {
   useEffect(() => { fetchData(); }, []);
 
   const isEmployee = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
+  const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
 
   const handleSubmit = async () => {
     if (!form.start_date || !form.end_date || !form.reason) {
