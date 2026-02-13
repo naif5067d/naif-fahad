@@ -6,11 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, CalendarDays, Users, Shield, DollarSign, Clock } from 'lucide-react';
 import api from '@/lib/api';
 
-// Fixed status colors
+// Status colors based on the role required for approval
 const STATUS_COLORS = {
-  executed: '#16A34A',
-  pending: '#EAB308',
-  rejected: '#DC2626',
+  executed: '#16A34A',      // Green - completed
+  rejected: '#DC2626',      // Red - rejected/cancelled
+  pending_supervisor: '#1D4ED8', // Supervisor blue
+  pending_ops: '#F97316',   // Sultan orange
+  pending_finance: '#0D9488', // Salah teal
+  pending_ceo: '#B91C1C',   // Mohammed red
+  pending_stas: '#7C3AED',  // STAS purple
 };
 
 const STAT_CONFIG = {
