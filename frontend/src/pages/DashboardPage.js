@@ -131,10 +131,17 @@ export default function DashboardPage() {
                 ) : recentTxs.map(tx => (
                   <tr key={tx.id} className="cursor-pointer" onClick={() => navigate(`/transactions/${tx.id}`)} data-testid={`tx-row-${tx.ref_no}`}>
                     <td className="font-mono text-xs">{tx.ref_no}</td>
-                    <td className="text-sm">{tx.type?.replace(/_/g, ' ')}</td>
-                    <td className="hidden sm:table-cell text-sm">{tx.data?.employee_name || '-'}</td>
-                    <td><span className={`status-badge ${getStatusClass(tx.status)}`}>{t(`status.${tx.status}`) || tx.status}</span></td>
-                    <td className="text-xs text-muted-foreground">{tx.current_stage}</td>
+                    <td className="text-sm">{getTranslatedType(tx.type)}</td>
+                    <td className="hidden sm:table-cell text-sm">{lang === 'ar' ? (tx.data?.employee_name_ar || tx.data?.employee_name) : tx.data?.employee_name || '-'}</td>
+                    <td>
+                      <span 
+                        className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                        style={getStatusStyle(tx.status)}
+                      >
+                        {t(`status.${tx.status}`) || tx.status}
+                      </span>
+                    </td>
+                    <td className="text-xs text-muted-foreground">{getTranslatedStage(tx.current_stage)}</td>
                   </tr>
                 ))}
               </tbody>
