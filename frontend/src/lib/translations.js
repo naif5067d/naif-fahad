@@ -70,7 +70,8 @@ export const translations = {
       title: "Employees", manage: "Manage Employees",
       name: "Name", department: "Department", position: "Position",
       status: "Status", active: "Active", inactive: "Inactive",
-      supervisor: "Supervisor", joinDate: "Join Date", noEmployees: "No employees found"
+      supervisor: "Supervisor", joinDate: "Join Date", noEmployees: "No employees found",
+      assignSupervisor: "Assign Supervisor", noSupervisor: "No Supervisor"
     },
     stas: {
       mirror: "STAS Mirror", preChecks: "Pre-Checks", traceLinks: "Trace Links (Veins)",
@@ -100,6 +101,25 @@ export const translations = {
       employee: "Employee", supervisor: "Supervisor",
       sultan: "Ops Admin", naif: "Ops Strategic",
       salah: "Finance", mohammed: "CEO", stas: "STAS"
+    },
+    txTypes: {
+      leave_request: "Leave Request",
+      finance_60: "Finance Transaction",
+      settlement: "Settlement",
+      contract: "Contract",
+      warning: "Warning",
+      asset: "Asset",
+      attendance_correction: "Attendance Correction",
+      add_finance_code: "Add Finance Code"
+    },
+    stages: {
+      supervisor: "Supervisor",
+      ops: "Operations",
+      finance: "Finance",
+      ceo: "CEO",
+      stas: "STAS",
+      executed: "Executed",
+      rejected: "Rejected"
     },
     status: {
       created: "Created", pending_supervisor: "Pending Supervisor",
@@ -186,7 +206,8 @@ export const translations = {
       title: "الموظفين", manage: "إدارة الموظفين",
       name: "الاسم", department: "القسم", position: "المنصب",
       status: "الحالة", active: "نشط", inactive: "غير نشط",
-      supervisor: "المشرف", joinDate: "تاريخ الانضمام", noEmployees: "لا يوجد موظفين"
+      supervisor: "المشرف", joinDate: "تاريخ الانضمام", noEmployees: "لا يوجد موظفين",
+      assignSupervisor: "تعيين المشرف", noSupervisor: "بدون مشرف"
     },
     stas: {
       mirror: "مرآة ستاس", preChecks: "الفحوصات المسبقة", traceLinks: "روابط التتبع (العروق)",
@@ -217,11 +238,30 @@ export const translations = {
       sultan: "مدير العمليات", naif: "العمليات الاستراتيجية",
       salah: "المالية", mohammed: "الرئيس التنفيذي", stas: "ستاس"
     },
+    txTypes: {
+      leave_request: "طلب إجازة",
+      finance_60: "معاملة مالية",
+      settlement: "تسوية",
+      contract: "عقد",
+      warning: "إنذار",
+      asset: "أصول",
+      attendance_correction: "تصحيح حضور",
+      add_finance_code: "إضافة رمز مالي"
+    },
+    stages: {
+      supervisor: "المشرف",
+      ops: "العمليات",
+      finance: "المالية",
+      ceo: "الرئيس التنفيذي",
+      stas: "ستاس",
+      executed: "منفذة",
+      rejected: "مرفوضة"
+    },
     status: {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
       pending_ops: "بانتظار العمليات", pending_finance: "بانتظار المالية",
       pending_ceo: "بانتظار الرئيس", pending_stas: "بانتظار ستاس",
-      executed: "تم التنفيذ", rejected: "مرفوض", completed: "مكتمل"
+      executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
     lang: { toggle: "English", current: "العربية" },
