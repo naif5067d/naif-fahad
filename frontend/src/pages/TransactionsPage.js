@@ -152,9 +152,11 @@ export default function TransactionsPage() {
             <SelectItem value="pending_ops">{t('status.pending_ops')}</SelectItem>
             <SelectItem value="pending_finance">{t('status.pending_finance')}</SelectItem>
             <SelectItem value="pending_ceo">{t('status.pending_ceo')}</SelectItem>
+            <SelectItem value="pending_employee_accept">{t('status.pending_employee_accept')}</SelectItem>
             <SelectItem value="pending_stas">{t('status.pending_stas')}</SelectItem>
             <SelectItem value="executed">{t('status.executed')}</SelectItem>
             <SelectItem value="rejected">{t('status.rejected')}</SelectItem>
+            <SelectItem value="cancelled">{t('status.cancelled')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filter.type} onValueChange={v => setFilter(f => ({ ...f, type: v === 'all' ? '' : v }))}>
