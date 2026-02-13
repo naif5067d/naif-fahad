@@ -180,8 +180,8 @@ class TestSupervisorWorkflowFix:
         
         leave_data = {
             "leave_type": "emergency",
-            "start_date": "2026-07-25",
-            "end_date": "2026-07-25",
+            "start_date": "2026-08-25",
+            "end_date": "2026-08-25",
             "reason": "TEST: sultan leave - should skip supervisor (no supervisor assigned)"
         }
         
