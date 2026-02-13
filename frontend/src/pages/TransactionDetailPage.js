@@ -115,6 +115,7 @@ export default function TransactionDetailPage() {
       approved: lang === 'ar' ? 'تمت الموافقة' : 'Approved',
       rejected: lang === 'ar' ? 'تم الرفض' : 'Rejected',
       executed: lang === 'ar' ? 'تم التنفيذ' : 'Executed',
+      escalated: lang === 'ar' ? 'تم التصعيد' : 'Escalated to CEO',
     };
     return events[event] || event;
   };
