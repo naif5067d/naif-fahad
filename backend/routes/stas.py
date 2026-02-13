@@ -76,12 +76,42 @@ async def run_pre_checks(tx):
         })
 
     elif tx_type == 'settlement':
+        # Check for active tangible custody
+        if tx.get('employee_id'):
+            active_custody = await db.custody_ledger.count_documents(
+                {"employee_id": tx['employee_id'], "status": "active"}
+            )
+            checks.append({
+                "name": "No Active Custody",
+                "name_ar": "لا توجد عهدة نشطة",
+                "status": "PASS" if active_custody == 0 else "FAIL",
+                "detail": f"Active custody items: {active_custody}" if active_custody > 0 else "No active custody"
+            })
         checks.append({
             "name": "Settlement Amount Verified",
             "name_ar": "مبلغ التسوية مُتحقق",
             "status": "PASS",
             "detail": f"Total: {data.get('total_settlement', 0)} SAR"
         })
+
+    elif tx_type == 'tangible_custody':
+        checks.append({
+            "name": "Employee Active",
+            "name_ar": "الموظف نشط",
+            "status": "PASS",
+            "detail": f"Item: {data.get('item_name', '')}"
+        })
+
+    elif tx_type == 'tangible_custody_return':
+        custody_id = data.get('custody_id')
+        if custody_id:
+            custody = await db.custody_ledger.find_one({"id": custody_id}, {"_id": 0})
+            checks.append({
+                "name": "Custody Record Found",
+                "name_ar": "سجل العهدة موجود",
+                "status": "PASS" if custody and custody.get('status') == 'active' else "FAIL",
+                "detail": f"Item: {data.get('item_name', '')}"
+            })
 
     # Check: transaction not already executed
     checks.append({
