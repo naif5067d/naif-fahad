@@ -6,8 +6,8 @@ from database import db
 from utils.auth import get_current_user
 from utils.pdf import generate_transaction_pdf
 from utils.workflow import (
-    WORKFLOW_MAP, STAGE_ROLES, 
-    validate_stage_actor, get_next_stage, 
+    WORKFLOW_MAP, STAGE_ROLES,
+    validate_stage_actor, get_next_stage,
     validate_only_stas_can_execute, can_initiate_transaction,
     should_skip_supervisor_stage, build_workflow_for_transaction,
     get_employee_by_user_id
@@ -47,7 +47,10 @@ async def list_transactions(
     if role == 'employee':
         emp = await db.employees.find_one({"user_id": user_id}, {"_id": 0})
         if emp:
-            query["employee_id"] = emp['id']
+            query["$or"] = [
+                {"employee_id": emp['id']},
+                {"current_stage": "employee_accept", "employee_id": emp['id']}
+            ]
         else:
             return []
     elif role == 'supervisor':
@@ -68,9 +71,12 @@ async def list_transactions(
             {"approval_chain": {"$elemMatch": {"stage": "finance"}}}
         ]
     elif role == 'mohammed':
+        # Mohammed sees ONLY escalated transactions and finance_60/settlement requiring his approval
         query["$or"] = [
             {"current_stage": "ceo"},
-            {"approval_chain": {"$elemMatch": {"stage": "ceo"}}}
+            {"escalated": True},
+            {"approval_chain": {"$elemMatch": {"stage": "ceo"}}},
+            {"type": {"$in": ["finance_60", "settlement"]}, "workflow": "ceo"}
         ]
     elif role == 'stas':
         pass  # see all
@@ -93,8 +99,9 @@ async def get_transaction(transaction_id: str, user=Depends(get_current_user)):
 
 
 class ApprovalAction(BaseModel):
-    action: str  # "approve" or "reject"
+    action: str  # "approve", "reject", "escalate"
     note: Optional[str] = ""
+    edit_data: Optional[dict] = None  # For Salah editing finance_60 data
 
 
 @router.post("/{transaction_id}/action")
@@ -103,16 +110,55 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    # Validate stage actor using workflow engine
+    stage = tx.get('current_stage')
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Handle escalation from ops to CEO
+    if body.action == 'escalate':
+        if user.get('role') not in ('sultan', 'naif'):
+            raise HTTPException(status_code=403, detail="Only Operations can escalate to CEO")
+        if stage != 'ops':
+            raise HTTPException(status_code=400, detail="Can only escalate from ops stage")
+
+        # Insert CEO stage into workflow before STAS
+        workflow = tx.get('workflow', [])
+        if 'ceo' not in workflow:
+            stas_idx = workflow.index('stas') if 'stas' in workflow else len(workflow)
+            workflow.insert(stas_idx, 'ceo')
+
+        timeline_event = {
+            "event": "escalated",
+            "actor": user['user_id'],
+            "actor_name": user.get('full_name', user['username']),
+            "timestamp": now,
+            "note": body.note or "Escalated to CEO",
+            "stage": stage
+        }
+
+        await db.transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "current_stage": "ceo",
+                    "status": "pending_ceo",
+                    "escalated": True,
+                    "escalated_by": user['user_id'],
+                    "escalated_at": now,
+                    "workflow": workflow,
+                    "updated_at": now
+                },
+                "$push": {"timeline": timeline_event}
+            }
+        )
+        return {"message": "Escalated to CEO", "status": "pending_ceo", "current_stage": "ceo"}
+
+    # Validate stage actor
     validation = await validate_stage_actor(tx, user['user_id'], user.get('role'))
     if not validation['valid']:
         raise HTTPException(status_code=403, detail=validation['error_detail'])
 
-    stage = tx.get('current_stage')
-    now = datetime.now(timezone.utc).isoformat()
-    
     timeline_event = {
-        "event": f"{body.action}d" if body.action == 'approve' else 'rejected',
+        "event": f"{body.action}d" if body.action == 'approve' else ('rejected' if body.action == 'reject' else body.action),
         "actor": user['user_id'],
         "actor_name": user.get('full_name', user['username']),
         "timestamp": now,
@@ -129,7 +175,36 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
         "note": body.note or ""
     }
 
+    # Handle rejection
     if body.action == 'reject':
+        # CEO rejection on escalated tx → return to ops
+        if stage == 'ceo' and tx.get('escalated'):
+            await db.transactions.update_one(
+                {"id": transaction_id},
+                {
+                    "$set": {
+                        "current_stage": "ops",
+                        "status": "pending_ops",
+                        "escalated": False,
+                        "updated_at": now
+                    },
+                    "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
+                }
+            )
+            return {"message": "CEO rejected. Returned to Operations.", "status": "pending_ops", "current_stage": "ops"}
+
+        # Employee rejection on tangible custody → cancel immediately
+        if stage == 'employee_accept':
+            await db.transactions.update_one(
+                {"id": transaction_id},
+                {
+                    "$set": {"status": "cancelled", "current_stage": "cancelled", "updated_at": now},
+                    "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
+                }
+            )
+            return {"message": "Custody rejected by employee. Cancelled.", "status": "cancelled"}
+
+        # Normal rejection
         await db.transactions.update_one(
             {"id": transaction_id},
             {
@@ -139,10 +214,21 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
         )
         return {"message": "Transaction rejected", "status": "rejected"}
 
+    # Handle finance stage editing (Salah can edit finance_60 data)
+    if stage == 'finance' and body.edit_data and tx.get('type') == 'finance_60':
+        update_data = {}
+        if 'amount' in body.edit_data:
+            update_data['data.amount'] = body.edit_data['amount']
+        if 'description' in body.edit_data:
+            update_data['data.description'] = body.edit_data['description']
+        if update_data:
+            await db.transactions.update_one({"id": transaction_id}, {"$set": update_data})
+            timeline_event['note'] = f"Edited and approved. {body.note or ''}"
+
     # Approve: move to next stage in workflow
     workflow = tx.get('workflow', [])
     next_stage = get_next_stage(workflow, stage)
-    
+
     if next_stage:
         next_status = f"pending_{next_stage}"
         await db.transactions.update_one(
@@ -154,7 +240,6 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
         )
         return {"message": f"Approved. Moved to {next_stage}", "status": next_status, "current_stage": next_stage}
     else:
-        # End of workflow - ready for STAS execution
         await db.transactions.update_one(
             {"id": transaction_id},
             {
@@ -185,5 +270,4 @@ async def get_transaction_pdf(transaction_id: str, user=Depends(get_current_user
     )
 
 
-# Export for other modules
 __all__ = ['get_next_ref_no', 'WORKFLOW_MAP', 'STAGE_ROLES']
