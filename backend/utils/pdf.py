@@ -61,7 +61,8 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
         parent=styles['Title'], 
         fontSize=16, 
         spaceAfter=12,
-        fontName=bold_font
+        fontName=bold_font,
+        alignment=1  # Center
     )
     heading_style = ParagraphStyle(
         'HeadingStyle', 
@@ -82,33 +83,87 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
         fontName=bold_font,
         fontSize=10
     )
+    arabic_title_style = ParagraphStyle(
+        'ArabicTitleStyle', 
+        parent=title_style, 
+        fontSize=14,
+        alignment=1  # Center
+    )
     
     elements = []
     integrity_id = str(uuid.uuid4())[:12].upper()
 
     # Title - bilingual
     elements.append(Paragraph("DAR AL CODE ENGINEERING CONSULTANCY", title_style))
-    elements.append(Paragraph(process_arabic_text("شركة دار الكود للاستشارات الهندسية"), ParagraphStyle('ArabicTitle', parent=title_style, fontSize=14)))
-    elements.append(Paragraph("HR Transaction Record / سجل معاملة الموارد البشرية", heading_style))
+    elements.append(Paragraph(safe_arabic("شركة دار الكود للاستشارات الهندسية"), arabic_title_style))
+    elements.append(Paragraph(f"HR Transaction Record / {safe_arabic('سجل معاملة الموارد البشرية')}", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1, color=colors.grey))
     elements.append(Spacer(1, 10))
 
+    # Translation maps for labels
+    label_translations = {
+        'leave_type': safe_arabic('نوع الإجازة'),
+        'start_date': safe_arabic('تاريخ البداية'),
+        'end_date': safe_arabic('تاريخ النهاية'),
+        'adjusted_end_date': safe_arabic('تاريخ النهاية المعدل'),
+        'working_days': safe_arabic('أيام العمل'),
+        'reason': safe_arabic('السبب'),
+        'employee_name': safe_arabic('اسم الموظف'),
+        'employee_name_ar': safe_arabic('اسم الموظف'),
+        'balance_before': safe_arabic('الرصيد قبل'),
+        'balance_after': safe_arabic('الرصيد بعد'),
+        'amount': safe_arabic('المبلغ'),
+        'description': safe_arabic('الوصف'),
+    }
+
+    leave_type_translations = {
+        'annual': safe_arabic('سنوية'),
+        'sick': safe_arabic('مرضية'),
+        'emergency': safe_arabic('طارئة'),
+    }
+
+    status_translations = {
+        'pending_supervisor': safe_arabic('بانتظار المشرف'),
+        'pending_ops': safe_arabic('بانتظار العمليات'),
+        'pending_finance': safe_arabic('بانتظار المالية'),
+        'pending_ceo': safe_arabic('بانتظار الرئيس'),
+        'pending_stas': safe_arabic('بانتظار ستاس'),
+        'executed': safe_arabic('منفذة'),
+        'rejected': safe_arabic('مرفوضة'),
+    }
+
+    type_translations = {
+        'leave_request': safe_arabic('طلب إجازة'),
+        'finance_60': safe_arabic('معاملة مالية'),
+        'settlement': safe_arabic('تسوية'),
+        'contract': safe_arabic('عقد'),
+    }
+
+    # Get translated type and status
+    tx_type = transaction.get('type', 'N/A')
+    tx_type_ar = type_translations.get(tx_type, tx_type.replace('_', ' ').title())
+    tx_type_display = f"{tx_type.replace('_', ' ').title()} / {tx_type_ar}"
+
+    tx_status = transaction.get('status', 'N/A')
+    tx_status_ar = status_translations.get(tx_status, tx_status.replace('_', ' ').title())
+    tx_status_display = f"{tx_status.replace('_', ' ').title()} / {tx_status_ar}"
+
     # Basic info
     info_data = [
-        ["Reference No / رقم المرجع:", transaction.get('ref_no', 'N/A')],
-        ["Type / النوع:", transaction.get('type', 'N/A').replace('_', ' ').title()],
-        ["Status / الحالة:", transaction.get('status', 'N/A').replace('_', ' ').title()],
-        ["Integrity ID / معرف السلامة:", integrity_id],
-        ["Generated / تاريخ الإنشاء:", datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')],
+        [f"Reference No / {safe_arabic('رقم المرجع')}:", transaction.get('ref_no', 'N/A')],
+        [f"Type / {safe_arabic('النوع')}:", tx_type_display],
+        [f"Status / {safe_arabic('الحالة')}:", tx_status_display],
+        [f"Integrity ID / {safe_arabic('معرف السلامة')}:", integrity_id],
+        [f"Generated / {safe_arabic('تاريخ الإنشاء')}:", datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')],
     ]
     if employee:
         emp_name = employee.get('full_name', 'N/A')
         emp_name_ar = employee.get('full_name_ar', '')
         name_display = f"{emp_name}"
         if emp_name_ar:
-            name_display += f" / {process_arabic_text(emp_name_ar)}"
-        info_data.insert(1, ["Employee / الموظف:", name_display])
-        info_data.insert(2, ["Employee No / رقم الموظف:", employee.get('employee_number', 'N/A')])
+            name_display += f" / {safe_arabic(emp_name_ar)}"
+        info_data.insert(1, [f"Employee / {safe_arabic('الموظف')}:", name_display])
+        info_data.insert(2, [f"Employee No / {safe_arabic('رقم الموظف')}:", employee.get('employee_number', 'N/A')])
 
     info_table = Table(info_data, colWidths=[150, 320])
     info_table.setStyle(TableStyle([
@@ -124,35 +179,52 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
     elements.append(Spacer(1, 15))
 
     # Transaction Details
-    elements.append(Paragraph("Transaction Details / تفاصيل المعاملة", heading_style))
+    elements.append(Paragraph(f"Transaction Details / {safe_arabic('تفاصيل المعاملة')}", heading_style))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
     elements.append(Spacer(1, 8))
     
     tx_data = transaction.get('data', {})
     for key, value in tx_data.items():
-        label = key.replace('_', ' ').title()
+        label_en = key.replace('_', ' ').title()
+        label_ar = label_translations.get(key, '')
+        label = f"{label_en} / {label_ar}" if label_ar else label_en
+        
         val_str = str(value) if value is not None else '-'
-        # Process Arabic text in values
-        if any('\u0600' <= char <= '\u06FF' for char in val_str):
-            val_str = process_arabic_text(val_str)
+        
+        # Translate specific values
+        if key == 'leave_type' and val_str in leave_type_translations:
+            val_str = f"{val_str.title()} / {leave_type_translations[val_str]}"
+        elif any('\u0600' <= char <= '\u06FF' for char in val_str):
+            val_str = safe_arabic(val_str)
+        
         elements.append(Paragraph(f"<b>{label}:</b> {val_str}", normal_style))
     elements.append(Spacer(1, 15))
 
     # Timeline
     if transaction.get('timeline'):
-        elements.append(Paragraph("Transaction Timeline / الجدول الزمني", heading_style))
+        elements.append(Paragraph(f"Transaction Timeline / {safe_arabic('الجدول الزمني')}", heading_style))
         elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
         elements.append(Spacer(1, 8))
-        timeline_data = [["Date / التاريخ", "Event / الحدث", "Actor / المنفذ", "Note / ملاحظة"]]
+        
+        event_translations = {
+            'created': safe_arabic('تم الإنشاء'),
+            'approved': safe_arabic('تمت الموافقة'),
+            'rejected': safe_arabic('تم الرفض'),
+            'executed': safe_arabic('تم التنفيذ'),
+        }
+        
+        timeline_data = [[f"Date / {safe_arabic('التاريخ')}", f"Event / {safe_arabic('الحدث')}", f"Actor / {safe_arabic('المنفذ')}", f"Note / {safe_arabic('ملاحظة')}"]]
         for event in transaction['timeline']:
             actor_name = event.get('actor_name', '')
+            event_name = event.get('event', '')
+            event_ar = event_translations.get(event_name, event_name)
             timeline_data.append([
                 str(event.get('timestamp', ''))[:19],
-                event.get('event', ''),
-                actor_name,
-                event.get('note', '')
+                f"{event_name} / {event_ar}",
+                safe_arabic(actor_name) if any('\u0600' <= c <= '\u06FF' for c in actor_name) else actor_name,
+                safe_arabic(event.get('note', '')) if event.get('note') else ''
             ])
-        t = Table(timeline_data, colWidths=[100, 100, 130, 140])
+        t = Table(timeline_data, colWidths=[90, 120, 130, 130])
         t.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.06, 0.09, 0.16)),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -170,15 +242,36 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
 
     # Approval Chain
     if transaction.get('approval_chain'):
-        elements.append(Paragraph("Approval Chain / سلسلة الموافقات", heading_style))
+        elements.append(Paragraph(f"Approval Chain / {safe_arabic('سلسلة الموافقات')}", heading_style))
         elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
         elements.append(Spacer(1, 8))
-        approval_data = [["Stage / المرحلة", "Approver / المعتمد", "Status / الحالة", "Date / التاريخ"]]
+        
+        stage_translations = {
+            'supervisor': safe_arabic('المشرف'),
+            'ops': safe_arabic('العمليات'),
+            'finance': safe_arabic('المالية'),
+            'ceo': safe_arabic('الرئيس'),
+            'stas': safe_arabic('ستاس'),
+        }
+        
+        approval_status_translations = {
+            'approve': safe_arabic('موافق'),
+            'reject': safe_arabic('مرفوض'),
+            'pending': safe_arabic('معلق'),
+        }
+        
+        approval_data = [[f"Stage / {safe_arabic('المرحلة')}", f"Approver / {safe_arabic('المعتمد')}", f"Status / {safe_arabic('الحالة')}", f"Date / {safe_arabic('التاريخ')}"]]
         for a in transaction['approval_chain']:
+            stage = a.get('stage', '')
+            stage_ar = stage_translations.get(stage, stage)
+            status = a.get('status', '')
+            status_ar = approval_status_translations.get(status, status)
+            approver = a.get('approver_name', '')
+            
             approval_data.append([
-                a.get('stage', ''), 
-                a.get('approver_name', ''),
-                a.get('status', ''), 
+                f"{stage} / {stage_ar}", 
+                safe_arabic(approver) if any('\u0600' <= c <= '\u06FF' for c in approver) else approver,
+                f"{status} / {status_ar}", 
                 str(a.get('timestamp', ''))[:19]
             ])
         at = Table(approval_data, colWidths=[100, 140, 100, 130])
