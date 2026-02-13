@@ -6,9 +6,16 @@ import { ArrowLeft, Download, Clock, CheckCircle, XCircle, Circle, Eye } from 'l
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
+// Fixed status colors
+const STATUS_COLORS = {
+  executed: '#16A34A',
+  pending: '#EAB308',
+  rejected: '#DC2626',
+};
+
 export default function TransactionDetailPage() {
   const { id } = useParams();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [tx, setTx] = useState(null);
 
@@ -35,11 +42,55 @@ export default function TransactionDetailPage() {
     } catch { toast.error(t('transactions.previewPdf') + ' failed'); }
   };
 
-  const getStatusClass = (status) => {
-    if (status === 'executed') return 'status-executed';
-    if (status === 'rejected') return 'status-rejected';
-    if (status?.startsWith('pending')) return 'status-pending';
-    return 'status-created';
+  // Get status style with fixed colors
+  const getStatusStyle = (status) => {
+    if (status === 'executed' || status === 'approve') {
+      return { backgroundColor: `${STATUS_COLORS.executed}15`, color: STATUS_COLORS.executed, borderColor: `${STATUS_COLORS.executed}30` };
+    }
+    if (status === 'rejected' || status === 'reject') {
+      return { backgroundColor: `${STATUS_COLORS.rejected}15`, color: STATUS_COLORS.rejected, borderColor: `${STATUS_COLORS.rejected}30` };
+    }
+    if (status?.startsWith('pending')) {
+      return { backgroundColor: `${STATUS_COLORS.pending}15`, color: STATUS_COLORS.pending, borderColor: `${STATUS_COLORS.pending}30` };
+    }
+    return { backgroundColor: '#3B82F615', color: '#3B82F6', borderColor: '#3B82F630' };
+  };
+
+  // Get translated type
+  const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
+  
+  // Get translated stage
+  const getTranslatedStage = (stage) => t(`stages.${stage}`) || stage;
+
+  // Translate data keys for display
+  const getTranslatedKey = (key) => {
+    const keyMap = {
+      leave_type: lang === 'ar' ? 'نوع الإجازة' : 'Leave Type',
+      start_date: lang === 'ar' ? 'تاريخ البداية' : 'Start Date',
+      end_date: lang === 'ar' ? 'تاريخ النهاية' : 'End Date',
+      adjusted_end_date: lang === 'ar' ? 'تاريخ النهاية المعدل' : 'Adjusted End Date',
+      working_days: lang === 'ar' ? 'أيام العمل' : 'Working Days',
+      reason: lang === 'ar' ? 'السبب' : 'Reason',
+      employee_name: lang === 'ar' ? 'اسم الموظف' : 'Employee Name',
+      employee_name_ar: lang === 'ar' ? 'اسم الموظف' : 'Employee Name (Arabic)',
+      balance_before: lang === 'ar' ? 'الرصيد قبل' : 'Balance Before',
+      balance_after: lang === 'ar' ? 'الرصيد بعد' : 'Balance After',
+      amount: lang === 'ar' ? 'المبلغ' : 'Amount',
+      description: lang === 'ar' ? 'الوصف' : 'Description',
+    };
+    return keyMap[key] || key.replace(/_/g, ' ');
+  };
+
+  // Translate leave types
+  const getTranslatedValue = (key, val) => {
+    if (key === 'leave_type') {
+      const leaveTypes = { annual: lang === 'ar' ? 'سنوية' : 'Annual', sick: lang === 'ar' ? 'مرضية' : 'Sick', emergency: lang === 'ar' ? 'طارئة' : 'Emergency' };
+      return leaveTypes[val] || val;
+    }
+    if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) {
+      return tx.data.employee_name_ar;
+    }
+    return String(val);
   };
 
   const getTimelineIcon = (event) => {
@@ -47,6 +98,17 @@ export default function TransactionDetailPage() {
     if (event === 'rejected') return <XCircle size={16} className="text-red-500" />;
     if (event === 'approved') return <CheckCircle size={16} className="text-blue-500" />;
     return <Circle size={16} className="text-muted-foreground" />;
+  };
+
+  // Get translated event name
+  const getTranslatedEvent = (event) => {
+    const events = {
+      created: lang === 'ar' ? 'تم الإنشاء' : 'Created',
+      approved: lang === 'ar' ? 'تمت الموافقة' : 'Approved',
+      rejected: lang === 'ar' ? 'تم الرفض' : 'Rejected',
+      executed: lang === 'ar' ? 'تم التنفيذ' : 'Executed',
+    };
+    return events[event] || event;
   };
 
   return (
