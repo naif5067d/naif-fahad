@@ -230,7 +230,10 @@ export default function AppLayout({ children }) {
                               isActive ? 'bg-primary/5' : 'hover:bg-muted/60'
                             }`}
                           >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 flex-shrink-0 ${ROLE_COLORS[uRole] || ROLE_COLORS.employee}`}>
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 flex-shrink-0"
+                              style={getRoleBadgeStyle(uRole)}
+                            >
                               {uRole === 'stas' ? 'S' : (u.full_name || 'U')[0]}
                             </div>
                             <div className="flex-1 min-w-0">
