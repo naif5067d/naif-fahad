@@ -174,7 +174,7 @@ export default function TransactionDetailPage() {
                 {i < tx.timeline.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
               </div>
               <div className="flex-1 pb-4">
-                <p className="text-sm font-medium capitalize">{ev.event}</p>
+                <p className="text-sm font-medium">{getTranslatedEvent(ev.event)}</p>
                 <p className="text-xs text-muted-foreground">{ev.actor_name} - {ev.timestamp?.slice(0, 19)}</p>
                 {ev.note && <p className="text-xs text-muted-foreground mt-0.5">{ev.note}</p>}
               </div>
@@ -191,13 +191,26 @@ export default function TransactionDetailPage() {
           </div>
           <div className="overflow-x-auto">
             <table className="hr-table">
-              <thead><tr><th>Stage</th><th>Approver</th><th>Status</th><th>Date</th><th>Note</th></tr></thead>
+              <thead><tr>
+                <th>{t('transactions.stage')}</th>
+                <th>{lang === 'ar' ? 'المعتمد' : 'Approver'}</th>
+                <th>{t('transactions.status')}</th>
+                <th>{t('transactions.date')}</th>
+                <th>{lang === 'ar' ? 'ملاحظة' : 'Note'}</th>
+              </tr></thead>
               <tbody>
                 {tx.approval_chain.map((a, i) => (
                   <tr key={i}>
-                    <td className="capitalize text-sm">{a.stage}</td>
+                    <td className="text-sm">{getTranslatedStage(a.stage)}</td>
                     <td className="text-sm">{a.approver_name}</td>
-                    <td><span className={`status-badge ${a.status === 'approve' ? 'status-executed' : a.status === 'reject' ? 'status-rejected' : 'status-pending'}`}>{a.status}</span></td>
+                    <td>
+                      <span 
+                        className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                        style={getStatusStyle(a.status)}
+                      >
+                        {a.status === 'approve' ? (lang === 'ar' ? 'موافق' : 'Approved') : a.status === 'reject' ? (lang === 'ar' ? 'مرفوض' : 'Rejected') : a.status}
+                      </span>
+                    </td>
                     <td className="text-xs text-muted-foreground">{a.timestamp?.slice(0, 19)}</td>
                     <td className="text-xs">{a.note}</td>
                   </tr>
