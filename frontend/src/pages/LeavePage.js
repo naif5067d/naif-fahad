@@ -111,7 +111,8 @@ export default function LeavePage() {
         ))}
       </div>
 
-      {/* Public Holidays */}
+      {/* Public Holidays - Only visible to admin */}
+      {isAdmin && (
       <div>
         <h2 className="text-lg font-semibold mb-3">{t('leave.holidays')}</h2>
         <div className="border border-border rounded-lg overflow-hidden">
