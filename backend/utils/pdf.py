@@ -77,12 +77,6 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
         fontName=base_font,
         fontSize=10
     )
-    bold_style = ParagraphStyle(
-        'BoldStyle',
-        parent=styles['Normal'],
-        fontName=bold_font,
-        fontSize=10
-    )
     arabic_title_style = ParagraphStyle(
         'ArabicTitleStyle', 
         parent=title_style, 
