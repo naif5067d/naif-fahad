@@ -161,11 +161,11 @@ export const translations = {
       noSignup: "تواصل مع مسؤول ستاس للحصول على حساب"
     },
     dashboard: {
-      welcome: "مرحباً", pendingApprovals: "الموافقات المعلقة",
+      welcome: "لوحتي", pendingApprovals: "الموافقات المعلقة",
       leaveBalance: "رصيد الإجازات", teamSize: "حجم الفريق",
       totalEmployees: "إجمالي الموظفين", pendingExecution: "معلق التنفيذ",
       totalTransactions: "إجمالي المعاملات", recentTransactions: "المعاملات الأخيرة",
-      pendingFinance: "المالية المعلقة", days: "أيام"
+      pendingFinance: "المالية المعلقة", days: "أيام", nextHoliday: "الإجازة القادمة"
     },
     transactions: {
       title: "المعاملات", inbox: "الوارد", all: "جميع المعاملات",
