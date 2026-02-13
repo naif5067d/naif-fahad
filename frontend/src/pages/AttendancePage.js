@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, HardHat } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -12,6 +13,7 @@ export default function AttendancePage() {
   const [history, setHistory] = useState([]);
   const [gpsState, setGpsState] = useState({ available: false, lat: null, lng: null, checking: true });
   const [loading, setLoading] = useState(false);
+  const [workLocation, setWorkLocation] = useState('HQ');
 
   const fetchData = () => {
     api.get('/api/attendance/today').then(r => setToday(r.data)).catch(() => {});
@@ -32,10 +34,17 @@ export default function AttendancePage() {
   }, []);
 
   const handleCheckIn = async () => {
+    if (!workLocation) {
+      toast.error(t('attendance.selectLocation'));
+      return;
+    }
     setLoading(true);
     try {
       await api.post('/api/attendance/check-in', {
-        latitude: gpsState.lat, longitude: gpsState.lng, gps_available: gpsState.available
+        latitude: gpsState.lat, 
+        longitude: gpsState.lng, 
+        gps_available: gpsState.available,
+        work_location: workLocation
       });
       toast.success(t('attendance.checkedIn'));
       fetchData();
@@ -48,13 +57,22 @@ export default function AttendancePage() {
     setLoading(true);
     try {
       await api.post('/api/attendance/check-out', {
-        latitude: gpsState.lat, longitude: gpsState.lng, gps_available: gpsState.available
+        latitude: gpsState.lat, 
+        longitude: gpsState.lng, 
+        gps_available: gpsState.available,
+        work_location: workLocation
       });
       toast.success(t('attendance.checkedOut'));
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Check-out failed');
     } finally { setLoading(false); }
+  };
+
+  const getLocationLabel = (loc) => {
+    if (loc === 'HQ') return t('attendance.hq');
+    if (loc === 'Project') return t('attendance.project');
+    return loc || '-';
   };
 
   return (
@@ -66,10 +84,43 @@ export default function AttendancePage() {
         <div className="flex items-center gap-2 p-3 rounded-md bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-sm" data-testid="no-gps-banner">
           <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
           <span className="text-amber-800 dark:text-amber-300">
-            {lang === 'ar' ? 'GPS غير متوفر - تسجيل الحضور يتطلب تحديد الموقع' : 'GPS not available - Attendance check-in requires location access'}
+            {t('attendance.noGps')} - {t('attendance.gpsRequired')}
           </span>
         </div>
       )}
+
+      {/* Work Location Selection */}
+      <Card className="border border-border shadow-none" data-testid="work-location-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">{t('attendance.workLocation')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select value={workLocation} onValueChange={setWorkLocation} disabled={!!today.check_in}>
+            <SelectTrigger className="w-full" data-testid="work-location-select">
+              <SelectValue placeholder={t('attendance.selectLocation')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="HQ">
+                <div className="flex items-center gap-2">
+                  <Building2 size={16} className="text-blue-600" />
+                  <span>{t('attendance.hq')}</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="Project">
+                <div className="flex items-center gap-2">
+                  <HardHat size={16} className="text-amber-600" />
+                  <span>{t('attendance.project')}</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {today.check_in && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {t('attendance.workLocation')}: <span className="font-medium">{getLocationLabel(today.check_in.work_location)}</span>
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Today Status */}
       <Card className="border border-border shadow-none" data-testid="today-status-card">
@@ -83,8 +134,14 @@ export default function AttendancePage() {
                 <p className="text-xs text-muted-foreground">
                   {today.check_in ? today.check_in.timestamp?.slice(11, 19) : t('attendance.notCheckedIn')}
                 </p>
-                {today.check_in?.gps_valid === false && today.check_in?.gps_available && (
-                  <p className="text-xs text-amber-600">Outside geofence ({today.check_in.distance_km} km)</p>
+                {today.check_in && (
+                  <p className="text-xs text-muted-foreground">
+                    {today.check_in.gps_valid ? (
+                      <span className="text-emerald-600">{t('attendance.insideLocation')}</span>
+                    ) : (
+                      <span className="text-amber-600">{t('attendance.outsideLocation')} ({today.check_in.distance_km} km)</span>
+                    )}
+                  </p>
                 )}
               </div>
             </div>
@@ -128,17 +185,35 @@ export default function AttendancePage() {
         <div className="border border-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="hr-table" data-testid="attendance-history-table">
-              <thead><tr><th>Date</th><th>Type</th><th>Time</th><th>GPS</th><th className="hidden sm:table-cell">Distance</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>{t('attendance.date')}</th>
+                  <th>{t('transactions.type')}</th>
+                  <th>{t('attendance.time')}</th>
+                  <th>{t('attendance.workLocation')}</th>
+                  <th className="hidden sm:table-cell">{t('attendance.gpsStatus')}</th>
+                  <th className="hidden sm:table-cell">{t('attendance.distance')}</th>
+                </tr>
+              </thead>
               <tbody>
                 {history.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
                 ) : history.map(e => (
                   <tr key={e.id}>
                     <td className="font-mono text-xs">{e.date}</td>
                     <td className="text-sm capitalize">{e.type?.replace('_', ' ')}</td>
                     <td className="text-xs">{e.timestamp?.slice(11, 19)}</td>
-                    <td>{e.gps_valid ? <CheckCircle size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-red-500" />}</td>
-                    <td className="hidden sm:table-cell text-xs text-muted-foreground">{e.distance_km ? `${e.distance_km} km` : '-'}</td>
+                    <td className="text-sm">{getLocationLabel(e.work_location)}</td>
+                    <td className="hidden sm:table-cell">
+                      {e.gps_valid ? (
+                        <CheckCircle size={14} className="text-emerald-500" />
+                      ) : (
+                        <XCircle size={14} className="text-red-500" />
+                      )}
+                    </td>
+                    <td className="hidden sm:table-cell text-xs text-muted-foreground">
+                      {e.distance_km ? `${e.distance_km} km` : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
