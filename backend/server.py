@@ -20,6 +20,7 @@ from routes.contracts import router as contracts_router
 from routes.stas import router as stas_router
 from routes.work_locations import router as work_locations_router
 from routes.custody import router as custody_router
+from routes.financial_custody import router as financial_custody_router
 from seed import seed_database
 
 app = FastAPI(title="DAR AL CODE HR OS", redirect_slashes=False)
@@ -35,6 +36,7 @@ app.include_router(contracts_router)
 app.include_router(stas_router)
 app.include_router(work_locations_router)
 app.include_router(custody_router)
+app.include_router(financial_custody_router)
 
 app.add_middleware(
     CORSMiddleware,
