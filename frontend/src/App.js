@@ -15,6 +15,7 @@ import ContractsPage from "@/pages/ContractsPage";
 import STASMirrorPage from "@/pages/STASMirrorPage";
 import EmployeesPage from "@/pages/EmployeesPage";
 import SettingsPage from "@/pages/SettingsPage";
+import WorkLocationsPage from "@/pages/WorkLocationsPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
