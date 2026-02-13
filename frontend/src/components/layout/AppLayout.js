@@ -28,13 +28,23 @@ const PATHS = {
 };
 
 const ROLE_COLORS = {
-  stas: 'bg-red-500/15 text-red-700 dark:text-red-400 ring-red-500/20',
-  mohammed: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 ring-purple-500/20',
-  sultan: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 ring-amber-500/20',
-  naif: 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 ring-cyan-500/20',
-  salah: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-emerald-500/20',
-  supervisor: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 ring-blue-500/20',
-  employee: 'bg-slate-500/15 text-slate-700 dark:text-slate-400 ring-slate-500/20',
+  employee: { bg: '#3B82F6', ring: '#3B82F630' },
+  supervisor: { bg: '#1D4ED8', ring: '#1D4ED830' },
+  sultan: { bg: '#F97316', ring: '#F9731630' },
+  mohammed: { bg: '#B91C1C', ring: '#B91C1C30' },
+  stas: { bg: '#7C3AED', ring: '#7C3AED30' },
+  naif: { bg: '#4D7C0F', ring: '#4D7C0F30' },
+  salah: { bg: '#0D9488', ring: '#0D948830' },
+};
+
+// Get role badge style
+const getRoleBadgeStyle = (role) => {
+  const colors = ROLE_COLORS[role] || ROLE_COLORS.employee;
+  return {
+    backgroundColor: `${colors.bg}20`,
+    color: colors.bg,
+    borderColor: colors.ring,
+  };
 };
 
 const ROLE_LABELS = {
