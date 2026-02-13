@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Clock, CheckCircle, XCircle, Circle } from 'lucide-react';
+import { ArrowLeft, Download, Clock, CheckCircle, XCircle, Circle, Eye } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -24,7 +24,15 @@ export default function TransactionDetailPage() {
       const url = URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a'); a.href = url; a.download = `${tx.ref_no}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch { toast.error('PDF download failed'); }
+    } catch { toast.error(t('transactions.downloadPdf') + ' failed'); }
+  };
+
+  const previewPdf = async () => {
+    try {
+      const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank');
+    } catch { toast.error(t('transactions.previewPdf') + ' failed'); }
   };
 
   const getStatusClass = (status) => {
@@ -57,6 +65,9 @@ export default function TransactionDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className={`status-badge ${getStatusClass(tx.status)}`}>{t(`status.${tx.status}`) || tx.status}</span>
+          <Button variant="outline" size="sm" onClick={previewPdf} data-testid="preview-pdf-btn">
+            <Eye size={14} className="me-1" /> {t('common.preview')}
+          </Button>
           <Button variant="outline" size="sm" onClick={downloadPdf} data-testid="download-pdf-btn">
             <Download size={14} className="me-1" /> PDF
           </Button>
