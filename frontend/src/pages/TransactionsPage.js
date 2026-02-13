@@ -147,11 +147,11 @@ export default function TransactionsPage() {
           <SelectTrigger className="w-full sm:w-44" data-testid="tx-filter-type"><SelectValue placeholder={t('transactions.type')} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('common.all')}</SelectItem>
-            <SelectItem value="leave_request">{lang === 'ar' ? 'طلب إجازة' : 'Leave Request'}</SelectItem>
-            <SelectItem value="finance_60">{lang === 'ar' ? 'معاملة مالية' : 'Finance 60'}</SelectItem>
-            <SelectItem value="settlement">{lang === 'ar' ? 'تسوية' : 'Settlement'}</SelectItem>
-            <SelectItem value="contract">{lang === 'ar' ? 'عقد' : 'Contract'}</SelectItem>
-            <SelectItem value="warning">{lang === 'ar' ? 'إنذار' : 'Warning'}</SelectItem>
+            <SelectItem value="leave_request">{t('txTypes.leave_request')}</SelectItem>
+            <SelectItem value="finance_60">{t('txTypes.finance_60')}</SelectItem>
+            <SelectItem value="settlement">{t('txTypes.settlement')}</SelectItem>
+            <SelectItem value="contract">{t('txTypes.contract')}</SelectItem>
+            <SelectItem value="warning">{t('txTypes.warning')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
