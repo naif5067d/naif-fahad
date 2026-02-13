@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="8" failures="20" skipped="0" tests="32" time="7.400" timestamp="2026-02-13T23:44:31.484657+00:00" hostname="agent-env-44c1e2b2-c749-406b-b219-e5110f09c2cf"><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyCreation" name="test_sultan_can_create_custody" time="0.512"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:85: in test_sultan_can_create_custody
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyCreation" name="test_naif_can_create_custody" time="0.169"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:101: in test_naif_can_create_custody
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyCreation" name="test_mohammed_can_create_custody" time="0.198"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:113: in test_mohammed_can_create_custody
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyCreation" name="test_salah_cannot_create_custody" time="0.206" /><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyCreation" name="test_employee_cannot_create_custody" time="0.225" /><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyReceive" name="test_receive_sets_status_to_active" time="0.409"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:150: in test_receive_sets_status_to_active
+    response = sultan_session.post(f"{BASE_URL}/api/financial-custody/{test_custody['id']}/receive")
+                                                                       ^^^^^^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyReceive" name="test_cannot_receive_already_received" time="0.000"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:158: in test_cannot_receive_already_received
+    response = sultan_session.post(f"{BASE_URL}/api/financial-custody/{test_custody['id']}/receive")
+                                                                       ^^^^^^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExpenses" name="test_sultan_can_add_expense" time="0.270"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:175: in active_custody
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExpenses" name="test_add_multiple_expenses_accumulate" time="0.000"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:175: in active_custody
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExpenses" name="test_expense_cannot_exceed_remaining" time="0.000"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:175: in active_custody
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExpenses" name="test_salah_cannot_add_expense" time="0.116"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:175: in active_custody
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyAudit" name="test_submit_for_audit" time="0.322"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:239: in custody_for_audit
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyAudit" name="test_cannot_submit_empty_custody" time="0.091"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:262: in test_cannot_submit_empty_custody
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyAudit" name="test_salah_can_approve_audit" time="0.112"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:239: in custody_for_audit
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyAudit" name="test_salah_can_reject_audit" time="0.077"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:287: in test_salah_can_reject_audit
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyApproval" name="test_mohammed_can_approve" time="0.590"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:314: in custody_for_approval
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyApproval" name="test_sultan_cannot_approve" time="0.068"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:341: in test_sultan_cannot_approve
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExecution" name="test_stas_can_execute_and_carry_remaining" time="0.747"><error message="failed on setup with &quot;KeyError: 'id'&quot;">backend/tests/test_financial_custody_v2.py:367: in custody_for_execution
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</error></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinancialCustodyExecution" name="test_sultan_cannot_execute" time="0.071"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:401: in test_sultan_cannot_execute
+    sultan_session.post(f"{BASE_URL}/api/financial-custody/{custody['id']}/receive")
+                                                            ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_add_new_code_sultan" time="0.461"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:427: in test_add_new_code_sultan
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_add_new_code_naif" time="0.181"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:442: in test_add_new_code_naif
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_add_new_code_salah" time="0.171"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:453: in test_add_new_code_salah
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_add_new_code_stas" time="0.239"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:464: in test_add_new_code_stas
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_employee_cannot_add_code" time="0.176" /><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_edit_code_sultan" time="0.067"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:488: in test_edit_code_sultan
+    response = sultan_session.put(f"{BASE_URL}/api/finance/codes/{code_data['id']}", json={
+                                                                  ^^^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_edit_code_naif" time="0.113"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:509: in test_edit_code_naif
+    response = naif_session.put(f"{BASE_URL}/api/finance/codes/{code_data['id']}", json={
+                                                                ^^^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestFinanceCodeManagement" name="test_duplicate_code_rejected" time="0.177"><failure message="assert 403 == 400&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:528: in test_duplicate_code_rejected
+    assert response.status_code == 400
+E   assert 403 == 400
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestDashboardNextHoliday" name="test_get_next_holiday" time="0.351"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:538: in test_get_next_holiday
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestListAndDetailEndpoints" name="test_list_custodies" time="0.391"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:554: in test_list_custodies
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestListAndDetailEndpoints" name="test_get_custody_detail" time="0.074"><failure message="KeyError: 'id'">backend/tests/test_financial_custody_v2.py:568: in test_get_custody_detail
+    response = sultan_session.get(f"{BASE_URL}/api/financial-custody/{custody['id']}")
+                                                                      ^^^^^^^^^^^^^
+E   KeyError: 'id'</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestListAndDetailEndpoints" name="test_list_finance_codes" time="0.077"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_financial_custody_v2.py:578: in test_list_finance_codes
+    assert response.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_financial_custody_v2.TestListAndDetailEndpoints" name="test_employee_cannot_list_custodies" time="0.300" /></testsuite></testsuites>
