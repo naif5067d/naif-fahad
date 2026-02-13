@@ -255,6 +255,11 @@ export default function TransactionsPage() {
             <DialogTitle>{t('transactions.transactionAction')}: {actionDialog?.ref_no}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {actionDialog?.escalated && (
+              <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2">
+                <p className="text-xs text-orange-700 dark:text-orange-300 font-medium">{t('transactions.escalated')}</p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium">{t('transactions.actionNote')}</label>
               <Input data-testid="action-note" value={note} onChange={e => setNote(e.target.value)} placeholder={t('transactions.actionNote')} />
@@ -267,6 +272,11 @@ export default function TransactionsPage() {
                 {loading ? <Loader2 size={16} className="me-1 animate-spin" /> : <XIcon size={16} className="me-1" />} {t('transactions.reject')}
               </Button>
             </div>
+            {canEscalate(actionDialog || {}) && (
+              <Button data-testid="confirm-escalate" variant="outline" onClick={() => handleAction('escalate')} className="w-full border-orange-400 text-orange-600 hover:bg-orange-50" disabled={loading}>
+                {t('transactions.escalate')}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
