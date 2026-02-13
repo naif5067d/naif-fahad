@@ -5,7 +5,7 @@ export const translations = {
       dashboard: "Dashboard", transactions: "Transactions", leave: "Leave",
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
       employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
-      logout: "Logout", profile: "Profile"
+      logout: "Logout", profile: "Profile", workLocations: "Work Locations"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
