@@ -25,19 +25,26 @@ except:
 
 def process_arabic_text(text):
     """Process Arabic text for proper RTL display in PDF"""
-    if not text or not ARABIC_FONT_AVAILABLE:
-        return str(text) if text else ''
+    if not text:
+        return ''
     
     text_str = str(text)
     # Check if text contains Arabic characters
     has_arabic = any('\u0600' <= char <= '\u06FF' or '\u0750' <= char <= '\u077F' for char in text_str)
-    if has_arabic:
+    if has_arabic and ARABIC_FONT_AVAILABLE:
         try:
             reshaped = arabic_reshaper.reshape(text_str)
             return get_display(reshaped)
         except:
             return text_str
     return text_str
+
+
+def safe_arabic(text):
+    """Safely process any text that might contain Arabic"""
+    if not text:
+        return '-'
+    return process_arabic_text(str(text))
 
 
 def generate_transaction_pdf(transaction: dict, employee: dict = None) -> tuple:
