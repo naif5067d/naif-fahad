@@ -70,7 +70,9 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
         raise HTTPException(status_code=400, detail="You are not registered as an employee")
 
     holidays_list = await db.public_holidays.find({}, {"_id": 0}).to_list(100)
-    holiday_dates = [h['date'] for h in holidays_list]
+    # Also get manual holidays
+    manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(100)
+    holiday_dates = [h['date'] for h in holidays_list] + [h['date'] for h in manual_holidays]
 
     sat_working = emp.get('working_calendar', {}).get('saturday_working', False)
     adjusted_end, working_days = extend_leave_for_holidays(
@@ -159,4 +161,14 @@ async def get_my_leave_balance(user=Depends(get_current_user)):
 @router.get("/holidays")
 async def get_holidays():
     holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(100)
-    return holidays
+    manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(100)
+    # Combine and mark manual holidays
+    all_holidays = []
+    for h in holidays:
+        h['source'] = 'system'
+        all_holidays.append(h)
+    for h in manual_holidays:
+        h['source'] = 'manual'
+        all_holidays.append(h)
+    all_holidays.sort(key=lambda x: x.get('date', ''))
+    return all_holidays
