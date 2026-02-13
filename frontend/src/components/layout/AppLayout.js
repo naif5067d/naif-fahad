@@ -197,7 +197,10 @@ export default function AppLayout({ children }) {
                   onClick={() => setSwitcherOpen(!switcherOpen)}
                   className="flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg hover:bg-muted border border-border transition-all"
                 >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-1 ${ROLE_COLORS[role] || ROLE_COLORS.employee}`}>
+                  <div 
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-1"
+                    style={getRoleBadgeStyle(role)}
+                  >
                     {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
                   </div>
                   <span className="hidden sm:inline text-xs font-medium truncate max-w-[100px]">{displayName}</span>
