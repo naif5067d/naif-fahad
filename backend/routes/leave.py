@@ -2,8 +2,16 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from database import db
 from utils.auth import get_current_user
-from routes.transactions import get_next_ref_no, skip_supervisor_stage, check_if_requester_is_supervisor, WORKFLOW_MAP
-from datetime import datetime, timezone, timedelta
+from utils.workflow import (
+    WORKFLOW_MAP, should_skip_supervisor_stage, 
+    build_workflow_for_transaction, get_employee_by_user_id
+)
+from utils.leave_rules import (
+    get_employee_with_contract, validate_leave_request, 
+    get_leave_balance, get_all_holidays
+)
+from routes.transactions import get_next_ref_no
+from datetime import datetime, timezone
 import uuid
 
 router = APIRouter(prefix="/api/leave", tags=["leave"])
@@ -16,92 +24,44 @@ class LeaveRequest(BaseModel):
     reason: str
 
 
-def count_working_days(start_str, end_str, holidays, saturday_working=False):
-    start = datetime.strptime(start_str, "%Y-%m-%d")
-    end = datetime.strptime(end_str, "%Y-%m-%d")
-    holiday_dates = set(holidays)
-    count = 0
-    current = start
-    while current <= end:
-        day_of_week = current.weekday()
-        date_str = current.strftime("%Y-%m-%d")
-        is_friday = day_of_week == 4
-        is_saturday = day_of_week == 5
-        is_holiday = date_str in holiday_dates
-        if not is_friday and not is_holiday:
-            if is_saturday and not saturday_working:
-                pass
-            else:
-                count += 1
-        current += timedelta(days=1)
-    return count
-
-
-def extend_leave_for_holidays(start_str, end_str, holidays, saturday_working=False):
-    requested_working_days = count_working_days(start_str, end_str, holidays, saturday_working)
-    start = datetime.strptime(start_str, "%Y-%m-%d")
-    holiday_dates = set(holidays)
-    actual_end = start
-    counted = 0
-    current = start
-    max_iterations = 365
-    i = 0
-    while counted < requested_working_days and i < max_iterations:
-        day_of_week = current.weekday()
-        date_str = current.strftime("%Y-%m-%d")
-        is_friday = day_of_week == 4
-        is_saturday = day_of_week == 5
-        is_holiday = date_str in holiday_dates
-        if not is_friday and not is_holiday:
-            if is_saturday and not saturday_working:
-                pass
-            else:
-                counted += 1
-                actual_end = current
-        current += timedelta(days=1)
-        i += 1
-    return actual_end.strftime("%Y-%m-%d"), requested_working_days
-
-
 @router.post("/request")
 async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)):
-    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
-    if not emp:
-        raise HTTPException(status_code=400, detail="You are not registered as an employee")
-
-    holidays_list = await db.public_holidays.find({}, {"_id": 0}).to_list(100)
-    # Also get manual holidays
-    manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(100)
-    holiday_dates = [h['date'] for h in holidays_list] + [h['date'] for h in manual_holidays]
-
-    sat_working = emp.get('working_calendar', {}).get('saturday_working', False)
-    adjusted_end, working_days = extend_leave_for_holidays(
-        req.start_date, req.end_date, holiday_dates, sat_working
-    )
-
-    entries = await db.leave_ledger.find(
-        {"employee_id": emp['id'], "leave_type": req.leave_type}, {"_id": 0}
-    ).to_list(1000)
-    current_balance = sum(e['days'] if e['type'] == 'credit' else -e['days'] for e in entries)
-
-    if working_days > current_balance:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Insufficient {req.leave_type} leave balance. Available: {current_balance}, Requested: {working_days}"
-        )
-
-    ref_no = await get_next_ref_no()
-    base_workflow = WORKFLOW_MAP["leave_request"][:]
+    """
+    Create a leave request with full pre-validation.
+    Validates:
+    - Employee is active with contract
+    - Sufficient leave balance
+    - No overlapping dates
+    - Holiday adjustments
+    """
+    # Step 1: Validate employee and contract
+    emp, contract, errors = await get_employee_with_contract(user['user_id'])
     
-    # Check if requester is their own supervisor (skip supervisor approval)
-    should_skip_supervisor = await check_if_requester_is_supervisor(emp, user['user_id'])
-    if should_skip_supervisor:
-        workflow = [s for s in base_workflow if s != 'supervisor']
-    else:
-        workflow = base_workflow[:]
+    if errors:
+        # Return first error
+        error = errors[0]
+        raise HTTPException(status_code=400, detail=error['message'])
+    
+    # Step 2: Validate leave request (balance, overlap, dates)
+    validation = await validate_leave_request(
+        employee=emp,
+        leave_type=req.leave_type,
+        start_date=req.start_date,
+        end_date=req.end_date
+    )
+    
+    if not validation['valid']:
+        error = validation['errors'][0]
+        raise HTTPException(status_code=400, detail=error['message'])
+    
+    # Step 3: Determine workflow (skip supervisor if applicable)
+    skip_supervisor = await should_skip_supervisor_stage(emp, user['user_id'])
+    base_workflow = WORKFLOW_MAP["leave_request"][:]
+    workflow = build_workflow_for_transaction(base_workflow, skip_supervisor)
     
     first_stage = workflow[0]
     now = datetime.now(timezone.utc).isoformat()
+    ref_no = await get_next_ref_no()
 
     tx = {
         "id": str(uuid.uuid4()),
@@ -114,21 +74,24 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
             "leave_type": req.leave_type,
             "start_date": req.start_date,
             "end_date": req.end_date,
-            "adjusted_end_date": adjusted_end,
-            "working_days": working_days,
+            "adjusted_end_date": validation['adjusted_end_date'],
+            "working_days": validation['working_days'],
             "reason": req.reason,
-            "employee_name": emp['full_name'],
-            "balance_before": current_balance,
-            "balance_after": current_balance - working_days,
+            "employee_name": emp.get('full_name', ''),
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "balance_before": validation['balance_before'],
+            "balance_after": validation['balance_after'],
+            "sick_tier_info": validation.get('sick_tier_info'),
         },
         "current_stage": first_stage,
         "workflow": workflow,
+        "workflow_skipped_stages": ['supervisor'] if skip_supervisor else [],
         "timeline": [{
             "event": "created",
             "actor": user['user_id'],
             "actor_name": user.get('full_name', ''),
             "timestamp": now,
-            "note": f"Leave request: {req.leave_type}, {working_days} working days",
+            "note": f"Leave request: {req.leave_type}, {validation['working_days']} working days",
             "stage": "created"
         }],
         "approval_chain": [],
@@ -138,6 +101,10 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
         "updated_at": now,
     }
 
+    # Add warnings to transaction data if any
+    if validation.get('warnings'):
+        tx['data']['warnings'] = validation['warnings']
+
     await db.transactions.insert_one(tx)
     tx.pop('_id', None)
     return tx
@@ -145,24 +112,25 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
 
 @router.get("/balance")
 async def get_my_leave_balance(user=Depends(get_current_user)):
+    """Get current user's leave balance breakdown"""
     emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
     if not emp:
         raise HTTPException(status_code=400, detail="Not an employee")
-    entries = await db.leave_ledger.find({"employee_id": emp['id']}, {"_id": 0}).to_list(1000)
+    
+    # Calculate balance for each leave type
     balance = {}
-    for e in entries:
-        lt = e['leave_type']
-        if lt not in balance:
-            balance[lt] = 0
-        balance[lt] += e['days'] if e['type'] == 'credit' else -e['days']
+    for leave_type in ['annual', 'sick', 'emergency']:
+        balance[leave_type] = await get_leave_balance(emp['id'], leave_type)
+    
     return balance
 
 
 @router.get("/holidays")
 async def get_holidays():
+    """Get all holidays (system + manual)"""
     holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(100)
     manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(100)
-    # Combine and mark manual holidays
+    
     all_holidays = []
     for h in holidays:
         h['source'] = 'system'
@@ -170,5 +138,6 @@ async def get_holidays():
     for h in manual_holidays:
         h['source'] = 'manual'
         all_holidays.append(h)
+    
     all_holidays.sort(key=lambda x: x.get('date', ''))
     return all_holidays
