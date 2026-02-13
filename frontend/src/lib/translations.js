@@ -126,7 +126,8 @@ export const translations = {
       executed: "Executed",
       rejected: "Rejected",
       employee_accept: "Employee Acceptance",
-      cancelled: "Cancelled"
+      cancelled: "Cancelled",
+      completed: "Completed"
     },
     status: {
       created: "Created", pending_supervisor: "Pending Supervisor",
@@ -271,7 +272,8 @@ export const translations = {
       executed: "منفذة",
       rejected: "مرفوضة",
       employee_accept: "قبول الموظف",
-      cancelled: "ملغاة"
+      cancelled: "ملغاة",
+      completed: "مكتملة"
     },
     status: {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
