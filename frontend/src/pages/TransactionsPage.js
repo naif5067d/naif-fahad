@@ -64,7 +64,8 @@ export default function TransactionsPage() {
     setLoading(true);
     try {
       await api.post(`/api/transactions/${actionDialog.id}/action`, { action, note });
-      toast.success(action === 'approve' ? t('transactions.approve') : t('transactions.reject'));
+      const msg = action === 'approve' ? t('transactions.approve') : action === 'escalate' ? t('transactions.escalate') : t('transactions.reject');
+      toast.success(msg);
       setActionDialog(null);
       setNote('');
       setSelectedForAction(null);
