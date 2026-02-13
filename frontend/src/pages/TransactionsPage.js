@@ -10,6 +10,24 @@ import { FileText, Download, Check, X as XIcon, Search, Eye, Loader2 } from 'luc
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
+// Fixed status colors as per requirements
+const STATUS_COLORS = {
+  executed: '#16A34A',
+  pending: '#EAB308',
+  rejected: '#DC2626',
+};
+
+// Fixed role colors as per requirements
+const ROLE_COLORS = {
+  employee: '#3B82F6',
+  supervisor: '#1D4ED8',
+  sultan: '#F97316',
+  mohammed: '#B91C1C',
+  stas: '#7C3AED',
+  naif: '#4D7C0F',
+  salah: '#0D9488',
+};
+
 export default function TransactionsPage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
