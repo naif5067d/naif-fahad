@@ -1,95 +1,191 @@
 # DAR AL CODE HR OS - Product Requirements Document
 
-## Problem Statement
-Build a mobile-first HR Operating System for Dar Al Code Engineering Consultancy with NIST RBAC, append-only ledgers, transaction workflows, STAS execution gate, and PDF generation with hash integrity.
+## Original Problem Statement
+Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system for an engineering consultancy. The system must follow strict guidelines inspired by NIST RBAC, WCAG 2.2, Event Sourcing, Apple HIG, Material Design, and OWASP.
 
-## Architecture
-- **Backend**: FastAPI + MongoDB (modular routes architecture)
-- **Frontend**: React + Tailwind CSS + shadcn/ui components
-- **Auth**: JWT with bcrypt password hashing
-- **Storage**: MongoDB with append-only ledger collections
+## Core Architecture
 
-## User Personas & Roles (LOCKED)
-| Role | Username | Access Level |
+### Backend Stack
+- **Framework**: FastAPI (Python)
+- **Database**: MongoDB
+- **Authentication**: JWT with Role-Based Access Control (RBAC)
+- **PDF Generation**: ReportLab with Arabic font support (NotoSansArabic)
+
+### Frontend Stack
+- **Framework**: React.js
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **HTTP Client**: Axios
+- **State Management**: React Context (Auth, Language, Theme)
+
+### Key Principles
+- Every action is an immutable transaction recorded in append-only ledgers
+- Employee profiles are read-only aggregations
+- Strict role-based access control (NIST-style)
+
+## User Roles (RBAC)
+
+| Role | Username | Description |
 |------|----------|-------------|
-| Employee | employee1, employee2 | Self-only transactions, leave, attendance |
-| Supervisor | supervisor1 | Direct reports + own transactions |
-| Ops Admin | sultan | All operations + employee for attendance |
-| Ops Strategic | naif | All operations |
-| Finance | salah | Finance transactions only |
-| CEO | mohammed | CEO-level approvals only |
-| STAS | stas | Governance executor - full system access |
+| STAS | stas | System Executor - highest privilege |
+| CEO | mohammed | Chief Executive Officer |
+| Ops Admin | sultan | Operations Administrator |
+| Ops Strategic | naif | Operations Strategic |
+| Finance | salah | Finance Manager |
+| Supervisor | supervisor1 | Team Supervisor |
+| Employee | employee1, employee2 | Regular employees |
 
-## Core Requirements (Static)
-1. RBAC with strict role-based UI + API access
-2. Transaction-based system with ref_no, immutable timeline, approval chain
-3. Append-only ledgers (Leave, Finance, Attendance, Warning, Asset)
-4. STAS Mirror with pre-checks, trace links, before/after projection
-5. PDF A4 generation with SHA-256 hash + integrity ID
-6. Leave management with holiday compensation
-7. GPS attendance with geofence checking
-8. 60 Code Finance catalog (codes 1-60 are official, 61+ require transaction)
-9. Contracts + Settlement flow
-10. Arabic RTL + English LTR toggle
-11. Light/Dark theme with strict WCAG contrast
-12. Mobile-first responsive design
+## Phase 1 - Core Implementation ✅ COMPLETE
 
-## What's Been Implemented (Feb 12, 2026)
-### Backend
-- [x] JWT Authentication (login, me, change-password)
-- [x] RBAC middleware with role-based access control
-- [x] Transaction engine with workflow stages (Created → Supervisor → Ops → Finance → CEO → STAS)
-- [x] Leave management with balance checking + holiday compensation
-- [x] Attendance GPS check-in/out with geofence validation
-- [x] 60 Code Finance catalog + transactions
-- [x] Contracts management + Settlement flow (Sultan → CEO → STAS)
-- [x] STAS Mirror with pre-checks, trace links, before/after projection
-- [x] Idempotent STAS Execute
-- [x] PDF generation with SHA-256 hash + integrity ID
-- [x] Append-only ledger system (leave, finance, attendance, warning, asset)
-- [x] Employee Profile 360 aggregation endpoint
-- [x] Database seeding with all users, employees, finance codes, holidays
+### Features Implemented
+1. **Authentication & User Switching**
+   - JWT-based authentication
+   - User switcher dropdown (no login page)
+   - Role-based navigation
 
-### Frontend
-- [x] Login page (no signup, clean design)
-- [x] Role-based dashboard with summary cards (max 3) + transactions table
-- [x] Transaction inbox with filters (status, type, search)
-- [x] Transaction detail page with timeline + approval chain
-- [x] Leave management (balance cards, request form, holidays)
-- [x] Attendance (GPS detection, check-in/out, history)
-- [x] 60 Code Finance (catalog table, statement, create transaction)
-- [x] Contracts (create contract, settlement flow)
-- [x] STAS Mirror (pre-checks PASS/FAIL, before/after, trace links, execute)
-- [x] Employee management (STAS can edit/enable/disable)
-- [x] Settings page (theme + language)
-- [x] Light/Dark theme with CSS variables
-- [x] Arabic RTL + English LTR toggle with full translations
-- [x] Mobile-first responsive layout (sidebar desktop, hamburger mobile)
+2. **Dashboard**
+   - Role-specific statistics cards
+   - Recent transactions list
+   - Pending approvals count
 
-## Prioritized Backlog
+3. **Transaction System**
+   - Unique ref_no generation (TXN-YEAR-NNNN)
+   - Workflow states: Created → Supervisor → Ops → Finance → CEO → STAS Execute
+   - Timeline tracking
+   - Approval chain recording
 
-### P0 (Critical - Next)
-- Employee Profile 360 page (frontend)
-- Full workflow test: employee creates → supervisor approves → ops approves → STAS executes
+4. **Leave Management**
+   - Leave request creation
+   - Balance calculation with holiday adjustment
+   - Public holiday list
 
-### P1 (High Priority)
-- Attendance GPS map visualization
-- Contract template management by STAS
-- Full History Pack PDF for settlement
-- More comprehensive Arabic translations
-- Desktop keyboard shortcuts
+5. **Attendance System**
+   - GPS-based check-in/out
+   - Geofence validation
+   - History tracking
 
-### P2 (Medium Priority)
-- Bulk operations for STAS
-- Reporting dashboard with charts
-- Export ledger data to Excel
-- Notification system for pending approvals
+6. **STAS Mirror**
+   - Pre-checks verification
+   - Before/After projections
+   - Trace links (Veins)
+   - Transaction execution
+
+7. **UI/UX**
+   - Light/Dark mode
+   - RTL Arabic support
+   - Mobile-responsive design
+
+## Phase 2 - Stabilization Patch ✅ COMPLETE (2026-02-13)
+
+### Issue 1: Approval Routing Fix ✅
+- Workflow correctly skips supervisor step if:
+  - Requester has no supervisor assigned (e.g., Sultan, Salah)
+  - Requester IS the supervisor of the team
+- Implementation: `check_if_requester_is_supervisor()` function in transactions.py
+
+### Issue 2: Full Language Switch ✅
+- Complete Arabic/English localization
+- All UI elements translated (navigation, buttons, labels, status badges)
+- No mixed languages in any view
+- Implementation: Comprehensive translations.js with ~150+ translation keys
+
+### Issue 3: PDF Arabic Rendering + Preview ✅
+- Arabic fonts embedded (NotoSansArabic-Regular.ttf, NotoSansArabic-Bold.ttf)
+- RTL text processing with arabic-reshaper and python-bidi
+- Preview button added alongside Download
+- Bilingual headers in PDF (English / Arabic)
+
+### Issue 4: Mobile Decision Bar ✅
+- Sticky footer on mobile viewports (< md breakpoint)
+- Shows Approve/Reject buttons for approvers
+- Shows Preview/Execute buttons for STAS
+- Fixed positioning at bottom with proper z-index
+
+### Issue 5: Attendance Work Location ✅
+- Work Location dropdown with options: HQ, Project
+- Required before check-in
+- Stored in attendance_ledger
+- Displayed in attendance history
+
+### Issue 6: Manual Holiday Calendar ✅
+- STAS-only Holiday Management tab
+- Add holiday with: English name, Arabic name, Date
+- Delete individual holidays
+- Manual holidays affect leave calculations
+- Source indicator (System vs Manual)
+
+### Issue 7: STAS Maintenance Tools ✅
+- System Maintenance tab in STAS Mirror
+- Purge Transactions: Requires "CONFIRM" text input
+- Archived Users: List and restore functionality
+- Protected admin users cannot be archived
+
+## API Endpoints
+
+### Auth
+- `GET /api/auth/users` - List all active users
+- `POST /api/auth/switch/{user_id}` - Switch to user
+- `GET /api/auth/me` - Get current user
+
+### Transactions
+- `GET /api/transactions` - List transactions
+- `GET /api/transactions/{id}` - Get transaction
+- `POST /api/transactions/{id}/action` - Approve/Reject
+- `GET /api/transactions/{id}/pdf` - Download PDF
+
+### Leave
+- `POST /api/leave/request` - Create leave request
+- `GET /api/leave/balance` - Get leave balance
+- `GET /api/leave/holidays` - Get all holidays (system + manual)
+
+### Attendance
+- `POST /api/attendance/check-in` - Check in with work_location
+- `POST /api/attendance/check-out` - Check out
+- `GET /api/attendance/today` - Get today's status
+- `GET /api/attendance/history` - Get attendance history
+
+### STAS
+- `GET /api/stas/pending` - Get pending executions
+- `GET /api/stas/mirror/{id}` - Get transaction mirror
+- `POST /api/stas/execute/{id}` - Execute transaction
+- `GET /api/stas/holidays` - Get manual holidays
+- `POST /api/stas/holidays` - Add holiday
+- `DELETE /api/stas/holidays/{id}` - Delete holiday
+- `POST /api/stas/maintenance/purge-transactions` - Purge all transactions
+- `POST /api/stas/users/{id}/archive` - Archive user
+- `POST /api/stas/users/{id}/restore` - Restore user
+- `GET /api/stas/users/archived` - Get archived users
+
+## Database Collections
+- `users` - User accounts with roles
+- `employees` - Employee records with supervisor_id
+- `transactions` - All transaction records
+- `leave_ledger` - Leave balance entries
+- `finance_ledger` - Finance entries
+- `attendance_ledger` - Attendance records
+- `public_holidays` - System holidays (seeded)
+- `holidays` - Manual holidays (STAS-managed)
+- `contracts` - Employee contracts
+- `finance_codes` - 60 finance codes
+- `counters` - Sequence counters
+
+## Future Tasks (Backlog)
+
+### P1 - High Priority
+- Contract versioning and snapshots
+- Employee settlement workflow
+- Warning ledger transactions
+- Asset ledger transactions
+
+### P2 - Medium Priority
+- Geofencing for project locations with map integration
+- Finance statement reports
+- Employee profile editing
+
+### P3 - Low Priority
+- Email notifications
+- Export to Excel
 - Audit log viewer
 
-### Future/Backlog
-- SSO/LDAP integration
-- API rate limiting
-- File attachments for transactions
-- Calendar view for leave
-- Mobile app (React Native)
-- Real-time notifications (WebSocket)
+---
+Last Updated: 2026-02-13
+Version: 2.0 (Stabilization Patch Complete)
