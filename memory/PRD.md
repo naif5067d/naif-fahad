@@ -38,154 +38,131 @@ Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system 
 
 ### Features Implemented
 1. **Authentication & User Switching**
-   - JWT-based authentication
-   - User switcher dropdown (no login page)
-   - Role-based navigation
-
-2. **Dashboard**
-   - Role-specific statistics cards
-   - Recent transactions list
-   - Pending approvals count
-
-3. **Transaction System**
-   - Unique ref_no generation (TXN-YEAR-NNNN)
-   - Workflow states: Created → Supervisor → Ops → Finance → CEO → STAS Execute
-   - Timeline tracking
-   - Approval chain recording
-
-4. **Leave Management**
-   - Leave request creation
-   - Balance calculation with holiday adjustment
-   - Public holiday list
-
-5. **Attendance System**
-   - GPS-based check-in/out
-   - Geofence validation
-   - History tracking
-
-6. **STAS Mirror**
-   - Pre-checks verification
-   - Before/After projections
-   - Trace links (Veins)
-   - Transaction execution
-
-7. **UI/UX**
-   - Light/Dark mode
-   - RTL Arabic support
-   - Mobile-responsive design
+2. **Dashboard** with role-specific stats
+3. **Transaction System** with workflow states
+4. **Leave Management** with balance calculation
+5. **Attendance System** with GPS validation
+6. **STAS Mirror** with pre-checks
+7. **UI/UX** with Light/Dark mode and RTL support
 
 ## Phase 2 - Stabilization Patch ✅ COMPLETE (2026-02-13)
 
 ### Issue 1: Approval Routing Fix ✅
-- Workflow correctly skips supervisor step if:
-  - Requester has no supervisor assigned (e.g., Sultan, Salah)
-  - Requester IS the supervisor of the team
-- Implementation: `check_if_requester_is_supervisor()` function in transactions.py
-
 ### Issue 2: Full Language Switch ✅
-- Complete Arabic/English localization
-- All UI elements translated (navigation, buttons, labels, status badges)
-- No mixed languages in any view
-- Implementation: Comprehensive translations.js with ~150+ translation keys
-
 ### Issue 3: PDF Arabic Rendering + Preview ✅
-- Arabic fonts embedded (NotoSansArabic-Regular.ttf, NotoSansArabic-Bold.ttf)
-- RTL text processing with arabic-reshaper and python-bidi
-- Preview button added alongside Download
-- Bilingual headers in PDF (English / Arabic)
-
 ### Issue 4: Mobile Decision Bar ✅
-- Sticky footer on mobile viewports (< md breakpoint)
-- Shows Approve/Reject buttons for approvers
-- Shows Preview/Execute buttons for STAS
-- Fixed positioning at bottom with proper z-index
-
 ### Issue 5: Attendance Work Location ✅
-- Work Location dropdown with options: HQ, Project
-- Required before check-in
-- Stored in attendance_ledger
-- Displayed in attendance history
-
 ### Issue 6: Manual Holiday Calendar ✅
-- STAS-only Holiday Management tab
-- Add holiday with: English name, Arabic name, Date
-- Delete individual holidays
-- Manual holidays affect leave calculations
-- Source indicator (System vs Manual)
-
 ### Issue 7: STAS Maintenance Tools ✅
-- System Maintenance tab in STAS Mirror
-- Purge Transactions: Requires "CONFIRM" text input
-- Archived Users: List and restore functionality
-- Protected admin users cannot be archived
+
+## Backend Behavior Lock ✅ COMPLETE (2026-02-13)
+
+### 1. WORKFLOW ENGINE (STRICT ORDER) ✅
+- Transaction path: Employee → Supervisor → Sultan → Mohammed (if escalated) → STAS → Execute
+- Skip supervisor if requester has no supervisor or IS the supervisor
+- Self-approval prevention (cannot approve own transaction)
+- Stage validation with role checks
+- Only STAS can Execute or Cancel
+- Executed transactions are immutable
+
+**Implementation:**
+- `/app/backend/utils/workflow.py` - Workflow engine with validation
+- `validate_stage_actor()` - Validates actor can perform actions
+- `should_skip_supervisor_stage()` - Determines supervisor skip logic
+- `build_workflow_for_transaction()` - Builds actual workflow
+
+### 2. LEAVE RULE ENGINE (PRE-VALIDATION) ✅
+- Validates before transaction creation
+- Rejects if: balance insufficient, dates overlap, employee inactive
+- Auto-extends leave for holidays
+- Sick leave tier tracking
+
+**Implementation:**
+- `/app/backend/utils/leave_rules.py` - Complete leave validation
+- `get_employee_with_contract()` - Validates employee + active contract
+- `validate_leave_request()` - Complete validation with balance, overlap checks
+- `extend_leave_for_holidays()` - Holiday adjustment logic
+
+### 3. LOCALIZATION LOCK ✅
+- Complete AR/EN translations in `translations.js`
+- All UI text from translation keys
+- RTL/LTR direction switching
+- STAS mirror and PDF support Arabic
+
+### 4. PDF ARABIC FIX ✅
+- NotoSansArabic font embedded (Regular + Bold)
+- arabic-reshaper + python-bidi for RTL
+- No squares, proper Arabic shaping
+
+### 5. ATTENDANCE LOGIC LOCK ✅
+- Server-side validation for check-in/out
+- Validates: active employee, active contract, not expired
+- Work location tracking (HQ/Project)
+- Working hours validation (warning only)
+
+**Implementation:**
+- `/app/backend/utils/attendance_rules.py` - Complete attendance validation
+- `validate_check_in()` - Validates employee, contract, location
+- `validate_check_out()` - Validates check-in exists
+
+### 6. CONTRACT & SETTLEMENT LOGIC ✅
+- Contract determines employment status and leave eligibility
+- Settlement: Only Sultan initiates → Mohammed approves → STAS executes
+- Settlement locks employee account on execution
+- Duplicate settlement prevention
+
+**Implementation:**
+- `/app/backend/routes/contracts.py` - Settlement workflow
+- Workflow: `["ceo", "stas"]` after Sultan initiation
 
 ## API Endpoints
 
 ### Auth
-- `GET /api/auth/users` - List all active users
-- `POST /api/auth/switch/{user_id}` - Switch to user
-- `GET /api/auth/me` - Get current user
+- `GET /api/auth/users` - List active users
+- `POST /api/auth/switch/{user_id}` - Switch user
+- `GET /api/auth/me` - Current user
 
 ### Transactions
 - `GET /api/transactions` - List transactions
-- `GET /api/transactions/{id}` - Get transaction
-- `POST /api/transactions/{id}/action` - Approve/Reject
-- `GET /api/transactions/{id}/pdf` - Download PDF
+- `POST /api/transactions/{id}/action` - Approve/Reject with validation
+- `GET /api/transactions/{id}/pdf` - PDF download
 
 ### Leave
-- `POST /api/leave/request` - Create leave request
-- `GET /api/leave/balance` - Get leave balance
-- `GET /api/leave/holidays` - Get all holidays (system + manual)
+- `POST /api/leave/request` - Create with full pre-validation
+- `GET /api/leave/balance` - Balance breakdown
+- `GET /api/leave/holidays` - All holidays
 
 ### Attendance
-- `POST /api/attendance/check-in` - Check in with work_location
-- `POST /api/attendance/check-out` - Check out
-- `GET /api/attendance/today` - Get today's status
-- `GET /api/attendance/history` - Get attendance history
+- `POST /api/attendance/check-in` - With contract validation
+- `POST /api/attendance/check-out` - With validation
 
 ### STAS
-- `GET /api/stas/pending` - Get pending executions
-- `GET /api/stas/mirror/{id}` - Get transaction mirror
+- `GET /api/stas/pending` - Pending executions
 - `POST /api/stas/execute/{id}` - Execute transaction
-- `GET /api/stas/holidays` - Get manual holidays
-- `POST /api/stas/holidays` - Add holiday
-- `DELETE /api/stas/holidays/{id}` - Delete holiday
-- `POST /api/stas/maintenance/purge-transactions` - Purge all transactions
-- `POST /api/stas/users/{id}/archive` - Archive user
-- `POST /api/stas/users/{id}/restore` - Restore user
-- `GET /api/stas/users/archived` - Get archived users
+- CRUD for holidays and maintenance
+
+### Contracts
+- `POST /api/contracts/settlement` - Sultan only
 
 ## Database Collections
-- `users` - User accounts with roles
-- `employees` - Employee records with supervisor_id
-- `transactions` - All transaction records
-- `leave_ledger` - Leave balance entries
-- `finance_ledger` - Finance entries
-- `attendance_ledger` - Attendance records
-- `public_holidays` - System holidays (seeded)
-- `holidays` - Manual holidays (STAS-managed)
-- `contracts` - Employee contracts
-- `finance_codes` - 60 finance codes
-- `counters` - Sequence counters
+- `users`, `employees`, `transactions`
+- `leave_ledger`, `finance_ledger`, `attendance_ledger`
+- `public_holidays`, `holidays` (manual)
+- `contracts`, `finance_codes`, `counters`
 
 ## Future Tasks (Backlog)
 
 ### P1 - High Priority
 - Contract versioning and snapshots
-- Employee settlement workflow
+- Employee settlement workflow expansion
 - Warning ledger transactions
 - Asset ledger transactions
 
 ### P2 - Medium Priority
-- Geofencing for project locations with map integration
+- Geofencing for project locations
 - Finance statement reports
 - Employee profile editing
 
-### P3 - Low Priority
-- Email notifications
-- Export to Excel
-- Audit log viewer
-
 ---
 Last Updated: 2026-02-13
-Version: 2.0 (Stabilization Patch Complete)
+Version: 3.0 (Backend Behavior Lock Complete)
