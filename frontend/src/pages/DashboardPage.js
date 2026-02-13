@@ -66,7 +66,7 @@ export default function DashboardPage() {
   const statCards = STAT_CONFIG[role] || STAT_CONFIG.employee;
   const displayName = role === 'stas' ? 'STAS' : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
 
-  // Get status style with fixed colors
+  // Get status style with role-based colors
   const getStatusStyle = (status) => {
     if (status === 'executed') {
       return { backgroundColor: `${STATUS_COLORS.executed}15`, color: STATUS_COLORS.executed, borderColor: `${STATUS_COLORS.executed}30` };
@@ -74,10 +74,12 @@ export default function DashboardPage() {
     if (status === 'rejected') {
       return { backgroundColor: `${STATUS_COLORS.rejected}15`, color: STATUS_COLORS.rejected, borderColor: `${STATUS_COLORS.rejected}30` };
     }
-    if (status?.startsWith('pending')) {
-      return { backgroundColor: `${STATUS_COLORS.pending}15`, color: STATUS_COLORS.pending, borderColor: `${STATUS_COLORS.pending}30` };
+    // For pending statuses, use the specific role color
+    if (STATUS_COLORS[status]) {
+      return { backgroundColor: `${STATUS_COLORS[status]}15`, color: STATUS_COLORS[status], borderColor: `${STATUS_COLORS[status]}30` };
     }
-    return { backgroundColor: '#3B82F615', color: '#3B82F6', borderColor: '#3B82F630' };
+    // Default fallback
+    return { backgroundColor: '#F9731615', color: '#F97316', borderColor: '#F9731630' };
   };
 
   // Get translated type
