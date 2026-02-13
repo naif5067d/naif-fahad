@@ -21,13 +21,14 @@ Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system 
 - Every action is an immutable transaction recorded in append-only ledgers
 - Employee profiles are read-only aggregations
 - Strict role-based access control (NIST-style)
+- **Core Rule: Any transaction not executed by STAS is not considered valid**
 
 ## User Roles (RBAC)
 
 | Role | Username | Description |
 |------|----------|-------------|
 | STAS | stas | System Executor - highest privilege |
-| CEO | mohammed | Chief Executive Officer |
+| CEO | mohammed | Chief Executive Officer - Escalated approvals only |
 | Ops Admin | sultan | Operations Administrator |
 | Ops Strategic | naif | Operations Strategic |
 | Finance | salah | Finance Manager |
@@ -35,85 +36,52 @@ Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system 
 | Employee | employee1, employee2 | Regular employees |
 
 ## Phase 1 - Core Implementation ✅ COMPLETE
-
-### Features Implemented
-1. **Authentication & User Switching**
-2. **Dashboard** with role-specific stats
-3. **Transaction System** with workflow states
-4. **Leave Management** with balance calculation
-5. **Attendance System** with GPS validation
-6. **STAS Mirror** with pre-checks
-7. **UI/UX** with Light/Dark mode and RTL support
-
 ## Phase 2 - Stabilization Patch ✅ COMPLETE (2026-02-13)
+## Phase 3 - UI/UX Enhancement + Work Locations ✅ COMPLETE (2026-02-13)
 
-### Issue 1: Approval Routing Fix ✅
-### Issue 2: Full Language Switch ✅
-### Issue 3: PDF Arabic Rendering + Preview ✅
-### Issue 4: Mobile Decision Bar ✅
-### Issue 5: Attendance Work Location ✅
-### Issue 6: Manual Holiday Calendar ✅
-### Issue 7: STAS Maintenance Tools ✅
+## Phase 4 - P0 Business Logic ✅ COMPLETE (2026-02-13)
 
-## Backend Behavior Lock ✅ COMPLETE (2026-02-13)
+### 1. Escalation System ✅
+- Sultan/Naif can "escalate" transactions from ops stage to CEO (Mohammed)
+- When escalated: Sultan's permissions freeze for that transaction
+- Mohammed can only: Accept (→ STAS) or Reject (→ back to ops)
+- Mohammed does NOT edit or execute
+- **Workflow:** Employee → Supervisor → Sultan → [Escalate] → Mohammed → STAS
 
-### 1. WORKFLOW ENGINE (STRICT ORDER) ✅
-- Transaction path: Employee → Supervisor → Sultan → Mohammed (if escalated) → STAS → Execute
-- Skip supervisor if requester has no supervisor or IS the supervisor
-- Self-approval prevention (cannot approve own transaction)
-- Stage validation with role checks
-- Only STAS can Execute or Cancel
-- Executed transactions are immutable
+### 2. Financial Custody (60 Code) ✅
+- **Created by Sultan ONLY** (Naif cannot create)
+- **Manual code input** (not dropdown): type code number, auto-lookup shows definition if found
+- If code is new → user defines it and it's saved automatically
+- **Workflow:** Sultan creates → `["finance", "ceo", "stas"]`
+  - Salah (Finance) audits and can edit
+  - Mohammed (CEO) approves
+  - STAS executes (final, immutable)
+- **API:** POST /api/finance/transaction, GET /api/finance/codes/lookup/{code}
 
-**Implementation:**
-- `/app/backend/utils/workflow.py` - Workflow engine with validation
-- `validate_stage_actor()` - Validates actor can perform actions
-- `should_skip_supervisor_stage()` - Determines supervisor skip logic
-- `build_workflow_for_transaction()` - Builds actual workflow
+### 3. Tangible Custody ✅
+- **Created by Sultan or Naif** (NOT Mohammed)
+- Sent to employee for acceptance
+- **Reject → cancelled immediately**
+- **Accept → STAS → recorded in custody_ledger**
+- **Return flow:** Sultan presses "Received" → STAS → removed from employee
+- **Active custody blocks settlement (مخالصة)**
+- **Workflow:** `["employee_accept", "stas"]`
+- **Return Workflow:** `["stas"]`
+- **API:** POST /api/custody/tangible, POST /api/custody/tangible/return, GET /api/custody/all
 
-### 2. LEAVE RULE ENGINE (PRE-VALIDATION) ✅
-- Validates before transaction creation
-- Rejects if: balance insufficient, dates overlap, employee inactive
-- Auto-extends leave for holidays
-- Sick leave tier tracking
+### 4. Mohammed's Role ✅
+- Sees ONLY escalated transactions and finance_60/settlement requiring approval
+- Does NOT see regular transactions
+- Does NOT edit data
+- Accept → STAS, Reject → back to ops
 
-**Implementation:**
-- `/app/backend/utils/leave_rules.py` - Complete leave validation
-- `get_employee_with_contract()` - Validates employee + active contract
-- `validate_leave_request()` - Complete validation with balance, overlap checks
-- `extend_leave_for_holidays()` - Holiday adjustment logic
-
-### 3. LOCALIZATION LOCK ✅
-- Complete AR/EN translations in `translations.js`
-- All UI text from translation keys
-- RTL/LTR direction switching
-- STAS mirror and PDF support Arabic
-
-### 4. PDF ARABIC FIX ✅
-- NotoSansArabic font embedded (Regular + Bold)
-- arabic-reshaper + python-bidi for RTL
-- No squares, proper Arabic shaping
-
-### 5. ATTENDANCE LOGIC LOCK ✅
-- Server-side validation for check-in/out
-- Validates: active employee, active contract, not expired
-- Work location tracking (HQ/Project)
-- Working hours validation (warning only)
-
-**Implementation:**
-- `/app/backend/utils/attendance_rules.py` - Complete attendance validation
-- `validate_check_in()` - Validates employee, contract, location
-- `validate_check_out()` - Validates check-in exists
-
-### 6. CONTRACT & SETTLEMENT LOGIC ✅
-- Contract determines employment status and leave eligibility
-- Settlement: Only Sultan initiates → Mohammed approves → STAS executes
-- Settlement locks employee account on execution
-- Duplicate settlement prevention
-
-**Implementation:**
-- `/app/backend/routes/contracts.py` - Settlement workflow
-- Workflow: `["ceo", "stas"]` after Sultan initiation
+## Database Collections
+- `users`, `employees`, `transactions`
+- `leave_ledger`, `finance_ledger`, `attendance_ledger`
+- `public_holidays`, `holidays` (manual)
+- `contracts`, `finance_codes`, `counters`
+- `work_locations`
+- `custody_ledger` (NEW - tangible custody records)
 
 ## API Endpoints
 
@@ -123,109 +91,53 @@ Build "DAR AL CODE HR OS," a mobile-first, enterprise-grade HR operating system 
 - `GET /api/auth/me` - Current user
 
 ### Transactions
-- `GET /api/transactions` - List transactions
-- `POST /api/transactions/{id}/action` - Approve/Reject with validation
+- `GET /api/transactions` - List transactions (role-filtered)
+- `POST /api/transactions/{id}/action` - Approve/Reject/Escalate
 - `GET /api/transactions/{id}/pdf` - PDF download
 
 ### Leave
-- `POST /api/leave/request` - Create with full pre-validation
+- `POST /api/leave/request` - Create leave request
 - `GET /api/leave/balance` - Balance breakdown
-- `GET /api/leave/holidays` - All holidays
 
-### Attendance
-- `POST /api/attendance/check-in` - With contract validation
-- `POST /api/attendance/check-out` - With validation
+### Finance
+- `POST /api/finance/transaction` - Create financial custody (Sultan only)
+- `GET /api/finance/codes/lookup/{code}` - Manual code lookup
+- `GET /api/finance/codes` - List all finance codes
+- `GET /api/finance/statement/{employee_id}` - Finance statement
+
+### Custody
+- `POST /api/custody/tangible` - Create tangible custody (Sultan/Naif)
+- `POST /api/custody/tangible/return` - Return custody (Sultan)
+- `GET /api/custody/employee/{id}` - Employee's custodies
+- `GET /api/custody/all` - All custodies
+- `GET /api/custody/check-clearance/{id}` - Check clearance eligibility
 
 ### STAS
 - `GET /api/stas/pending` - Pending executions
 - `POST /api/stas/execute/{id}` - Execute transaction
-- CRUD for holidays and maintenance
+- Holiday & maintenance CRUD
 
-### Contracts
-- `POST /api/contracts/settlement` - Sultan only
+### Work Locations
+- CRUD at `/api/work-locations`
 
-## Database Collections
-- `users`, `employees`, `transactions`
-- `leave_ledger`, `finance_ledger`, `attendance_ledger`
-- `public_holidays`, `holidays` (manual)
-- `contracts`, `finance_codes`, `counters`
-
-## Phase 3 - UI/UX Enhancement + Work Locations ✅ COMPLETE (2026-02-13)
-
-### Issue 1: Supervisor Workflow Fix ✅
-- Fixed workflow to skip supervisor stage when:
-  - Employee has no supervisor assigned
-  - Employee's supervisor is themselves
-  - **NEW:** Employee's supervisor has a non-supervisor role (e.g., Sultan, Naif)
-- Implementation in `/app/backend/utils/workflow.py`
-
-### Issue 2: Role-Based Status Colors ✅
-- Status colors now match the role responsible for approval:
-  - `pending_supervisor`: #1D4ED8 (Supervisor blue)
-  - `pending_ops`: #F97316 (Sultan orange)
-  - `pending_finance`: #0D9488 (Salah teal)
-  - `pending_ceo`: #B91C1C (Mohammed red)
-  - `pending_stas`: #7C3AED (STAS purple)
-  - `executed`: #16A34A (Green)
-  - `rejected`: #DC2626 (Red)
-
-### Issue 3: Role Colors ✅
-- Fixed role badge colors:
-  - Employee: #3B82F6
-  - Supervisor: #1D4ED8
-  - Sultan: #F97316
-  - Mohammed: #B91C1C
-  - STAS: #7C3AED
-  - Naif: #4D7C0F
-  - Salah: #0D9488
-
-### Issue 4: Full Arabic Localization ✅
-- Added translations for:
-  - Transaction types (`txTypes`)
-  - Workflow stages (`stages`)
-  - All status messages
-- PDF rendering with proper Arabic text shaping
-
-### Issue 5: Work Locations Feature ✅
-- New page: `/work-locations`
-- Map integration with Leaflet/OpenStreetMap
-- Features:
-  - Add/Edit/Delete work locations
-  - Set location with map pin click
-  - Configure work hours (from/to)
-  - Configure work days
-  - Set GPS radius (default 500m)
-  - Assign employees to locations
-  - STAS monitors, Sultan/Naif manage
-
-**API Endpoints:**
-- `GET /api/work-locations` - List all locations
-- `POST /api/work-locations` - Create location (Sultan/Naif/STAS)
-- `PUT /api/work-locations/{id}` - Update location
-- `DELETE /api/work-locations/{id}` - Soft delete location
-- `POST /api/work-locations/{id}/assign` - Assign employees (Sultan/Naif only)
-- `GET /api/work-locations/employee/{id}` - Get employee's locations
-
-## Database Collections
-- `users`, `employees`, `transactions`
-- `leave_ledger`, `finance_ledger`, `attendance_ledger`
-- `public_holidays`, `holidays` (manual)
-- `contracts`, `finance_codes`, `counters`
-- `work_locations` (NEW)
-
-## Future Tasks (Backlog)
+## Upcoming Tasks
 
 ### P1 - High Priority
-- Supervisor Assignment Feature (Sultan/Naif can assign supervisors)
-- Contract versioning and snapshots
-- Warning ledger transactions
-- Asset ledger transactions
+- Employee Profile Card (بطاقة الموظف): attendance, custody, transactions view
+- Mohammed CEO Dashboard: dedicated view for escalated transactions
+- Supervisor Assignment UI (Sultan/Naif can assign supervisors)
+- Contract Deletion for STAS
+- New Transaction Types (Leave subtypes, Attendance subtypes)
 
 ### P2 - Medium Priority
+- Complete Work Locations Map Feature (Leaflet)
+- PDF Formatting Improvement
 - Geofencing validation for attendance check-in
-- Finance statement reports
-- Employee profile editing
+
+### Future
+- Contract versioning and snapshots
+- Warning & Asset ledger transactions
 
 ---
 Last Updated: 2026-02-13
-Version: 4.0 (Phase 3 - UI/UX Enhancement + Work Locations Complete)
+Version: 5.0 (Phase 4 - P0 Business Logic Complete)
