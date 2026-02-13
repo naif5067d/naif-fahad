@@ -3,7 +3,7 @@ The user wants to build DAR AL CODE HR OS, a mobile-first, enterprise-grade HR o
 
 **PRODUCT REQUIREMENTS (LOCKED):**
 
-**Phase 1 (Initial Build - Mostly Complete):**
+**Phase 1 (Initial Build - Completed):**
 -   **Core Concept:** Every action is an immutable transaction recorded in append-only ledgers. Employee profiles are read-only aggregations.
 -   **RBAC (NIST-style):**
     -   **Roles:** Employee, Supervisor, Sultan (Ops Admin), Naif (Ops/Strategic), Salah (Finance), Mohammed (CEO), STAS (System Executor).
@@ -13,251 +13,162 @@ The user wants to build DAR AL CODE HR OS, a mobile-first, enterprise-grade HR o
     -   **Workflow:** Created → Supervisor → Ops Admin → Finance → CEO → STAS Execute.
     -   Generates a hashed A4 PDF for every transaction.
 -   **Append-only Ledgers:** Leave, Finance, Attendance, Warning, Asset.
--   **STAS Mirror:** A special view for the STAS role to verify transactions with pre-checks, before/after projections, and trace links before final execution.
--   **Leave & Attendance:** GPS-based attendance, leave balance validation, and public holiday compensation.
--   **Contracts & Settlement:** Editable contracts, STAS-managed templates, and a strict settlement workflow.
--   **UI/UX:** Apple-inspired clean design, mobile-first, responsive, with perfect Light/Dark modes and full Arabic RTL support.
+-   **STAS Mirror:** A special view for the STAS role to verify transactions.
+-   **UI/UX:** Apple-inspired clean design, mobile-first, responsive, with full Light/Dark modes and full Arabic RTL support.
 
-**Phase 2 (Stabilization Patch - Current Task):**
-1.  **Approval Routing Fix:** The workflow must correctly skip the supervisor step if the requester is the supervisor or has no supervisor.
-2.  **Full Language Switch:** UI must be 100% Arabic or 100% English based on selection, with no mixed languages.
-3.  **PDF Arabic Rendering:** PDFs must embed an Arabic font to render correctly and include a Preview button in the UI.
-4.  **Mobile Decision Bar:** Approve/Reject/Execute buttons must be in a sticky footer on mobile views.
-5.  **Attendance Compliance:** Add a Work Location dropdown (HQ/Project) before check-in.
-6.  **Manual Holiday Calendar:** STAS must have a settings panel to manually add/remove holidays, which affects leave calculations.
-7.  **STAS Maintenance Tools:** Add STAS-only functions to purge transactions or users, and ensure disabled users are archived and hidden from the user switcher.
+**Phase 2 (Stabilization Patches - Completed, with a regression):**
+1.  **Approval Routing Fix:** The workflow must correctly skip the supervisor step if the requester is the supervisor or has no supervisor. (REGRESSION DETECTED).
+2.  **Full Language Switch:** UI must be 100% Arabic or 100% English. (DONE).
+3.  **PDF Arabic Rendering:** PDFs must embed an Arabic font. (DONE).
+4.  **Mobile Decision Bar:** Approve/Reject/Execute buttons must be in a sticky footer on mobile. (DONE).
+5.  **Attendance Compliance:** Add a Work Location dropdown. (DONE).
+6.  **Manual Holiday Calendar:** STAS must have a settings panel to manage holidays. (DONE).
+7.  **STAS Maintenance Tools:** Add STAS-only functions to purge/archive data. (DONE).
+8.  **Backend Behavior Lock:** Implemented strict server-side validation for workflows, leave rules, attendance, and contracts. (DONE).
 
-**User's preferred language**: English and Arabic. The user provides technical requirements in English and UI feedback in Arabic. The application itself requires full localization for both. The next agent should respond in English for technical discussions unless the user initiates in Arabic.
+**User's preferred language**: English and Arabic. The user provides technical requirements in English and UI feedback in Arabic. The next agent must respond in the user's chosen language for that message. Default to English for technical planning.
 
 **what currently exists?**
-A full-stack HR OS application has been built using React for the frontend and FastAPI/MongoDB for the backend.
--   **Backend:** All API routes for authentication, transactions, leave, finance, etc., are implemented. A data seeding script creates all necessary users, roles, and initial data. JWT-based authentication is in place.
--   **Frontend:** The UI is built with components for a dashboard, transaction lists, leave requests, STAS mirror, and more. It supports light/dark modes and has a basic structure for RTL.
--   **Key Feature:** A user-switching dropdown in the header has replaced the traditional login page, allowing instant role changes for testing and admin purposes.
+A full-stack HR OS application built with React, FastAPI, and MongoDB. All core modules (Auth, RBAC, Transactions, Ledgers) are in place. Two major stabilization patches have been completed, implementing full localization, PDF rendering, mobile UI fixes, and strict backend validation for all business logic. A user-switcher in the header is used for role testing instead of a login page.
 
 **Last working item**:
--   Last item agent was working: The agent had just received a 7-point Stabilization Patch request from the user. The last action was to create a plan and view the files that would need to be modified to implement these fixes.
+-   Last item agent was working: The user reported a critical regression in Arabic: when a supervisor submits a leave request, the request incorrectly gets stuck in the Pending Supervisor state, waiting for their own approval. The system correctly blocks the self-approval action, but the workflow doesn't advance automatically to the next stage ('Sultan'). The agent acknowledged the issue and was about to start fixing it.
 -   Status: NOT STARTED
 -   Agent Testing Done: N
--   Which testing method agent to use? both
+-   Which testing method agent to use? backend testing agent
 -   User Testing Done: N
 
 **All Pending/In progress Issue list**:
-The following 7 issues form the Stabilization Patch and are the highest priority.
-
--   **Issue 1: Approval Routing Fix (P0)**
--   **Issue 2: Full Language Switch (Localization Lock) (P1)**
--   **Issue 3: PDF Arabic Rendering + Preview (P1)**
--   **Issue 4: Mobile Decision Bar (Critical Usability Fix) (P0)**
--   **Issue 5: Attendance Minimum Compliance (P1)**
--   **Issue 6: Manual Holiday Calendar (Administrative Override) (P1)**
--   **Issue 7: STAS Maintenance Tools (Governance Control) (P0)**
+-   **Issue 1: Supervisor Self-Approval Workflow Bug (P0)**
 
 **Issues Detail:**
--   **Issue 1: Approval Routing Fix**
-    -   **Attempted fixes:** None.
+-   **Issue 1: Supervisor Self-Approval Workflow Bug**
+    -   **Attempted fixes:** This logic was part of the previous stabilization patches, but it is either incomplete or has regressed.
     -   **Next debug checklist:**
-        -   Modify the transaction creation logic in  and other relevant transaction routes.
-        -   Add conditional logic to check if  or if .
-        -   If true, bypass the 'Supervisor' step and set the transaction's next approver to 'Sultan' (Ops Admin).
-    -   **Why fix this issue and what will be achieved with the fix?** To correct a critical flaw in the business workflow, ensuring requests are not stuck and supervisors cannot approve their own requests.
+        1.  Examine the transaction creation logic in  and other transaction routes (e.g., ).
+        2.  Focus on the part of the code where the initial transaction document is created. The bug likely lies here: the  is being incorrectly set to 'Pending Supervisor' by default, even when the requester is a supervisor.
+        3.  Review the  function in . The check  should result in the transaction's initial status being set to 'Pending Ops' and the approver to 'Sultan'. Verify why this logic is failing.
+        4.  Reproduce the issue by logging in as a  and creating a leave request. Verify via API that the transaction status is stuck.
+        5.  Fix the logic to ensure the initial state is set correctly at creation time.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical workflow bug that prevents supervisors from using the system for their own requests, making the application untestable and unusable for that role.
     -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test backend/both after fix?** backend
-    -   **Blocked on other issue:** None.
-
--   **Issue 2: Full Language Switch (Localization Lock)**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   Create a comprehensive translation file (e.g., ).
-        -   Audit all frontend components (, ) for hardcoded English strings.
-        -   Replace all static text (labels, buttons, statuses, alerts) with calls to the translation function based on the current language context.
-    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's strict requirement for full UI localization, providing a seamless experience for Arabic-speaking users.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** frontend
-    -   **Blocked on other issue:** None.
-
--   **Issue 3: PDF Arabic Rendering + Preview**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   **Backend:** Find and install a suitable Arabic font (e.g., Amiri, Noto Sans Arabic). Update  to register and embed this font using .
-        -   **Frontend:** In transaction view components (e.g., , ), add a Preview button next to the Download PDF button. This may involve fetching the PDF as a blob and displaying it in a modal or new tab.
-    -   **Why fix this issue and what will be achieved with the fix?** To ensure official documents (PDFs) are correctly rendered in Arabic and to improve usability by allowing previews.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None.
-
--   **Issue 4: Mobile Decision Bar**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   Identify transaction detail pages (, transaction approval views).
-        -   Create a new React component for the decision bar.
-        -   Use CSS to make this component  on mobile screen sizes ( queries).
-        -   Move the Approve/Reject/Execute buttons into this bar.
-    -   **Why fix this issue and what will be achieved with the fix?** To fix a critical mobile usability issue, allowing users to make decisions without scrolling.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** frontend
-    -   **Blocked on other issue:** None.
-
--   **Issue 5: Attendance Minimum Compliance**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   **Frontend:** In the attendance check-in component (), add a dropdown with options 'HQ' and 'Project'.
-        -   **Backend:** Update the attendance check-in endpoint in  to accept a  field and save it to the .
-        -   Add logic to display Inside location / Outside location status (this will be basic for now, without a real map).
-    -   **Why fix this issue and what will be achieved with the fix?** To add a required compliance step to the attendance flow.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None.
-
--   **Issue 6: Manual Holiday Calendar**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   **Backend:** Create new STAS-only endpoints in  to add/remove dates from a  collection in MongoDB.
-        -   Modify the leave calculation logic in  to query this collection and factor in manual holidays.
-        -   **Frontend:** Create a new settings page for STAS ( or a new component) with a calendar interface to manage these holidays.
-    -   **Why fix this issue and what will be achieved with the fix?** To give administrators control over the working calendar, which is essential for accurate leave and attendance management.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None.
-
--   **Issue 7: STAS Maintenance Tools**
-    -   **Attempted fixes:** None.
-    -   **Next debug checklist:**
-        -   **Backend:** Create new STAS-only endpoints in  for  and . Implement the logic to delete records from multiple collections while preserving admin users.
-        -   Update the user disable logic to set an  flag.
-        -   **Frontend:** Update the user switcher in  to filter out users where  is true. Create a new System Maintenance panel for STAS with buttons to trigger the purge actions.
-    -   **Why fix this issue and what will be achieved with the fix?** To provide essential administrative and governance tools for system resets and user management.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None.
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** backend
+    -   **Blocked on other issue:** None. This is the top priority blocker.
 
 **In progress Task List**:
-None. The agent is about to start the Stabilization Patch as a new set of tasks.
+None.
 
 **Upcoming and Future Tasks**
-The 7-point stabilization patch is the immediate upcoming task list. Future tasks derived from the original problem statement include:
--   Full implementation of contract versioning and snapshots.
--   Full implementation of the detailed employee settlement workflow.
--   Expanding the Project location for attendance with geofencing and map integration.
--   Building out the remaining ledgers (Warning, Asset) with corresponding transaction types.
+-   **Upcoming Tasks:**
+    -   **P1: Implement Supervisor Assignment Feature:** The user requested a feature for 'Sultan' (Ops) and 'Naif' (Ops/Strategic) to assign/change an employee's supervisor via the employees list. This change should be a formal transaction requiring STAS approval.
+-   **Future Tasks:**
+    -   Full implementation of contract versioning and snapshots.
+    -   Expand the Project location for attendance with geofencing and map integration.
+    -   Build out the remaining ledgers (Warning, Asset) with corresponding transaction types.
 
 **Completed work in this session**
--   **Application Scaffolding:** Built the complete full-stack application structure (FastAPI backend, React frontend).
--   **Authentication & RBAC:** Implemented JWT authentication and a user-switching mechanism. Seeded all required user roles.
--   **Core Backend APIs:** Created API endpoints for all major modules: auth, dashboard, employees, transactions, leave, attendance, finance, contracts, and STAS.
--   **Core Frontend UI:** Developed pages and components for Login (now removed), Dashboard, Transactions, Leave, Attendance, STAS Mirror, and basic navigation.
--   **Styling:** Implemented Light/Dark modes and basic RTL support.
--   **Bug Fix:** Resolved a critical backend issue where API routes with a trailing slash caused 307 redirects and broke authenticated requests. ( vs ).
--   **User Request:** Removed the login page and implemented a user-switcher dropdown in the header for easy role-testing, as requested by the user.
+-   **7-Point Stabilization Patch:**
+    -   Implemented full UI localization (Arabic/English) and RTL support.
+    -   Fixed Arabic PDF rendering by embedding a NotoSansArabic font.
+    -   Added a sticky mobile decision bar for transaction approvals.
+    -   Added a Work Location dropdown to the attendance page.
+    -   Created a STAS-only settings panel for managing a manual holiday calendar.
+    -   Added STAS maintenance tools for purging data and archiving users.
+-   **Backend Behavior Lock Patch:**
+    -   Created modular, server-side validation engines (, , ).
+    -   Enforced strict, sequential approval workflows for all transactions.
+    -   Implemented a pre-validation rule engine for leave requests (balance, overlap, holidays).
+    -   Enforced server-side logic for attendance and settlement workflows based on employee contract status.
+    -   Populated seed data with active contracts for all employees.
+-   **Testing:** Performed extensive testing via curl, screenshots, and the .
 
 **Earlier issues found/mentioned but not fixed**
-The 7 items in the **All Pending/In progress Issue list** are the current set of known, unfixed issues requested by the user.
+-   The **Supervisor Self-Approval Workflow Bug** was thought to be fixed but was reported again by the user, indicating the fix was not robust.
 
 **Known issue recurrence from previous fork**
-None. This is the first session.
+-   **Issue recurrence in previous fork:** None.
+-   **Recurrence count:** The supervisor workflow bug has now occurred twice in this job.
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, Python, MongoDB (via )
--   **Frontend:** React.js, Tailwind CSS, shadcn/ui (components), 
--   **Authentication:** Custom JSON Web Tokens (JWT) with Role-Based Access Control (RBAC).
--   **Architecture:** RESTful API, Single Page Application (SPA).
--   **Core Principles:** Append-only ledgers, event sourcing (conceptual), immutability.
--   **Tooling:**  for PDF generation.
+-   **Backend:** FastAPI, Python, MongoDB (), 
+-   **Frontend:** React.js, Tailwind CSS, shadcn/ui, 
+-   **Authentication:** Custom JWT with Role-Based Access Control (RBAC).
+-   **Architecture:** Modular backend with distinct engines for workflow logic, business rules, and validation.
 
 **key DB schema**
 -   : {username, email, role, hashed_password, disabled, is_archived}
--   : {user_id, name, supervisor_id, work_calendar, ...}
--   : {ref_no, type, created_by, status, approvers, workflow, timeline_events, ...}
--   : {transaction_id, employee_id, date, type ('annual', 'sick'), amount, ...}
--   : {transaction_id, employee_id, code, amount, ...}
--   : {employee_id, check_in_time, check_out_time, work_location, ...}
--   : {employee_id, content, version, created_at, ...}
--   : {code, description, ...}
--   : {date, description, type ('public', 'manual')}
+-   : {user_id, name, supervisor_id, ...}
+-   : {ref_no, type, created_by, status, approvers, workflow, ...}
+-   , , 
+-   : {employee_id, content, version, start_date, end_date, is_active}
+-   : {date, description, type}
 
 **changes in tech stack**
 None.
 
 **All files of reference**
--   : Main FastAPI app, includes all routers.
--   : All business logic for API endpoints is modularized here.
--   : Core JWT creation and dependency for RBAC.
--   : Main application component with all routing logic.
--   : Manages user state, token, and the new user-switching logic.
--   : Contains the main layout with header, sidebar, and the user-switcher dropdown.
--   : Individual screens for each module.
--   : The Product Requirements Document updated by the agent.
+-   : Contains the primary logic for creating leave requests and needs to be fixed.
+-   : May have similar workflow creation logic that needs checking.
+-   : Contains the core workflow state transition logic.
+-   : Contains business rule validation (e.g., leave balance).
+-   : The UI where the user observes the stuck transaction.
+-   : The Product Requirements Document.
 
 **Areas that need refactoring**:
-The user has explicitly forbidden refactoring. However, the task to implement Full Language Switch will involve moving hardcoded strings from components to a central translation file, which is a form of code improvement.
+None. The user has forbidden refactoring. The focus is on fixing the bug.
 
 **key api endpoints**
--   : Switches user without a password.
--   : Lists all active users for the switcher.
--   : Lists all transactions visible to the current user.
--   : Creates a new leave request transaction.
--   : Fetches summary data for the dashboard cards.
--   : Executes a transaction after pre-checks pass.
+-   : Creates a leave request. (BUG is here).
+-   : Creates an expense request. (Potential BUG is here).
+-   : Approves a transaction.
+-   : Lists users for the user-switcher.
+-   : Adds a manual holiday.
 
 **Critical Info for New Agent**
--   **Stabilization Patch Focus:** Your ONLY goal is to implement the 7-point stabilization patch. Do NOT add new features, refactor, or redesign the UI. Follow the patch requirements precisely.
--   **No Login Page:** The application uses a user-switcher in the header for authentication. Do not re-implement a login page.
--   **User Specificity:** The user has provided LOCKED requirements. Do not deviate. The system is meant to be a real-world, enterprise-grade tool, not a demo.
--   **Trailing Slash Issue:** The previous agent fixed a bug where FastAPI  redirects on routes missing a trailing slash would cause auth headers to be dropped. All routes were updated to handle requests with and without the slash (e.g., using  within an  prefix). Be mindful of this if adding new routes.
+-   **Immediate Priority is the Bug:** You must fix the supervisor self-approval workflow bug before anything else. The user is blocked. Do not work on any new features until this is resolved and confirmed by the user.
+-   **Reproduce First:** Before writing code, switch to the  role and create a leave request to confirm you can reproduce the bug as described.
+-   **User's Language:** The user reported the bug in Arabic. Be prepared to communicate the fix and ask for verification in Arabic if they continue in that language.
+-   **New Feature Request:** Acknowledge the user's new feature request (assigning supervisors) but state that you will address it *after* the critical bug is fixed.
 
 **documents and test reports created in this job**
 -   
--   
+-    (Note: This is from the first stabilization patch and may not cover the latest backend changes).
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. : Requests to remove the login page and use a user switcher instead, reflecting existing users.
-9. : Acknowledges in Arabic and confirms it will remove the login page and add a user switcher.
-8. : Provides a plan to implement the user switcher (backend endpoint, frontend context update, UI icon).
-7. : Implements the backend endpoint to list and switch users.
-6. : Updates the  to handle the new switching logic.
-5. : Updates  to add the user switcher icon and dropdown.
-4. : Updates  to remove the login page route.
-3. : Provides a new, detailed 7-point list of Stabilization Patch requirements, overriding the previous finish goal. (This is the current task).
-2. : Creates and shares a new plan based on the 7 stabilization patch items.
-1. : Starts executing the plan by viewing all relevant files that need to be patched.
+10. : Asks to test the settlement workflow. (Completed)
+9. : Verifies PDF Arabic rendering is still working. (Completed)
+8. : Runs linting. (Completed)
+7. : Takes a screenshot to verify UI. (Completed)
+6. : Updates PRD.md and prepares to finish. (Completed)
+5. : Provides a new Backend Behavior Lock patch with 6 strict requirements, focusing on server-side validation and logic. (Task Received)
+4. : Implements the entire backend behavior lock patch, adding validation modules and updating all relevant routes. (Completed)
+3. : Performs extensive testing of the new backend logic, including re-seeding the database, and confirms all workflows are working as per the new rules. (Completed)
+2. : Prepares to finish after completing the backend patch.
+1.  ** (PENDING):** Reports a critical bug in Arabic. When a supervisor creates a request, it shows this message: You cannot approve your own transaction and the status gets stuck on Pending Supervisor, which is illogical! It should go directly to Sultan. Also requests a new feature to allow Sultan/Naif to assign supervisors.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The approval workflow logic is flawed (supervisors can approve their own requests).
-    -   UI localization is incomplete (mix of English and Arabic).
-    -   PDFs render Arabic text as squares.
-    -   Mobile usability is poor for decision-making.
-    -   Key administrative functions (holiday override, data purge) are missing.
+    -   The core transaction approval workflow is critically broken for the 'supervisor' role, preventing them from creating their own requests.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
--   None. User explicitly locked this requirement for the current phase.
+None.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, it was used once after the initial build.
--   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Testing agent used after significant changes:** YES.
+-   **Troubleshoot agent used after agent stuck in loop:** NO.
 -   **Test files created:** None.
--   **Known regressions:** None identified, but the 7-point patch list details existing bugs/missing features.
+-   **Known regressions:** The supervisor self-approval workflow has regressed and is the highest priority issue.
 
 **Credentials to test flow:**
-No passwords are required. Use the user-switcher dropdown in the top-right header to switch between the following seeded roles:
--   **** (Regular employee)
--   **** (Supervisor)
--   **** (Ops Admin)
--   **** (Ops/Strategic)
--   **** (Finance)
--   **** (CEO)
--   **** (System Executor)
+Use the user-switcher dropdown in the app's header. No passwords required.
+-   **To reproduce the bug:** Switch to the  user.
+-   **To test the fix:** Use , , and  to test different workflow paths.
 
 **What agent forgot to execute**
-The agent was about to  the initial build but was correctly interrupted by the user with new, overriding requirements (the stabilization patch). The initial implementation missed several business logic edge cases and usability features that are now the focus of the current task list.</analysis>
+The agent did not create a specific test case for a user who is *also* a supervisor submitting a request for themselves. While the general logic for skip supervisor was implemented, this specific edge case was missed during testing, leading to the regression.</analysis>
