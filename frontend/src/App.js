@@ -17,6 +17,7 @@ import EmployeesPage from "@/pages/EmployeesPage";
 import SettingsPage from "@/pages/SettingsPage";
 import WorkLocationsPage from "@/pages/WorkLocationsPage";
 import CustodyPage from "@/pages/CustodyPage";
+import FinancialCustodyPage from "@/pages/FinancialCustodyPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -56,6 +57,7 @@ function AppRoutes() {
       <Route path="/contracts" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'employee', 'supervisor']}><ContractsPage /></ProtectedRoute>} />
       <Route path="/work-locations" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><WorkLocationsPage /></ProtectedRoute>} />
       <Route path="/custody" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><CustodyPage /></ProtectedRoute>} />
+      <Route path="/financial-custody" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'salah', 'mohammed', 'stas']}><FinancialCustodyPage /></ProtectedRoute>} />
       <Route path="/stas-mirror" element={<ProtectedRoute allowedRoles={['stas']}><STASMirrorPage /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
