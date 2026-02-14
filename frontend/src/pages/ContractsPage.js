@@ -141,7 +141,7 @@ export default function ContractsPage() {
                   <td className="text-sm capitalize">{c.contract_type?.replace('_', ' ')}</td>
                   <td className="font-mono text-xs">v{c.version}</td>
                   <td className="font-mono text-sm text-right">{c.salary?.toLocaleString()} SAR</td>
-                  <td className="hidden sm:table-cell text-xs">{c.start_date}</td>
+                  <td className="hidden sm:table-cell text-xs">{formatGregorianHijri(c.start_date).combined}</td>
                   <td className="hidden sm:table-cell">{c.is_snapshot ? <span className="status-badge status-executed">Snapshot</span> : '-'}</td>
                 </tr>
               ))}
