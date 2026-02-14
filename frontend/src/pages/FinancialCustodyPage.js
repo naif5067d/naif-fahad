@@ -243,7 +243,7 @@ export default function FinancialCustodyPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="text-xs font-semibold text-foreground">{ev.actor_name}</p>
-                      <time className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{ev.timestamp?.slice(0, 16).replace('T', ' ')}</time>
+                      <time className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{formatGregorianHijriDateTime(ev.timestamp).combined}</time>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{ev.note}</p>
                   </div>
