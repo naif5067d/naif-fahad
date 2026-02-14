@@ -435,7 +435,7 @@ export default function TransactionDetailPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {formatSaudiDateTime(a.timestamp)}
+                        {formatGregorianHijriDateTime(a.timestamp).combined}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">{a.note || '-'}</td>
                     </tr>
