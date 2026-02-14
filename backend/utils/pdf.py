@@ -1,7 +1,7 @@
 """
 Professional PDF Generator for DAR AL CODE HR OS
 Single A4 Page - Arabic/English Support - QR/Barcode Signatures
-With proper RTL Arabic text support
+Properly handles bilingual text without breaking either language
 """
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -20,6 +20,7 @@ import hashlib
 import uuid
 import io
 import os
+import base64
 from datetime import datetime, timezone, timedelta
 
 # Constants
@@ -36,9 +37,10 @@ TEXT_GRAY = colors.Color(0.4, 0.4, 0.45)
 # Font Registration
 FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
 
-ARABIC_FONT_AVAILABLE = False
-FONT_REGULAR = 'Helvetica'
-FONT_BOLD = 'Helvetica-Bold'
+ARABIC_FONT = None
+ARABIC_FONT_BOLD = None
+ENGLISH_FONT = 'Helvetica'
+ENGLISH_FONT_BOLD = 'Helvetica-Bold'
 
 # Try to register Arabic fonts
 for font_name, regular_file, bold_file in [
@@ -54,37 +56,48 @@ for font_name, regular_file, bold_file in [
                 pdfmetrics.registerFont(TTFont(f'{font_name}ArabicBold', bold_path))
             else:
                 pdfmetrics.registerFont(TTFont(f'{font_name}ArabicBold', regular_path))
-            FONT_REGULAR = f'{font_name}Arabic'
-            FONT_BOLD = f'{font_name}ArabicBold'
-            ARABIC_FONT_AVAILABLE = True
+            ARABIC_FONT = f'{font_name}Arabic'
+            ARABIC_FONT_BOLD = f'{font_name}ArabicBold'
             break
     except Exception as e:
         continue
 
 
-def reshape_arabic(text):
-    """Reshape Arabic text for proper RTL display in PDF"""
+def has_arabic(text):
+    """Check if text contains Arabic characters"""
+    if not text:
+        return False
+    return any('\u0600' <= c <= '\u06FF' for c in str(text))
+
+
+def reshape_arabic_text(text):
+    """Reshape Arabic text for proper RTL display"""
     if not text:
         return ''
     try:
-        # Reshape the Arabic characters
         reshaped = arabic_reshaper.reshape(str(text))
-        # Apply bidirectional algorithm
-        bidi_text = get_display(reshaped)
-        return bidi_text
+        return get_display(reshaped)
     except:
         return str(text)
 
 
-def format_text(text, lang='ar'):
-    """Format text based on language - reshape Arabic"""
+def format_text_bilingual(text, target_lang='ar'):
+    """
+    Format text based on content detection, NOT target language.
+    - Arabic text: always reshape for proper display
+    - English text: return as-is
+    - Mixed: process Arabic parts only
+    """
     if not text:
         return '-'
+    
     text = str(text)
-    if lang == 'ar':
-        # Check if text contains Arabic characters
-        if any('\u0600' <= c <= '\u06FF' for c in text):
-            return reshape_arabic(text)
+    
+    # If text has Arabic characters, reshape it
+    if has_arabic(text):
+        return reshape_arabic_text(text)
+    
+    # Pure English/numbers - return as-is
     return text
 
 
@@ -105,8 +118,8 @@ def format_saudi_time(ts):
         return str(ts)[:16] if ts else '-'
 
 
-def create_qr_image(data: str, size: int = 20):
-    """Create actual QR code image for PDF"""
+def create_qr_image(data: str, size: int = 18):
+    """Create QR code image for PDF"""
     try:
         qr = qrcode.QRCode(
             version=1,
@@ -123,15 +136,15 @@ def create_qr_image(data: str, size: int = 20):
         buffer.seek(0)
         
         return RLImage(buffer, width=size*mm, height=size*mm)
-    except Exception as e:
+    except:
         return None
 
 
-def create_barcode_image(code: str, width: int = 45, height: int = 10):
-    """Create actual barcode for STAS signature"""
+def create_barcode_image(code: str, width: int = 40, height: int = 10):
+    """Create Code128 barcode for STAS signature"""
     try:
-        barcode = code128.Code128(code, barWidth=0.4*mm, barHeight=height*mm)
-        d = Drawing(width*mm, (height+2)*mm)
+        barcode = code128.Code128(code, barWidth=0.35*mm, barHeight=height*mm)
+        d = Drawing(width*mm, (height+3)*mm)
         d.add(barcode)
         return d
     except:
@@ -158,7 +171,9 @@ def get_labels(lang: str):
             'action': 'الإجراء',
             'time': 'الوقت',
             'signature': 'التوقيع',
+            'comments': 'التعليقات',
             'executed_by': 'تم التنفيذ بواسطة STAS',
+            'transaction_id': 'رقم المعاملة',
             # Transaction types
             'leave_request': 'طلب إجازة',
             'finance_60': 'عهدة مالية',
@@ -184,8 +199,11 @@ def get_labels(lang: str):
             'employee_accept': 'الموظف',
             # Actions
             'approve': 'موافقة',
+            'approved': 'موافقة',
             'reject': 'رفض',
+            'rejected': 'مرفوض',
             'escalate': 'تصعيد',
+            'escalated': 'تم التصعيد',
             # Data fields
             'leave_type': 'نوع الإجازة',
             'start_date': 'من تاريخ',
@@ -219,7 +237,9 @@ def get_labels(lang: str):
             'action': 'Action',
             'time': 'Time',
             'signature': 'Signature',
+            'comments': 'Comments',
             'executed_by': 'Executed by STAS',
+            'transaction_id': 'Transaction ID',
             # Transaction types
             'leave_request': 'Leave Request',
             'finance_60': 'Financial Custody',
@@ -245,8 +265,11 @@ def get_labels(lang: str):
             'employee_accept': 'Employee',
             # Actions
             'approve': 'Approved',
+            'approved': 'Approved',
             'reject': 'Rejected',
+            'rejected': 'Rejected',
             'escalate': 'Escalated',
+            'escalated': 'Escalated',
             # Data fields
             'leave_type': 'Leave Type',
             'start_date': 'Start Date',
@@ -264,8 +287,66 @@ def get_labels(lang: str):
         }
 
 
-def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str = 'ar') -> tuple:
-    """Generate professional single-page PDF for transaction with proper Arabic support"""
+async def get_company_branding():
+    """Fetch company branding from database"""
+    try:
+        from database import db
+        settings = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+        if settings:
+            return settings
+    except:
+        pass
+    # Return defaults
+    return {
+        "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+        "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+        "slogan_en": "Engineering Excellence",
+        "slogan_ar": "التميز الهندسي",
+        "logo_data": None
+    }
+
+
+def get_company_branding_sync():
+    """Synchronous version - fetch from database"""
+    import asyncio
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # We're in async context, create a task
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, get_company_branding())
+                return future.result()
+        else:
+            return asyncio.run(get_company_branding())
+    except:
+        return {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي",
+            "logo_data": None
+        }
+
+
+def create_logo_image(logo_data: str, max_width: int = 25, max_height: int = 15):
+    """Create image from base64 logo data"""
+    if not logo_data:
+        return None
+    try:
+        # Remove data:image/xxx;base64, prefix if present
+        if ',' in logo_data:
+            logo_data = logo_data.split(',')[1]
+        
+        img_bytes = base64.b64decode(logo_data)
+        buffer = io.BytesIO(img_bytes)
+        return RLImage(buffer, width=max_width*mm, height=max_height*mm)
+    except:
+        return None
+
+
+def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str = 'ar', branding: dict = None) -> tuple:
+    """Generate professional single-page PDF for transaction with proper bilingual support"""
     buffer = io.BytesIO()
     
     doc = SimpleDocTemplate(
@@ -278,25 +359,62 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     )
     
     labels = get_labels(lang)
-    font = FONT_REGULAR if ARABIC_FONT_AVAILABLE else 'Helvetica'
-    font_bold = FONT_BOLD if ARABIC_FONT_AVAILABLE else 'Helvetica-Bold'
+    
+    # Get branding if not provided
+    if branding is None:
+        branding = get_company_branding_sync()
+    
+    # Choose fonts based on language
+    if lang == 'ar' and ARABIC_FONT:
+        main_font = ARABIC_FONT
+        bold_font = ARABIC_FONT_BOLD
+    else:
+        main_font = ENGLISH_FONT
+        bold_font = ENGLISH_FONT_BOLD
     
     # Styles
     styles = {
-        'title': ParagraphStyle('title', fontSize=14, fontName=font_bold, textColor=NAVY, alignment=TA_CENTER, spaceAfter=2*mm),
-        'subtitle': ParagraphStyle('subtitle', fontSize=11, fontName=font_bold, textColor=NAVY, alignment=TA_CENTER, spaceAfter=4*mm),
-        'section': ParagraphStyle('section', fontSize=9, fontName=font_bold, textColor=NAVY, spaceBefore=4*mm, spaceAfter=2*mm),
-        'small': ParagraphStyle('small', fontSize=6, fontName=font, textColor=TEXT_GRAY, alignment=TA_CENTER),
+        'title': ParagraphStyle('title', fontSize=14, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=2*mm),
+        'subtitle': ParagraphStyle('subtitle', fontSize=11, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=4*mm),
+        'section': ParagraphStyle('section', fontSize=9, fontName=bold_font, textColor=NAVY, spaceBefore=4*mm, spaceAfter=2*mm),
+        'small': ParagraphStyle('small', fontSize=6, fontName=main_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
+        'small_bold': ParagraphStyle('small_bold', fontSize=7, fontName=bold_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
     }
     
     elements = []
     integrity_id = str(uuid.uuid4())[:12].upper()
+    ref_no = transaction.get('ref_no', 'N/A')
     
-    # ============ HEADER ============
-    company_text = format_text(labels['company'], lang)
-    elements.append(Paragraph(company_text, styles['title']))
+    # ============ HEADER WITH LOGO ============
+    # Get company name based on language
+    company_name = branding.get('company_name_ar' if lang == 'ar' else 'company_name_en', labels['company'])
+    slogan = branding.get('slogan_ar' if lang == 'ar' else 'slogan_en', labels['slogan'])
+    logo_data = branding.get('logo_data')
     
-    # Line
+    # Format company name for display
+    company_display = format_text_bilingual(company_name, lang)
+    
+    # Create header with logo if available
+    logo_img = create_logo_image(logo_data)
+    if logo_img:
+        # Header with logo on left, company name on right
+        header_data = [[logo_img, Paragraph(company_display, styles['title'])]]
+        header_table = Table(header_data, colWidths=[30*mm, CONTENT_WIDTH - 35*mm])
+        header_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ]))
+        elements.append(header_table)
+    else:
+        elements.append(Paragraph(company_display, styles['title']))
+    
+    # Slogan
+    if slogan:
+        slogan_display = format_text_bilingual(slogan, lang)
+        elements.append(Paragraph(slogan_display, styles['small']))
+    
+    # Line separator
     line_table = Table([['']], colWidths=[CONTENT_WIDTH], rowHeights=[1.5])
     line_table.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, 0), 2, NAVY)]))
     elements.append(line_table)
@@ -304,16 +422,23 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     
     # ============ DOCUMENT TYPE ============
     tx_type = transaction.get('type', '')
-    doc_type = format_text(labels.get(tx_type, tx_type.replace('_', ' ').title()), lang)
+    type_label = labels.get(tx_type, tx_type.replace('_', ' ').title())
+    doc_type = format_text_bilingual(type_label, lang)
     elements.append(Paragraph(doc_type, styles['subtitle']))
     
     # ============ INFO BOX ============
     status_raw = transaction.get('status', '')
-    status_text = format_text(labels.get(status_raw, status_raw.replace('_', ' ').title()), lang)
+    status_label = labels.get(status_raw, status_raw.replace('_', ' ').title())
+    status_display = format_text_bilingual(status_label, lang)
+    
+    ref_label = format_text_bilingual(labels['ref_no'], lang)
+    status_label_text = format_text_bilingual(labels['status'], lang)
+    date_label = format_text_bilingual(labels['date'], lang)
+    integrity_label = format_text_bilingual(labels['integrity_id'], lang)
     
     info_data = [
-        [format_text(labels['ref_no'], lang), transaction.get('ref_no', '-'), format_text(labels['status'], lang), status_text],
-        [format_text(labels['date'], lang), format_saudi_time(transaction.get('created_at')), format_text(labels['integrity_id'], lang), integrity_id],
+        [ref_label, ref_no, status_label_text, status_display],
+        [date_label, format_saudi_time(transaction.get('created_at')), integrity_label, integrity_id],
     ]
     
     info_table = Table(info_data, colWidths=[28*mm, 60*mm, 28*mm, 54*mm], rowHeights=[7*mm, 7*mm])
@@ -321,7 +446,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
-        ('FONTNAME', (0, 0), (-1, -1), font),
+        ('FONTNAME', (0, 0), (-1, -1), main_font),
         ('FONTSIZE', (0, 0), (-1, -1), 7),
         ('TEXTCOLOR', (0, 0), (0, -1), TEXT_GRAY),
         ('TEXTCOLOR', (2, 0), (2, -1), TEXT_GRAY),
@@ -333,16 +458,21 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     
     # ============ EMPLOYEE INFO ============
     if employee:
-        elements.append(Paragraph(format_text(labels['employee_info'], lang), styles['section']))
+        section_title = format_text_bilingual(labels['employee_info'], lang)
+        elements.append(Paragraph(section_title, styles['section']))
         
+        # Get name based on language preference
         emp_name = employee.get('full_name_ar' if lang == 'ar' else 'full_name', employee.get('full_name', '-'))
-        emp_name = format_text(emp_name, lang)
-        emp_no = employee.get('employee_number', '-')
+        emp_name_display = format_text_bilingual(emp_name, lang)
+        emp_no = str(employee.get('employee_number', '-'))
         
-        emp_data = [[format_text(labels['name'], lang), emp_name, format_text(labels['emp_no'], lang), str(emp_no)]]
+        name_label = format_text_bilingual(labels['name'], lang)
+        empno_label = format_text_bilingual(labels['emp_no'], lang)
+        
+        emp_data = [[name_label, emp_name_display, empno_label, emp_no]]
         emp_table = Table(emp_data, colWidths=[25*mm, 80*mm, 25*mm, 40*mm], rowHeights=[6*mm])
         emp_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), font),
+            ('FONTNAME', (0, 0), (-1, -1), main_font),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('TEXTCOLOR', (0, 0), (0, 0), TEXT_GRAY),
             ('TEXTCOLOR', (2, 0), (2, 0), TEXT_GRAY),
@@ -351,34 +481,42 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         elements.append(emp_table)
     
     # ============ TRANSACTION DETAILS ============
-    elements.append(Paragraph(format_text(labels['details'], lang), styles['section']))
+    details_title = format_text_bilingual(labels['details'], lang)
+    elements.append(Paragraph(details_title, styles['section']))
     
     tx_data = transaction.get('data', {})
-    skip_fields = ['employee_name_ar', 'balance_before', 'balance_after', 'adjusted_end_date', 'sick_tier_info']
+    skip_fields = {'employee_name_ar', 'balance_before', 'balance_after', 'adjusted_end_date', 'sick_tier_info'}
     
     details_rows = []
     for key, value in tx_data.items():
         if key in skip_fields:
             continue
+        # Use Arabic name if available and lang is Arabic
         if key == 'employee_name' and lang == 'ar' and 'employee_name_ar' in tx_data:
             value = tx_data['employee_name_ar']
-        if isinstance(value, dict) or isinstance(value, list):
+        # Skip complex types
+        if isinstance(value, (dict, list)):
             continue
         
-        field_label = format_text(labels.get(key, key.replace('_', ' ').title()), lang)
+        # Get field label
+        field_label = labels.get(key, key.replace('_', ' ').title())
+        field_label_display = format_text_bilingual(field_label, lang)
         
+        # Format value
         if value is None:
             formatted_val = '-'
         elif key == 'leave_type':
-            formatted_val = format_text(labels.get(str(value), str(value)), lang)
+            leave_label = labels.get(str(value), str(value))
+            formatted_val = format_text_bilingual(leave_label, lang)
         elif key in ('amount', 'estimatedvalue', 'estimated_value'):
             formatted_val = f"{value} SAR"
         else:
-            formatted_val = format_text(str(value), lang)
+            formatted_val = format_text_bilingual(str(value), lang)
         
-        details_rows.append([field_label, formatted_val])
+        details_rows.append([field_label_display, formatted_val])
     
     if details_rows:
+        # Two-column layout for many fields
         if len(details_rows) > 3:
             mid = (len(details_rows) + 1) // 2
             col1 = details_rows[:mid]
@@ -388,14 +526,19 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             
             combined = []
             for i in range(len(col1)):
-                combined.append([col1[i][0], col1[i][1], col2[i][0] if i < len(col2) else '', col2[i][1] if i < len(col2) else ''])
+                row = [
+                    col1[i][0], col1[i][1],
+                    col2[i][0] if i < len(col2) else '',
+                    col2[i][1] if i < len(col2) else ''
+                ]
+                combined.append(row)
             
             details_table = Table(combined, colWidths=[28*mm, 55*mm, 28*mm, 55*mm], rowHeights=[6*mm] * len(combined))
         else:
             details_table = Table(details_rows, colWidths=[40*mm, 130*mm], rowHeights=[6*mm] * len(details_rows))
         
         details_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), font),
+            ('FONTNAME', (0, 0), (-1, -1), main_font),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('TEXTCOLOR', (0, 0), (0, -1), TEXT_GRAY),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -403,56 +546,73 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ]))
         elements.append(details_table)
     
-    # ============ APPROVAL CHAIN WITH ACTUAL QR/BARCODE ============
+    # ============ APPROVAL CHAIN WITH QR/BARCODE ============
     approval_chain = transaction.get('approval_chain', [])
     if approval_chain:
-        elements.append(Paragraph(format_text(labels['approvals'], lang), styles['section']))
+        approvals_title = format_text_bilingual(labels['approvals'], lang)
+        elements.append(Paragraph(approvals_title, styles['section']))
         
         # Headers
-        headers = [
-            format_text(labels['stage'], lang),
-            format_text(labels['approver'], lang),
-            format_text(labels['action'], lang),
-            format_text(labels['time'], lang),
-            format_text(labels['signature'], lang)
-        ]
+        stage_header = format_text_bilingual(labels['stage'], lang)
+        approver_header = format_text_bilingual(labels['approver'], lang)
+        action_header = format_text_bilingual(labels['action'], lang)
+        time_header = format_text_bilingual(labels['time'], lang)
+        sig_header = format_text_bilingual(labels['signature'], lang)
+        
+        headers = [stage_header, approver_header, action_header, time_header, sig_header]
         approval_data = [headers]
         
         for approval in approval_chain:
             stage = approval.get('stage', '')
-            stage_label = labels.get(stage, stage.upper())
-            if stage in ('stas', 'ceo'):
-                stage_label = stage.upper()
-            else:
-                stage_label = format_text(stage_label, lang)
             
-            approver = format_text(approval.get('approver_name', '-'), lang)
-            action = approval.get('status', '')
-            action_label = format_text(labels.get(action, action.title()), lang)
+            # Stage label - STAS and CEO always in English
+            if stage in ('stas', 'ceo'):
+                stage_display = stage.upper()
+            else:
+                stage_label = labels.get(stage, stage.title())
+                stage_display = format_text_bilingual(stage_label, lang)
+            
+            # Approver name - CRITICAL: get from approval_chain entry
+            approver_name = approval.get('approver_name', approval.get('actor_name', '-'))
+            approver_display = format_text_bilingual(approver_name, lang)
+            
+            # Action
+            action_raw = approval.get('status', approval.get('action', ''))
+            action_label = labels.get(action_raw, action_raw.title())
+            action_display = format_text_bilingual(action_label, lang)
+            
+            # Timestamp
             timestamp = format_saudi_time(approval.get('timestamp'))
             
-            # Create actual QR code or barcode for signature
+            # Signature: BARCODE for STAS, QR for others
             approver_id = approval.get('approver_id', '')[:8]
             if stage == 'stas':
-                sig_img = create_barcode_image(f"STAS-{integrity_id[:6]}", width=35, height=8)
+                # BARCODE for STAS with transaction ID
+                sig_code = f"STAS-{ref_no[-8:]}"
+                sig_img = create_barcode_image(sig_code, width=35, height=8)
             else:
-                sig_img = create_qr_image(f"{stage}-{approver_id}", size=12)
+                # QR code for others
+                sig_data = f"{stage}-{approver_id}"
+                sig_img = create_qr_image(sig_data, size=12)
             
             if sig_img is None:
                 sig_img = f"[{approver_id[:6]}]"
             
-            approval_data.append([stage_label, approver, action_label, timestamp, sig_img])
+            approval_data.append([stage_display, approver_display, action_display, timestamp, sig_img])
+        
+        # Calculate row heights
+        row_heights = [7*mm] + [14*mm] * (len(approval_data) - 1)
         
         approval_table = Table(
-            approval_data, 
-            colWidths=[28*mm, 40*mm, 25*mm, 35*mm, 42*mm], 
-            rowHeights=[7*mm] + [15*mm] * (len(approval_data) - 1)
+            approval_data,
+            colWidths=[28*mm, 40*mm, 25*mm, 35*mm, 42*mm],
+            rowHeights=row_heights
         )
         approval_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), NAVY),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), font_bold),
-            ('FONTNAME', (0, 1), (-1, -1), font),
+            ('FONTNAME', (0, 0), (-1, 0), bold_font),
+            ('FONTNAME', (0, 1), (-1, -1), main_font),
             ('FONTSIZE', (0, 0), (-1, -1), 6),
             ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
             ('LINEBELOW', (0, 0), (-1, -1), 0.3, BORDER_GRAY),
@@ -461,25 +621,36 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ]))
         elements.append(approval_table)
     
-    # ============ EXECUTION STAMP ============
+    # ============ EXECUTION STAMP (STAS BARCODE) ============
     if transaction.get('status') == 'executed':
         elements.append(Spacer(1, 4*mm))
         
-        stamp_text = format_text(labels['executed_by'], lang)
+        executed_label = format_text_bilingual(labels['executed_by'], lang)
         stamp_date = format_saudi_time(transaction.get('updated_at'))
-        barcode_code = f"EXEC-{transaction.get('ref_no', 'NA')[-8:]}-{integrity_id[:4]}"
         
-        barcode_img = create_barcode_image(barcode_code, width=55, height=12)
+        # Create execution barcode with transaction ref
+        exec_code = f"EXEC-{ref_no[-8:]}-{integrity_id[:4]}"
+        barcode_img = create_barcode_image(exec_code, width=50, height=12)
         
-        stamp_data = [[Paragraph(stamp_text, styles['section'])]]
-        row_heights = [6*mm]
+        # Build stamp content
+        stamp_elements = [
+            [Paragraph(executed_label, styles['section'])],
+        ]
+        stamp_heights = [6*mm]
+        
         if barcode_img:
-            stamp_data.append([barcode_img])
-            row_heights.append(16*mm)
-        stamp_data.append([Paragraph(stamp_date, styles['small'])])
-        row_heights.append(5*mm)
+            stamp_elements.append([barcode_img])
+            stamp_heights.append(18*mm)
         
-        stamp_table = Table(stamp_data, colWidths=[65*mm], rowHeights=row_heights)
+        # Transaction ID under barcode
+        tx_id_label = format_text_bilingual(labels['transaction_id'], lang)
+        stamp_elements.append([Paragraph(f"{tx_id_label}: {ref_no}", styles['small_bold'])])
+        stamp_heights.append(5*mm)
+        
+        stamp_elements.append([Paragraph(stamp_date, styles['small'])])
+        stamp_heights.append(4*mm)
+        
+        stamp_table = Table(stamp_elements, colWidths=[60*mm], rowHeights=stamp_heights)
         stamp_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -487,6 +658,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
         ]))
         
+        # Center the stamp
         outer = Table([[stamp_table]], colWidths=[CONTENT_WIDTH])
         outer.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
         elements.append(outer)
@@ -501,7 +673,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     elements.append(Spacer(1, 1*mm))
     elements.append(Paragraph(footer_text, styles['small']))
     
-    # Build
+    # Build PDF
     doc.build(elements)
     pdf_bytes = buffer.getvalue()
     pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
