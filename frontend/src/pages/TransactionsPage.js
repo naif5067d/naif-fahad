@@ -129,7 +129,7 @@ export default function TransactionsPage() {
       pending_ops: ['sultan', 'naif'],
       pending_finance: ['salah'],
       pending_ceo: ['mohammed'],
-      pending_stas: ['stas'],
+      stas: ['stas'],
       pending_employee_accept: ['employee'],
     };
     return map[tx.status]?.includes(user?.role);
