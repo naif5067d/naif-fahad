@@ -464,7 +464,7 @@ async def close_contract(
                 "to_status": "closed",
                 "actor_id": executor_id,
                 "timestamp": now,
-                "note": f"تم إغلاق العقد بعد المخالصة" + (f" رقم {settlement_ref}" if settlement_ref else "")
+                "note": "تم إغلاق العقد بعد المخالصة" + (f" رقم {settlement_ref}" if settlement_ref else "")
             }
         }
     }
