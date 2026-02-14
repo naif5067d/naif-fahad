@@ -103,16 +103,56 @@ export default function AttendancePage() {
               <AlertTriangle size={14} /> {t('attendance.noGps')}
             </div>
           )}
+
+          {/* Show assigned work locations */}
+          {assignedLocations.length > 0 && (
+            <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+              <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1.5">
+                <MapPin size={14} /> {lang === 'ar' ? 'مواقع العمل المعينة لك' : 'Your Assigned Work Locations'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {assignedLocations.map(loc => (
+                  <div key={loc.id} className="text-xs bg-white dark:bg-slate-800 px-2.5 py-1.5 rounded-md border border-blue-200 dark:border-blue-700">
+                    <span className="font-medium">{lang === 'ar' ? loc.name_ar : loc.name}</span>
+                    <span className="text-muted-foreground ms-1">({loc.work_start} - {loc.work_end})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {assignedLocations.length === 0 && !isAdmin && (
+            <div className="mb-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                <AlertTriangle size={14} /> {lang === 'ar' ? 'لم يتم تعيين موقع عمل لك بعد. تواصل مع مديرك.' : 'No work location assigned yet. Contact your manager.'}
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-3 items-center">
             <Select value={workLocation} onValueChange={setWorkLocation} disabled={!!today.check_in}>
-              <SelectTrigger className="w-40" data-testid="work-location-select"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-48" data-testid="work-location-select">
+                <SelectValue placeholder={lang === 'ar' ? 'اختر موقع العمل' : 'Select location'} />
+              </SelectTrigger>
               <SelectContent>
-                <SelectItem value="HQ"><div className="flex items-center gap-1.5"><Building2 size={14} className="text-blue-600" />{t('attendance.hq')}</div></SelectItem>
-                <SelectItem value="Project"><div className="flex items-center gap-1.5"><HardHat size={14} className="text-amber-600" />{t('attendance.project')}</div></SelectItem>
+                {assignedLocations.map(loc => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    <div className="flex items-center gap-1.5">
+                      <Navigation size={14} className="text-blue-600" />
+                      {lang === 'ar' ? loc.name_ar : loc.name}
+                    </div>
+                  </SelectItem>
+                ))}
+                {assignedLocations.length === 0 && (
+                  <>
+                    <SelectItem value="HQ"><div className="flex items-center gap-1.5"><Building2 size={14} className="text-blue-600" />{t('attendance.hq')}</div></SelectItem>
+                    <SelectItem value="Project"><div className="flex items-center gap-1.5"><Navigation size={14} className="text-amber-600" />{t('attendance.project')}</div></SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
             <div className="flex gap-2 flex-1">
-              <Button data-testid="check-in-btn" onClick={handleCheckIn} disabled={loading || !!today.check_in} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" size="sm">
+              <Button data-testid="check-in-btn" onClick={handleCheckIn} disabled={loading || !!today.check_in || !workLocation} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" size="sm">
                 <MapPin size={14} className="me-1" /> {t('attendance.checkIn')} {today.check_in && <span className="text-xs ms-1 opacity-80">({today.check_in.timestamp?.slice(11, 16)})</span>}
               </Button>
               <Button data-testid="check-out-btn" onClick={handleCheckOut} disabled={loading || !today.check_in || !!today.check_out} variant="outline" className="flex-1" size="sm">
