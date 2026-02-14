@@ -161,18 +161,20 @@ system_archives, maintenance_log
 - New Transaction Types (leave/attendance subtypes)
 - STAS Financial Custody Mirror
 - Geofencing enforcement
-- System-wide Arabic UI audit
 
 ## Key Files
 - `/app/backend/utils/pdf.py` - PDF generator with bilingual support (FIXED)
 - `/app/backend/utils/workflow.py` - validate_stage_actor (STAS excluded from already_acted)
 - `/app/backend/routes/transactions.py` - PDF endpoint with branding fetch
 - `/app/backend/routes/stas.py` - STAS execution with branding fetch
+- `/app/backend/routes/maintenance.py` - System maintenance APIs (Phase 14)
 - `/app/frontend/src/pages/CompanySettingsPage.js` - Company settings UI
+- `/app/frontend/src/pages/SystemMaintenancePage.js` - System maintenance UI (Phase 14)
+- `/app/frontend/src/lib/dateUtils.js` - Date formatting utilities with Gregorian/Hijri support
 
 ## Test Reports
-- `/app/test_reports/iteration_13.json` - Latest test results (100% pass)
-- `/app/backend/tests/test_iteration13_features.py` - Backend tests
+- `/app/test_reports/iteration_14.json` - Latest test results (100% pass - Phase 14)
+- `/app/backend/tests/test_iteration14_maintenance.py` - Backend tests for maintenance features
 
 ## Technical Notes
 
