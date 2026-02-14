@@ -60,6 +60,7 @@ function AppRoutes() {
       <Route path="/custody" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><CustodyPage /></ProtectedRoute>} />
       <Route path="/financial-custody" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'salah', 'mohammed', 'stas']}><FinancialCustodyPage /></ProtectedRoute>} />
       <Route path="/stas-mirror" element={<ProtectedRoute allowedRoles={['stas']}><STASMirrorPage /></ProtectedRoute>} />
+      <Route path="/company-settings" element={<ProtectedRoute allowedRoles={['stas']}><CompanySettingsPage /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
