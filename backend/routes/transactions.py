@@ -302,12 +302,12 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
 
 
 @router.get("/{transaction_id}/pdf")
-async def get_transaction_pdf(transaction_id: str, user=Depends(get_current_user)):
+async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depends(get_current_user)):
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
     emp = await db.employees.find_one({"id": tx.get('employee_id')}, {"_id": 0})
-    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp)
+    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, lang)
 
     await db.transactions.update_one(
         {"id": transaction_id},
