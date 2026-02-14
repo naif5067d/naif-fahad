@@ -58,7 +58,8 @@ export const translations = {
       selectLocation: "Select work location", insideLocation: "Inside Location",
       outsideLocation: "Outside Location", distance: "Distance",
       gpsStatus: "GPS Status", valid: "Valid", invalid: "Invalid",
-      date: "Date", time: "Time"
+      date: "Date", time: "Time", adminView: "Team Attendance",
+      daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly"
     },
     finance: {
       title: "60 Code Finance", codes: "Finance Codes", statement: "Statement",
