@@ -19,8 +19,8 @@ const STATUS_CONFIG = {
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', labelAr: 'بانتظار المشرف', labelEn: 'Pending Supervisor' },
   pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20', labelAr: 'بانتظار العمليات', labelEn: 'Pending Ops' },
   pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20', labelAr: 'بانتظار المالية', labelEn: 'Pending Finance' },
-  pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20', labelAr: 'بانتظار الرئيس', labelEn: 'Pending CEO' },
-  pending_stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20', labelAr: 'بانتظار ستاس', labelEn: 'Pending STAS' },
+  pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20', labelAr: 'بانتظار CEO', labelEn: 'Pending CEO' },
+  stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20', labelAr: 'STAS', labelEn: 'STAS' },
   pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20', labelAr: 'بانتظار الموظف', labelEn: 'Pending Employee' },
 };
 
