@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { FileText, CalendarDays, Users, Shield, DollarSign, Clock, ChevronRight, Briefcase, UserCheck, MapPin, Wallet, Settings2 } from 'lucide-react';
+import { formatGregorianHijri } from '@/lib/dateUtils';
 import api from '@/lib/api';
 
 const STAT_CONFIG = {
