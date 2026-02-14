@@ -25,6 +25,20 @@ export default function AttendancePage() {
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
   const isEmployee = ['employee', 'supervisor'].includes(user?.role);
 
+  // Fetch employee's assigned work locations
+  const fetchAssignedLocations = async (empId) => {
+    try {
+      const res = await api.get(`/api/work-locations/employee/${empId}`);
+      setAssignedLocations(res.data || []);
+      // Set first location as default if available
+      if (res.data?.length > 0 && !workLocation) {
+        setWorkLocation(res.data[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to fetch assigned locations:', err);
+    }
+  };
+
   const fetchData = () => {
     if (isEmployee || isAdmin) {
       api.get('/api/attendance/today').then(r => setToday(r.data)).catch(() => {});
