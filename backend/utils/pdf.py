@@ -1,12 +1,12 @@
 """
 Professional PDF Generator for DAR AL CODE HR OS
-Redesigned with professional layout, proper alignment, and clean formatting.
+With QR Signatures, Language Support (Arabic/English), and Barcode for STAS
 """
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image, KeepTogether
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image as RLImage
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
-from reportlab.lib.units import mm, cm
+from reportlab.lib.units import mm
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -16,8 +16,8 @@ import hashlib
 import uuid
 import io
 import os
+import qrcode
 from datetime import datetime, timezone
-from database import db
 
 # Register Arabic fonts
 FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
@@ -29,9 +29,9 @@ except Exception:
     ARABIC_FONT_AVAILABLE = False
 
 # Brand Colors
-NAVY_DARK = colors.Color(0.12, 0.23, 0.37)  # #1E3A5F
-LAVENDER = colors.Color(0.65, 0.55, 0.98)   # #A78BFA
-GRAY_LIGHT = colors.Color(0.96, 0.96, 0.97)  # #F5F5F7
+NAVY_DARK = colors.Color(0.12, 0.23, 0.37)
+LAVENDER = colors.Color(0.65, 0.55, 0.98)
+GRAY_LIGHT = colors.Color(0.96, 0.96, 0.97)
 GRAY_BORDER = colors.Color(0.88, 0.88, 0.90)
 TEXT_DARK = colors.Color(0.04, 0.04, 0.04)
 
@@ -51,11 +51,13 @@ def process_arabic_text(text):
     return text_str
 
 
-def safe_arabic(text):
-    """Safely process any text that might contain Arabic"""
+def safe_text(text, lang='ar'):
+    """Safely process text based on language"""
     if not text:
         return '-'
-    return process_arabic_text(str(text))
+    if lang == 'ar':
+        return process_arabic_text(str(text))
+    return str(text)
 
 
 def format_saudi_time(iso_timestamp):
@@ -64,15 +66,12 @@ def format_saudi_time(iso_timestamp):
         return '-'
     try:
         if isinstance(iso_timestamp, str):
-            # Parse ISO format
             if 'T' in iso_timestamp:
                 dt = datetime.fromisoformat(iso_timestamp.replace('Z', '+00:00'))
             else:
                 return iso_timestamp[:19]
         else:
             dt = iso_timestamp
-        
-        # Add 3 hours for Saudi timezone
         from datetime import timedelta
         saudi_time = dt + timedelta(hours=3)
         return saudi_time.strftime('%Y-%m-%d %H:%M')
@@ -80,23 +79,175 @@ def format_saudi_time(iso_timestamp):
         return str(iso_timestamp)[:16] if iso_timestamp else '-'
 
 
-async def get_company_settings():
-    """Get company branding settings from database"""
-    settings = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
-    if settings:
-        return settings
-    # Default settings
-    return {
-        "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
-        "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
-        "slogan_en": "Engineering Excellence",
-        "slogan_ar": "التميز الهندسي",
-        "logo_url": None
+def generate_qr_code(data, size=25):
+    """Generate QR code as ReportLab Image"""
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=3, border=1)
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    return RLImage(buffer, width=size*mm, height=size*mm)
+
+
+def generate_barcode_text(code):
+    """Generate a simple text barcode representation"""
+    return f"|||{code}|||"
+
+
+# Translations
+TRANSLATIONS = {
+    'ar': {
+        'company_name': 'شركة دار الكود للاستشارات الهندسية',
+        'document_title': 'مستند رسمي',
+        'ref_no': 'رقم المرجع',
+        'status': 'الحالة',
+        'date': 'التاريخ',
+        'integrity_id': 'معرف السلامة',
+        'employee_info': 'معلومات الموظف',
+        'name': 'الاسم',
+        'employee_no': 'رقم الموظف',
+        'department': 'القسم',
+        'transaction_details': 'تفاصيل المعاملة',
+        'timeline': 'الجدول الزمني',
+        'approval_chain': 'سلسلة الموافقات',
+        'stage': 'المرحلة',
+        'approver': 'المعتمد',
+        'note': 'ملاحظة',
+        'signature': 'التوقيع',
+        'system_signature': 'توقيع النظام',
+        'footer': 'نظام دار الكود للموارد البشرية',
+        'generated': 'تم الإنشاء',
+        'saudi_time': 'توقيت السعودية',
+        # Transaction types
+        'leave_request': 'طلب إجازة',
+        'finance_60': 'عهدة مالية',
+        'settlement': 'تسوية',
+        'contract': 'عقد',
+        'tangible_custody': 'عهدة ملموسة',
+        'tangible_custody_return': 'إرجاع عهدة',
+        'salary_advance': 'سلفة راتب',
+        'letter_request': 'طلب خطاب',
+        # Statuses
+        'executed': 'منفذة',
+        'rejected': 'مرفوضة',
+        'cancelled': 'ملغاة',
+        'pending_supervisor': 'بانتظار المشرف',
+        'pending_ops': 'بانتظار العمليات',
+        'pending_finance': 'بانتظار المالية',
+        'pending_ceo': 'بانتظار CEO',
+        'stas': 'STAS',
+        'pending_employee_accept': 'بانتظار الموظف',
+        # Stages
+        'supervisor': 'المشرف',
+        'ops': 'العمليات',
+        'finance': 'المالية',
+        'ceo': 'CEO',
+        'employee_accept': 'قبول الموظف',
+        # Events
+        'created': 'تم الإنشاء',
+        'approved': 'تمت الموافقة',
+        'reject': 'تم الرفض',
+        'escalated': 'تم التصعيد',
+        'returned': 'تم الإرجاع',
+        # Data labels
+        'leave_type': 'نوع الإجازة',
+        'start_date': 'تاريخ البداية',
+        'end_date': 'تاريخ النهاية',
+        'working_days': 'أيام العمل',
+        'reason': 'السبب',
+        'amount': 'المبلغ',
+        'description': 'الوصف',
+        'itemname': 'اسم العنصر',
+        'serial_number': 'الرقم التسلسلي',
+        'estimatedvalue': 'القيمة التقديرية',
+        'employee_name': 'اسم الموظف',
+        # Leave types
+        'annual': 'سنوية',
+        'sick': 'مرضية',
+        'emergency': 'طارئة',
+    },
+    'en': {
+        'company_name': 'DAR AL CODE ENGINEERING CONSULTANCY',
+        'document_title': 'Official Document',
+        'ref_no': 'Reference No',
+        'status': 'Status',
+        'date': 'Date',
+        'integrity_id': 'Integrity ID',
+        'employee_info': 'Employee Information',
+        'name': 'Name',
+        'employee_no': 'Employee No',
+        'department': 'Department',
+        'transaction_details': 'Transaction Details',
+        'timeline': 'Timeline',
+        'approval_chain': 'Approval Chain',
+        'stage': 'Stage',
+        'approver': 'Approver',
+        'note': 'Note',
+        'signature': 'Signature',
+        'system_signature': 'System Signature',
+        'footer': 'DAR AL CODE HR OS',
+        'generated': 'Generated',
+        'saudi_time': 'Saudi Time',
+        # Transaction types
+        'leave_request': 'Leave Request',
+        'finance_60': 'Financial Custody',
+        'settlement': 'Settlement',
+        'contract': 'Contract',
+        'tangible_custody': 'Tangible Custody',
+        'tangible_custody_return': 'Custody Return',
+        'salary_advance': 'Salary Advance',
+        'letter_request': 'Letter Request',
+        # Statuses
+        'executed': 'Executed',
+        'rejected': 'Rejected',
+        'cancelled': 'Cancelled',
+        'pending_supervisor': 'Pending Supervisor',
+        'pending_ops': 'Pending Ops',
+        'pending_finance': 'Pending Finance',
+        'pending_ceo': 'Pending CEO',
+        'stas': 'STAS',
+        'pending_employee_accept': 'Pending Employee',
+        # Stages
+        'supervisor': 'Supervisor',
+        'ops': 'Operations',
+        'finance': 'Finance',
+        'ceo': 'CEO',
+        'employee_accept': 'Employee Accept',
+        # Events
+        'created': 'Created',
+        'approved': 'Approved',
+        'reject': 'Rejected',
+        'escalated': 'Escalated',
+        'returned': 'Returned',
+        # Data labels
+        'leave_type': 'Leave Type',
+        'start_date': 'Start Date',
+        'end_date': 'End Date',
+        'working_days': 'Working Days',
+        'reason': 'Reason',
+        'amount': 'Amount',
+        'description': 'Description',
+        'itemname': 'Item Name',
+        'serial_number': 'Serial Number',
+        'estimatedvalue': 'Estimated Value',
+        'employee_name': 'Employee Name',
+        # Leave types
+        'annual': 'Annual',
+        'sick': 'Sick',
+        'emergency': 'Emergency',
     }
+}
 
 
-def generate_transaction_pdf(transaction: dict, employee: dict = None, company_settings: dict = None) -> tuple:
-    """Generate professional PDF with clean layout and proper Arabic support"""
+def t(key, lang='ar'):
+    """Get translation for key"""
+    return TRANSLATIONS.get(lang, TRANSLATIONS['en']).get(key, key)
+
+
+def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str = 'ar') -> tuple:
+    """Generate professional PDF with QR signatures and language support"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, 
@@ -107,52 +258,50 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
         rightMargin=15*mm
     )
     
-    # Fonts
-    base_font = 'NotoArabic' if ARABIC_FONT_AVAILABLE else 'Helvetica'
-    bold_font = 'NotoArabicBold' if ARABIC_FONT_AVAILABLE else 'Helvetica-Bold'
+    # Fonts based on language
+    if lang == 'ar' and ARABIC_FONT_AVAILABLE:
+        base_font = 'NotoArabic'
+        bold_font = 'NotoArabicBold'
+        alignment = TA_RIGHT
+    else:
+        base_font = 'Helvetica'
+        bold_font = 'Helvetica-Bold'
+        alignment = TA_LEFT
     
     # Styles
-    styles = getSampleStyleSheet()
-    
-    title_en_style = ParagraphStyle(
-        'TitleEN', 
-        fontSize=14, 
-        fontName='Helvetica-Bold',
+    title_style = ParagraphStyle(
+        'Title', 
+        fontSize=16, 
+        fontName=bold_font,
         textColor=NAVY_DARK,
         alignment=TA_CENTER,
-        spaceAfter=2*mm
+        spaceAfter=3*mm
     )
     
-    title_ar_style = ParagraphStyle(
-        'TitleAR', 
+    section_style = ParagraphStyle(
+        'Section', 
         fontSize=12, 
         fontName=bold_font,
         textColor=NAVY_DARK,
-        alignment=TA_CENTER,
-        spaceAfter=4*mm
-    )
-    
-    section_title_style = ParagraphStyle(
-        'SectionTitle', 
-        fontSize=11, 
-        fontName=bold_font,
-        textColor=NAVY_DARK,
         spaceBefore=8*mm,
-        spaceAfter=4*mm
+        spaceAfter=4*mm,
+        alignment=alignment
     )
     
     label_style = ParagraphStyle(
         'Label', 
         fontSize=9, 
         fontName=base_font,
-        textColor=colors.Color(0.4, 0.4, 0.4)
+        textColor=colors.Color(0.4, 0.4, 0.4),
+        alignment=alignment
     )
     
     value_style = ParagraphStyle(
         'Value', 
         fontSize=10, 
         fontName=bold_font,
-        textColor=TEXT_DARK
+        textColor=TEXT_DARK,
+        alignment=alignment
     )
     
     footer_style = ParagraphStyle(
@@ -166,84 +315,47 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
     elements = []
     integrity_id = str(uuid.uuid4())[:12].upper()
     
-    # Default company settings if not provided
-    if not company_settings:
-        company_settings = {
-            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
-            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
-        }
-    
     # ═══════════════════════════════════════════════════════════════
-    # HEADER SECTION
+    # HEADER
     # ═══════════════════════════════════════════════════════════════
     
-    # Company name (English)
-    elements.append(Paragraph(company_settings.get("company_name_en", "DAR AL CODE ENGINEERING CONSULTANCY"), title_en_style))
+    company_name = safe_text(t('company_name', lang), lang)
+    elements.append(Paragraph(company_name, title_style))
     
-    # Company name (Arabic)
-    elements.append(Paragraph(safe_arabic(company_settings.get("company_name_ar", "شركة دار الكود للاستشارات الهندسية")), title_ar_style))
-    
-    # Divider line
-    divider_table = Table([['']], colWidths=[180*mm])
-    divider_table.setStyle(TableStyle([
+    # Divider
+    divider = Table([['']], colWidths=[180*mm])
+    divider.setStyle(TableStyle([
         ('LINEABOVE', (0, 0), (-1, 0), 2, NAVY_DARK),
         ('TOPPADDING', (0, 0), (-1, -1), 0),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
     ]))
-    elements.append(divider_table)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(divider)
+    elements.append(Spacer(1, 5*mm))
     
-    # Document title
-    type_translations = {
-        'leave_request': ('Leave Request', 'طلب إجازة'),
-        'finance_60': ('Financial Custody', 'عهدة مالية'),
-        'settlement': ('Settlement', 'تسوية'),
-        'contract': ('Contract', 'عقد'),
-        'tangible_custody': ('Tangible Custody', 'عهدة ملموسة'),
-        'tangible_custody_return': ('Custody Return', 'إرجاع عهدة'),
-    }
+    # Document Type Title
     tx_type = transaction.get('type', 'transaction')
-    type_en, type_ar = type_translations.get(tx_type, (tx_type.replace('_', ' ').title(), tx_type))
-    
-    doc_title_style = ParagraphStyle(
-        'DocTitle', 
-        fontSize=13, 
-        fontName=bold_font,
-        textColor=TEXT_DARK,
-        alignment=TA_CENTER,
-        spaceAfter=6*mm
-    )
-    elements.append(Paragraph(f"{type_en} / {safe_arabic(type_ar)}", doc_title_style))
+    doc_title = safe_text(t(tx_type, lang), lang)
+    doc_title_style = ParagraphStyle('DocTitle', fontSize=14, fontName=bold_font, textColor=TEXT_DARK, alignment=TA_CENTER, spaceAfter=5*mm)
+    elements.append(Paragraph(doc_title, doc_title_style))
     
     # ═══════════════════════════════════════════════════════════════
     # REFERENCE INFO BOX
     # ═══════════════════════════════════════════════════════════════
     
-    status_translations = {
-        'pending_supervisor': ('Pending Supervisor', 'بانتظار المشرف'),
-        'pending_ops': ('Pending Ops', 'بانتظار العمليات'),
-        'pending_finance': ('Pending Finance', 'بانتظار المالية'),
-        'pending_ceo': ('Pending CEO', 'بانتظار الرئيس'),
-        'pending_stas': ('Pending STAS', 'بانتظار ستاس'),
-        'executed': ('Executed', 'منفذة'),
-        'rejected': ('Rejected', 'مرفوضة'),
-    }
-    
     tx_status = transaction.get('status', 'pending')
-    status_en, status_ar = status_translations.get(tx_status, (tx_status.replace('_', ' ').title(), tx_status))
+    status_label = safe_text(t(tx_status, lang), lang)
     
-    # Reference info table with clean layout
     ref_data = [
         [
-            Paragraph(f"<b>Ref No / {safe_arabic('رقم المرجع')}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('ref_no', lang), lang)}</b>", label_style),
             Paragraph(transaction.get('ref_no', 'N/A'), value_style),
-            Paragraph(f"<b>Status / {safe_arabic('الحالة')}</b>", label_style),
-            Paragraph(f"{status_en} / {safe_arabic(status_ar)}", value_style),
+            Paragraph(f"<b>{safe_text(t('status', lang), lang)}</b>", label_style),
+            Paragraph(status_label, value_style),
         ],
         [
-            Paragraph(f"<b>Date / {safe_arabic('التاريخ')}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('date', lang), lang)}</b>", label_style),
             Paragraph(format_saudi_time(transaction.get('created_at', '')), value_style),
-            Paragraph(f"<b>ID / {safe_arabic('المعرف')}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('integrity_id', lang), lang)}</b>", label_style),
             Paragraph(integrity_id, value_style),
         ],
     ]
@@ -262,24 +374,22 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
     elements.append(ref_table)
     
     # ═══════════════════════════════════════════════════════════════
-    # EMPLOYEE INFO SECTION
+    # EMPLOYEE INFO
     # ═══════════════════════════════════════════════════════════════
     
     if employee:
-        elements.append(Paragraph(f"Employee Information / {safe_arabic('معلومات الموظف')}", section_title_style))
+        elements.append(Paragraph(safe_text(t('employee_info', lang), lang), section_style))
         
-        emp_name = employee.get('full_name', 'N/A')
-        emp_name_ar = employee.get('full_name_ar', '')
+        emp_name = employee.get('full_name_ar' if lang == 'ar' else 'full_name', employee.get('full_name', 'N/A'))
         emp_number = employee.get('employee_number', 'N/A')
-        emp_dept = employee.get('department', 'N/A')
         
         emp_data = [
             [
-                Paragraph(f"<b>Name / {safe_arabic('الاسم')}</b>", label_style),
-                Paragraph(f"{emp_name}" + (f" / {safe_arabic(emp_name_ar)}" if emp_name_ar else ""), value_style),
+                Paragraph(f"<b>{safe_text(t('name', lang), lang)}</b>", label_style),
+                Paragraph(safe_text(emp_name, lang), value_style),
             ],
             [
-                Paragraph(f"<b>Employee No / {safe_arabic('رقم الموظف')}</b>", label_style),
+                Paragraph(f"<b>{safe_text(t('employee_no', lang), lang)}</b>", label_style),
                 Paragraph(str(emp_number), value_style),
             ],
         ]
@@ -288,61 +398,37 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
         emp_table.setStyle(TableStyle([
             ('TOPPADDING', (0, 0), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         elements.append(emp_table)
     
     # ═══════════════════════════════════════════════════════════════
-    # TRANSACTION DETAILS SECTION
+    # TRANSACTION DETAILS
     # ═══════════════════════════════════════════════════════════════
     
-    elements.append(Paragraph(f"Transaction Details / {safe_arabic('تفاصيل المعاملة')}", section_title_style))
-    
-    label_translations = {
-        'leave_type': ('Leave Type', 'نوع الإجازة'),
-        'start_date': ('Start Date', 'تاريخ البداية'),
-        'end_date': ('End Date', 'تاريخ النهاية'),
-        'adjusted_end_date': ('Adjusted End Date', 'تاريخ النهاية المعدل'),
-        'working_days': ('Working Days', 'أيام العمل'),
-        'reason': ('Reason', 'السبب'),
-        'employee_name': ('Employee', 'الموظف'),
-        'employee_name_ar': ('Employee (AR)', 'الموظف'),
-        'balance_before': ('Balance Before', 'الرصيد قبل'),
-        'balance_after': ('Balance After', 'الرصيد بعد'),
-        'amount': ('Amount', 'المبلغ'),
-        'description': ('Description', 'الوصف'),
-        'asset_name': ('Asset', 'الأصل'),
-        'asset_serial': ('Serial No', 'الرقم التسلسلي'),
-    }
-    
-    leave_type_translations = {
-        'annual': ('Annual', 'سنوية'),
-        'sick': ('Sick', 'مرضية'),
-        'emergency': ('Emergency', 'طارئة'),
-    }
+    elements.append(Paragraph(safe_text(t('transaction_details', lang), lang), section_style))
     
     tx_data = transaction.get('data', {})
     details_rows = []
     
     for key, value in tx_data.items():
-        if key in ('employee_name_ar',) and 'employee_name' in tx_data:
-            continue  # Skip if already showing combined name
-            
-        label_en, label_ar = label_translations.get(key, (key.replace('_', ' ').title(), key))
+        if key in ('employee_name_ar', 'employee_name') and lang == 'ar' and 'employee_name_ar' in tx_data:
+            if key == 'employee_name':
+                continue
+        
+        label = safe_text(t(key, lang), lang)
         
         # Format value
         val_str = str(value) if value is not None else '-'
-        if key == 'leave_type' and val_str in leave_type_translations:
-            val_en, val_ar = leave_type_translations[val_str]
-            val_str = f"{val_en} / {safe_arabic(val_ar)}"
-        elif any('\u0600' <= char <= '\u06FF' for char in val_str):
-            val_str = safe_arabic(val_str)
-        elif key == 'amount':
+        if key == 'leave_type' and val_str in ('annual', 'sick', 'emergency'):
+            val_str = safe_text(t(val_str, lang), lang)
+        elif key in ('amount', 'estimatedvalue'):
             val_str = f"{val_str} SAR"
+        elif lang == 'ar' and any('\u0600' <= c <= '\u06FF' for c in val_str):
+            val_str = safe_text(val_str, lang)
         
         details_rows.append([
-            Paragraph(f"<b>{label_en} / {safe_arabic(label_ar)}</b>", label_style),
+            Paragraph(f"<b>{label}</b>", label_style),
             Paragraph(val_str, value_style),
         ])
     
@@ -351,133 +437,67 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
         details_table.setStyle(TableStyle([
             ('TOPPADDING', (0, 0), (-1, -1), 5),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 0),
             ('LINEBELOW', (0, 0), (-1, -2), 0.5, GRAY_BORDER),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         elements.append(details_table)
     
     # ═══════════════════════════════════════════════════════════════
-    # TIMELINE SECTION
-    # ═══════════════════════════════════════════════════════════════
-    
-    if transaction.get('timeline'):
-        elements.append(Paragraph(f"Transaction Timeline / {safe_arabic('الجدول الزمني')}", section_title_style))
-        
-        event_translations = {
-            'created': ('Created', 'تم الإنشاء'),
-            'approved': ('Approved', 'تمت الموافقة'),
-            'rejected': ('Rejected', 'تم الرفض'),
-            'executed': ('Executed', 'تم التنفيذ'),
-            'escalated': ('Escalated', 'تم التصعيد'),
-        }
-        
-        # Timeline header
-        timeline_header = [
-            Paragraph(f"<b>Date / {safe_arabic('التاريخ')}</b>", label_style),
-            Paragraph(f"<b>Event / {safe_arabic('الحدث')}</b>", label_style),
-            Paragraph(f"<b>By / {safe_arabic('بواسطة')}</b>", label_style),
-            Paragraph(f"<b>Note / {safe_arabic('ملاحظة')}</b>", label_style),
-        ]
-        
-        timeline_rows = [timeline_header]
-        
-        for event in transaction['timeline']:
-            event_name = event.get('event', '')
-            event_en, event_ar = event_translations.get(event_name, (event_name.title(), event_name))
-            actor_name = event.get('actor_name', '')
-            
-            # Format actor name
-            if any('\u0600' <= c <= '\u06FF' for c in actor_name):
-                actor_display = safe_arabic(actor_name)
-            else:
-                actor_display = actor_name
-            
-            note = event.get('note', '')
-            if any('\u0600' <= c <= '\u06FF' for c in note):
-                note = safe_arabic(note)
-            
-            timeline_rows.append([
-                Paragraph(format_saudi_time(event.get('timestamp', '')), value_style),
-                Paragraph(f"{event_en} / {safe_arabic(event_ar)}", value_style),
-                Paragraph(actor_display, value_style),
-                Paragraph(note[:50] + '...' if len(note) > 50 else note, value_style),
-            ])
-        
-        timeline_table = Table(timeline_rows, colWidths=[40*mm, 45*mm, 45*mm, 50*mm])
-        timeline_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), NAVY_DARK),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-            ('BOX', (0, 0), (-1, -1), 0.5, GRAY_BORDER),
-            ('LINEBELOW', (0, 0), (-1, -2), 0.5, GRAY_BORDER),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ]))
-        elements.append(timeline_table)
-    
-    # ═══════════════════════════════════════════════════════════════
-    # APPROVAL CHAIN SECTION
+    # APPROVAL CHAIN WITH QR SIGNATURES
     # ═══════════════════════════════════════════════════════════════
     
     if transaction.get('approval_chain'):
-        elements.append(Paragraph(f"Approval Chain / {safe_arabic('سلسلة الموافقات')}", section_title_style))
+        elements.append(Paragraph(safe_text(t('approval_chain', lang), lang), section_style))
         
-        stage_translations = {
-            'supervisor': ('Supervisor', 'المشرف'),
-            'ops': ('Operations', 'العمليات'),
-            'finance': ('Finance', 'المالية'),
-            'ceo': ('CEO', 'الرئيس'),
-            'stas': ('STAS', 'ستاس'),
-        }
-        
-        approval_status_translations = {
-            'approve': ('Approved', 'موافق'),
-            'approved': ('Approved', 'موافق'),
-            'reject': ('Rejected', 'مرفوض'),
-            'rejected': ('Rejected', 'مرفوض'),
-            'pending': ('Pending', 'معلق'),
-        }
-        
+        # Header
         approval_header = [
-            Paragraph(f"<b>Stage / {safe_arabic('المرحلة')}</b>", label_style),
-            Paragraph(f"<b>Approver / {safe_arabic('المعتمد')}</b>", label_style),
-            Paragraph(f"<b>Status / {safe_arabic('الحالة')}</b>", label_style),
-            Paragraph(f"<b>Date / {safe_arabic('التاريخ')}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('stage', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('approver', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('status', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('date', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('signature', lang), lang)}</b>", label_style),
         ]
         
         approval_rows = [approval_header]
         
         for a in transaction['approval_chain']:
             stage = a.get('stage', '')
-            stage_en, stage_ar = stage_translations.get(stage, (stage.title(), stage))
-            status = a.get('status', '')
-            status_en, status_ar = approval_status_translations.get(status, (status.title(), status))
-            approver = a.get('approver_name', '')
+            stage_label = safe_text(t(stage, lang), lang) if stage not in ('stas', 'ceo') else stage.upper()
             
-            if any('\u0600' <= c <= '\u06FF' for c in approver):
-                approver = safe_arabic(approver)
+            status = a.get('status', '')
+            status_label = safe_text(t(status, lang), lang)
+            
+            approver = a.get('approver_name', '')
+            if lang == 'ar' and any('\u0600' <= c <= '\u06FF' for c in approver):
+                approver = safe_text(approver, lang)
+            
+            # Generate QR signature for this approval
+            sig_data = f"{transaction.get('ref_no')}|{stage}|{a.get('approver_id', '')}|{a.get('timestamp', '')}"
+            
+            # STAS gets barcode, others get QR
+            if stage == 'stas':
+                sig_text = f"[{safe_text(t('system_signature', lang), lang)}]\n|||STAS-{integrity_id}|||"
+                sig_cell = Paragraph(sig_text, ParagraphStyle('Sig', fontSize=7, fontName=base_font, alignment=TA_CENTER))
+            else:
+                sig_cell = generate_qr_code(sig_data, size=15)
             
             approval_rows.append([
-                Paragraph(f"{stage_en} / {safe_arabic(stage_ar)}", value_style),
+                Paragraph(stage_label, value_style),
                 Paragraph(approver, value_style),
-                Paragraph(f"{status_en} / {safe_arabic(status_ar)}", value_style),
+                Paragraph(status_label, value_style),
                 Paragraph(format_saudi_time(a.get('timestamp', '')), value_style),
+                sig_cell,
             ])
         
-        approval_table = Table(approval_rows, colWidths=[45*mm, 50*mm, 45*mm, 40*mm])
+        approval_table = Table(approval_rows, colWidths=[35*mm, 40*mm, 35*mm, 35*mm, 35*mm])
         approval_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), NAVY_DARK),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTSIZE', (0, 0), (-1, -1), 8),
             ('TOPPADDING', (0, 0), (-1, -1), 6),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
             ('BOX', (0, 0), (-1, -1), 0.5, GRAY_BORDER),
             ('LINEBELOW', (0, 0), (-1, -2), 0.5, GRAY_BORDER),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -486,22 +506,76 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, company_s
         elements.append(approval_table)
     
     # ═══════════════════════════════════════════════════════════════
-    # FOOTER
+    # TIMELINE
     # ═══════════════════════════════════════════════════════════════
     
-    elements.append(Spacer(1, 15*mm))
+    if transaction.get('timeline'):
+        elements.append(Paragraph(safe_text(t('timeline', lang), lang), section_style))
+        
+        timeline_header = [
+            Paragraph(f"<b>{safe_text(t('date', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('status', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('approver', lang), lang)}</b>", label_style),
+            Paragraph(f"<b>{safe_text(t('note', lang), lang)}</b>", label_style),
+        ]
+        
+        timeline_rows = [timeline_header]
+        
+        for event in transaction['timeline']:
+            event_name = event.get('event', '')
+            event_label = safe_text(t(event_name, lang), lang)
+            
+            actor_name = event.get('actor_name', '')
+            if lang == 'ar' and any('\u0600' <= c <= '\u06FF' for c in actor_name):
+                actor_name = safe_text(actor_name, lang)
+            
+            note = event.get('note', '')
+            if lang == 'ar' and any('\u0600' <= c <= '\u06FF' for c in note):
+                note = safe_text(note, lang)
+            note = note[:40] + '...' if len(note) > 40 else note
+            
+            timeline_rows.append([
+                Paragraph(format_saudi_time(event.get('timestamp', '')), value_style),
+                Paragraph(event_label, value_style),
+                Paragraph(actor_name, value_style),
+                Paragraph(note, value_style),
+            ])
+        
+        timeline_table = Table(timeline_rows, colWidths=[40*mm, 40*mm, 45*mm, 55*mm])
+        timeline_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), NAVY_DARK),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ('BOX', (0, 0), (-1, -1), 0.5, GRAY_BORDER),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.5, GRAY_BORDER),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ]))
+        elements.append(timeline_table)
     
-    # Footer divider
-    footer_divider = Table([['']], colWidths=[180*mm])
-    footer_divider.setStyle(TableStyle([
+    # ═══════════════════════════════════════════════════════════════
+    # FOOTER WITH DOCUMENT QR
+    # ═══════════════════════════════════════════════════════════════
+    
+    elements.append(Spacer(1, 10*mm))
+    
+    # Document verification QR
+    doc_qr_data = f"DAR-AL-CODE|{transaction.get('ref_no')}|{integrity_id}|{transaction.get('status')}"
+    doc_qr = generate_qr_code(doc_qr_data, size=20)
+    
+    footer_table = Table([
+        [doc_qr, Paragraph(f"{safe_text(t('footer', lang), lang)}<br/>{safe_text(t('integrity_id', lang), lang)}: {integrity_id}<br/>{safe_text(t('generated', lang), lang)}: {format_saudi_time(datetime.now(timezone.utc).isoformat())} ({safe_text(t('saudi_time', lang), lang)})", footer_style)]
+    ], colWidths=[25*mm, 155*mm])
+    footer_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('LINEABOVE', (0, 0), (-1, 0), 0.5, GRAY_BORDER),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
     ]))
-    elements.append(footer_divider)
-    elements.append(Spacer(1, 3*mm))
-    
-    # Footer text
-    footer_text = f"DAR AL CODE HR OS | Document ID: {integrity_id} | Generated: {format_saudi_time(datetime.now(timezone.utc).isoformat())} (Saudi Time)"
-    elements.append(Paragraph(footer_text, footer_style))
+    elements.append(footer_table)
     
     # Build PDF
     doc.build(elements)
