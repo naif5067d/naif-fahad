@@ -172,23 +172,29 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
-      {/* Timeline */}
+      {/* Timeline - Professional Vertical */}
       <div className="border border-border rounded-lg p-4 md:p-6">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('transactions.timeline')}</h2>
-        <div className="space-y-4">
-          {(tx.timeline || []).map((ev, i) => (
-            <div key={i} className="flex gap-3" data-testid={`timeline-event-${i}`}>
-              <div className="flex flex-col items-center">
-                {getTimelineIcon(ev.event)}
-                {i < tx.timeline.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
-              </div>
-              <div className="flex-1 pb-4">
-                <p className="text-sm font-medium">{getTranslatedEvent(ev.event)}</p>
-                <p className="text-xs text-muted-foreground">{ev.actor_name} - {ev.timestamp?.slice(0, 19)}</p>
-                {ev.note && <p className="text-xs text-muted-foreground mt-0.5">{ev.note}</p>}
-              </div>
-            </div>
-          ))}
+        <div className="relative ms-2">
+          <div className="absolute top-0 bottom-0 start-[7px] w-px bg-border" />
+          <div className="space-y-0">
+            {(tx.timeline || []).map((ev, i) => {
+              const dotColor = ev.event === 'created' ? 'bg-slate-400' : ev.event === 'approved' ? 'bg-emerald-500' : ev.event === 'rejected' ? 'bg-red-500' : ev.event === 'executed' ? 'bg-purple-600' : ev.event === 'escalated' ? 'bg-orange-500' : 'bg-blue-400';
+              return (
+                <div key={i} className="relative flex gap-4 pb-4" data-testid={`timeline-event-${i}`}>
+                  <div className={`relative z-10 w-[15px] h-[15px] rounded-full border-2 border-background ${dotColor} flex-shrink-0 mt-0.5`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-semibold">{getTranslatedEvent(ev.event)}</p>
+                      <time className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{ev.timestamp?.slice(0, 16).replace('T', ' ')}</time>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{ev.actor_name}</p>
+                    {ev.note && <p className="text-xs text-muted-foreground/70 mt-0.5 italic">{ev.note}</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
