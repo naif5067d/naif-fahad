@@ -17,7 +17,7 @@ const STATUS_CONFIG = {
   pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20' },
   pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20' },
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
-  pending_stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20' },
+  stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20' },
   pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20' },
   approve: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
   approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
