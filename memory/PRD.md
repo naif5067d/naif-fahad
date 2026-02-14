@@ -66,6 +66,36 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
   - Requires double confirmation ("DELETE ALL")
 - **Maintenance Log:** Tracks all archive/purge/restore operations
 
+### Phase 14: System Maintenance V2 + Date Format Audit ✅ (2026-02-14)
+
+**P0 Changes - System Maintenance Enhancements:**
+- **Total Storage Size:** Added `total_size_kb`, `transaction_size_kb`, `protected_size_kb` to storage-info API
+- **Upload & Restore:** New endpoint `POST /api/maintenance/archives/upload` accepts JSON archive files
+  - Validates file type (.json only)
+  - Parses and restores all collections from uploaded archive
+  - Creates restoration record in `system_archives`
+  - Logs restoration operation in `maintenance_log`
+- **UI/UX Overhaul:** Complete redesign of System Maintenance page
+  - Dark gradient storage summary card with 5 metrics
+  - Three action cards: Create Archive (blue), Upload/Restore (green), Purge (red)
+  - Collections detail split view (transactions vs protected)
+  - Enhanced archives list with download/restore/delete buttons
+
+**P1 Changes - System-Wide Date Format Audit:**
+- **New Date Utility:** `formatGregorianHijri()` and `formatGregorianHijriDateTime()` in `/lib/dateUtils.js`
+  - Format: `DD/MM/YYYY (DD/MM/YYYY AH هـ)` e.g., `21/02/2026 (09/04/1447 AH هـ)`
+  - Returns `{primary, secondary, combined}` for flexibility
+- **Pages Updated:**
+  - `TransactionsPage.js` - Transaction timestamps
+  - `TransactionDetailPage.js` - Transaction created_at and approval timestamps
+  - `LeavePage.js` - Holiday dates
+  - `DashboardPage.js` - Next holiday date
+  - `ContractsPage.js` - Contract start dates
+  - `FinancePage.js` - Finance statement dates
+  - `AttendancePage.js` - Attendance history dates
+  - `FinancialCustodyPage.js` - Timeline event timestamps
+  - `SystemMaintenancePage.js` - Archive and log timestamps
+
 **IMPORTANT RULE (من هنا للأبد):**
 - أي Collection جديدة يجب إضافتها في `/app/backend/routes/maintenance.py`
 - في `TRANSACTION_COLLECTIONS` (قابلة للحذف) أو `PROTECTED_COLLECTIONS` (محمية)
