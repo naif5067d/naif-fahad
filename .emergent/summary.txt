@@ -2,102 +2,85 @@
 The user wants to build DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system.
 
 **LATEST USER REQUIREMENTS (from this and previous sessions):**
-1.  **PDF & Preview Overhaul (CRITICAL BUG):** The user is extremely dissatisfied with the generated PDFs and transaction previews. They have reported multiple issues:
-    *   Text rendering as squares (font/encoding issue).
-    *   Overlapping and misaligned text.
-    *   Poor table formatting and unprofessional layout.
-    *   The PDF **must** be a single A4 page. If it overflows, the header must repeat, but the goal is a single page.
-    *   Language must match the app's UI (full Arabic or full English).
-    *   Each approver's signature should be a **QR code**.
-    *   The final executive decision by 'STAS' must be represented by a **BARCODE**.
+1.  **PDF & Preview Overhaul (CRITICAL BUG):** The user is extremely dissatisfied with the generated PDFs. They have reported multiple issues:
+    *   **Bilingual Text Rendering:** The English PDF version is completely blank (text has disappeared). The Arabic version has reversed/garbled text, missing approver names, and missing comments.
+    *   **Layout & Branding:** The company logo and name are not appearing on the PDF.
+    *   **Signatures:** Each approver's signature should be a **QR code**. The final executive decision by 'STAS' must be represented by a **BARCODE** (line code with the transaction number below), not a QR code.
+    *   **Single Page:** The PDF **must** be a single A4 page.
 2.  **Workflow Logic Refinements (CRITICAL BUG):**
-    *   **Rejection Flow:** A rejection by any manager (e.g., CEO 'Mohammed') must send the transaction to 'STAS' for a final decision, not back to 'Operations'.
-    *   **STAS Actions:** When a transaction is rejected and sent to STAS, STAS should not see an Execute option. Instead, they should have options to Cancel the transaction or Return it to the manager who rejected it (e.g., Return to Mohammed).
-    *   **Return Flow:** When a transaction is returned to a manager, they should regain their original approval/rejection capabilities.
-    *   **STAS Approval:** When STAS approves a transaction, it should go to a preview area for final review before being marked as Executed.
+    *   **STAS Execution Error:** STAS receives a You have already taken an action on this transaction error when trying to execute a transaction that was previously returned by them, blocking the workflow.
+    *   **STAS Mirror & Cancellation:** When STAS approves a transaction, it must go to a preview area (STAS Mirror) for final review before execution. A transaction Cancelled by STAS must *not* be executed or have its contents processed (e.g., no leave deduction).
+    *   **No Double-Return:** A transaction can only be returned once. The final decision is to execute or cancel.
 3.  **UI/UX & Data Display:**
-    *   **Transactions Page:** Must have a professional, clean, banking-style UI with a large, clear timeline component.
-    *   **Time & Date (CRITICAL BUG):**
-        *   All times must be displayed in the Saudi Arabia timezone (). No UTC.
-        *   Dates must be Gregorian (primary) with Hijri (secondary). This must be fixed across the entire application (e.g., Attendance page).
-    *   **Language:** The UI must be fully Arabic, with no mixed English text. The name 'STAS' should remain 'STAS' in both languages.
+    *   **Time & Date:** All times must be displayed in the Saudi Arabia timezone (). Dates must be Gregorian (primary) with Hijri (secondary). This needs a system-wide audit.
+    *   **Language:** The UI must be fully Arabic.
 4.  **Logo & Branding Management:**
-    *   Implement a system for the 'STAS' role to upload a company logo and edit the company name/slogan (in Arabic and English).
-    *   This branding must be reflected across the entire application, including all PDF documents and previews.
+    *   A system for the 'STAS' role to upload a company logo and edit the company name/slogan (in Arabic and English) has been built but is not reflected in the application (e.g., in PDFs).
 
-**User's preferred language**: **Arabic**. The user provides all feedback and requirements in Arabic. The next agent **MUST** respond in Arabic.
+**User's preferred language**: **Arabic**. The next agent **MUST** respond in Arabic.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB system. In this session, the agent fixed the critical repeat approval bug and implemented significant portions of the user's new, complex workflow requirements. This included adding new backend logic for routing rejected transactions to STAS and conditional frontend buttons for STAS to Return or Cancel transactions. A new API for company settings (logo/slogan) was created on the backend. A timezone utility () and a new  component were created and integrated into the Transactions and Details pages. QR code and barcode generation were added to the PDF utility. However, the user remains highly dissatisfied with the PDF output and has identified further logical inconsistencies in the workflow.
+The agent has made significant changes across the stack. A major effort was put into refactoring the PDF generation in  using  and  to handle Arabic text, but this introduced severe regressions: the English PDF is now blank, and the Arabic PDF is missing key data. A new frontend page () was created for the 'STAS' user to upload a logo and company name, and it is linked from the dashboard. The backend workflow logic in  was adjusted to allow STAS to act on a transaction multiple times (e.g., return then approve), but this is what is causing the already acted error on the frontend. The STAS Mirror pre-flight checks were also improved. The agent ran the testing subagent which reported 100% success, but this was a false positive as the user immediately found critical bugs in the PDF and workflow.
 
 **Last working item**:
--   Last item agent was working: Acknowledging the user's latest, most critical feedback regarding the still-unacceptable PDF quality and the refined workflow logic. The agent was about to start fixing the font rendering issue (squares), the PDF layout, and the logic for returning transactions from STAS to the original manager.
+-   Last item agent was working: Analyzing the user's latest critical feedback, including screenshots showing the broken English and Arabic PDFs, the incorrect STAS signature (QR instead of barcode), and the missing company branding. The agent correctly identified the root causes (e.g.,  breaking English text, missing data in PDF rendering, incorrect barcode logic).
 -   Status: **IN PROGRESS**
--   Agent Testing Done: N (for the very last set of changes)
--   Which testing method agent to use? **both**. Backend testing via  for the workflow and PDF generation. Frontend testing agent for the UI, language parity, and date/time displays across the app.
--   User Testing Done: N
+-   Agent Testing Done: Y (but it was a false positive and did not catch the user's reported issues)
+-   Which testing method agent to use? **both**. The backend  requires a complete overhaul. The frontend needs to be checked to ensure company branding is fetched and displayed. The entire workflow from rejection to STAS approval and execution needs end-to-end testing.
+-   User Testing Done: Y (and it FAILED)
 
 **All Pending/In progress Issue list**:
--   Issue 1: **PDF Generation and Formatting (P0, Recurring, BLOCKER)**
--   Issue 2: **Workflow Logic for STAS and Returned Transactions (P0)**
--   Issue 3: **System-Wide Date/Time Consistency (P1)**
--   Issue 4: **UI for Company Logo/Slogan Management (P2)**
--   Issue 5: **Missing CEO (Mohammed) Dashboard View (P2)**
+-   Issue 1: **PDF Generation is Unusable (P0, Recurring, BLOCKER)**
+-   Issue 2: **Workflow blocked for STAS (P0)**
+-   Issue 3: **Company Branding Not Applied (P1)**
+-   Issue 4: **Logic of Cancelled transaction needs verification (P1)**
+-   Issue 5: **System-Wide Date/Time Consistency (P2)**
+-   Issue 6: **Missing CEO (Mohammed) Dashboard View (P2)**
 
 **Issues Detail:**
--   **Issue 1: PDF Generation and Formatting**
-    -   **Attempted fixes:** The agent added  font, QR/barcode generation, and a language parameter. These were insufficient. The core problems of layout, text rendering (squares), and the single-page constraint remain.
+-   **Issue 1: PDF Generation is Unusable**
+    -   **Attempted fixes:** The agent rewrote  to use  and . This fixed some Arabic rendering but broke everything else.
     -   **Next debug checklist:**
-        1.  **Font Issue:** Investigate . The squares indicate the font () does not support all characters used. Embed a comprehensive Arabic font like  or  into the PDF generation process.
-        2.  **Layout Issue:** Re-architect  to use 's  layout tools (Frames, PageTemplates, Table styles) for a robust, non-overlapping structure instead of absolute  positioning.
-        3.  **Single-Page Constraint:** Use 's scaling or content-aware table/flowable sizes to ensure content fits on one A4 page.
-        4.  **Barcode for STAS:** Ensure the logic in  specifically generates a  barcode for the 'STAS' action, and QR codes for all other approvers.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a hard requirement from the user, who considers the current PDFs unusable for official records. Fixing it is critical for user acceptance.
+        1.  In , modify the text drawing function to be bilingual. It must detect if the text is English or Arabic and ONLY apply  and  to Arabic text.
+        2.  Fetch and draw the company logo and name from the  collection at the start of PDF generation.
+        3.  Fetch and draw the approver's  and  in the approval history table. They are currently missing.
+        4.  Implement a conditional check: if the approver is 'stas', generate a  barcode using . For all others, generate a QR code. Display the transaction ID under the barcode.
+    -   **Why fix this issue and what will be achieved with the fix?** This is the user's #1 complaint. The application is useless without professional, accurate PDF records.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** backend
--   **Issue 2: Workflow Logic for STAS and Returned Transactions**
-    -   **Attempted fixes:** The agent modified  to route rejections to STAS and added conditional Return buttons on the frontend.
+-   **Issue 2: Workflow blocked for STAS**
+    -   **Attempted fixes:** The agent modified  to allow STAS to act multiple times, but this didn't solve the frontend error.
     -   **Next debug checklist:**
-        1.  In , verify that when a transaction is Returned, its state correctly reverts, allowing the original manager (e.g., 'Mohammed') to see and act on it again with their original set of actions (approve/reject).
-        2.  Implement the user's new concept of a preview area for transactions that STAS approves before they are finally Executed. This will likely require a new status and UI modifications.
-    -   **Why fix this issue and what will be achieved with the fix?** To match the precise business logic the user requires for handling exceptions and final decisions.
+        1.  In  inside , ensure the logic correctly exempts 'stas' from the already in approval chain check *specifically for final execution actions*.
+        2.  Verify the frontend logic in  doesn't have its own separate validation that is blocking the action.
+    -   **Why fix this issue and what will be achieved with the fix?** The core workflow for handling rejected transactions is currently blocked.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
--   **Issue 3: System-Wide Date/Time Consistency**
-    -   **Attempted fixes:** Fixed on  and .
+-   **Issue 3: Company Branding Not Applied**
+    -   **Attempted fixes:** Created the API and frontend page for uploading settings.
     -   **Next debug checklist:**
-        1.  Audit all pages that display dates or times.
-        2.  Ensure every instance uses the  utility or a similar  timezone-aware method.
-        3.  Confirm the primary/secondary date format (Gregorian/Hijri) is consistent everywhere.
-    -   **Why fix this issue and what will be achieved with the fix?** Correct time logging is a critical requirement for a business operations tool.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** frontend
--   **Issue 4: UI for Company Logo/Slogan Management**
-    -   **Attempted fixes:** Backend API and database model were created.
-    -   **Next debug checklist:**
-        1.  Create a new page/component accessible to the 'STAS' role.
-        2.  Add a file upload input for the logo and text inputs for the company name/slogan (AR/EN).
-        3.  Connect this UI to the  endpoint.
-    -   **Why fix this issue and what will be achieved with the fix?** To complete the branding feature requested by the user.
+        1.  In , call the  endpoint (or query the DB directly) to retrieve the logo URL and company names.
+        2.  On the frontend, consider creating a global context (e.g., ) to fetch and provide branding info to all components, like the main header.
+    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a key user requirement for personalizing the application.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** frontend
--   **Issue 5: Missing CEO (Mohammed) Dashboard View**
-    -   **Attempted fixes:** None.
+    -   **Should Test frontend/backend/both after fix?** both
+-   **Issue 4: Logic of Cancelled transaction needs verification**
+    -   **Attempted fixes:** None. This is a clarification from the user.
     -   **Next debug checklist:**
-        1.  Create a specific dashboard view for the 'ceo' role on  that shows relevant information, such as escalated transactions.
-    -   **Why fix this issue and what will be achieved with the fix?** The CEO is a critical user but has no dedicated interface.
+        1.  Review the  endpoint.
+        2.  When the action is , confirm that the transaction status is updated to  and that no other business logic (like leave balance deduction) is triggered.
+    -   **Why fix this issue and what will be achieved with the fix?** Ensures the cancellation workflow behaves as per the user's business rules.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Should Test frontend/backend/both after fix?** backend
 
 **In progress Task List**:
--   **Task 1: PDF and Transaction Preview Overhaul (P0)**
-    -   **Where to resume:** . The immediate priority is to fix the font rendering bug (squares) and then rebuild the layout using professional  techniques to satisfy the user's quality and single-page requirements.
-    -   **What will be achieved with this?** A professional, readable, and officially usable PDF document that meets all user specifications.
+-   **Task 1: Fix PDF Generation and Workflow (P0)**
+    -   **Where to resume:** . The immediate priority is fixing the bilingual text, adding the missing data (comments, names), implementing the correct barcode for STAS, and displaying the company branding. Simultaneously, fix the STAS action validation in .
+    -   **What will be achieved with this?** A fully functional, professional PDF and an unblocked core workflow.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None.
@@ -106,89 +89,82 @@ The application is a full-stack React/FastAPI/MongoDB system. In this session, t
 -   **Upcoming Tasks:**
     -   **P1: Supervisor Assignment UI:** Add a UI for 'Sultan'/'Naif' to assign/change an employee's supervisor.
     -   **P1: Contract Deletion for STAS:** Add a delete option for contracts, visible only to the 'STAS' role.
-    -   **P2: Implement New Transaction Types:** Add specific leave/attendance request types (e.g., Marriage Leave, Exam Leave).
+    -   **P2: Implement New Transaction Types:** Add specific leave/attendance request types.
+    -   **P2: CEO Dashboard:** Create a dedicated dashboard view for the 'ceo' role.
 -   **Future Tasks:**
     -   Full implementation of contract versioning and snapshots.
     -   Build out the remaining ledgers (Warning, Asset).
 
 **Completed work in this session**
--   **Approval Workflow Bug Fix:** Fixed the critical bug allowing users to approve/reject the same transaction multiple times.
--   **Advanced Workflow Implementation:**
-    -   Implemented logic for routing rejected transactions to STAS.
-    -   Added conditional frontend actions for STAS (Return to..., Cancel).
--   **PDF Enhancements:** Integrated  and  to add dynamic signatures to PDFs based on approver role.
--   **Backend API for Branding:** Created a new endpoint and database schema () to manage company logo and name/slogan.
--   **UI & Component Creation:**
-    -   Created a new reusable  component.
-    -   Created a timezone-aware  utility for consistent  time display.
--   **Bug Fixes:**
-    -   Corrected date/time display on the Attendance and Transactions pages to show Gregorian (primary) and Hijri (secondary).
-    -   Implemented language parity in the PDF generation endpoint ().
+-   **Company Settings Feature:** Created a new page () and API for STAS to manage the company logo and name.
+-   **Workflow Adjustments:** Modified  to handle STAS re-approval, and fixed pre-check logic on .
+-   **PDF Arabic Support (Partial):** Integrated  and  into .
+-   **UI Enhancements:** Added a link to Company Settings on the STAS dashboard.
+-   **Bug Fix:** Hid complex  fields from the transaction detail view.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Font Rendering in PDF:** User repeatedly complained about squares instead of text. This points to a critical font/encoding problem in .
--   **Issue 2: PDF Layout Quality:** User has consistently rejected the PDF layout as unprofessional and cluttered.
--   **Issue 3: Missing CEO Dashboard:** A pending task from the previous session that has not been addressed.
+-   **Issue 1: PDF Quality:** User has consistently rejected the PDF layout, font rendering, and data accuracy. This remains the primary unsolved issue.
+-   **Issue 2: Missing CEO Dashboard:** A pending task from the previous session that has not been addressed.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Poor PDF Formatting.
--   **Recurrence count:** High (mentioned in almost every user interaction this session).
+-   **Recurrence count:** Very High (The central point of failure in this and previous sessions).
 -   **Status:** IN PROGRESS (and is the main blocker).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, Python, MongoDB (), , , .
+-   **Backend:** FastAPI, Python, MongoDB, , , , , .
 -   **Frontend:** React.js, Tailwind CSS, shadcn/ui, , .
--   **Key Logic:** Complex state machine for transaction approvals located in .
+-   **Key Logic:** Complex state machine for transaction approvals in . Bilingual PDF generation in .
 
 **key DB schema**
 -   : {..., status, history: [{actor, action, timestamp}], ...}
--   **New:** : {logo_url, company_name_ar, company_name_en, slogan_ar, slogan_en}
+-   : {logo_url, company_name_ar, company_name_en, slogan_ar, slogan_en}
 
 **changes in tech stack**
--   Added  dependency to the backend.
+-   No new dependencies installed, but  and  are now critical for PDF generation.
 
 **All files of reference**
--   : **NEEDS COMPLETE REWORK.** This is the source of the user's main complaint.
--   : Contains the complex business logic for transactions. Needs verification for the return flow.
--   : Contains the latest frontend logic for STAS actions. Should be merged into the original file.
--   : Location of the previously fixed date/time bug.
--   : The utility for correct date/time display.
+-   : **NEEDS IMMEDIATE, CAREFUL REWORK.** Source of most user complaints.
+-   : Contains the validation logic () blocking STAS.
+-   : The new UI for branding.
+-   : Frontend for transaction actions.
 
 **Areas that need refactoring**:
--    must be merged back into  to avoid code duplication and confusion.
--    needs a complete architectural refactoring to use 's  flowables instead of hardcoded  drawing commands.
+-    must be refactored to be robustly bilingual and data-complete. The current implementation is brittle.
 
 **key api endpoints**
--   : Generates the transaction PDF.
--   : The core endpoint for all workflow actions (approve, reject, return, etc.).
--   , : New endpoints for managing company branding.
+-   : Generates the (currently broken) PDF.
+-   : Core endpoint for workflow actions.
+-   , : Endpoints for managing company branding.
 
 **Critical Info for New Agent**
--   **USER SATISFACTION IS THE PRIORITY:** The user is technically savvy and has a very specific vision. They are extremely dissatisfied with the PDF quality. **You must solve the PDF font and layout issues before moving on to anything else.**
--   **PDF FONT BUG:** The squares in the PDF mean the current font does not support the characters. You must find and embed a comprehensive Arabic font (e.g., Amiri, Noto) in .
--   **WORKFLOW IS COMPLEX:** The transaction workflow has many specific rules. Read the user's latest feedback carefully. When STAS returns a transaction to a manager, that manager must regain their original action permissions.
--   **DO NOT CHANGE THE UI STYLE:** The user has approved the general UI direction. The task is to refine it, fix bugs, and add features, not to redesign it again.
--   **TEST THOROUGHLY:** Test every workflow permutation and check the generated PDF for every change.
+-   **PRIORITIZE THE PDF:** The user is extremely unhappy. Do not work on anything else until the PDF is perfect according to all user requirements: correct bilingual text, all data visible, company branding present, and the correct signature types (QR vs. Barcode for STAS).
+-   **TEST MANUALLY:** The automated tests gave a false positive. After every change, manually generate both the Arabic and English PDFs and verify every single element. Test the full STAS workflow (reject, return, approve, execute) as the STAS user.
+-   **USER'S WORKFLOW IS LAW:**
+    -   STAS approval -> STAS Mirror page.
+    -   From Mirror -> Execute button performs final action.
+    -   STAS cancel -> Transaction is dead, no side effects.
+    -   STAS barcode is , not a QR code.
 
 **documents and test reports created in this job**
 -    (updated)
--    (Note: Many critical changes were made *after* this test run).
+-    (Gave a false positive, do not trust its results for the PDF).
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (LATEST):** Re-iterates that the PDF and preview quality are unacceptable (hidden/moving text, font squares). Specifies the single A4 page rule. Clarifies the return logic: when returned, managers should get their original actions back. Confirms STAS signature should be a barcode.
--   **Agent:** Acknowledges the user's final list of critical fixes.
--   **User:** Provides very detailed feedback on the STAS workflow, PDF quality, QR/barcode requirements, and the need for strict language parity between the app UI and the generated PDF.
--   **Agent:** Deploys a series of fixes for the workflow, date formatting, and UI display.
--   **User:** Reports a new bug on the Attendance page date format and clarifies the rejection workflow (CEO reject -> STAS).
--   **Agent:** Fixes the primary approval workflow bug (repeat actions) and calls the testing agent.
+-   **User (LATEST):** Provided screenshots of the broken PDFs. Pointed out that the English PDF is blank, the Arabic PDF is missing approver names and comments, the STAS signature is a QR code instead of a barcode, and the company logo/name is not being used. Questioned the logic for cancelled transactions.
+-   **Agent:** Analyzed the screenshots and correctly identified the technical reasons for the PDF and workflow failures.
+-   **User:** Stated that the tests passed but showed screenshots of multiple new, critical errors.
+-   **Agent:** Finished a round of fixes, ran the testing agent, and declared 100% success right before the user reported the new issues.
+-   **User:** Clarified the logic for STAS: Mirror is a final review area, execution happens from there, and a transaction can't be returned twice.
+-   **Agent:** Acknowledged understanding of the complex workflow and PDF issues.
 
 **Project Health Check:**
 -   **Broken:**
-    -   **PDF Generation:** Fails on font rendering, layout quality, and content consistency. This is a P0 blocker.
-    -   **Workflow Logic:** The full return and STAS approve logic is incomplete.
+    -   **PDF Generation:** Fails on almost every requirement (bilingual text, data completeness, signature types, branding). **P0 BLOCKER**.
+    -   **Core Workflow:** STAS is blocked from executing transactions.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
@@ -197,16 +173,16 @@ The application is a full-stack React/FastAPI/MongoDB system. In this session, t
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, but before the latest round of critical workflow changes and user feedback. A new, full test run is required after fixing the current P0 issues.
+-   **Testing agent used after significant changes:** YES. However, it produced a **false positive**. The tests were not comprehensive enough to catch the visual and data-related bugs in the PDF reported by the user.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
 -   **Test files created:** None.
--   **Known regressions:** The PDF quality has been a persistent failure point throughout the session.
+-   **Known regressions:** PDF generation is significantly worse than before the latest changes (e.g., the English PDF is now completely blank).
 
 **Credentials to test flow:**
 Use the user-switcher dropdown in the app's header. Roles include , , , , , and  (CEO). No passwords required.
 
 **What agent forgot to execute**
--   Failed to resolve the user's primary complaint about PDF quality and font rendering, despite multiple attempts and direct feedback.
--   Did not build the frontend UI for the Company Settings/Logo management feature.
--   Did not address the pending task to create a dedicated dashboard view for the CEO role.
--   Did not run the testing agent after the final, most complex set of workflow changes, leaving the current state untested by the subagent.</analysis>
+-   The agent failed to properly test the PDF output after making major changes. A simple visual check of both language versions would have caught the regressions.
+-   The agent implemented the STAS signature incorrectly as a QR code despite the user specifying a barcode.
+-   The agent built the branding feature but forgot the final step of actually applying the uploaded logo and name to the application, specifically the PDF.
+-   The agent did not address the pending tasks of the CEO dashboard.</analysis>
