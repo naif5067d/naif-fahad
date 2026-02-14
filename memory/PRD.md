@@ -132,8 +132,8 @@ custody_ledger, custody_financial, warning_ledger, asset_ledger
 
 ### Protected Collections (محمية):
 ```
-users, employees, contracts, finance_codes, public_holidays, 
-holidays, work_locations, settings, counters
+users, employees, contracts, contracts_v2, contract_snapshots, contract_audit_log,
+finance_codes, public_holidays, holidays, work_locations, settings, counters
 ```
 
 ### System Collections:
