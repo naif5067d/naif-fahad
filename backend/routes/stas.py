@@ -329,9 +329,20 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
                 {"$set": {"status": "returned", "returned_at": now, "return_transaction_id": tx['id']}}
             )
 
+    # Fetch company branding for PDF
+    branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+    if not branding:
+        branding = {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي",
+            "logo_data": None
+        }
+
     # Generate PDF
     emp = await db.employees.find_one({"id": emp_id}, {"_id": 0}) if emp_id else None
-    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp)
+    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, 'ar', branding)
 
     timeline_event = {
         "event": "executed",
