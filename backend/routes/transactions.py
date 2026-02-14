@@ -231,12 +231,56 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
             await db.transactions.update_one({"id": transaction_id}, {"$set": update_data})
             timeline_event['note'] = f"Edited and approved. {body.note or ''}"
 
+    # STAS special actions: return_to_sultan, return_to_ceo
+    if body.action == 'return_to_sultan' and user.get('role') == 'stas':
+        await db.transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "current_stage": "ops",
+                    "status": "pending_ops",
+                    "updated_at": now
+                },
+                "$push": {"timeline": {
+                    "event": "returned",
+                    "actor": user['user_id'],
+                    "actor_name": user.get('full_name', user['username']),
+                    "timestamp": now,
+                    "note": body.note or "Returned to Sultan by STAS",
+                    "stage": "stas"
+                }, "approval_chain": approval_entry}
+            }
+        )
+        return {"message": "Returned to Sultan", "status": "pending_ops", "current_stage": "ops"}
+
+    if body.action == 'return_to_ceo' and user.get('role') == 'stas':
+        await db.transactions.update_one(
+            {"id": transaction_id},
+            {
+                "$set": {
+                    "current_stage": "ceo",
+                    "status": "pending_ceo",
+                    "updated_at": now
+                },
+                "$push": {"timeline": {
+                    "event": "returned",
+                    "actor": user['user_id'],
+                    "actor_name": user.get('full_name', user['username']),
+                    "timestamp": now,
+                    "note": body.note or "Returned to CEO by STAS",
+                    "stage": "stas"
+                }, "approval_chain": approval_entry}
+            }
+        )
+        return {"message": "Returned to CEO", "status": "pending_ceo", "current_stage": "ceo"}
+
     # Approve: move to next stage in workflow
     workflow = tx.get('workflow', [])
     next_stage = get_next_stage(workflow, stage)
 
     if next_stage:
-        next_status = f"pending_{next_stage}"
+        # For STAS stage, status is just "stas" not "pending_stas"
+        next_status = "stas" if next_stage == "stas" else f"pending_{next_stage}"
         await db.transactions.update_one(
             {"id": transaction_id},
             {
@@ -246,14 +290,15 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
         )
         return {"message": f"Approved. Moved to {next_stage}", "status": next_status, "current_stage": next_stage}
     else:
+        # Final stage is STAS - status is "stas" not "pending_stas"
         await db.transactions.update_one(
             {"id": transaction_id},
             {
-                "$set": {"status": "pending_stas", "current_stage": "stas", "updated_at": now},
+                "$set": {"status": "stas", "current_stage": "stas", "updated_at": now},
                 "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
             }
         )
-        return {"message": "Approved. Ready for STAS execution", "status": "pending_stas"}
+        return {"message": "Approved. Ready for STAS execution", "status": "stas"}
 
 
 @router.get("/{transaction_id}/pdf")
