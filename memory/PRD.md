@@ -85,9 +85,30 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 - `/api/stas/pending` - Get pending transactions for STAS
 - `/api/stas/mirror/{id}` - Get mirror data for transaction
 - `/api/stas/execute/{id}` - Execute transaction
+- `/api/maintenance/storage-info` - **NEW** Storage statistics
+- `/api/maintenance/archive-full` - **NEW** Create full system archive
+- `/api/maintenance/archives` - **NEW** List/manage archives
+- `/api/maintenance/purge-all-transactions` - **NEW** Delete all transactions
+- `/api/maintenance/logs` - **NEW** Maintenance operation logs
 
 ## Collections
-users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger, public_holidays, holidays, contracts, finance_codes, counters, work_locations, custody_ledger, custody_financial, settings
+
+### Transaction Collections (قابلة للحذف):
+```
+transactions, leave_ledger, finance_ledger, attendance_ledger, 
+custody_ledger, custody_financial, warning_ledger, asset_ledger
+```
+
+### Protected Collections (محمية):
+```
+users, employees, contracts, finance_codes, public_holidays, 
+holidays, work_locations, settings, counters
+```
+
+### System Collections:
+```
+system_archives, maintenance_log
+```
 
 ## Completed Bug Fixes (Phase 12)
 1. ✅ PDF English Version - No longer blank
