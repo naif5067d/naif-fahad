@@ -367,8 +367,16 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
 
 @router.get("/pending")
 async def get_pending_executions(user=Depends(require_roles('stas'))):
+    # Get transactions that are ready for STAS action
+    # This includes: current_stage=stas OR status=pending_stas
     txs = await db.transactions.find(
-        {"current_stage": "stas", "status": {"$nin": ["executed", "rejected"]}}, {"_id": 0}
+        {
+            "$or": [
+                {"current_stage": "stas", "status": {"$nin": ["executed", "rejected", "cancelled"]}},
+                {"status": "pending_stas"}
+            ]
+        }, 
+        {"_id": 0}
     ).sort("created_at", -1).to_list(500)
     return txs
 
