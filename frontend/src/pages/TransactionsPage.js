@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FileText, Download, Check, X as XIcon, Search, Eye, Loader2, Filter, ChevronLeft, ChevronRight, Clock, User } from 'lucide-react';
-import { formatSaudiDateTime, formatRelativeTime } from '@/lib/dateUtils';
+import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
