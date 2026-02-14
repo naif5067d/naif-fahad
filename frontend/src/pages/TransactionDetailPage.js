@@ -82,6 +82,43 @@ export default function TransactionDetailPage() {
     }
   };
 
+  // Handle STAS actions
+  const handleAction = async (action) => {
+    setActionLoading(true);
+    try {
+      await api.post(`/api/transactions/${tx.id}/action`, { action, note: '' });
+      toast.success(lang === 'ar' ? 'تم بنجاح' : 'Success');
+      // Refresh transaction
+      const res = await api.get(`/api/transactions/${id}`);
+      setTx(res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل العملية' : 'Action failed'));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Determine what actions STAS can take
+  const getStasActions = () => {
+    if (user?.role !== 'stas' || tx?.status !== 'stas') return null;
+    
+    const rejectionSource = tx?.rejection_source;
+    const ceoRejected = tx?.ceo_rejected;
+    const wasRejected = rejectionSource || ceoRejected;
+    
+    // If rejected by CEO, show return to CEO
+    // If rejected by sultan/ops, show return to sultan
+    // If not rejected (normal flow), show execute and cancel
+    
+    return {
+      canExecute: !wasRejected,
+      canCancel: true,
+      returnTo: ceoRejected ? 'ceo' : (rejectionSource === 'ops' || rejectionSource === 'supervisor') ? 'sultan' : null
+    };
+  };
+
+  const stasActions = tx ? getStasActions() : null;
+
   const getStatusStyle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   
   const getStatusLabel = (status) => {
