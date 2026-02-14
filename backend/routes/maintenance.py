@@ -572,3 +572,126 @@ async def get_collections_info(user=Depends(require_roles('stas'))):
         },
         "note": "⚠️ أي collection جديدة يجب إضافتها في ملف maintenance.py"
     }
+
+
+# ============================================================
+# رفع واستعادة أرشيف من ملف
+# ============================================================
+
+@router.post("/archives/upload")
+async def upload_and_restore_archive(
+    file: UploadFile = File(...),
+    user=Depends(require_roles('stas'))
+):
+    """
+    رفع ملف أرشيف JSON واستعادة النظام منه
+    ⚠️ تحذير: هذا يحذف جميع البيانات الحالية ويستبدلها بالأرشيف المرفوع
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # التحقق من نوع الملف
+    if not file.filename.endswith('.json'):
+        raise HTTPException(
+            status_code=400, 
+            detail="نوع الملف غير مدعوم. يجب أن يكون ملف JSON"
+        )
+    
+    try:
+        # قراءة محتوى الملف
+        content = await file.read()
+        archive_data = json.loads(content.decode('utf-8'))
+        
+        # التحقق من صحة بنية الأرشيف
+        if "collections" not in archive_data:
+            raise HTTPException(
+                status_code=400, 
+                detail="بنية الأرشيف غير صحيحة - لا يوجد حقل collections"
+            )
+        
+        results = {
+            "timestamp": now,
+            "archive_name": archive_data.get("name", file.filename),
+            "archive_id": archive_data.get("id", "UPLOADED"),
+            "restored_by": user['user_id'],
+            "file_name": file.filename,
+            "collections_restored": {},
+            "total_documents_restored": 0,
+            "status": "success"
+        }
+        
+        # حذف واستعادة كل collection
+        for coll_name in ALL_COLLECTIONS:
+            if coll_name in archive_data.get("collections", {}):
+                coll_data = archive_data["collections"][coll_name]
+                documents = coll_data.get("data", [])
+                
+                try:
+                    coll = db[coll_name]
+                    
+                    # حذف البيانات الحالية
+                    delete_result = await coll.delete_many({})
+                    
+                    # استعادة البيانات من الأرشيف
+                    if documents:
+                        await coll.insert_many(documents)
+                    
+                    results["collections_restored"][coll_name] = {
+                        "deleted": delete_result.deleted_count,
+                        "restored": len(documents)
+                    }
+                    results["total_documents_restored"] += len(documents)
+                    
+                except Exception as e:
+                    results["collections_restored"][coll_name] = {
+                        "error": str(e)
+                    }
+        
+        # حفظ سجل للأرشيف المرفوع
+        uploaded_archive_id = f"UPLOADED-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}-{str(uuid.uuid4())[:8]}"
+        
+        await db.system_archives.insert_one({
+            "id": uploaded_archive_id,
+            "name": f"Restored: {archive_data.get('name', file.filename)}",
+            "description": f"استعادة من ملف مرفوع: {file.filename}",
+            "created_at": now,
+            "created_by": user['user_id'],
+            "created_by_name": user.get('full_name', 'STAS'),
+            "stats": {
+                "total_documents": results["total_documents_restored"],
+                "collections_archived": len(results["collections_restored"])
+            },
+            "compressed_data": "",  # لا نحفظ البيانات مرة أخرى
+            "size_original_kb": round(len(content) / 1024, 2),
+            "size_compressed_kb": 0,
+            "source": "uploaded",
+            "original_archive_id": archive_data.get("id")
+        })
+        
+        # تسجيل في سجل الصيانة
+        await db.maintenance_log.insert_one({
+            "id": str(uuid.uuid4()),
+            "type": "restore",
+            "action": "restore_from_uploaded_file",
+            "archive_id": uploaded_archive_id,
+            "performed_by": user['user_id'],
+            "performed_by_name": user.get('full_name', 'STAS'),
+            "timestamp": now,
+            "details": {
+                "file_name": file.filename,
+                "original_archive_name": archive_data.get("name"),
+                "total_restored": results["total_documents_restored"]
+            }
+        })
+        
+        return results
+        
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400, 
+            detail="ملف JSON غير صالح"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"خطأ في الاستعادة: {str(e)}"
+        )
