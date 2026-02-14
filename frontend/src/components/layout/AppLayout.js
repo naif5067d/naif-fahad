@@ -220,8 +220,8 @@ export default function AppLayout({ children }) {
                       {allUsers.filter(u => u.is_active !== false).map(u => {
                         const isActive = u.id === user?.id;
                         const uRole = u.role;
-                        const uName = uRole === 'stas' ? 'STAS' : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
-                        const uRoleLabel = uRole === 'stas' ? 'STAS' : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
+                        const uName = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
+                        const uRoleLabel = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
                         return (
                           <button
                             key={u.id}
@@ -236,7 +236,7 @@ export default function AppLayout({ children }) {
                               className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 flex-shrink-0"
                               style={getRoleBadgeStyle(uRole)}
                             >
-                              {uRole === 'stas' ? 'S' : (u.full_name || 'U')[0]}
+                              {uRole === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (u.full_name || 'U')[0]}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className={`text-sm truncate ${isActive ? 'font-semibold text-primary' : 'font-medium'}`}>{uName}</p>
