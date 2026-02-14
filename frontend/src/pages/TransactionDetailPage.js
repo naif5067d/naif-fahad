@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Eye, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw } from 'lucide-react';
 import { formatSaudiDateTime, toHijri } from '@/lib/dateUtils';
 import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
@@ -28,10 +29,12 @@ const STATUS_CONFIG = {
 export default function TransactionDetailPage() {
   const { id } = useParams();
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetchTx = async () => {
