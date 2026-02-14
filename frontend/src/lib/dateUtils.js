@@ -201,4 +201,6 @@ export default {
   formatRelativeTime,
   getSaudiNow,
   toHijri,
+  formatGregorianHijri,
+  formatGregorianHijriDateTime,
 };
