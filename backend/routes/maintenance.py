@@ -41,6 +41,8 @@ TRANSACTION_COLLECTIONS = [
     "custody_financial",
     "warning_ledger",
     "asset_ledger",
+    "contract_audit_log",     # سجل تدقيق العقود
+    "contract_snapshots",     # لقطات العقود
 ]
 
 # Collections التي لا تُحذف (بيانات أساسية)
@@ -48,14 +50,15 @@ PROTECTED_COLLECTIONS = [
     "users",
     "employees", 
     "contracts",
+    "contracts_v2",           # نظام العقود الجديد
     "finance_codes",
     "public_holidays",
     "holidays",
     "work_locations",
     "settings",
     "counters",
-    "system_archives",      # أرشيفات النظام
-    "maintenance_log",      # سجل الصيانة
+    "system_archives",        # أرشيفات النظام
+    "maintenance_log",        # سجل الصيانة
 ]
 
 # كل الـ Collections في النظام (للأرشفة)
