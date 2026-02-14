@@ -281,7 +281,7 @@ export const translations = {
       pending_ceo: "بانتظار الرئيس", pending_stas: "بانتظار ستاس",
       pending_employee_accept: "بانتظار الموظف",
       executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة",
-      cancelled: "ملغاة"
+      cancelled: "ملغاة", approved: "تمت الموافقة", pending: "معلق"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
     lang: { toggle: "English", current: "العربية" },
