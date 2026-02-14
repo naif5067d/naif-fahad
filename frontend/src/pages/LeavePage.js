@@ -162,7 +162,7 @@ export default function LeavePage() {
                 <tbody className="divide-y divide-border">
                   {holidays.map(h => (
                     <tr key={h.id || h.date} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-mono text-xs">{h.date}</td>
+                      <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(h.date).combined}</td>
                       <td className="px-3 py-2 text-sm">{h.name}</td>
                       <td className="px-3 py-2 text-sm hidden sm:table-cell">{h.name_ar}</td>
                       <td className="px-3 py-2 text-xs text-muted-foreground capitalize">{h.source || 'system'}</td>
