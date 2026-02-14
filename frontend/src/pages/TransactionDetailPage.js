@@ -52,7 +52,7 @@ export default function TransactionDetailPage() {
   const downloadPdf = async () => {
     setPdfLoading(true);
     try {
-      const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
+      const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement('a');
       a.href = url;
@@ -69,7 +69,7 @@ export default function TransactionDetailPage() {
   const previewPdf = async () => {
     setPdfLoading(true);
     try {
-      const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
+      const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       window.open(url, '_blank');
     } catch {
