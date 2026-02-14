@@ -287,48 +287,6 @@ def get_labels(lang: str):
         }
 
 
-async def get_company_branding():
-    """Fetch company branding from database"""
-    try:
-        from database import db
-        settings = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
-        if settings:
-            return settings
-    except:
-        pass
-    # Return defaults
-    return {
-        "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
-        "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
-        "slogan_en": "Engineering Excellence",
-        "slogan_ar": "التميز الهندسي",
-        "logo_data": None
-    }
-
-
-def get_company_branding_sync():
-    """Synchronous version - fetch from database"""
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # We're in async context, create a task
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, get_company_branding())
-                return future.result()
-        else:
-            return asyncio.run(get_company_branding())
-    except:
-        return {
-            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
-            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
-            "slogan_en": "Engineering Excellence",
-            "slogan_ar": "التميز الهندسي",
-            "logo_data": None
-        }
-
-
 def create_logo_image(logo_data: str, max_width: int = 25, max_height: int = 15):
     """Create image from base64 logo data"""
     if not logo_data:
