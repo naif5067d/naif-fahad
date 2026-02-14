@@ -345,11 +345,15 @@ export default function TransactionDetailPage() {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Object.entries(tx.data || {})
-            .filter(([key]) => {
+            .filter(([key, value]) => {
               // Skip Arabic name if showing English
               if (key === 'employee_name_ar' && lang !== 'ar') return false;
               // Skip English name if showing Arabic with AR name available
               if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) return false;
+              // Skip internal/complex fields
+              if (key === 'sick_tier_info') return false;
+              // Skip objects (complex nested data)
+              if (typeof value === 'object' && value !== null) return false;
               return true;
             })
             .map(([key, value]) => (
