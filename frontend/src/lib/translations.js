@@ -277,8 +277,8 @@ export const translations = {
       supervisor: "المشرف",
       ops: "العمليات",
       finance: "المالية",
-      ceo: "الرئيس التنفيذي",
-      stas: "ستاس",
+      ceo: "CEO",
+      stas: "STAS",
       executed: "منفذة",
       rejected: "مرفوضة",
       employee_accept: "قبول الموظف",
@@ -288,7 +288,7 @@ export const translations = {
     status: {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
       pending_ops: "بانتظار العمليات", pending_finance: "بانتظار المالية",
-      pending_ceo: "بانتظار الرئيس", pending_stas: "بانتظار ستاس",
+      pending_ceo: "بانتظار CEO", stas: "STAS",
       pending_employee_accept: "بانتظار الموظف",
       executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة",
       cancelled: "ملغاة", approved: "تمت الموافقة", pending: "معلق"
