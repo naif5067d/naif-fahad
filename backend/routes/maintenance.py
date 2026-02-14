@@ -51,6 +51,8 @@ PROTECTED_COLLECTIONS = [
     "work_locations",
     "settings",
     "counters",
+    "system_archives",      # أرشيفات النظام
+    "maintenance_log",      # سجل الصيانة
 ]
 
 # كل الـ Collections في النظام (للأرشفة)
