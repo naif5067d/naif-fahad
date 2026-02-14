@@ -117,6 +117,12 @@ export default function TransactionsPage() {
   };
 
   const canApprove = (tx) => {
+    // Check if user has already acted on this transaction
+    const hasAlreadyActed = tx.approval_chain?.some(
+      approval => approval.approver_id === user?.id
+    );
+    if (hasAlreadyActed) return false;
+    
     const map = {
       pending_supervisor: ['supervisor', 'sultan', 'naif'],
       pending_ops: ['sultan', 'naif'],
@@ -129,6 +135,12 @@ export default function TransactionsPage() {
   };
 
   const canEscalate = (tx) => {
+    // Check if user has already acted on this transaction
+    const hasAlreadyActed = tx.approval_chain?.some(
+      approval => approval.approver_id === user?.id
+    );
+    if (hasAlreadyActed) return false;
+    
     if (user?.role !== 'sultan') return false;
     return ['pending_supervisor', 'pending_ops'].includes(tx.status);
   };
