@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CalendarDays, Plus, Badge } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -16,138 +15,169 @@ export default function LeavePage() {
   const { user } = useAuth();
   const [balance, setBalance] = useState({});
   const [holidays, setHolidays] = useState([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ leave_type: 'annual', start_date: '', end_date: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [holidayForm, setHolidayForm] = useState({ name: '', name_ar: '', date: '' });
+  const [editHoliday, setEditHoliday] = useState(null);
+  const [addHolidayOpen, setAddHolidayOpen] = useState(false);
 
-  const fetchData = () => {
-    api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
-    api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
-  };
-  useEffect(() => { fetchData(); }, []);
-
-  const isEmployee = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
+  const canRequest = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
+  const canEditHolidays = ['sultan', 'naif', 'stas'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
 
-  const handleSubmit = async () => {
-    if (!form.start_date || !form.end_date || !form.reason) {
-      toast.error(t('leave.fillAllFields'));
-      return;
-    }
+  useEffect(() => {
+    if (canRequest) api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
+    api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
+  }, [canRequest]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.start_date || !form.end_date) return toast.error(lang === 'ar' ? 'أدخل التواريخ' : 'Enter dates');
     setSubmitting(true);
     try {
       const res = await api.post('/api/leave/request', form);
-      toast.success(`${lang === 'ar' ? 'تم إنشاء طلب الإجازة' : 'Leave request created'}: ${res.data.ref_no}`);
-      setDialogOpen(false);
+      toast.success(`${lang === 'ar' ? 'تم إنشاء الطلب' : 'Request created'}: ${res.data.ref_no}`);
       setForm({ leave_type: 'annual', start_date: '', end_date: '', reason: '' });
-      fetchData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || t('common.error'));
-    } finally {
-      setSubmitting(false);
-    }
+      api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
+    } catch (err) { toast.error(err.response?.data?.detail || 'Error'); }
+    finally { setSubmitting(false); }
+  };
+
+  const handleAddHoliday = async () => {
+    if (!holidayForm.name || !holidayForm.date) return toast.error(lang === 'ar' ? 'أدخل الاسم والتاريخ' : 'Enter name and date');
+    setSubmitting(true);
+    try {
+      if (editHoliday) {
+        await api.put(`/api/leave/holidays/${editHoliday.id}`, holidayForm);
+        toast.success(lang === 'ar' ? 'تم التعديل' : 'Updated');
+      } else {
+        await api.post('/api/leave/holidays', holidayForm);
+        toast.success(lang === 'ar' ? 'تم الإضافة' : 'Added');
+      }
+      setAddHolidayOpen(false); setEditHoliday(null);
+      setHolidayForm({ name: '', name_ar: '', date: '' });
+      api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
+    } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
+    finally { setSubmitting(false); }
+  };
+
+  const handleDeleteHoliday = async (id) => {
+    try {
+      await api.delete(`/api/leave/holidays/${id}`);
+      toast.success(lang === 'ar' ? 'تم الحذف' : 'Deleted');
+      api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
+    } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
   };
 
   return (
     <div className="space-y-6" data-testid="leave-page">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('leave.title')}</h1>
-        {isEmployee && user?.employee_id && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="request-leave-btn" className="bg-primary text-primary-foreground">
-                <Plus size={16} className="me-1" /> {t('leave.requestLeave')}
+      <h1 className="text-2xl font-bold tracking-tight">{t('leave.title')}</h1>
+
+      {/* Balance cards - for employees */}
+      {canRequest && (
+        <div className="grid grid-cols-3 gap-3">
+          {Object.entries(balance).map(([type, bal]) => (
+            <div key={type} className="bg-muted/40 border border-border rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground capitalize">{t(`leave.${type}`) || type}</p>
+              <p className="text-xl font-bold font-mono">{bal?.available ?? bal?.balance ?? 0}</p>
+              <p className="text-[10px] text-muted-foreground">{t('dashboard.days')}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Leave Request Form */}
+      {canRequest && (
+        <div className="border border-border rounded-lg p-4">
+          <h2 className="text-base font-semibold mb-3">{t('leave.newRequest')}</h2>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label>{t('leave.leaveType')}</Label>
+              <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v }))}>
+                <SelectTrigger data-testid="leave-type-select"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="annual">{t('leave.annual')}</SelectItem>
+                  <SelectItem value="sick">{t('leave.sick')}</SelectItem>
+                  <SelectItem value="emergency">{t('leave.emergency')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{t('leave.reason')}</Label>
+              <Input data-testid="leave-reason" value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} />
+            </div>
+            <div>
+              <Label>{t('leave.startDate')}</Label>
+              <Input data-testid="leave-start" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
+            </div>
+            <div>
+              <Label>{t('leave.endDate')}</Label>
+              <Input data-testid="leave-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={submitting} data-testid="submit-leave" className="w-full sm:w-auto">
+                {submitting ? <Loader2 size={14} className="me-1 animate-spin" /> : null}
+                {submitting ? t('common.loading') : t('leave.submit')}
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>{t('leave.requestLeave')}</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>{t('leave.type')}</Label>
-                  <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v }))}>
-                    <SelectTrigger data-testid="leave-type-select"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="annual">{t('leave.annual')}</SelectItem>
-                      <SelectItem value="sick">{t('leave.sick')}</SelectItem>
-                      <SelectItem value="emergency">{t('leave.emergency')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>{t('leave.startDate')}</Label>
-                    <Input data-testid="leave-start-date" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
-                  </div>
-                  <div>
-                    <Label>{t('leave.endDate')}</Label>
-                    <Input data-testid="leave-end-date" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
-                  </div>
-                </div>
-                <div>
-                  <Label>{t('leave.reason')}</Label>
-                  <Input data-testid="leave-reason" value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} placeholder={t('leave.reason')} />
-                </div>
-                <Button data-testid="submit-leave" onClick={handleSubmit} className="w-full bg-primary text-primary-foreground" disabled={submitting}>
-                  {submitting ? t('common.loading') : t('leave.submit')}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+            </div>
+          </form>
+        </div>
+      )}
 
-      {/* Balance Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {['annual', 'sick', 'emergency'].map(lt => (
-          <Card key={lt} className="border border-border shadow-none" data-testid={`balance-${lt}`}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground capitalize">{t(`leave.${lt}`)}</CardTitle>
-              <CalendarDays size={18} className="text-blue-600 dark:text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{balance[lt] ?? 0} <span className="text-sm font-normal text-muted-foreground">{t('dashboard.days')}</span></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Public Holidays - Only visible to admin */}
+      {/* Public Holidays - Admin can edit, employees don't see table */}
       {isAdmin && (
-      <div>
-        <h2 className="text-lg font-semibold mb-3">{t('leave.holidays')}</h2>
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="hr-table" data-testid="holidays-table">
-              <thead>
-                <tr>
-                  <th>{t('transactions.date')}</th>
-                  <th>{t('leave.holidayName')}</th>
-                  <th className="hidden sm:table-cell">{lang === 'ar' ? 'المصدر' : 'Source'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {holidays.length === 0 ? (
-                  <tr><td colSpan={3} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
-                ) : holidays.map(h => (
-                  <tr key={h.id || h.date}>
-                    <td className="font-mono text-xs">{h.date}</td>
-                    <td className="text-sm">{lang === 'ar' ? h.name_ar : h.name}</td>
-                    <td className="hidden sm:table-cell">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        h.source === 'manual' 
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' 
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300'
-                      }`}>
-                        {h.source === 'manual' ? (lang === 'ar' ? 'يدوي' : 'Manual') : (lang === 'ar' ? 'نظام' : 'System')}
-                      </span>
-                    </td>
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold flex items-center gap-2"><CalendarDays size={18} /> {t('leave.publicHolidays')}</h2>
+            {canEditHolidays && (
+              <Dialog open={addHolidayOpen} onOpenChange={(open) => { setAddHolidayOpen(open); if (!open) { setEditHoliday(null); setHolidayForm({ name: '', name_ar: '', date: '' }); } }}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" data-testid="add-holiday-btn"><Plus size={14} className="me-1" />{lang === 'ar' ? 'إضافة إجازة' : 'Add Holiday'}</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>{editHoliday ? (lang === 'ar' ? 'تعديل الإجازة' : 'Edit Holiday') : (lang === 'ar' ? 'إضافة إجازة رسمية' : 'Add Public Holiday')}</DialogTitle></DialogHeader>
+                  <div className="space-y-3">
+                    <div><Label>{lang === 'ar' ? 'الاسم (إنجليزي)' : 'Name'}</Label><Input data-testid="holiday-name" value={holidayForm.name} onChange={e => setHolidayForm(f => ({ ...f, name: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label><Input data-testid="holiday-name-ar" value={holidayForm.name_ar} onChange={e => setHolidayForm(f => ({ ...f, name_ar: e.target.value }))} dir="rtl" /></div>
+                    <div><Label>{lang === 'ar' ? 'التاريخ' : 'Date'}</Label><Input data-testid="holiday-date" type="date" value={holidayForm.date} onChange={e => setHolidayForm(f => ({ ...f, date: e.target.value }))} /></div>
+                    <Button onClick={handleAddHoliday} disabled={submitting} data-testid="save-holiday" className="w-full">{submitting ? <Loader2 size={14} className="me-1 animate-spin" /> : null}{editHoliday ? (lang === 'ar' ? 'حفظ' : 'Save') : (lang === 'ar' ? 'إضافة' : 'Add')}</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" data-testid="holidays-table">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-900/50 text-xs border-b border-border">
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">Name</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground hidden sm:table-cell">Name (AR)</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'المصدر' : 'Source'}</th>
+                    {canEditHolidays && <th className="px-2 py-2.5 w-16"></th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {holidays.map(h => (
+                    <tr key={h.id || h.date} className="hover:bg-muted/30">
+                      <td className="px-3 py-2 font-mono text-xs">{h.date}</td>
+                      <td className="px-3 py-2 text-sm">{h.name}</td>
+                      <td className="px-3 py-2 text-sm hidden sm:table-cell">{h.name_ar}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground capitalize">{h.source || 'system'}</td>
+                      {canEditHolidays && (
+                        <td className="px-2 py-2 flex gap-1">
+                          <button onClick={() => { setEditHoliday(h); setHolidayForm({ name: h.name, name_ar: h.name_ar || '', date: h.date }); setAddHolidayOpen(true); }} className="text-muted-foreground hover:text-foreground"><Pencil size={13} /></button>
+                          <button onClick={() => handleDeleteHoliday(h.id)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );
