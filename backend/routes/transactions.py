@@ -335,7 +335,19 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
     emp = await db.employees.find_one({"id": tx.get('employee_id')}, {"_id": 0})
-    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, lang)
+    
+    # Fetch company branding for PDF
+    branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+    if not branding:
+        branding = {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي",
+            "logo_data": None
+        }
+    
+    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, lang, branding)
 
     await db.transactions.update_one(
         {"id": transaction_id},
