@@ -209,7 +209,8 @@ export const translations = {
       selectLocation: "اختر موقع العمل", insideLocation: "داخل الموقع",
       outsideLocation: "خارج الموقع", distance: "المسافة",
       gpsStatus: "حالة GPS", valid: "صالح", invalid: "غير صالح",
-      date: "التاريخ", time: "الوقت"
+      date: "التاريخ", time: "الوقت", adminView: "حضور الفريق",
+      daily: "يومي", weekly: "أسبوعي", monthly: "شهري", yearly: "سنوي"
     },
     finance: {
       title: "المالية - 60 رمز", codes: "رموز المالية", statement: "كشف الحساب",
