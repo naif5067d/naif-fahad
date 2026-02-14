@@ -177,6 +177,17 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
 
     # Handle rejection
     if body.action == 'reject':
+        # STAS rejection = Cancel the transaction
+        if stage == 'stas' and user.get('role') == 'stas':
+            await db.transactions.update_one(
+                {"id": transaction_id},
+                {
+                    "$set": {"status": "cancelled", "current_stage": "cancelled", "updated_at": now},
+                    "$push": {"timeline": {**timeline_event, "event": "cancelled"}, "approval_chain": approval_entry}
+                }
+            )
+            return {"message": "Transaction cancelled by STAS", "status": "cancelled"}
+        
         # CEO rejection → goes to STAS for final decision (execute rejection or return)
         if stage == 'ceo':
             await db.transactions.update_one(
