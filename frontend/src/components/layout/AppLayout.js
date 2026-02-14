@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, UserCircle, ChevronDown, Check, MapPin, Package, Wallet } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = {
@@ -14,6 +14,9 @@ const NAV_ITEMS = {
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
   stas: ['dashboard', 'transactions', 'stasMirror', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
 };
+
+// Mobile bottom nav - only show first 4-5 items
+const MOBILE_NAV_ITEMS = ['dashboard', 'transactions', 'leave', 'attendance'];
 
 const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
@@ -30,43 +33,22 @@ const PATHS = {
 };
 
 const ROLE_COLORS = {
-  employee: { bg: '#3B82F6', ring: '#3B82F630' },
-  supervisor: { bg: '#1D4ED8', ring: '#1D4ED830' },
-  sultan: { bg: '#F97316', ring: '#F9731630' },
-  mohammed: { bg: '#B91C1C', ring: '#B91C1C30' },
-  stas: { bg: '#7C3AED', ring: '#7C3AED30' },
-  naif: { bg: '#4D7C0F', ring: '#4D7C0F30' },
-  salah: { bg: '#0D9488', ring: '#0D948830' },
-};
-
-// Get role badge style
-const getRoleBadgeStyle = (role) => {
-  const colors = ROLE_COLORS[role] || ROLE_COLORS.employee;
-  return {
-    backgroundColor: `${colors.bg}20`,
-    color: colors.bg,
-    borderColor: colors.ring,
-  };
+  employee: { bg: '#3B82F6', text: '#3B82F6' },
+  supervisor: { bg: '#1D4ED8', text: '#1D4ED8' },
+  sultan: { bg: '#F97316', text: '#F97316' },
+  mohammed: { bg: '#DC2626', text: '#DC2626' },
+  stas: { bg: '#A78BFA', text: '#A78BFA' },
+  naif: { bg: '#22C55E', text: '#22C55E' },
+  salah: { bg: '#14B8A6', text: '#14B8A6' },
 };
 
 const ROLE_LABELS = {
-  stas: 'STAS',
-  mohammed: 'CEO',
-  sultan: 'Ops Admin',
-  naif: 'Ops Strategic',
-  salah: 'Finance',
-  supervisor: 'Supervisor',
-  employee: 'Employee',
+  stas: 'STAS', mohammed: 'CEO', sultan: 'Ops Admin',
+  naif: 'Ops Strategic', salah: 'Finance', supervisor: 'Supervisor', employee: 'Employee',
 };
-
 const ROLE_LABELS_AR = {
-  stas: 'ستاس',
-  mohammed: 'الرئيس التنفيذي',
-  sultan: 'مدير العمليات',
-  naif: 'العمليات الاستراتيجية',
-  salah: 'المالية',
-  supervisor: 'مشرف',
-  employee: 'موظف',
+  stas: 'ستاس', mohammed: 'الرئيس التنفيذي', sultan: 'مدير العمليات',
+  naif: 'العمليات الاستراتيجية', salah: 'المالية', supervisor: 'مشرف', employee: 'موظف',
 };
 
 export default function AppLayout({ children }) {
@@ -82,6 +64,8 @@ export default function AppLayout({ children }) {
 
   const role = user?.role || 'employee';
   const items = NAV_ITEMS[role] || NAV_ITEMS.employee;
+  const mobileItems = items.filter(item => MOBILE_NAV_ITEMS.includes(item) || item === 'stasMirror');
+  const colors = ROLE_COLORS[role] || ROLE_COLORS.employee;
 
   const displayName = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
   const roleLabel = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[role] : ROLE_LABELS[role]);
@@ -90,7 +74,6 @@ export default function AppLayout({ children }) {
     if (allUsers.length === 0) fetchAllUsers();
   }, [allUsers.length, fetchAllUsers]);
 
-  // Close switcher on click outside
   useEffect(() => {
     const handler = (e) => {
       if (switcherRef.current && !switcherRef.current.contains(e.target)) {
@@ -110,15 +93,19 @@ export default function AppLayout({ children }) {
     navigate('/');
   };
 
-  const navContent = (
+  // Desktop sidebar content
+  const sidebarContent = (
     <nav className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <h1 className="text-sm font-bold tracking-tight text-foreground truncate" data-testid="app-title">
+      {/* Logo/Brand */}
+      <div className="p-5 border-b border-border">
+        <h1 className="text-base font-bold tracking-tight text-foreground" data-testid="app-title">
           {t('app.name')}
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5 truncate">{t('app.company')}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t('app.company')}</p>
       </div>
-      <div className="flex-1 py-2 overflow-y-auto">
+      
+      {/* Navigation */}
+      <div className="flex-1 py-3 overflow-y-auto">
         {items.map(item => {
           const Icon = ICONS[item];
           const path = PATHS[item];
@@ -128,30 +115,30 @@ export default function AppLayout({ children }) {
               key={item}
               data-testid={`nav-${item}`}
               onClick={() => { navigate(path); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-5 py-3 text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-primary/10 text-primary font-medium border-r-2 border-primary rtl:border-r-0 rtl:border-l-2'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'bg-primary/10 text-primary border-s-3 border-primary'
+                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground border-s-3 border-transparent'
               }`}
             >
-              <Icon size={18} />
+              <Icon size={20} strokeWidth={isActive ? 2 : 1.5} />
               <span>{t(`nav.${item}`)}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Current user display at bottom */}
-      <div className="border-t border-border p-3">
-        <div className="flex items-center gap-2 px-2 py-1.5">
+      {/* User info at bottom */}
+      <div className="border-t border-border p-4">
+        <div className="flex items-center gap-3">
           <div 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1"
-            style={getRoleBadgeStyle(role)}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+            style={{ background: colors.bg }}
           >
             {role === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (user?.full_name || 'U')[0]}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
+            <p className="text-sm font-semibold truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
         </div>
@@ -162,64 +149,73 @@ export default function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border z-30">
-        {navContent}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-e border-border z-30">
+        {sidebarContent}
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile overlay sidebar */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed inset-y-0 left-0 rtl:left-auto rtl:right-0 w-64 bg-card border-r border-border rtl:border-r-0 rtl:border-l z-50">
-            <div className="absolute top-3 right-3 rtl:right-auto rtl:left-3">
-              <button onClick={() => setSidebarOpen(false)} className="p-1 rounded-md hover:bg-muted" data-testid="close-sidebar">
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <aside className="fixed inset-y-0 start-0 w-72 bg-card border-e border-border z-50 animate-fade-in">
+            <div className="absolute top-4 end-4">
+              <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-muted touch-target" data-testid="close-sidebar">
                 <X size={20} />
               </button>
             </div>
-            {navContent}
+            {sidebarContent}
           </aside>
         </div>
       )}
 
       {/* Main content */}
-      <div className="md:ms-60">
-        {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border">
-          <div className="flex items-center justify-between px-4 h-14">
-            <button className="md:hidden p-2 -ms-2 rounded-md hover:bg-muted" onClick={() => setSidebarOpen(true)} data-testid="open-sidebar">
-              <Menu size={20} />
+      <div className="md:ms-64 pb-20 md:pb-0">
+        {/* Top header */}
+        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border">
+          <div className="flex items-center justify-between px-4 md:px-6 h-16">
+            {/* Mobile menu button */}
+            <button 
+              className="md:hidden p-2 -ms-2 rounded-lg hover:bg-muted touch-target" 
+              onClick={() => setSidebarOpen(true)} 
+              data-testid="open-sidebar"
+            >
+              <Menu size={22} />
             </button>
+            
+            {/* Page title (desktop) */}
             <div className="hidden md:block" />
 
-            <div className="flex items-center gap-1.5">
+            {/* Right side controls */}
+            <div className="flex items-center gap-2">
               {/* User Switcher */}
               <div className="relative" ref={switcherRef}>
                 <button
                   data-testid="user-switcher-btn"
                   onClick={() => setSwitcherOpen(!switcherOpen)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg hover:bg-muted border border-border transition-all"
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
                 >
                   <div 
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-1"
-                    style={getRoleBadgeStyle(role)}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: colors.bg }}
                   >
                     {role === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (user?.full_name || 'U')[0]}
                   </div>
-                  <span className="hidden sm:inline text-xs font-medium truncate max-w-[100px]">{displayName}</span>
-                  <ChevronDown size={12} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
+                  <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{displayName}</span>
+                  <ChevronDown size={14} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {switcherOpen && (
-                  <div className="absolute top-full mt-1.5 end-0 w-72 bg-card border border-border rounded-xl shadow-lg overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
-                    <div className="px-3 py-2.5 border-b border-border bg-muted/30">
+                  <div className="absolute top-full mt-2 end-0 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
+                    <div className="px-4 py-3 border-b border-border bg-muted/30">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                         {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
                       </p>
                     </div>
-                    <div className="max-h-80 overflow-y-auto py-1">
+                    <div className="max-h-80 overflow-y-auto py-2">
                       {allUsers.filter(u => u.is_active !== false).map(u => {
                         const isActive = u.id === user?.id;
                         const uRole = u.role;
+                        const uColors = ROLE_COLORS[uRole] || ROLE_COLORS.employee;
                         const uName = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
                         const uRoleLabel = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
                         return (
@@ -228,21 +224,21 @@ export default function AppLayout({ children }) {
                             data-testid={`switch-to-${u.username}`}
                             onClick={() => handleSwitch(u)}
                             disabled={switching}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors ${
                               isActive ? 'bg-primary/5' : 'hover:bg-muted/60'
                             }`}
                           >
                             <div 
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 flex-shrink-0"
-                              style={getRoleBadgeStyle(uRole)}
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                              style={{ background: uColors.bg }}
                             >
                               {uRole === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (u.full_name || 'U')[0]}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm truncate ${isActive ? 'font-semibold text-primary' : 'font-medium'}`}>{uName}</p>
-                              <p className="text-[11px] text-muted-foreground">{uRoleLabel}</p>
+                              <p className={`text-sm truncate ${isActive ? 'font-bold text-primary' : 'font-medium'}`}>{uName}</p>
+                              <p className="text-xs text-muted-foreground">{uRoleLabel}</p>
                             </div>
-                            {isActive && <Check size={16} className="text-primary flex-shrink-0" />}
+                            {isActive && <Check size={18} className="text-primary flex-shrink-0" />}
                           </button>
                         );
                       })}
@@ -252,24 +248,57 @@ export default function AppLayout({ children }) {
               </div>
 
               {/* Language toggle */}
-              <button data-testid="toggle-lang" onClick={toggleLang} className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md hover:bg-muted text-muted-foreground transition-colors" title={t('lang.toggle')}>
-                <Globe size={14} />
-                <span className="hidden sm:inline">{t('lang.toggle')}</span>
+              <button 
+                data-testid="toggle-lang" 
+                onClick={toggleLang} 
+                className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                title={t('lang.toggle')}
+              >
+                <Globe size={18} />
               </button>
 
               {/* Theme toggle */}
-              <button data-testid="toggle-theme" onClick={toggleTheme} className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors" title={t('theme.toggle')}>
-                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+              <button 
+                data-testid="toggle-theme" 
+                onClick={toggleTheme} 
+                className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                title={t('theme.toggle')}
+              >
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
               </button>
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 max-w-7xl mx-auto animate-fade-in">
+        <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in main-content-mobile">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav md:hidden" data-testid="mobile-bottom-nav">
+        <div className="flex items-center justify-around px-2 py-2">
+          {mobileItems.slice(0, 5).map(item => {
+            const Icon = ICONS[item];
+            const path = PATHS[item];
+            const isActive = location.pathname === path || (item === 'dashboard' && location.pathname === '/');
+            return (
+              <button
+                key={item}
+                onClick={() => navigate(path)}
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all touch-target ${
+                  isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground'
+                }`}
+                data-testid={`mobile-nav-${item}`}
+              >
+                <Icon size={22} strokeWidth={isActive ? 2 : 1.5} />
+                <span className="text-[10px] font-medium">{t(`nav.${item}`)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
