@@ -294,6 +294,7 @@ export const translations = {
       cancelled: "ملغاة", approved: "تمت الموافقة", pending: "معلق"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
+    theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
     lang: { toggle: "English", current: "العربية" },
     settings: {
       title: "الإعدادات", appearance: "المظهر", language: "اللغة",
