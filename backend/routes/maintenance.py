@@ -9,7 +9,7 @@ STAS System Maintenance API
 - أي collection جديدة يجب إضافتها هنا
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List
 from database import db
@@ -19,6 +19,9 @@ import uuid
 import json
 import gzip
 import base64
+import zipfile
+import io
+import os
 
 router = APIRouter(prefix="/api/maintenance", tags=["maintenance"])
 
