@@ -22,6 +22,7 @@ from routes.work_locations import router as work_locations_router
 from routes.custody import router as custody_router
 from routes.financial_custody import router as financial_custody_router
 from routes.settings import router as settings_router
+from routes.maintenance import router as maintenance_router
 from seed import seed_database
 
 app = FastAPI(title="DAR AL CODE HR OS", redirect_slashes=False)
