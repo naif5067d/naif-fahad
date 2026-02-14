@@ -296,5 +296,27 @@ const { combined } = formatGregorianHijriDateTime(timestamp);
 // combined: "21/02/2026, 14:30 (09/04/1447 AH هـ)"
 ```
 
+### Contract System V2 (Phase 15)
+Contract serial format: DAC-YYYY-XXX
+```python
+# Serial generation
+contract_serial = f"DAC-{current_year}-{seq:03d}"  # DAC-2026-001
+
+# Lifecycle transitions
+draft → pending_stas → active → terminated → closed
+
+# Role permissions
+Sultan/Naif: create, edit, submit
+STAS: create, edit, submit, execute, terminate, close
+```
+
+Contract activation flow:
+1. Validate no other active contract
+2. Create User if not exists
+3. Activate employee
+4. Initialize leave balance (standard or opening balance for migrated)
+5. Create audit log
+6. Generate PDF snapshot
+
 ---
-Version: 14.0 (2026-02-14)
+Version: 15.0 (2026-02-14)
