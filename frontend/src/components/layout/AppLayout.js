@@ -22,7 +22,7 @@ const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
   attendance: Clock, finance: DollarSign, contracts: FileSignature,
   employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
-  custody: Package, financialCustody: Wallet,
+  custody: Package, financialCustody: Wallet, systemMaintenance: Wrench,
 };
 
 const PATHS = {
