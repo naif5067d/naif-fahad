@@ -54,6 +54,13 @@ export default function AttendancePage() {
   useEffect(() => { fetchData(); }, []);
   useEffect(() => { if (isAdmin) fetchAdmin(); }, [period, dateFilter]);
 
+  // Fetch employee's assigned locations on mount
+  useEffect(() => {
+    if (user?.employee_id) {
+      fetchAssignedLocations(user.employee_id);
+    }
+  }, [user?.employee_id]);
+
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
