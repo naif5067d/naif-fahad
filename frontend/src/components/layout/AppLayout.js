@@ -2,17 +2,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'finance', 'financialCustody'],
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
@@ -21,14 +21,14 @@ const MOBILE_NAV_ITEMS = ['dashboard', 'transactions', 'leave', 'attendance'];
 const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
   attendance: Clock, finance: DollarSign, contracts: FileSignature,
-  employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
+  contractsManagement: FileCheck, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench,
 };
 
 const PATHS = {
   dashboard: '/', transactions: '/transactions', leave: '/leave',
   attendance: '/attendance', finance: '/finance', contracts: '/contracts',
-  employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
+  contractsManagement: '/contracts-management', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance',
 };
