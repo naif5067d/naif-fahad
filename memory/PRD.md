@@ -251,8 +251,8 @@ system_archives, maintenance_log
 - `/app/frontend/src/lib/dateUtils.js` - Date formatting utilities with Gregorian/Hijri support
 
 ## Test Reports
-- `/app/test_reports/iteration_14.json` - Latest test results (100% pass - Phase 14)
-- `/app/backend/tests/test_iteration14_maintenance.py` - Backend tests for maintenance features
+- `/app/test_reports/iteration_15.json` - Latest test results (100% pass - Phase 15 Contract System V2)
+- `/app/backend/tests/test_contracts_v2.py` - Backend tests for contract system (23 tests)
 
 ## Technical Notes
 
