@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, HardHat } from 'lucide-react';
+import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, Navigation } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -16,7 +16,8 @@ export default function AttendancePage() {
   const [history, setHistory] = useState([]);
   const [gpsState, setGpsState] = useState({ available: false, lat: null, lng: null, checking: true });
   const [loading, setLoading] = useState(false);
-  const [workLocation, setWorkLocation] = useState('HQ');
+  const [workLocation, setWorkLocation] = useState('');
+  const [assignedLocations, setAssignedLocations] = useState([]);
   const [adminData, setAdminData] = useState([]);
   const [period, setPeriod] = useState('daily');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().slice(0, 10));
