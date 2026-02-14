@@ -339,7 +339,7 @@ export default function AttendancePage() {
                           <span className="font-medium">{lang === 'ar' ? (r.employee_name_ar || r.employee_name) : r.employee_name}</span>
                         </div>
                       </td>
-                      <td className="font-mono text-muted-foreground">{r.date}</td>
+                      <td className="font-mono text-muted-foreground">{formatGregorianHijri(r.date).combined}</td>
                       <td className="font-mono">{r.check_in || '-'}</td>
                       <td className="font-mono">{r.check_out || '-'}</td>
                       <td>
