@@ -149,18 +149,93 @@ system_archives, maintenance_log
 5. ✅ STAS Workflow - Can execute transactions after return flow
 6. ✅ Cancel Transaction - Does not trigger business logic (no leave deduction)
 
+### Phase 15: Contract System V2 (نظام العقود الشامل) ✅ (2026-02-14)
+
+**المتطلبات المُنفذة:**
+
+1. **نموذج العقد الجديد (Contract Model):**
+   - `contract_serial`: ترقيم DAC-YYYY-XXX (مثال: DAC-2026-001)
+   - `version`: رقم الإصدار
+   - `contract_category`: employment | internship_unpaid
+   - `employment_type`: unlimited | fixed_term | trial_paid
+   - `status`: draft | pending_stas | active | terminated | closed
+   - `is_migrated`: للموظفين القدامى
+   - `leave_opening_balance`: رصيد إجازات افتتاحي
+
+2. **ترقيم العقود (Serial Generation):**
+   - صيغة DAC-YYYY-XXX
+   - يتزايد تلقائياً
+   - يُعاد الضبط مع بداية كل سنة
+   - البحث يدعم: رقم العقد، آخر 3 أرقام، كود الموظف، اسم الموظف
+
+3. **دورة حياة العقد (Lifecycle):**
+   ```
+   draft → pending_stas → active → terminated → closed
+   ```
+   - التنفيذ إلى "active" حصرياً من STAS
+   - الإنهاء إلى "terminated" حصرياً من STAS
+   - الإغلاق "closed" بعد المخالصة
+
+4. **الصلاحيات:**
+   - Sultan/Naif: إنشاء + تعديل + إرسال لـ STAS
+   - STAS: كل شيء (إنشاء + تعديل + تنفيذ + إنهاء)
+
+5. **عند تنفيذ العقد:**
+   - التحقق من عدم وجود عقد نشط آخر
+   - إنشاء User إذا لم يكن موجوداً
+   - تفعيل صلاحية الحضور
+   - بدء احتساب الإجازات من start_date
+   - إضافة leave_opening_balance للمُهاجرين
+   - إنشاء Audit Log + Snapshot
+
+6. **قواعد التفعيل:**
+   - لا حضور أو طلبات بدون عقد نشط
+   - لا يُسمح بأكثر من عقد نشط لموظف واحد
+   - لا تعديل على عقد منفذ (فقط Version جديد)
+   - لا حذف لعقد منفذ
+
+7. **قالب PDF:**
+   - قالب Placeholder جاهز
+   - يدعم المتغيرات الديناميكية
+   - Snapshot غير قابل للتعديل عند التنفيذ
+
+**الملفات الجديدة:**
+- `/app/backend/services/contract_service.py` - Business Logic Layer
+- `/app/backend/services/contract_template.py` - PDF Template Engine
+- `/app/backend/routes/contracts_v2.py` - API Endpoints
+- `/app/frontend/src/pages/ContractsManagementPage.js` - واجهة إدارة العقود
+
+**APIs الجديدة:**
+- `GET /api/contracts-v2` - قائمة العقود
+- `POST /api/contracts-v2` - إنشاء عقد جديد
+- `PUT /api/contracts-v2/{id}` - تعديل عقد
+- `DELETE /api/contracts-v2/{id}` - حذف عقد (draft/pending فقط)
+- `POST /api/contracts-v2/{id}/submit` - إرسال لـ STAS
+- `POST /api/contracts-v2/{id}/execute` - تنفيذ (STAS)
+- `POST /api/contracts-v2/{id}/terminate` - إنهاء (STAS)
+- `GET /api/contracts-v2/{id}/pdf` - PDF العقد
+- `GET /api/contracts-v2/stats/summary` - إحصائيات
+
 ## Remaining Tasks
+
+### P0 (Priority 0) - Next Phase
+- **نظام المخالصة (Settlement System):**
+  - محرك حساب EOS حسب نظام العمل السعودي
+  - حساب بدل الإجازات التلقائي
+  - تجميع الاستحقاقات والاستقطاعات
+  - مرآة STAS للمخالصة
 
 ### P1 (Priority 1)
 - Employee Profile Card (بطاقة الموظف)
 - Mohammed CEO Dashboard - Escalated transactions view
 - Supervisor Assignment UI - Allow Sultan/Naif to assign supervisors
-- Contract Deletion for STAS
 
 ### P2 (Priority 2)
 - New Transaction Types (leave/attendance subtypes)
 - STAS Financial Custody Mirror
 - Geofencing enforcement
+- نظام الإنذارات والجزاءات
+- نظام السلف وتتبع الأقساط
 
 ## Key Files
 - `/app/backend/utils/pdf.py` - PDF generator with bilingual support (FIXED)
@@ -168,8 +243,11 @@ system_archives, maintenance_log
 - `/app/backend/routes/transactions.py` - PDF endpoint with branding fetch
 - `/app/backend/routes/stas.py` - STAS execution with branding fetch
 - `/app/backend/routes/maintenance.py` - System maintenance APIs (Phase 14)
+- `/app/backend/routes/contracts_v2.py` - Contract System V2 (Phase 15)
+- `/app/backend/services/contract_service.py` - Contract business logic (Phase 15)
 - `/app/frontend/src/pages/CompanySettingsPage.js` - Company settings UI
 - `/app/frontend/src/pages/SystemMaintenancePage.js` - System maintenance UI (Phase 14)
+- `/app/frontend/src/pages/ContractsManagementPage.js` - Contract management UI (Phase 15)
 - `/app/frontend/src/lib/dateUtils.js` - Date formatting utilities with Gregorian/Hijri support
 
 ## Test Reports
