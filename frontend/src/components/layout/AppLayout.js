@@ -83,8 +83,8 @@ export default function AppLayout({ children }) {
   const role = user?.role || 'employee';
   const items = NAV_ITEMS[role] || NAV_ITEMS.employee;
 
-  const displayName = role === 'stas' ? 'STAS' : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
-  const roleLabel = role === 'stas' ? 'STAS' : (lang === 'ar' ? ROLE_LABELS_AR[role] : ROLE_LABELS[role]);
+  const displayName = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
+  const roleLabel = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[role] : ROLE_LABELS[role]);
 
   useEffect(() => {
     if (allUsers.length === 0) fetchAllUsers();
