@@ -135,7 +135,7 @@ export const translations = {
       pending_ceo: "Pending CEO", pending_stas: "Pending STAS",
       pending_employee_accept: "Pending Employee",
       executed: "Executed", rejected: "Rejected", completed: "Completed",
-      cancelled: "Cancelled"
+      cancelled: "Cancelled", approved: "Approved", pending: "Pending"
     },
     theme: { light: "Light", dark: "Dark", toggle: "Toggle Theme" },
     lang: { toggle: "العربية", current: "English" },
