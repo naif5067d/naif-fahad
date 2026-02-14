@@ -204,5 +204,19 @@ if actor_role == 'stas':
     return {"valid": True, "stage": current_stage}
 ```
 
+### Date Formatting (Phase 14)
+All dates use dual calendar format - Gregorian primary + Hijri secondary:
+```javascript
+import { formatGregorianHijri, formatGregorianHijriDateTime } from '@/lib/dateUtils';
+
+// Usage
+const { primary, secondary, combined } = formatGregorianHijri(date);
+// combined: "21/02/2026 (09/04/1447 AH هـ)"
+
+// With time
+const { combined } = formatGregorianHijriDateTime(timestamp);
+// combined: "21/02/2026, 14:30 (09/04/1447 AH هـ)"
+```
+
 ---
-Version: 13.0 (2026-02-14)
+Version: 14.0 (2026-02-14)
