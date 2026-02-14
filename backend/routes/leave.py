@@ -141,3 +141,56 @@ async def get_holidays():
     
     all_holidays.sort(key=lambda x: x.get('date', ''))
     return all_holidays
+
+
+@router.post("/holidays")
+async def add_holiday(req: dict, user=Depends(get_current_user)):
+    """Add a holiday - Sultan, Naif, STAS only"""
+    if user.get('role') not in ('sultan', 'naif', 'stas'):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    name = req.get('name')
+    name_ar = req.get('name_ar', '')
+    date = req.get('date')
+    if not name or not date:
+        raise HTTPException(status_code=400, detail="name and date required")
+    holiday = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "name_ar": name_ar or name,
+        "date": date,
+        "created_by": user['user_id'],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.public_holidays.insert_one(holiday)
+    holiday.pop('_id', None)
+    return holiday
+
+
+@router.put("/holidays/{holiday_id}")
+async def update_holiday(holiday_id: str, req: dict, user=Depends(get_current_user)):
+    """Update a holiday - Sultan, Naif, STAS only"""
+    if user.get('role') not in ('sultan', 'naif', 'stas'):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    update = {}
+    if 'name' in req: update['name'] = req['name']
+    if 'name_ar' in req: update['name_ar'] = req['name_ar']
+    if 'date' in req: update['date'] = req['date']
+    if update:
+        result = await db.public_holidays.update_one({"id": holiday_id}, {"$set": update})
+        if result.matched_count == 0:
+            await db.holidays.update_one({"id": holiday_id}, {"$set": update})
+    updated = await db.public_holidays.find_one({"id": holiday_id}, {"_id": 0})
+    if not updated:
+        updated = await db.holidays.find_one({"id": holiday_id}, {"_id": 0})
+    return updated
+
+
+@router.delete("/holidays/{holiday_id}")
+async def delete_holiday(holiday_id: str, user=Depends(get_current_user)):
+    """Delete a holiday - Sultan, Naif, STAS only"""
+    if user.get('role') not in ('sultan', 'naif', 'stas'):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    r1 = await db.public_holidays.delete_one({"id": holiday_id})
+    if r1.deleted_count == 0:
+        await db.holidays.delete_one({"id": holiday_id})
+    return {"message": "Holiday deleted"}
