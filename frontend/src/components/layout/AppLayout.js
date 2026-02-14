@@ -148,7 +148,7 @@ export default function AppLayout({ children }) {
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1"
             style={getRoleBadgeStyle(role)}
           >
-            {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
+            {role === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (user?.full_name || 'U')[0]}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{displayName}</p>
