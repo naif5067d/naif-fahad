@@ -1,0 +1,162 @@
+{
+  "summary": "Iteration 15: Contract System V2 (DAC-YYYY-XXX) fully tested. All 23 backend tests pass. Frontend UI verified - contracts list, create dialog, view dialog, date formats (Gregorian + Hijri), and role-based permissions.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "features_verified": {
+    "contract_list_api": {
+      "status": "VERIFIED",
+      "results": [
+        "GET /api/contracts-v2 returns contracts list",
+        "All contracts have DAC-YYYY-XXX serial format (DAC-2026-001, DAC-2026-002, etc.)",
+        "Serial increments correctly when creating new contracts",
+        "Contracts have all required fields (id, contract_serial, version, employee_id, etc.)",
+        "Search by serial and employee name works",
+        "Filter by status works"
+      ]
+    },
+    "contract_crud": {
+      "status": "VERIFIED",
+      "results": [
+        "POST /api/contracts-v2 creates draft contract",
+        "STAS, Sultan, Naif can create contracts",
+        "Employee role blocked from creating contracts (403 Forbidden)",
+        "PUT /api/contracts-v2/{id} updates draft/pending contracts",
+        "DELETE /api/contracts-v2/{id} deletes draft/pending_stas contracts only",
+        "Cannot delete active contracts (400 Bad Request)"
+      ]
+    },
+    "contract_lifecycle": {
+      "status": "VERIFIED",
+      "results": [
+        "POST /api/contracts-v2/{id}/submit changes draft → pending_stas",
+        "POST /api/contracts-v2/{id}/execute (STAS only) changes pending_stas → active",
+        "POST /api/contracts-v2/{id}/terminate (STAS only) changes active → terminated",
+        "Termination requires valid reason from predefined list",
+        "Sultan/Naif correctly blocked from execute (403)",
+        "Naif correctly blocked from terminate (403)"
+      ]
+    },
+    "contract_pdf": {
+      "status": "VERIFIED",
+      "results": [
+        "GET /api/contracts-v2/{id}/pdf?lang=ar returns valid PDF",
+        "PDF contains contract details in Arabic"
+      ]
+    },
+    "contract_stats": {
+      "status": "VERIFIED",
+      "results": [
+        "GET /api/contracts-v2/stats/summary returns status counts",
+        "Includes total, active, draft, pending_stas, terminated, closed counts"
+      ]
+    },
+    "contracts_management_ui": {
+      "status": "VERIFIED",
+      "results": [
+        "Contracts Management page loads (إدارة العقود)",
+        "Page subtitle shows: نظام العقود الجديد - DAC-YYYY-XXX",
+        "Status summary cards: Draft (1), Pending STAS (3), Active (5), Terminated (0), Closed (0)",
+        "Contract list displays 9 contracts with DAC-YYYY-XXX format",
+        "Create contract button visible for authorized roles",
+        "Action buttons: View, PDF, Edit, Execute (STAS only), Terminate (STAS only), Delete"
+      ]
+    },
+    "create_contract_dialog": {
+      "status": "VERIFIED",
+      "results": [
+        "Dialog opens with 'إنشاء عقد جديد' title",
+        "Employee selector dropdown works",
+        "Contract category (توظيف, تدريب غير مدفوع) dropdown",
+        "Employment type dropdown (غير محدد المدة, محدد المدة, فترة تجربة)",
+        "Date inputs (start, end)",
+        "Probation period default 3 months",
+        "Notice period default 30 days",
+        "Salary fields (basic, housing, transport, other)",
+        "Total salary auto-calculation",
+        "Migration toggle for opening leave balance",
+        "Submit button creates draft contract"
+      ]
+    },
+    "view_contract_dialog": {
+      "status": "VERIFIED",
+      "results": [
+        "Shows contract serial: تفاصيل العقد: DAC-2026-XXX",
+        "Employee data section (الاسم, الكود, المسمى, القسم)",
+        "Contract details section (الفئة, النوع, التواريخ, فترة التجربة, فترة الإنذار)",
+        "Salary details section (الراتب الأساسي, البدلات, الإجمالي)",
+        "Status history (سجل الحالات) shows state transitions",
+        "PDF button available"
+      ]
+    },
+    "date_format_gregorian_hijri": {
+      "status": "VERIFIED",
+      "format_used": "DD/MM/YYYY (DD/MM/YYYY AH هـ)",
+      "examples": [
+        "01/09/2026 (03/20/1448 AH هـ)",
+        "01/08/2026 (02/18/1448 AH هـ)",
+        "14/02/2026 (08/27/1447 AH هـ)"
+      ]
+    },
+    "role_based_permissions": {
+      "status": "VERIFIED",
+      "frontend": {
+        "canCreate": "Sultan, Naif, STAS can see create button",
+        "canExecute": "Only STAS can see execute button",
+        "canTerminate": "Only STAS can see terminate button"
+      },
+      "backend": {
+        "create": "Sultan, Naif, STAS allowed (tested)",
+        "execute": "Only STAS allowed (Sultan blocked with 403)",
+        "terminate": "Only STAS allowed (Naif blocked with 403)"
+      }
+    }
+  },
+  
+  "test_report_links": [
+    "/app/backend/tests/test_contracts_v2.py",
+    "/app/test_reports/pytest/contracts_v2_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "Contract service layer properly implements serial generation with DAC-YYYY-XXX format",
+    "Contract lifecycle transitions are properly validated (draft → pending_stas → active → terminated → closed)",
+    "Role-based permissions correctly implemented in both backend (require_roles decorator) and frontend (canExecute/canTerminate checks)",
+    "Date format shows Gregorian primary + Hijri secondary as specified",
+    "Delete is correctly restricted to draft and pending_stas status only"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_contracts_v2.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  
+  "test_credentials": {
+    "stas_user_id": "fedffe24-ec69-5c65-809d-5d24f8a16b9d",
+    "sultan_user_id": "54e422b8-357c-5fdc-81d5-de6cac565810",
+    "naif_user_id": "3f2532cf-499e-54b3-a1b7-f8083ef5414f",
+    "method": "Use POST /api/auth/switch/{user_id} to get token"
+  },
+  
+  "seed_data_creation": "Backend tests create/delete test contracts during execution. 9 total contracts exist (5 migrated + 4 from tests). Test contracts in draft/pending_stas status were cleaned up.",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "Iteration 15 verified Contract System V2:\n1. GET /api/contracts-v2 - Returns contracts with DAC-YYYY-XXX serial format\n2. Contract CRUD - Create, Read, Update, Delete working (delete restricted to draft/pending_stas)\n3. Lifecycle - draft → pending_stas → active → terminated → closed\n4. Role permissions - Sultan/Naif: create+edit+submit | STAS: everything\n5. Date format - Gregorian DD/MM/YYYY (DD/MM/YYYY AH هـ)\n6. Frontend UI - Contracts page, Create dialog, View dialog all working\n\nTest file: /app/backend/tests/test_contracts_v2.py (23 tests)\nAll tests pass. No issues found."
+}
