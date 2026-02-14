@@ -68,7 +68,11 @@ export default function TransactionDetailPage() {
   const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
   
   // Get translated stage
-  const getTranslatedStage = (stage) => t(`stages.${stage}`) || stage;
+  const getTranslatedStage = (stage) => {
+    // Handle STAS specifically
+    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
+    return t(`stages.${stage}`) || stage;
+  };
 
   // Translate data keys for display
   const getTranslatedKey = (key) => {
