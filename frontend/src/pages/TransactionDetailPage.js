@@ -214,22 +214,37 @@ export default function TransactionDetailPage() {
                 <th>{lang === 'ar' ? 'ملاحظة' : 'Note'}</th>
               </tr></thead>
               <tbody>
-                {tx.approval_chain.map((a, i) => (
-                  <tr key={i}>
-                    <td className="text-sm">{getTranslatedStage(a.stage)}</td>
-                    <td className="text-sm">{a.approver_name}</td>
-                    <td>
-                      <span 
-                        className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-                        style={getStatusStyle(a.status)}
-                      >
-                        {a.status === 'approve' ? (lang === 'ar' ? 'موافق' : 'Approved') : a.status === 'reject' ? (lang === 'ar' ? 'مرفوض' : 'Rejected') : a.status}
-                      </span>
-                    </td>
-                    <td className="text-xs text-muted-foreground">{a.timestamp?.slice(0, 19)}</td>
-                    <td className="text-xs">{a.note}</td>
-                  </tr>
-                ))}
+                {tx.approval_chain.map((a, i) => {
+                  // Translate approval status
+                  const getApprovalStatusText = (status) => {
+                    const statusMap = {
+                      approve: lang === 'ar' ? 'موافق' : 'Approved',
+                      approved: lang === 'ar' ? 'موافق' : 'Approved',
+                      reject: lang === 'ar' ? 'مرفوض' : 'Rejected',
+                      rejected: lang === 'ar' ? 'مرفوض' : 'Rejected',
+                      pending: lang === 'ar' ? 'معلق' : 'Pending',
+                      escalated: lang === 'ar' ? 'تم التصعيد' : 'Escalated',
+                    };
+                    return statusMap[status] || status;
+                  };
+                  
+                  return (
+                    <tr key={i}>
+                      <td className="text-sm">{getTranslatedStage(a.stage)}</td>
+                      <td className="text-sm">{a.approver_name}</td>
+                      <td>
+                        <span 
+                          className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                          style={getStatusStyle(a.status)}
+                        >
+                          {getApprovalStatusText(a.status)}
+                        </span>
+                      </td>
+                      <td className="text-xs text-muted-foreground">{a.timestamp?.slice(0, 19)}</td>
+                      <td className="text-xs">{a.note}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
