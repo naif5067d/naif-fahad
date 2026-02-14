@@ -116,8 +116,13 @@ async def validate_stage_actor(transaction: dict, actor_user_id: str, actor_role
             "error_detail": f"Transaction is already {status} and cannot be modified"
         }
 
-    # **NEW: Check if user has already acted on this transaction**
-    # Prevent duplicate actions by the same user
+    # STAS can ALWAYS act - they are the final authority
+    # They can execute even if they previously returned the transaction
+    if actor_role == 'stas':
+        return {"valid": True, "stage": current_stage}
+
+    # Check if user has already acted on this transaction (except STAS)
+    # This prevents duplicate approvals by the same manager
     approval_chain = transaction.get('approval_chain', [])
     for approval in approval_chain:
         if approval.get('approver_id') == actor_user_id:
@@ -149,10 +154,6 @@ async def validate_stage_actor(transaction: dict, actor_user_id: str, actor_role
 
     # Check if actor's role is allowed for current stage
     allowed_roles = STAGE_ROLES.get(current_stage, [])
-
-    # STAS can act on any stage (override capability)
-    if actor_role == 'stas':
-        return {"valid": True, "stage": current_stage}
 
     if actor_role not in allowed_roles:
         return {
