@@ -101,10 +101,13 @@ async def get_storage_info(user=Depends(require_roles('stas'))):
             "total_collections": 0,
             "transaction_documents": 0,
             "protected_documents": 0,
+            "total_size_kb": 0,
+            "transaction_size_kb": 0,
+            "protected_size_kb": 0,
         },
         "categories": {
-            "transactions": {"collections": [], "total_docs": 0},
-            "protected": {"collections": [], "total_docs": 0},
+            "transactions": {"collections": [], "total_docs": 0, "total_size_kb": 0},
+            "protected": {"collections": [], "total_docs": 0, "total_size_kb": 0},
         }
     }
     
@@ -118,12 +121,13 @@ async def get_storage_info(user=Depends(require_roles('stas'))):
             sample = await coll.find_one()
             avg_size = len(json.dumps(sample, default=str)) if sample else 0
             estimated_size = count * avg_size
+            estimated_size_kb = round(estimated_size / 1024, 2)
             
             coll_info = {
                 "name": coll_name,
                 "documents": count,
                 "estimated_size_bytes": estimated_size,
-                "estimated_size_kb": round(estimated_size / 1024, 2),
+                "estimated_size_kb": estimated_size_kb,
                 "is_protected": coll_name in PROTECTED_COLLECTIONS,
                 "is_transaction_data": coll_name in TRANSACTION_COLLECTIONS,
             }
@@ -131,15 +135,20 @@ async def get_storage_info(user=Depends(require_roles('stas'))):
             storage_info["collections"][coll_name] = coll_info
             storage_info["totals"]["total_documents"] += count
             storage_info["totals"]["total_collections"] += 1
+            storage_info["totals"]["total_size_kb"] += estimated_size_kb
             
             if coll_name in TRANSACTION_COLLECTIONS:
                 storage_info["totals"]["transaction_documents"] += count
+                storage_info["totals"]["transaction_size_kb"] += estimated_size_kb
                 storage_info["categories"]["transactions"]["collections"].append(coll_name)
                 storage_info["categories"]["transactions"]["total_docs"] += count
+                storage_info["categories"]["transactions"]["total_size_kb"] += estimated_size_kb
             else:
                 storage_info["totals"]["protected_documents"] += count
+                storage_info["totals"]["protected_size_kb"] += estimated_size_kb
                 storage_info["categories"]["protected"]["collections"].append(coll_name)
                 storage_info["categories"]["protected"]["total_docs"] += count
+                storage_info["categories"]["protected"]["total_size_kb"] += estimated_size_kb
                 
         except Exception as e:
             storage_info["collections"][coll_name] = {
@@ -147,6 +156,11 @@ async def get_storage_info(user=Depends(require_roles('stas'))):
                 "error": str(e),
                 "documents": 0
             }
+    
+    # تقريب الأحجام الكلية
+    storage_info["totals"]["total_size_kb"] = round(storage_info["totals"]["total_size_kb"], 2)
+    storage_info["totals"]["transaction_size_kb"] = round(storage_info["totals"]["transaction_size_kb"], 2)
+    storage_info["totals"]["protected_size_kb"] = round(storage_info["totals"]["protected_size_kb"], 2)
     
     return storage_info
 
