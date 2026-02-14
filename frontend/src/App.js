@@ -19,6 +19,7 @@ import WorkLocationsPage from "@/pages/WorkLocationsPage";
 import CustodyPage from "@/pages/CustodyPage";
 import FinancialCustodyPage from "@/pages/FinancialCustodyPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
+import SystemMaintenancePage from "@/pages/SystemMaintenancePage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
