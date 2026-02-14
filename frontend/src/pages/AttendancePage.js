@@ -271,7 +271,7 @@ export default function AttendancePage() {
                     <p className="text-sm font-medium">
                       {h.type === 'check_in' ? t('attendance.checkIn') : t('attendance.checkOut')}
                     </p>
-                    <p className="text-xs text-muted-foreground">{h.date}</p>
+                    <p className="text-xs text-muted-foreground">{formatGregorianHijri(h.date).combined}</p>
                   </div>
                 </div>
                 <div className="text-end">
