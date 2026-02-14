@@ -115,11 +115,12 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 - `/api/stas/pending` - Get pending transactions for STAS
 - `/api/stas/mirror/{id}` - Get mirror data for transaction
 - `/api/stas/execute/{id}` - Execute transaction
-- `/api/maintenance/storage-info` - **NEW** Storage statistics
-- `/api/maintenance/archive-full` - **NEW** Create full system archive
-- `/api/maintenance/archives` - **NEW** List/manage archives
-- `/api/maintenance/purge-all-transactions` - **NEW** Delete all transactions
-- `/api/maintenance/logs` - **NEW** Maintenance operation logs
+- `/api/maintenance/storage-info` - Storage statistics with total_size_kb
+- `/api/maintenance/archive-full` - Create full system archive
+- `/api/maintenance/archives` - List/manage archives
+- `/api/maintenance/archives/upload` - **NEW** Upload & restore from JSON file
+- `/api/maintenance/purge-all-transactions` - Delete all transactions
+- `/api/maintenance/logs` - Maintenance operation logs
 
 ## Collections
 
