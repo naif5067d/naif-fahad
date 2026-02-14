@@ -9,6 +9,35 @@ import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, Navigati
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
+// Format date with Gregorian as primary and Hijri as secondary
+function formatDateWithHijri(date, lang) {
+  const d = new Date(date);
+  
+  // Gregorian date
+  const gregorian = d.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
+  // Hijri date - use Arabic numerals only for Arabic
+  const hijriLocale = lang === 'ar' ? 'ar-SA-u-ca-islamic-nu-arab' : 'en-SA-u-ca-islamic';
+  let hijri = d.toLocaleDateString(hijriLocale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    calendar: 'islamic'
+  });
+  
+  // For English, convert any Arabic numerals to Western numerals
+  if (lang !== 'ar') {
+    hijri = hijri.replace(/[\u0660-\u0669]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x0660 + 48));
+  }
+  
+  return { gregorian, hijri };
+}
+
 export default function AttendancePage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
