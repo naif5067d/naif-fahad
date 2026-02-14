@@ -144,7 +144,8 @@ export default function AttendancePage() {
       {/* Header */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold">{t('nav.attendance')}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{new Date().toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p className="text-sm text-foreground mt-1">{todayFormatted.gregorian}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{todayFormatted.hijri}</p>
       </div>
 
       {/* Employee: Check in/out Card */}
