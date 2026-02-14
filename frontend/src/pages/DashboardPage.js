@@ -90,7 +90,11 @@ export default function DashboardPage() {
   const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
   
   // Get translated stage
-  const getTranslatedStage = (stage) => t(`stages.${stage}`) || stage;
+  const getTranslatedStage = (stage) => {
+    // Handle STAS specifically
+    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
+    return t(`stages.${stage}`) || stage;
+  };
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
