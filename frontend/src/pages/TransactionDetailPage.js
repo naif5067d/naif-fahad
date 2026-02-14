@@ -142,6 +142,12 @@ export default function TransactionDetailPage() {
       description: { ar: 'الوصف', en: 'Description' },
       asset_name: { ar: 'اسم الأصل', en: 'Asset Name' },
       asset_serial: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
+      // Tangible custody fields
+      itemname: { ar: 'اسم العنصر', en: 'Item Name' },
+      itemnamear: { ar: 'اسم العنصر', en: 'Item Name (AR)' },
+      serial_number: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
+      estimatedvalue: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
+      estimated_value: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
     };
     return labels[key] ? (lang === 'ar' ? labels[key].ar : labels[key].en) : key.replace(/_/g, ' ');
   };
