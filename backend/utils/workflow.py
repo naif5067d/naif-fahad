@@ -116,6 +116,17 @@ async def validate_stage_actor(transaction: dict, actor_user_id: str, actor_role
             "error_detail": f"Transaction is already {status} and cannot be modified"
         }
 
+    # **NEW: Check if user has already acted on this transaction**
+    # Prevent duplicate actions by the same user
+    approval_chain = transaction.get('approval_chain', [])
+    for approval in approval_chain:
+        if approval.get('approver_id') == actor_user_id:
+            return {
+                "valid": False,
+                "error": "error.already_acted",
+                "error_detail": "You have already taken an action on this transaction"
+            }
+
     # Special handling for employee_accept stage
     if current_stage == 'employee_accept':
         emp = await db.employees.find_one({"id": transaction.get('employee_id')}, {"_id": 0})
