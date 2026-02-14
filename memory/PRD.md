@@ -9,7 +9,7 @@ Any transaction not executed by STAS is not considered valid.
 ## Architecture
 - **Backend:** FastAPI + MongoDB + JWT RBAC
 - **Frontend:** React + Tailwind CSS + shadcn/ui
-- **Map:** react-leaflet + OpenStreetMap (planned)
+- **Map:** react-leaflet + OpenStreetMap
 
 ## Roles: stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 
@@ -19,16 +19,14 @@ Any transaction not executed by STAS is not considered valid.
 ### Phase 4: P0 Business Logic ✅ (Escalation, Tangible Custody)
 ### Phase 5: Financial Custody V2 ✅
 ### Phase 6: UI/UX Overhaul ✅ (2026-02-14)
+### Phase 7: Map Feature & Language Fix ✅ (2026-02-14)
 
-**Changes in Phase 6:**
-- Financial Custody: Cards → Professional Excel-like TABLE with summary stats
-- Expense Sheet: Professional table with running balance column
-- Timeline: Vertical line + colored dots across entire app
-- Leave Holidays: CRUD for Sultan/Naif/STAS (add/edit/delete)
-- Employees hidden from holiday table
-- Attendance Admin: Daily/Weekly/Monthly/Yearly table for admin roles
-- Dashboard renamed to "لوحتي" (My Board)
-- Navigation: "العهدة المالية" (Financial Custody)
+**Changes in Phase 7:**
+- Work Locations Map: Employees can now see assigned work locations on Attendance page
+- Employee Assignment: Admin (Sultan/Naif) can assign employees to locations via checkboxes
+- Language Consistency: STAS displays as "ستاس" in Arabic mode across all UI elements
+- Status badges properly translate based on selected language
+- Fixed language mixing issues throughout the application
 
 ## Key API Endpoints
 - `/api/financial-custody/*` - Full custody lifecycle
@@ -38,11 +36,21 @@ Any transaction not executed by STAS is not considered valid.
 - `/api/attendance/admin?period=daily|weekly|monthly|yearly` - Admin view
 - `/api/finance/codes/*` - Code CRUD
 - `/api/dashboard/next-holiday` - Next upcoming holiday
+- `/api/work-locations` - Work location CRUD
+- `/api/work-locations/employee/{empId}` - Get assigned locations for employee
 
 ## Collections
 users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger, public_holidays, holidays, contracts, finance_codes, counters, work_locations, custody_ledger, custody_financial
 
+## Completed Bug Fixes
+1. ✅ Map/Work Locations - Employees see assigned locations
+2. ✅ Language Mixing - STAS properly shows as "ستاس" in Arabic
+
 ## Upcoming Tasks
+
+### P0 (Next Priority)
+- Complete UI/UX Redesign - Apply modern design with new color scheme (blue, green, gray, black)
+- PDF Formatting - Professional layout with proper structure and fonts
 
 ### P1
 - Employee Profile Card (بطاقة الموظف)
@@ -50,12 +58,10 @@ users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger,
 - Supervisor Assignment UI
 - New Transaction Types (leave/attendance subtypes)
 - Contract Deletion for STAS
-- Work Locations: Leaflet map, employee assignment, GPS validation
 
 ### P2
-- PDF redesign (different templates per type)
 - STAS Financial Custody Mirror
 - Geofencing enforcement
 
 ---
-Version: 7.0 (2026-02-14)
+Version: 8.0 (2026-02-14)
