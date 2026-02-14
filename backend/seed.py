@@ -324,8 +324,12 @@ async def seed_database(db):
 
     # Initialize transaction counter
     await db.counters.insert_one({"id": "transaction_ref", "seq": 0})
+    
+    # Initialize contract serial counter for current year
+    current_year = datetime.now(timezone.utc).year
+    await db.counters.insert_one({"id": f"contract_serial_{current_year}", "seq": 0})
 
-    # Create active contracts for all employees
+    # Create active contracts for all employees (OLD SYSTEM - keeping for compatibility)
     now = datetime.now(timezone.utc).isoformat()
     contracts = []
     for emp in SEED_EMPLOYEES:
@@ -350,5 +354,94 @@ async def seed_database(db):
             "created_at": now,
         })
     await db.contracts.insert_many(contracts)
+
+    # Create contracts_v2 for all employees (NEW SYSTEM)
+    # These are migrated contracts with is_migrated=true and status=active
+    contracts_v2 = []
+    serial_seq = 0
+    for emp in SEED_EMPLOYEES:
+        serial_seq += 1
+        contract_serial = f"DAC-{current_year}-{serial_seq:03d}"
+        
+        # Determine salary based on role
+        user = next((u for u in SEED_USERS if u.get("employee_id") == emp["id"]), None)
+        is_manager = user and user.get("role") in ["sultan", "naif", "salah", "supervisor"]
+        
+        basic_salary = 10000 if is_manager else 5000
+        
+        contracts_v2.append({
+            "id": str(uuid.uuid4()),
+            "contract_serial": contract_serial,
+            "version": 1,
+            
+            "employee_id": emp["id"],
+            "employee_code": emp["employee_number"],
+            "employee_name": emp["full_name"],
+            "employee_name_ar": emp["full_name_ar"],
+            
+            "contract_category": "employment",
+            "employment_type": "unlimited",
+            
+            "job_title": emp.get("position", ""),
+            "job_title_ar": emp.get("position_ar", ""),
+            "department": emp.get("department", ""),
+            "department_ar": emp.get("department_ar", ""),
+            
+            "start_date": emp.get("join_date", "2025-01-01"),
+            "end_date": None,
+            
+            "probation_months": 3,
+            "notice_period_days": 30,
+            
+            "basic_salary": basic_salary,
+            "housing_allowance": 1000,
+            "transport_allowance": 500,
+            "other_allowances": 0,
+            
+            "wage_definition": "basic_only",
+            
+            "is_migrated": True,
+            "leave_opening_balance": emp.get("leave_entitlement", {"annual": 25, "sick": 30, "emergency": 5}),
+            
+            "supervisor_id": emp.get("supervisor_id"),
+            "notes": "عقد مُهاجر من النظام السابق - Migrated from legacy system",
+            
+            "status": "active",
+            "status_history": [{
+                "from_status": None,
+                "to_status": "active",
+                "actor_id": "stas",
+                "actor_name": "STAS",
+                "timestamp": now,
+                "note": "عقد مُهاجر - تم تفعيله تلقائياً"
+            }],
+            
+            "termination_date": None,
+            "termination_reason": None,
+            
+            "created_by": "stas",
+            "created_at": now,
+            "updated_at": now,
+            
+            "executed_by": "stas",
+            "executed_at": now,
+            
+            "snapshots": []
+        })
+    
+    if contracts_v2:
+        await db.contracts_v2.insert_many(contracts_v2)
+    
+    # Update contract serial counter
+    await db.counters.update_one(
+        {"id": f"contract_serial_{current_year}"},
+        {"$set": {"seq": serial_seq}}
+    )
+    
+    # Update employees to have has_active_contract flag
+    await db.employees.update_many(
+        {},
+        {"$set": {"has_active_contract": True}}
+    )
 
     return {"message": "Database seeded successfully", "seeded": True}
