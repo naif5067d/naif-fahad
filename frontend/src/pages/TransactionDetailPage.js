@@ -115,12 +115,13 @@ export default function TransactionDetailPage() {
   };
 
   const getStageLabel = (stage) => {
-    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
+    // STAS and CEO always show in English
+    if (stage === 'stas') return 'STAS';
+    if (stage === 'ceo') return 'CEO';
     const stages = {
       supervisor: { ar: 'المشرف', en: 'Supervisor' },
       ops: { ar: 'العمليات', en: 'Operations' },
       finance: { ar: 'المالية', en: 'Finance' },
-      ceo: { ar: 'الرئيس', en: 'CEO' },
       employee_accept: { ar: 'قبول الموظف', en: 'Employee Accept' },
     };
     return stages[stage] ? (lang === 'ar' ? stages[stage].ar : stages[stage].en) : stage;
