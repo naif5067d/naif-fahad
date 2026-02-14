@@ -164,7 +164,7 @@ export default function TransactionDetailPage() {
     if (key === 'employee_name' && lang === 'ar' && tx?.data?.employee_name_ar) {
       return tx.data.employee_name_ar;
     }
-    if (key === 'amount' && value) {
+    if ((key === 'amount' || key === 'estimatedvalue' || key === 'estimated_value') && value) {
       return `${value} SAR`;
     }
     return String(value);
