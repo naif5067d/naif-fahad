@@ -244,13 +244,22 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
 
     # STAS special actions: return_to_sultan, return_to_ceo
     if body.action == 'return_to_sultan' and user.get('role') == 'stas':
+        # When returning, remove rejection markers so the manager can act again
+        # We need to check if sultan already acted and remove their entry from approval_chain
+        existing_chain = tx.get('approval_chain', [])
+        # Keep only non-ops approvals
+        filtered_chain = [a for a in existing_chain if a.get('stage') != 'ops']
+        
         await db.transactions.update_one(
             {"id": transaction_id},
             {
                 "$set": {
                     "current_stage": "ops",
                     "status": "pending_ops",
-                    "updated_at": now
+                    "updated_at": now,
+                    "rejection_source": None,
+                    "ceo_rejected": False,
+                    "approval_chain": filtered_chain
                 },
                 "$push": {"timeline": {
                     "event": "returned",
@@ -259,19 +268,27 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                     "timestamp": now,
                     "note": body.note or "Returned to Sultan by STAS",
                     "stage": "stas"
-                }, "approval_chain": approval_entry}
+                }}
             }
         )
         return {"message": "Returned to Sultan", "status": "pending_ops", "current_stage": "ops"}
 
     if body.action == 'return_to_ceo' and user.get('role') == 'stas':
+        # When returning to CEO, remove rejection markers so CEO can act again
+        existing_chain = tx.get('approval_chain', [])
+        # Keep only non-CEO approvals (allow CEO to re-approve/reject)
+        filtered_chain = [a for a in existing_chain if a.get('stage') != 'ceo']
+        
         await db.transactions.update_one(
             {"id": transaction_id},
             {
                 "$set": {
                     "current_stage": "ceo",
                     "status": "pending_ceo",
-                    "updated_at": now
+                    "updated_at": now,
+                    "rejection_source": None,
+                    "ceo_rejected": False,
+                    "approval_chain": filtered_chain
                 },
                 "$push": {"timeline": {
                     "event": "returned",
@@ -280,7 +297,7 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                     "timestamp": now,
                     "note": body.note or "Returned to CEO by STAS",
                     "stage": "stas"
-                }, "approval_chain": approval_entry}
+                }}
             }
         )
         return {"message": "Returned to CEO", "status": "pending_ceo", "current_stage": "ceo"}
