@@ -1,117 +1,119 @@
 <analysis>**original_problem_statement:**
-The user wants to build DAR AL CODE HR OS, a mobile-first, enterprise-grade HR operating system for an engineering consultancy.
+The user wants to build DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system.
 
-**LATEST USER REQUIREMENTS (from this session):**
-1.  **Map Feature (Work Locations):**
-    *   Use a free map service (like OpenStreetMap).
-    *   Roles 'Sultan' and 'Naif' can pin locations on the map, defining a work site.
-    *   Each site should have a configurable radius (e.g., 500m) for geo-fencing.
-    *   Admins can assign employees (from a dropdown) to one or more locations, specifying work days and times.
-    *   'STAS' has read-only access to this feature.
-    *   Employees should see their assigned work locations in their profiles.
-2.  **New Transaction Types:** The user wants to add more specific transaction types, categorized as follows:
-    *   **Leave Requests:** Annual Leave, Sick Leave (requires PDF attachment), Unpaid Leave, Marriage Leave, Bereavement Leave, Official Government Leave, Exam Leave.
-    *   **Attendance Requests:** Forgot Check-in/out, External Mission, Early Departure, Late Arrival, Manual Entry by Admin, Organizational Note.
-    *   All requests should appear in the same central Transactions list for management.
-3.  **UI/UX & Role-Specific Fixes:**
-    *   **PDF Formatting:** The layout and text organization of generated PDFs need to be improved.
-    *   **Supervisor Assignment:** A UI feature for 'Sultan' and 'Naif' to assign/change an employee's supervisor from the employee list page.
-    *   **Contract Deletion:** A delete option for contracts, visible only to the 'STAS' role.
-    *   **Missing CEO View:** The user Mohammed (CEO) is missing from the user switcher. A view needs to be created for him to see escalated requests and his own transaction history.
-4.  **Arabic Language Support:** The user reported issues with Arabic text appearing reversed or disconnected in the PDF and transaction previews. This was addressed, but needs verification.
-5.  **Color Coding:** The user wants the color of a pending transaction to reflect the role of the *current required approver*. For example, a transaction Pending Supervisor should have the color assigned to the  role (dark blue).
+**LATEST USER REQUIREMENTS (from this and previous session):**
+1.  **Complete UI/UX Overhaul:** The user is dissatisfied with the current UI and has requested a complete redesign to be very modern, professional, and mobile-first, similar to banking or the latest HR applications. A new color scheme (blue, green, gray, dark black) has been provided.
+2.  **Financial Custody (Advanced):** Implement a detailed financial custody module where authorized users can create custodies, add itemized expenses in an Excel-like sheet with a running balance, and submit them through an approval workflow (Creator -> Auditor -> Final Approver -> Executor). The remaining balance must be automatically carried over to a new custody record upon execution. The UI must be a professional table with summary stats, not cards.
+3.  **Tangible Custody:** A workflow where assets are assigned to employees, who must accept or reject the assignment. Active custody must block the employee's final settlement process.
+4.  **Escalation Workflow:** Allow specific managers (e.g., 'Sultan') to escalate any transaction to a higher authority (e.g., 'Mohammed'), who can only approve or reject, not edit.
+5.  **Map Feature (Work Locations):** Implement a map where admins can pin work locations, define a geo-fenced radius, and assign employees to those sites. This feature is currently broken.
+6.  **Attendance Tracking:** Provide an admin-facing dashboard to view employee attendance records in a filterable table (daily, weekly, monthly, yearly).
+7.  **Holiday Management:** Allow authorized admins to add, edit, and delete official holidays. Employees should see the next upcoming holiday on their dashboard.
+8.  **Bug Fixes:**
+    *   **Language Mixing:** The entire application (UI, PDF, previews) must consistently display either full Arabic or full English based on the selected language, with no mixing.
+    *   **Map Functionality:** Employees cannot see their assigned work locations, and admins cannot see the employee list to make assignments.
+    *   **PDF Formatting:** The layout of generated PDFs is unprofessional and needs a complete overhaul with proper alignment, fonts, and structure.
 
-**User's preferred language**: The user communicates technical requirements in English and provides UI/UX feedback in Arabic. The next agent must respond in the language used by the user for that specific message. Default to English for planning.
+**User's preferred language**: The user provides UI/UX feedback and new requirements primarily in **Arabic**. Technical clarifications are sometimes in English. The next agent **MUST** respond in the language the user uses for each message. For planning and summaries, English is acceptable.
 
 **what currently exists?**
-The application is a full-stack React/FastAPI/MongoDB HR system. The core RBAC, transaction, and ledger systems are functional. In this session, several critical fixes and features were added:
--   The supervisor self-approval workflow bug was fixed and verified.
--   The UI now supports full Arabic localization, dynamically translating backend data like transaction types and stages.
--   A new color-coding system for transaction statuses has been implemented, where the color reflects the role of the next approver.
--   The backend PDF generation was fixed to correctly render RTL Arabic text.
--   The foundation for a Work Locations (map) feature has been created, including backend CRUD APIs, a database model, and a basic frontend page with Leaflet installed.
+The application is a full-stack React/FastAPI/MongoDB system. In this session, the agent implemented complex backend logic for Financial Custody, Tangible Custody, and an Escalation workflow, with extensive API-level testing. The frontend was significantly reworked to support these features, including creating an admin attendance view and holiday management. However, the user was repeatedly dissatisfied with the UI/UX, which led to the agent starting a complete aesthetic redesign of the application just before the session ended.
 
 **Last working item**:
--   Last item agent was working: The agent had just received a comprehensive list of new features and fixes from the user (see LATEST USER REQUIREMENTS above). The agent acknowledged these requirements and was about to start implementation, beginning with the color-coding changes.
--   Status: NOT STARTED (on the large batch of new requests).
--   Agent Testing Done: Y (for the work completed *before* the new requests arrived).
--   Which testing method agent to use? both (Frontend for UI changes, Backend for new transaction logic and API endpoints).
--   User Testing Done: N (User has not yet verified the latest fixes and has provided new requirements instead).
+-   Last item agent was working: A complete UI/UX overhaul. The agent updated the color palette in  and created a new, mobile-first  with a bottom navigation bar, as the first step of the redesign.
+-   Status: **IN PROGRESS**
+-   Agent Testing Done: N
+-   Which testing method agent to use? frontend testing agent (After the full redesign is implemented).
+-   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Missing CEO (Mohammed) Account (P0)**
--   **Issue 2: Poor PDF Formatting (P1)**
--   **Issue 3: Verify Status/Role Color Implementation (P2)**
+-   Issue 1: **Map Feature is Broken (P0)**
+-   Issue 2: **System-Wide Language Mixing (P0)**
+-   Issue 3: **Poor PDF Formatting (P1)**
+-   Issue 4: **Missing CEO (Mohammed) Account & View (P2)**
 
 **Issues Detail:**
--   **Issue 1: Missing CEO (Mohammed) Account**
-    -   **Attempted fixes:** None. The issue was just reported.
+-   **Issue 1: Map Feature is Broken**
+    -   **Attempted fixes:** None in this session. The feature was created in a previous session but reported as non-functional by the user.
     -   **Next debug checklist:**
-        1.  Check  or the component containing the user switcher.
-        2.  Verify if the API response from  includes the Mohammed user.
-        3.  If the user is missing from the frontend list, add him.
-        4.  Create a dedicated view/dashboard for the CEO role that shows escalated transactions and his personal requests.
-    -   **Why fix this issue and what will be achieved with the fix?** The CEO is a critical role in the approval workflow and currently has no access to the system via the UI.
+        1.  Verify the  endpoint returns assigned locations for the logged-in employee.
+        2.  Check the employee's profile/dashboard page in the frontend to ensure it fetches and displays this data.
+        3.  On the  admin page, debug the API call that should populate the employee dropdown ().
+        4.  Fix the data flow to ensure assignments are saved and reflected correctly.
+    -   **Why fix this issue and what will be achieved with the fix?** It's a key requested feature that is completely non-functional, preventing admins from managing work sites and employees from seeing their assigned locations.
     -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** both
--   **Issue 2: Poor PDF Formatting**
-    -   **Attempted fixes:** The agent fixed the Arabic text rendering, but not the overall layout.
+-   **Issue 2: System-Wide Language Mixing**
+    -   **Attempted fixes:** None specifically targeted at this. The agent added translations, but the root cause of mixing seems to be in how data and static text are rendered together.
     -   **Next debug checklist:**
-        1.  Review .
-        2.  Restructure the placement of text, headers, and tables using  coordinates to create a more professional and organized document.
-        3.  Ensure consistent styling and spacing.
-    -   **Why fix this issue and what will be achieved with the fix?** The generated PDFs are official records and must be clear, professional, and well-organized.
+        1.  Inspect components like  where mixed languages were reported (e.g., ).
+        2.  Ensure all dynamic data from the backend (e.g., statuses like ) is translated using the  function from .
+        3.  Review the PDF generation logic in  to ensure it uses a single language context.
+        4.  Systematically check all pages and components for hardcoded English text alongside translated content.
+    -   **Why fix this issue and what will be achieved with the fix?** The mixed language UI is unprofessional and confusing for users, undermining the application's usability.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** both
+-   **Issue 3: Poor PDF Formatting**
+    -   **Attempted fixes:** Previous fixes focused on RTL text rendering, but not layout.
+    -   **Next debug checklist:**
+        1.  Review  and the  implementation.
+        2.  Create a structured template with clear headers (bold), body text, and tables. Use 's frames or tables for layout control instead of absolute positioning.
+        3.  Incorporate dividing lines and consistent spacing.
+    -   **Why fix this issue and what will be achieved with the fix?** PDFs are official documents and their current state is unprofessional.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** backend
--   **Issue 3: Verify Status/Role Color Implementation**
-    -   **Attempted fixes:** The agent implemented logic to change status colors based on the approver's role.
+-   **Issue 4: Missing CEO (Mohammed) Account & View**
+    -   **Attempted fixes:** The backend escalation logic for the CEO role was built, but the frontend view was never prioritized.
     -   **Next debug checklist:**
-        1.  Review the logic in  and .
-        2.  Cross-reference the implemented colors with the user's explicit list.
-        3.  Create transactions that go through each stage of the workflow and verify in the UI that the color updates correctly at each step.
-    -   **Why fix this issue and what will be achieved with the fix?** The user has repeatedly mentioned this. Verifying it will ensure the UI meets their exact specifications and prevent further requests on this topic.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
+        1.  Add Mohammed to the user switcher in .
+        2.  On the , create a specific view for the 'ceo' role that shows only escalated transactions and his own personal transaction history.
+    -   **Why fix this issue and what will be achieved with the fix?** The CEO is a critical part of the approval chain but currently has no UI access.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** frontend
 
 **In progress Task List**:
--   **Task 1: Complete Work Locations Map Feature (P1)**
+-   **Task 1: Complete UI/UX Redesign (P0)**
 
 **Task Detail:**
--   **Task 1: Complete Work Locations Map Feature**
-    -   **Where to resume:** The backend API () and a basic frontend page () exist. The next step is to build out the UI on the frontend page to:
-        1.  Display the Leaflet map.
-        2.  Allow admins ('Sultan', 'Naif') to click the map to add a pin (a new work location).
-        3.  Show a form to name the location and define its properties (e.g., 500m radius).
-        4.  Add a multi-select dropdown (populated from ) to assign employees to the selected location.
-        5.  Implement logic to link employees to locations in the database via the API.
-    -   **What will be achieved with this?** It will deliver a major user-requested feature for managing employee work sites.
+-   **Task 1: Complete UI/UX Redesign**
+    -   **Where to resume:** The agent has created . The next step is to apply the new design system (colors from , mobile-first layout with bottom nav, modern fonts) across all pages and components, starting with , , , etc.
+    -   **What will be achieved with this?** This will address the user's core feedback on the application's look and feel, aiming for a modern, professional, and mobile-friendly experience.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
+    -   **Should Test frontend/backend/both after fix?** frontend
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0: Implement New Transaction Types:** Modify  and  (or create new routes) to handle the new, specific request types. Update the frontend to allow users to select these new types when creating a request.
-    -   **P1: Supervisor Assignment UI:** Add a feature to the Employees page () allowing 'Sultan'/'Naif' to change an employee's . This should likely trigger a formal transaction for STAS approval.
-    -   **P1: Contract Deletion for STAS:** Add a delete button on the contracts page, visible only to users with the 'STAS' role, that calls a new backend endpoint to delete contracts.
+    -   **P1: Supervisor Assignment UI:** Add a UI for 'Sultan'/'Naif' to assign/change an employee's supervisor from the employee list page.
+    -   **P1: Contract Deletion for STAS:** Add a delete option for contracts, visible only to the 'STAS' role.
+    -   **P2: Implement New Transaction Types:** Add specific leave/attendance request types as originally requested (e.g., Marriage Leave, Exam Leave, External Mission).
 -   **Future Tasks:**
     -   Full implementation of contract versioning and snapshots.
-    -   Build out the remaining ledgers (Warning, Asset) with corresponding transaction types.
+    -   Build out the remaining ledgers (Warning, Asset).
 
 **Completed work in this session**
--   Fixed the critical regression where a supervisor's leave request would get stuck pending their own approval.
--   Implemented full Arabic localization for dynamic content (transaction types, statuses) and fixed RTL text rendering in PDFs.
--   Implemented the user's requested color-coding scheme for transaction statuses based on the current approver's role color.
--   Created the backend API, database model, and initial frontend page for the Work Locations (map) feature.
+-   **Financial Custody Module (Backend & Frontend):** Implemented a complex, Excel-like financial custody management system with a multi-stage approval workflow and automatic balance carry-over.
+-   **Tangible Custody Workflow:** Created the backend logic and initial UI for assigning tangible assets to employees for their approval.
+-   **Escalation Workflow:** Built the backend logic for escalating transactions to a higher authority.
+-   **Admin Dashboards:**
+    -   Created an admin-facing page to view and filter all employee attendance records.
+    -   Enabled authorized admins to add, edit, and delete official holidays.
+-   **UI Enhancements:**
+    -   Renamed Dashboard to My Board ().
+    -   Added a Next Holiday card to the employee dashboard.
+    -   Created a professional, reusable Timeline component.
 
 **Earlier issues found/mentioned but not fixed**
-All new issues and tasks mentioned in the user's last message () are now captured in the Pending Issues and Upcoming Tasks sections above.
+-   **Issue 1: Map Feature Broken:** Admins cannot assign employees to work locations, and employees cannot see their assigned locations. This was mentioned in the initial handoff and re-confirmed by the user.
+-   **Issue 2: System-Wide Language Mixing:** The UI inconsistently mixes Arabic and English, which was a major point of frustration for the user.
+-   **Issue 3: PDF Formatting:** The layout and organization of generated PDFs remain unprofessional despite earlier fixes to text rendering.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** The supervisor self-approval workflow bug.
+-   **Issue recurrence in previous fork:** Supervisor self-approval bug.
 -   **Recurrence count:** 2
 -   **Status:** RESOLVED
 
@@ -120,77 +122,87 @@ All new issues and tasks mentioned in the user's last message () are now capture
 
 **Key Technical Concepts**
 -   **Backend:** FastAPI, Python, MongoDB (), 
--   **Frontend:** React.js, Tailwind CSS, shadcn/ui, , , , 
--   **Authentication:** Custom JWT with Role-Based Access Control (RBAC).
--   **Architecture:** Modular backend with distinct engines for workflow logic.
+-   **Frontend:** React.js, Tailwind CSS, shadcn/ui, , 
+-   **State Management:** React Hooks (, , )
+-   **Architecture:** Modular backend with distinct workflow logic; component-based frontend.
 
 **key DB schema**
--   , , , , , , ,  (Existing)
--   : {name, latitude, longitude, radius, assigned_employees: [employee_id]} (NEW)
+-   , , , , , , 
+-   : {name, latitude, longitude, radius, assigned_employees: [employee_id]}
+-   : {code, amount, status, expenses: [{description, amount}], created_by, current_owner, history: [], carried_to, carried_from} (NEW)
 
 **changes in tech stack**
--   Added  and  for the map feature.
-
-**All files of reference**
--   : Contains the fixed supervisor skip logic.
--   : Contains the fix for Arabic text rendering.
--   : New backend for the map feature.
--   : New frontend for the map feature.
--   , , : Heavily modified to support new color logic and translations.
--   : Contains all new Arabic translations.
--   : Contains the new color palette for roles and statuses.
--   , : Modified to add routing and navigation for the new page.
-
-**Areas that need refactoring**:
 None.
 
+**All files of reference**
+-   : New file, start of the UI redesign.
+-   : Contains the new user-specified color theme.
+-   : Contains the complex Excel-like UI for managing financial custodies.
+-   : The backend driving the new financial custody workflow.
+-   : The new professional timeline component.
+-   : The new admin dashboard for attendance.
+-   : Needs to be reworked for better formatting.
+-   : Needs to be debugged.
+
+**Areas that need refactoring**:
+-   The entire frontend is undergoing a planned redesign. All pages and components will need to be refactored to align with the new design system defined in  and .
+
 **key api endpoints**
--   : Creates a leave request.
--   , : New CRUD endpoints for the map feature.
+-   : Create a new financial custody.
+-   : Add an expense line item.
+-   : Advance the custody through its workflow (receive, audit, approve, execute).
+-   : Get all attendance records for the admin view.
+-   : Add a new holiday.
+-   : Edit an existing holiday.
 
 **Critical Info for New Agent**
--   The user has just provided a large list of new requirements. You MUST address these systematically. Start by creating a plan that covers the new items and get user approval.
--   **Priority Order:**
-    1.  Fix the missing Mohammed (CEO) user account.
-    2.  Implement the new, detailed transaction types.
-    3.  Complete the Work Locations map feature.
-    4.  Address the UI requests (Supervisor Assignment, Contract Deletion).
-    5.  Improve PDF formatting.
--   The user is very specific about colors and UI behavior. Pay close attention to their feedback in Arabic.
--   The Work Locations feature is already started. Resume work from the existing files ( and ).
+-   **PRIORITIES:**
+    1.  **P0: Complete the UI/UX Redesign.** This is the user's top concern. Apply the new design system from  and  across the entire application.
+    2.  **P0: Fix Critical Bugs.** While doing the redesign, you MUST fix the **Map Feature** and the **Language Mixing** issue. These are major functional and UX blockers.
+    3.  **P1: Fix PDF Formatting.** Once the UI is stable, tackle the PDF generation to match the new professional look.
+-   The user is highly detail-oriented and has a very specific vision for the UI/UX. Be prepared for iterative feedback.
+-   The backend logic for most complex features is already built and tested at the API level. The main focus is now on the frontend presentation and fixing the remaining bugs.
+-   Do not consider the task finished until the user explicitly confirms satisfaction with the redesign AND the critical bugs are verifiably fixed.
 
 **documents and test reports created in this job**
--    (Updated)
--   Test reports from  were generated but are now outdated due to the new requirements.
+-    (Continuously updated)
+-   
+-   
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. : Requests that status colors reflect the role of the current approver and provides detailed specs for the map feature. (Task in progress)
-9. : Acknowledges the new color and map requirements and begins implementation.
-8. : Implements the backend API for the map feature (Work Locations).
-7. : Implements the frontend page for Work Locations and adds navigation.
-6. : Reports that Arabic text is reversed in PDF and previews. (Task Received)
-5. : Fixes the Arabic text rendering issue in .
-4. : Tests the PDF fix and other functionality, confirms it works, and updates PRD.md.
-3. ** (PENDING/CRITICAL):** Provides a large, new list of requirements: complete the map feature by linking it to employees, add numerous new specific transaction types, fix PDF formatting, add a supervisor assignment UI, add contract deletion for STAS, and points out the CEO Mohammed is missing from the UI.
-2. : Acknowledges the large list of new requirements.
-1. : Starts implementing the new requirements, beginning with the final color-coding fix.
+-   : (pending) Specifies a new color palette (blue, green, gray, black) and accepts the agent's proposal for a full redesign, stressing it must not affect content.
+-   : Proposes a full, modern, mobile-first UI/UX overhaul to address user feedback, offering to find inspiration from modern apps.
+-   : (pending) Expresses frustration with the current UI, calling it primitive and annoying. Demands a complete, modern redesign similar to banking/HR apps. Reiterates critical bugs: map not working for employees, language mixing (), and bad PDF formatting.
+-   : Finishes task after passing all tests for the second major feature implementation.
+-   : (pending) Asks about the status of the Work Locations (Map) and Attendance features, questioning why they don't seem to be working or reflecting data correctly for users/admins.
+-   : (pending) Asks the agent to list all the fixes that are currently planned based on recent feedback.
+-   : (pending) Provides significant negative feedback on the Excel-like table, timeline, and PDF. Demands a more professional, modern, and dynamic UI. Asks for the ability for admins to edit holidays.
+-   : Finishes task after implementing the complex financial custody workflow and other UI changes, with 100% test pass rate.
+-   : (pending) Gives permission for admins to modify all 60+ financial codes, renames Dashboard to My Board, and wants employees to see the next upcoming holiday.
+-   : (pending) Clarifies the financial custody workflow again, specifying who can edit what.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The CEO role (Mohammed) is not accessible in the frontend, blocking a key part of the approval chain.
+    -   **Map/Work Locations Feature:** Completely non-functional from a user perspective.
+    -   **Language Rendering:** The UI displays a mix of English and Arabic, creating a confusing and unprofessional experience.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
 -    &  for OpenStreetMap integration.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES.
+-   **Testing agent used after significant changes:** YES, multiple times after major backend/frontend phases.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
 -   **Test files created:** None.
--   **Known regressions:** None currently, but the supervisor workflow bug was a recent regression that has been fixed.
+-   **Known regressions:** The Map feature can be considered a regression as it was partially built previously and is now confirmed broken.
 
 **Credentials to test flow:**
-Use the user-switcher dropdown in the app's header. No passwords required. Roles include , , , , , and . The  role is missing from the UI and needs to be added.
+Use the user-switcher dropdown in the app's header. No passwords required. Roles include , , , , , , and .
 
 **What agent forgot to execute**
-The agent was about to finish the job before receiving the user's final, large list of requirements. A key oversight from previous work is the absence of the Mohammed (CEO) user in the frontend user-switcher, which has now become a P0 issue.</analysis>
+The agent correctly prioritized user requests throughout the session but was unable to resolve three persistent, critical issues that were repeatedly mentioned:
+1.  **The broken Map feature.**
+2.  **The system-wide language mixing.**
+3.  **The poor PDF formatting.**
+These were deprioritized in favor of implementing new complex features but have now become top-priority blockers for user satisfaction.</analysis>
