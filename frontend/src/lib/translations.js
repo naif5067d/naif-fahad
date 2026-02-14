@@ -159,7 +159,7 @@ export const translations = {
       employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
-      companySettings: "إعدادات الشركة"
+      companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
