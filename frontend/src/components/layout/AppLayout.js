@@ -203,7 +203,7 @@ export default function AppLayout({ children }) {
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ring-1"
                     style={getRoleBadgeStyle(role)}
                   >
-                    {role === 'stas' ? 'S' : (user?.full_name || 'U')[0]}
+                    {role === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (user?.full_name || 'U')[0]}
                   </div>
                   <span className="hidden sm:inline text-xs font-medium truncate max-w-[100px]">{displayName}</span>
                   <ChevronDown size={12} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
