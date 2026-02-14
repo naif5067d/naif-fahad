@@ -172,9 +172,12 @@ async def update_holiday(holiday_id: str, req: dict, user=Depends(get_current_us
     if user.get('role') not in ('sultan', 'naif', 'stas'):
         raise HTTPException(status_code=403, detail="Not authorized")
     update = {}
-    if 'name' in req: update['name'] = req['name']
-    if 'name_ar' in req: update['name_ar'] = req['name_ar']
-    if 'date' in req: update['date'] = req['date']
+    if 'name' in req:
+        update['name'] = req['name']
+    if 'name_ar' in req:
+        update['name_ar'] = req['name_ar']
+    if 'date' in req:
+        update['date'] = req['date']
     if update:
         result = await db.public_holidays.update_one({"id": holiday_id}, {"$set": update})
         if result.matched_count == 0:
