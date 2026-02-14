@@ -53,6 +53,9 @@ export default function AttendancePage() {
 
   const isEmployee = ['employee', 'supervisor'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
+  
+  // Get today's date formatted
+  const todayFormatted = formatDateWithHijri(new Date(), lang);
 
   // Fetch employee's assigned work locations
   const fetchAssignedLocations = async (empId) => {
