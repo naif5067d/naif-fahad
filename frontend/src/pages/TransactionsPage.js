@@ -129,7 +129,11 @@ export default function TransactionsPage() {
   const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
   
   // Get translated stage
-  const getTranslatedStage = (stage) => t(`stages.${stage}`) || stage;
+  const getTranslatedStage = (stage) => {
+    // Handle STAS specifically
+    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
+    return t(`stages.${stage}`) || stage;
+  };
 
   // Get actionable transactions for mobile bar
   const actionableTx = selectedForAction ? transactions.find(tx => tx.id === selectedForAction && canAct(tx)) : null;
