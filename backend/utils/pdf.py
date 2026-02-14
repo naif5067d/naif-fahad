@@ -472,11 +472,14 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         barcode_img = create_barcode_image(barcode_code, width=55, height=12)
         
         stamp_data = [[Paragraph(stamp_text, styles['section'])]]
+        row_heights = [6*mm]
         if barcode_img:
             stamp_data.append([barcode_img])
+            row_heights.append(16*mm)
         stamp_data.append([Paragraph(stamp_date, styles['small'])])
+        row_heights.append(5*mm)
         
-        stamp_table = Table(stamp_data, colWidths=[65*mm], rowHeights=[6*mm, 16*mm, 5*mm])
+        stamp_table = Table(stamp_data, colWidths=[65*mm], rowHeights=row_heights)
         stamp_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
