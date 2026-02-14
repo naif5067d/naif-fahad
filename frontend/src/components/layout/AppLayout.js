@@ -12,7 +12,7 @@ const NAV_ITEMS = {
   naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'finance', 'financialCustody'],
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
