@@ -156,3 +156,83 @@ async def get_attendance_history(user=Depends(get_current_user)):
         {"employee_id": emp['id']}, {"_id": 0}
     ).sort("timestamp", -1).to_list(100)
     return entries
+
+
+@router.get("/admin")
+async def get_admin_attendance(
+    period: str = "daily",
+    date: str = None,
+    user=Depends(get_current_user)
+):
+    """Admin view of all employee attendance. period: daily/weekly/monthly/yearly"""
+    role = user.get('role')
+    if role not in ('sultan', 'naif', 'salah', 'mohammed', 'stas'):
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    target_date = date or now.strftime("%Y-%m-%d")
+    
+    if period == "daily":
+        query = {"date": target_date}
+    elif period == "weekly":
+        # Get current week (last 7 days from target)
+        dt = datetime.strptime(target_date, "%Y-%m-%d")
+        start = (dt - timedelta(days=dt.weekday())).strftime("%Y-%m-%d")
+        end = (dt - timedelta(days=dt.weekday()) + timedelta(days=6)).strftime("%Y-%m-%d")
+        query = {"date": {"$gte": start, "$lte": end}}
+    elif period == "monthly":
+        month_start = target_date[:7] + "-01"
+        # Calculate month end
+        dt = datetime.strptime(month_start, "%Y-%m-%d")
+        if dt.month == 12:
+            month_end = f"{dt.year + 1}-01-01"
+        else:
+            month_end = f"{dt.year}-{dt.month + 1:02d}-01"
+        query = {"date": {"$gte": month_start, "$lt": month_end}}
+    elif period == "yearly":
+        year = target_date[:4]
+        query = {"date": {"$gte": f"{year}-01-01", "$lte": f"{year}-12-31"}}
+    else:
+        query = {"date": target_date}
+    
+    entries = await db.attendance_ledger.find(query, {"_id": 0}).sort("date", -1).to_list(5000)
+    
+    # Group by employee and date
+    employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(200)
+    emp_map = {e['id']: e for e in employees}
+    
+    # Build summary
+    grouped = {}
+    for entry in entries:
+        emp_id = entry['employee_id']
+        date_key = entry['date']
+        key = f"{emp_id}_{date_key}"
+        if key not in grouped:
+            emp = emp_map.get(emp_id, {})
+            grouped[key] = {
+                "employee_id": emp_id,
+                "employee_name": emp.get('full_name', ''),
+                "employee_name_ar": emp.get('full_name_ar', ''),
+                "employee_number": emp.get('employee_number', ''),
+                "date": date_key,
+                "check_in": None,
+                "check_out": None,
+                "check_in_time": None,
+                "check_out_time": None,
+                "gps_valid_in": None,
+                "gps_valid_out": None,
+                "work_location": None,
+            }
+        if entry['type'] == 'check_in':
+            grouped[key]['check_in'] = entry['timestamp']
+            grouped[key]['check_in_time'] = entry['timestamp'][11:19] if entry.get('timestamp') else None
+            grouped[key]['gps_valid_in'] = entry.get('gps_valid')
+            grouped[key]['work_location'] = entry.get('work_location')
+        elif entry['type'] == 'check_out':
+            grouped[key]['check_out'] = entry['timestamp']
+            grouped[key]['check_out_time'] = entry['timestamp'][11:19] if entry.get('timestamp') else None
+            grouped[key]['gps_valid_out'] = entry.get('gps_valid')
+    
+    result = sorted(grouped.values(), key=lambda x: (x['date'], x['employee_name']), reverse=True)
+    return result
