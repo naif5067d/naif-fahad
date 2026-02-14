@@ -177,21 +177,22 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
 
     # Handle rejection
     if body.action == 'reject':
-        # CEO rejection on escalated tx → return to ops
-        if stage == 'ceo' and tx.get('escalated'):
+        # CEO rejection → goes to STAS for final decision (execute rejection or return)
+        if stage == 'ceo':
             await db.transactions.update_one(
                 {"id": transaction_id},
                 {
                     "$set": {
-                        "current_stage": "ops",
-                        "status": "pending_ops",
-                        "escalated": False,
+                        "current_stage": "stas",
+                        "status": "stas",
+                        "ceo_rejected": True,
+                        "rejection_source": "ceo",
                         "updated_at": now
                     },
                     "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
                 }
             )
-            return {"message": "CEO rejected. Returned to Operations.", "status": "pending_ops", "current_stage": "ops"}
+            return {"message": "CEO rejected. Sent to STAS for final decision.", "status": "stas", "current_stage": "stas"}
 
         # Employee rejection on tangible custody → cancel immediately
         if stage == 'employee_accept':
@@ -204,15 +205,20 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
             )
             return {"message": "Custody rejected by employee. Cancelled.", "status": "cancelled"}
 
-        # Normal rejection
+        # Other rejections → go to STAS for final decision
         await db.transactions.update_one(
             {"id": transaction_id},
             {
-                "$set": {"status": "rejected", "updated_at": now},
+                "$set": {
+                    "current_stage": "stas",
+                    "status": "stas",
+                    "rejection_source": stage,
+                    "updated_at": now
+                },
                 "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
             }
         )
-        return {"message": "Transaction rejected", "status": "rejected"}
+        return {"message": "Rejected. Sent to STAS for final decision.", "status": "stas", "current_stage": "stas"}
 
     # Handle finance stage editing (Salah can edit finance_60 data)
     if stage == 'finance' and body.edit_data and tx.get('type') == 'finance_60':
