@@ -68,7 +68,7 @@ export default function DashboardPage() {
 
   const role = user?.role || 'employee';
   const statCards = STAT_CONFIG[role] || STAT_CONFIG.employee;
-  const displayName = role === 'stas' ? 'STAS' : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
+  const displayName = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
 
   // Get status style with role-based colors
   const getStatusStyle = (status) => {
