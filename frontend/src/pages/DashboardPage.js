@@ -75,6 +75,7 @@ const QUICK_ACTIONS = {
     { key: 'transactions', icon: FileText, path: '/transactions', color: '#F97316' },
     { key: 'employees', icon: Users, path: '/employees', color: '#3B82F6' },
     { key: 'financialCustody', icon: Wallet, path: '/financial-custody', color: '#10B981' },
+    { key: 'companySettings', icon: Settings2, path: '/company-settings', color: '#64748B' },
   ],
 };
 
