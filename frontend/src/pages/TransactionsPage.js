@@ -292,7 +292,7 @@ export default function TransactionsPage() {
                     {/* Time */}
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <Clock size={14} />
-                      <span>{formatSaudiDateTime(tx.created_at)}</span>
+                      <span>{formatGregorianHijriDateTime(tx.created_at).combined}</span>
                     </div>
                     {/* Stage */}
                     <div className="ms-auto text-xs bg-muted/50 px-2 py-1 rounded-md">
