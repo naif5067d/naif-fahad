@@ -58,15 +58,16 @@ users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger,
 
 ## Completed Bug Fixes
 1. ✅ Map/Work Locations - Employees see assigned locations
-2. ✅ Language Mixing - STAS properly shows as "STAS" in both Arabic and English
+2. ✅ Language Mixing - STAS/CEO show same in both languages
 3. ✅ UI/UX Overhaul - Modern, professional design implemented
-4. ✅ PDF Formatting - Professional layout with bilingual headers, proper tables
+4. ✅ PDF Formatting - Professional layout with QR signatures, language support
 5. ✅ Time Display - All times now use Saudi timezone (Asia/Riyadh, UTC+3)
 6. ✅ Approval Workflow - Users cannot approve/reject same transaction twice
-7. ✅ CEO Rejection Flow - CEO rejection goes to STAS (not back to Ops)
-8. ✅ STAS Status Display - Shows "STAS" (not "بانتظار ستاس" or "Pending STAS")
-9. ✅ CEO Name - Shows "CEO" in both Arabic and English
-10. ✅ Attendance Date - Gregorian primary + Hijri secondary with correct numerals
+7. ✅ CEO Rejection Flow - CEO rejection goes to STAS with "Return to CEO" option
+8. ✅ STAS Status Display - Shows "STAS" (not "بانتظار ستاس")
+9. ✅ Attendance Date - Gregorian primary + Hijri secondary with correct numerals
+10. ✅ PDF Language Support - Arabic PDF = fully Arabic, English PDF = fully English
+11. ✅ QR Signatures - Each approval has QR code, STAS has barcode (system signature)
 
 ## Remaining Issues
 None critical.
