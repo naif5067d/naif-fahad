@@ -244,7 +244,7 @@ export default function TransactionDetailPage() {
             <p className="text-sm text-muted-foreground font-mono">{tx.ref_no}</p>
             <h1 className="text-2xl font-bold mt-1">{getTypeLabel(tx.type)}</h1>
             <p className="text-muted-foreground mt-1">
-              {formatSaudiDateTime(tx.created_at)}
+              {formatGregorianHijriDateTime(tx.created_at).combined}
             </p>
           </div>
           
