@@ -137,7 +137,7 @@ export const translations = {
     status: {
       created: "Created", pending_supervisor: "Pending Supervisor",
       pending_ops: "Pending Ops", pending_finance: "Pending Finance",
-      pending_ceo: "Pending CEO", pending_stas: "Pending STAS",
+      pending_ceo: "Pending CEO", stas: "STAS",
       pending_employee_accept: "Pending Employee",
       executed: "Executed", rejected: "Rejected", completed: "Completed",
       cancelled: "Cancelled", approved: "Approved", pending: "Pending"
