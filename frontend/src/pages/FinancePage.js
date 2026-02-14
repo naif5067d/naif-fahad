@@ -166,7 +166,7 @@ export default function FinancePage() {
                     <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
                   ) : statement.map(e => (
                     <tr key={e.id}>
-                      <td className="font-mono text-xs">{e.date?.slice(0, 10)}</td>
+                      <td className="font-mono text-xs">{formatGregorianHijri(e.date).combined}</td>
                       <td className="text-xs">{e.code} - {e.code_name}</td>
                       <td className="text-sm">{e.description}</td>
                       <td className="text-right font-mono font-medium">{e.amount?.toLocaleString()} SAR</td>
