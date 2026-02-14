@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function SystemMaintenancePage() {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [storageInfo, setStorageInfo] = useState(null);
   const [archives, setArchives] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
