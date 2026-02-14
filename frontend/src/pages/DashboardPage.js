@@ -211,7 +211,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold truncate">
               {lang === 'ar' ? nextHoliday.name_ar || nextHoliday.name : nextHoliday.name}
             </p>
-            <p className="text-xs text-muted-foreground font-mono">{nextHoliday.date}</p>
+            <p className="text-xs text-muted-foreground font-mono">{formatGregorianHijri(nextHoliday.date).combined}</p>
           </div>
         </div>
       )}
