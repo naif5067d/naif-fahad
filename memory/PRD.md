@@ -33,14 +33,15 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 ### Phase 7: Map Feature & Language Fix ✅
 ### Phase 8: Complete UI/UX Redesign ✅
 ### Phase 9: PDF & Transactions Enhancement ✅
-### Phase 10: Company Settings & Workflow Fix ✅ (2026-02-14)
+### Phase 10: Company Settings & Workflow Fix ✅
+### Phase 11: PDF Arabic Text Fix & STAS Execution Flow ✅ (2026-02-14)
 
-**Changes in Phase 10:**
-- **Company Settings Page:** New page `/company-settings` for STAS to manage company logo, name, and slogan (Arabic/English)
-- **PDF Generator Fix:** Complete rewrite with proper Arabic fonts (Noto Naskh Arabic), better layout, QR/Barcode signatures
-- **Workflow Return Logic:** Fixed STAS return actions to properly reset rejection markers, allowing returned managers to act again
-- **Transaction Detail Fix:** Hidden complex fields like `sick_tier_info` from UI display
-- **Quick Actions:** Added "Company Settings" button to STAS dashboard
+**Changes in Phase 11:**
+- **PDF Arabic Fix:** Used `arabic_reshaper` and `bidi` libraries for proper RTL Arabic text display
+- **STAS Execution Bug:** Fixed "You have already taken an action" error - STAS is now excluded from this check
+- **Pre-Checks Logic:** Updated to count 'escalate' actions as valid approvals
+- **STAS Pending API:** Updated to include both `current_stage=stas` and `status=pending_stas`
+- **PDF rowHeights Bug:** Fixed dynamic row heights for stamp_data to avoid ValueError
 
 ## Key API Endpoints
 - `/api/financial-custody/*` - Full custody lifecycle
@@ -53,6 +54,9 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 - `/api/work-locations` - Work location CRUD
 - `/api/settings/branding` - Company branding (GET/PUT/POST logo/DELETE logo)
 - `/api/transactions/{id}/pdf?lang=ar|en` - PDF generation
+- `/api/stas/pending` - Get pending transactions for STAS
+- `/api/stas/mirror/{id}` - Get mirror data for transaction
+- `/api/stas/execute/{id}` - Execute transaction
 
 ## Collections
 users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger, public_holidays, holidays, contracts, finance_codes, counters, work_locations, custody_ledger, custody_financial, settings
@@ -68,6 +72,9 @@ users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger,
 8. ✅ STAS Return Flow - Properly resets rejection markers
 9. ✅ Complex Fields Hidden - No [object Object] in UI
 10. ✅ Company Branding API - Full CRUD for logo/name/slogan
+11. ✅ PDF Arabic Text - Using arabic_reshaper and bidi for proper RTL
+12. ✅ STAS Execution - No more "already acted" error for STAS
+13. ✅ Pre-Checks Escalation - Escalate counts as valid approval
 
 ## Remaining Tasks
 
@@ -83,16 +90,15 @@ users, employees, transactions, leave_ledger, finance_ledger, attendance_ledger,
 - Geofencing enforcement
 
 ## Key Files
+- `/app/backend/utils/pdf.py` - PDF generator with arabic_reshaper and bidi
+- `/app/backend/utils/workflow.py` - validate_stage_actor (STAS excluded from already_acted)
+- `/app/backend/routes/stas.py` - STAS Mirror and execution with updated pre-checks
+- `/app/frontend/src/pages/STASMirrorPage.js` - STAS Mirror UI
 - `/app/frontend/src/pages/CompanySettingsPage.js` - Company settings UI
-- `/app/frontend/src/lib/dateUtils.js` - Saudi timezone formatting
-- `/app/frontend/src/components/Timeline.js` - Timeline component
-- `/app/backend/routes/settings.py` - Company branding API
-- `/app/backend/routes/transactions.py` - Transaction workflow
-- `/app/backend/utils/pdf.py` - PDF generator with Arabic fonts
 
 ## Test Reports
-- `/app/test_reports/iteration_11.json` - Latest test results (100% pass)
-- `/app/backend/tests/test_iteration11_features.py` - Backend tests
+- `/app/test_reports/iteration_12.json` - Latest test results (100% pass)
+- `/app/backend/tests/test_iteration12_features.py` - Backend tests
 
 ---
-Version: 11.0 (2026-02-14)
+Version: 12.0 (2026-02-14)
