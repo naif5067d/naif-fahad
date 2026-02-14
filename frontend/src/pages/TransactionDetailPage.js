@@ -2,21 +2,27 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Clock, CheckCircle, XCircle, Circle, Eye } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Loader2 } from 'lucide-react';
+import { formatSaudiDateTime, toHijri } from '@/lib/dateUtils';
+import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-// Status colors based on the role required for approval
-const STATUS_COLORS = {
-  executed: '#16A34A',      // Green - completed
-  rejected: '#DC2626',      // Red - rejected/cancelled
-  cancelled: '#DC2626',     // Red - cancelled
-  pending_supervisor: '#1D4ED8', // Supervisor blue
-  pending_ops: '#F97316',   // Sultan orange
-  pending_finance: '#0D9488', // Salah teal
-  pending_ceo: '#B91C1C',   // Mohammed red
-  pending_stas: '#7C3AED',  // STAS purple
-  pending_employee_accept: '#3B82F6', // Employee blue
+// Status configuration
+const STATUS_CONFIG = {
+  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
+  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
+  pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
+  pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20' },
+  pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20' },
+  pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
+  pending_stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20' },
+  pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20' },
+  approve: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  reject: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
+  pending: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
 };
 
 export default function TransactionDetailPage() {
@@ -24,228 +30,309 @@ export default function TransactionDetailPage() {
   const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [tx, setTx] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
-    api.get(`/api/transactions/${id}`).then(r => setTx(r.data)).catch(() => navigate('/transactions'));
-  }, [id, navigate]);
-
-  if (!tx) return <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>;
+    const fetchTx = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/transactions/${id}`);
+        setTx(res.data);
+      } catch (err) {
+        toast.error(lang === 'ar' ? 'فشل تحميل المعاملة' : 'Failed to load transaction');
+        navigate('/transactions');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTx();
+  }, [id, navigate, lang]);
 
   const downloadPdf = async () => {
+    setPdfLoading(true);
     try {
       const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a'); a.href = url; a.download = `${tx.ref_no}.pdf`; a.click();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tx.ref_no}.pdf`;
+      a.click();
       URL.revokeObjectURL(url);
-    } catch { toast.error(t('transactions.downloadPdf') + ' failed'); }
+    } catch {
+      toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const previewPdf = async () => {
+    setPdfLoading(true);
     try {
       const res = await api.get(`/api/transactions/${tx.id}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       window.open(url, '_blank');
-    } catch { toast.error(t('transactions.previewPdf') + ' failed'); }
+    } catch {
+      toast.error(lang === 'ar' ? 'فشل معاينة PDF' : 'Failed to preview PDF');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
-  // Get status style with role-based colors
-  const getStatusStyle = (status) => {
-    if (status === 'executed' || status === 'approve') {
-      return { backgroundColor: `${STATUS_COLORS.executed}15`, color: STATUS_COLORS.executed, borderColor: `${STATUS_COLORS.executed}30` };
-    }
-    if (status === 'rejected' || status === 'reject') {
-      return { backgroundColor: `${STATUS_COLORS.rejected}15`, color: STATUS_COLORS.rejected, borderColor: `${STATUS_COLORS.rejected}30` };
-    }
-    // For pending statuses, use the specific role color
-    if (STATUS_COLORS[status]) {
-      return { backgroundColor: `${STATUS_COLORS[status]}15`, color: STATUS_COLORS[status], borderColor: `${STATUS_COLORS[status]}30` };
-    }
-    // Default fallback
-    return { backgroundColor: '#F9731615', color: '#F97316', borderColor: '#F9731630' };
-  };
-
-  // Get translated type
-  const getTranslatedType = (type) => t(`txTypes.${type}`) || type?.replace(/_/g, ' ');
+  const getStatusStyle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   
-  // Get translated stage
-  const getTranslatedStage = (stage) => {
-    // Handle STAS specifically
-    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
-    return t(`stages.${stage}`) || stage;
-  };
-
-  // Translate data keys for display
-  const getTranslatedKey = (key) => {
-    const keyMap = {
-      leave_type: lang === 'ar' ? 'نوع الإجازة' : 'Leave Type',
-      start_date: lang === 'ar' ? 'تاريخ البداية' : 'Start Date',
-      end_date: lang === 'ar' ? 'تاريخ النهاية' : 'End Date',
-      adjusted_end_date: lang === 'ar' ? 'تاريخ النهاية المعدل' : 'Adjusted End Date',
-      working_days: lang === 'ar' ? 'أيام العمل' : 'Working Days',
-      reason: lang === 'ar' ? 'السبب' : 'Reason',
-      employee_name: lang === 'ar' ? 'اسم الموظف' : 'Employee Name',
-      employee_name_ar: lang === 'ar' ? 'اسم الموظف' : 'Employee Name (Arabic)',
-      balance_before: lang === 'ar' ? 'الرصيد قبل' : 'Balance Before',
-      balance_after: lang === 'ar' ? 'الرصيد بعد' : 'Balance After',
-      amount: lang === 'ar' ? 'المبلغ' : 'Amount',
-      description: lang === 'ar' ? 'الوصف' : 'Description',
+  const getStatusLabel = (status) => {
+    const labels = {
+      executed: { ar: 'منفذة', en: 'Executed' },
+      rejected: { ar: 'مرفوضة', en: 'Rejected' },
+      cancelled: { ar: 'ملغاة', en: 'Cancelled' },
+      pending_supervisor: { ar: 'بانتظار المشرف', en: 'Pending Supervisor' },
+      pending_ops: { ar: 'بانتظار العمليات', en: 'Pending Ops' },
+      pending_finance: { ar: 'بانتظار المالية', en: 'Pending Finance' },
+      pending_ceo: { ar: 'بانتظار الرئيس', en: 'Pending CEO' },
+      pending_stas: { ar: 'بانتظار ستاس', en: 'Pending STAS' },
+      pending_employee_accept: { ar: 'بانتظار الموظف', en: 'Pending Employee' },
+      approve: { ar: 'موافق', en: 'Approved' },
+      approved: { ar: 'موافق', en: 'Approved' },
+      reject: { ar: 'مرفوض', en: 'Rejected' },
+      pending: { ar: 'معلق', en: 'Pending' },
     };
-    return keyMap[key] || key.replace(/_/g, ' ');
+    return labels[status] ? (lang === 'ar' ? labels[status].ar : labels[status].en) : status;
   };
 
-  // Translate leave types
-  const getTranslatedValue = (key, val) => {
+  const getTypeLabel = (type) => {
+    const types = {
+      leave_request: { ar: 'طلب إجازة', en: 'Leave Request' },
+      finance_60: { ar: 'عهدة مالية', en: 'Financial Custody' },
+      settlement: { ar: 'تسوية', en: 'Settlement' },
+      contract: { ar: 'عقد', en: 'Contract' },
+      tangible_custody: { ar: 'عهدة ملموسة', en: 'Tangible Custody' },
+      tangible_custody_return: { ar: 'إرجاع عهدة', en: 'Custody Return' },
+      salary_advance: { ar: 'سلفة راتب', en: 'Salary Advance' },
+      letter_request: { ar: 'طلب خطاب', en: 'Letter Request' },
+    };
+    return types[type] ? (lang === 'ar' ? types[type].ar : types[type].en) : type?.replace(/_/g, ' ');
+  };
+
+  const getStageLabel = (stage) => {
+    if (stage === 'stas') return lang === 'ar' ? 'ستاس' : 'STAS';
+    const stages = {
+      supervisor: { ar: 'المشرف', en: 'Supervisor' },
+      ops: { ar: 'العمليات', en: 'Operations' },
+      finance: { ar: 'المالية', en: 'Finance' },
+      ceo: { ar: 'الرئيس', en: 'CEO' },
+      employee_accept: { ar: 'قبول الموظف', en: 'Employee Accept' },
+    };
+    return stages[stage] ? (lang === 'ar' ? stages[stage].ar : stages[stage].en) : stage;
+  };
+
+  const getDataKeyLabel = (key) => {
+    const labels = {
+      leave_type: { ar: 'نوع الإجازة', en: 'Leave Type' },
+      start_date: { ar: 'تاريخ البداية', en: 'Start Date' },
+      end_date: { ar: 'تاريخ النهاية', en: 'End Date' },
+      adjusted_end_date: { ar: 'تاريخ النهاية المعدل', en: 'Adjusted End Date' },
+      working_days: { ar: 'أيام العمل', en: 'Working Days' },
+      reason: { ar: 'السبب', en: 'Reason' },
+      employee_name: { ar: 'اسم الموظف', en: 'Employee Name' },
+      employee_name_ar: { ar: 'اسم الموظف', en: 'Employee Name (AR)' },
+      balance_before: { ar: 'الرصيد قبل', en: 'Balance Before' },
+      balance_after: { ar: 'الرصيد بعد', en: 'Balance After' },
+      amount: { ar: 'المبلغ', en: 'Amount' },
+      description: { ar: 'الوصف', en: 'Description' },
+      asset_name: { ar: 'اسم الأصل', en: 'Asset Name' },
+      asset_serial: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
+    };
+    return labels[key] ? (lang === 'ar' ? labels[key].ar : labels[key].en) : key.replace(/_/g, ' ');
+  };
+
+  const getDataValueLabel = (key, value) => {
     if (key === 'leave_type') {
-      const leaveTypes = { annual: lang === 'ar' ? 'سنوية' : 'Annual', sick: lang === 'ar' ? 'مرضية' : 'Sick', emergency: lang === 'ar' ? 'طارئة' : 'Emergency' };
-      return leaveTypes[val] || val;
+      const types = {
+        annual: { ar: 'سنوية', en: 'Annual' },
+        sick: { ar: 'مرضية', en: 'Sick' },
+        emergency: { ar: 'طارئة', en: 'Emergency' },
+      };
+      return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
     }
-    if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) {
+    if (key === 'employee_name' && lang === 'ar' && tx?.data?.employee_name_ar) {
       return tx.data.employee_name_ar;
     }
-    return String(val);
+    if (key === 'amount' && value) {
+      return `${value} SAR`;
+    }
+    return String(value);
   };
 
-  const getTimelineIcon = (event) => {
-    if (event === 'executed') return <CheckCircle size={16} className="text-emerald-500" />;
-    if (event === 'rejected') return <XCircle size={16} className="text-red-500" />;
-    if (event === 'approved') return <CheckCircle size={16} className="text-blue-500" />;
-    return <Circle size={16} className="text-muted-foreground" />;
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  // Get translated event name
-  const getTranslatedEvent = (event) => {
-    const events = {
-      created: lang === 'ar' ? 'تم الإنشاء' : 'Created',
-      approved: lang === 'ar' ? 'تمت الموافقة' : 'Approved',
-      rejected: lang === 'ar' ? 'تم الرفض' : 'Rejected',
-      executed: lang === 'ar' ? 'تم التنفيذ' : 'Executed',
-      escalated: lang === 'ar' ? 'تم التصعيد' : 'Escalated to CEO',
-    };
-    return events[event] || event;
-  };
+  if (!tx) return null;
+
+  const statusStyle = getStatusStyle(tx.status);
 
   return (
-    <div className="space-y-6" data-testid="transaction-detail-page">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/transactions')} data-testid="back-btn">
-          <ArrowLeft size={16} className="me-1" /> {t('common.back')}
-        </Button>
-      </div>
+    <div className="space-y-6 max-w-4xl mx-auto" data-testid="transaction-detail-page">
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => navigate('/transactions')} 
+        className="hover:bg-muted -ms-2"
+        data-testid="back-btn"
+      >
+        <ArrowLeft size={18} className="me-2" />
+        {lang === 'ar' ? 'رجوع' : 'Back'}
+      </Button>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight font-mono">{tx.ref_no}</h1>
-          <p className="text-sm text-muted-foreground">{getTranslatedType(tx.type)}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span 
-            className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-            style={getStatusStyle(tx.status)}
-          >
-            {t(`status.${tx.status}`) || tx.status}
-          </span>
-          <Button variant="outline" size="sm" onClick={previewPdf} data-testid="preview-pdf-btn">
-            <Eye size={14} className="me-1" /> {t('common.preview')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={downloadPdf} data-testid="download-pdf-btn">
-            <Download size={14} className="me-1" /> PDF
-          </Button>
-        </div>
-      </div>
-
-      {/* Transaction Data */}
-      <div className="border border-border rounded-lg p-4 md:p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('transactions.details')}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {Object.entries(tx.data || {}).filter(([key]) => !(key === 'employee_name_ar' && lang !== 'ar') && !(key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar)).map(([key, val]) => (
-            <div key={key} className="flex flex-col">
-              <span className="text-xs text-muted-foreground">{getTranslatedKey(key)}</span>
-              <span className="text-sm font-medium">{getTranslatedValue(key, val)}</span>
+      {/* Header Card */}
+      <div className="bg-card rounded-2xl border border-border p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground font-mono">{tx.ref_no}</p>
+            <h1 className="text-2xl font-bold mt-1">{getTypeLabel(tx.type)}</h1>
+            <p className="text-muted-foreground mt-1">
+              {formatSaudiDateTime(tx.created_at)}
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-end gap-3">
+            {/* Status Badge */}
+            <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+              {getStatusLabel(tx.status)}
+            </span>
+            
+            {/* PDF Buttons */}
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={previewPdf} 
+                disabled={pdfLoading}
+                className="rounded-xl"
+                data-testid="preview-pdf-btn"
+              >
+                {pdfLoading ? <Loader2 size={14} className="animate-spin me-2" /> : <Eye size={14} className="me-2" />}
+                {lang === 'ar' ? 'معاينة' : 'Preview'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={downloadPdf} 
+                disabled={pdfLoading}
+                className="rounded-xl"
+                data-testid="download-pdf-btn"
+              >
+                <Download size={14} className="me-2" />
+                PDF
+              </Button>
             </div>
-          ))}
+          </div>
         </div>
+      </div>
+
+      {/* Transaction Details */}
+      <div className="bg-card rounded-2xl border border-border p-6">
+        <h2 className="text-lg font-semibold mb-4">
+          {lang === 'ar' ? 'تفاصيل المعاملة' : 'Transaction Details'}
+        </h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Object.entries(tx.data || {})
+            .filter(([key]) => {
+              // Skip Arabic name if showing English
+              if (key === 'employee_name_ar' && lang !== 'ar') return false;
+              // Skip English name if showing Arabic with AR name available
+              if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) return false;
+              return true;
+            })
+            .map(([key, value]) => (
+              <div key={key} className="bg-muted/30 rounded-xl p-4">
+                <p className="text-xs text-muted-foreground mb-1">{getDataKeyLabel(key)}</p>
+                <p className="font-medium">{getDataValueLabel(key, value)}</p>
+              </div>
+            ))
+          }
+        </div>
+        
+        {/* PDF Hash Info */}
         {tx.pdf_hash && (
-          <div className="pt-3 border-t border-border mt-3">
-            <span className="text-xs text-muted-foreground">PDF Hash: </span>
-            <span className="text-xs font-mono">{tx.pdf_hash}</span>
-            <br />
-            <span className="text-xs text-muted-foreground">Integrity ID: </span>
-            <span className="text-xs font-mono">{tx.integrity_id}</span>
+          <div className="mt-6 pt-4 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
+                <span className="font-mono">{tx.integrity_id}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'تجزئة PDF:' : 'PDF Hash:'} </span>
+                <span className="font-mono text-[10px]">{tx.pdf_hash?.slice(0, 32)}...</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Timeline - Professional Vertical */}
-      <div className="border border-border rounded-lg p-4 md:p-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('transactions.timeline')}</h2>
-        <div className="relative ms-2">
-          <div className="absolute top-0 bottom-0 start-[7px] w-px bg-border" />
-          <div className="space-y-0">
-            {(tx.timeline || []).map((ev, i) => {
-              const dotColor = ev.event === 'created' ? 'bg-slate-400' : ev.event === 'approved' ? 'bg-emerald-500' : ev.event === 'rejected' ? 'bg-red-500' : ev.event === 'executed' ? 'bg-purple-600' : ev.event === 'escalated' ? 'bg-orange-500' : 'bg-blue-400';
-              return (
-                <div key={i} className="relative flex gap-4 pb-4" data-testid={`timeline-event-${i}`}>
-                  <div className={`relative z-10 w-[15px] h-[15px] rounded-full border-2 border-background ${dotColor} flex-shrink-0 mt-0.5`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-xs font-semibold">{getTranslatedEvent(ev.event)}</p>
-                      <time className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{ev.timestamp?.slice(0, 16).replace('T', ' ')}</time>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{ev.actor_name}</p>
-                    {ev.note && <p className="text-xs text-muted-foreground/70 mt-0.5 italic">{ev.note}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Timeline */}
+      {tx.timeline?.length > 0 && (
+        <div className="bg-card rounded-2xl border border-border p-6">
+          <h2 className="text-lg font-semibold mb-6">
+            {lang === 'ar' ? 'الجدول الزمني' : 'Timeline'}
+          </h2>
+          <Timeline events={tx.timeline} />
         </div>
-      </div>
+      )}
 
       {/* Approval Chain */}
       {tx.approval_chain?.length > 0 && (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="p-4 md:p-6 pb-0">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('transactions.approvalChain')}</h2>
+        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+          <div className="p-6 pb-4">
+            <h2 className="text-lg font-semibold">
+              {lang === 'ar' ? 'سلسلة الموافقات' : 'Approval Chain'}
+            </h2>
           </div>
+          
           <div className="overflow-x-auto">
-            <table className="hr-table">
-              <thead><tr>
-                <th>{t('transactions.stage')}</th>
-                <th>{lang === 'ar' ? 'المعتمد' : 'Approver'}</th>
-                <th>{t('transactions.status')}</th>
-                <th>{t('transactions.date')}</th>
-                <th>{lang === 'ar' ? 'ملاحظة' : 'Note'}</th>
-              </tr></thead>
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50 border-y border-border">
+                  <th className="text-start px-6 py-3 text-sm font-semibold text-muted-foreground">
+                    {lang === 'ar' ? 'المرحلة' : 'Stage'}
+                  </th>
+                  <th className="text-start px-6 py-3 text-sm font-semibold text-muted-foreground">
+                    {lang === 'ar' ? 'المعتمد' : 'Approver'}
+                  </th>
+                  <th className="text-start px-6 py-3 text-sm font-semibold text-muted-foreground">
+                    {lang === 'ar' ? 'الحالة' : 'Status'}
+                  </th>
+                  <th className="text-start px-6 py-3 text-sm font-semibold text-muted-foreground">
+                    {lang === 'ar' ? 'التاريخ' : 'Date'}
+                  </th>
+                  <th className="text-start px-6 py-3 text-sm font-semibold text-muted-foreground">
+                    {lang === 'ar' ? 'ملاحظة' : 'Note'}
+                  </th>
+                </tr>
+              </thead>
               <tbody>
                 {tx.approval_chain.map((a, i) => {
-                  // Translate approval status
-                  const getApprovalStatusText = (status) => {
-                    const statusMap = {
-                      approve: lang === 'ar' ? 'موافق' : 'Approved',
-                      approved: lang === 'ar' ? 'موافق' : 'Approved',
-                      reject: lang === 'ar' ? 'مرفوض' : 'Rejected',
-                      rejected: lang === 'ar' ? 'مرفوض' : 'Rejected',
-                      pending: lang === 'ar' ? 'معلق' : 'Pending',
-                      escalated: lang === 'ar' ? 'تم التصعيد' : 'Escalated',
-                    };
-                    return statusMap[status] || status;
-                  };
-                  
+                  const aStatusStyle = getStatusStyle(a.status);
                   return (
-                    <tr key={i}>
-                      <td className="text-sm">{getTranslatedStage(a.stage)}</td>
-                      <td className="text-sm">{a.approver_name}</td>
-                      <td>
-                        <span 
-                          className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-                          style={getStatusStyle(a.status)}
-                        >
-                          {getApprovalStatusText(a.status)}
+                    <tr key={i} className="border-b border-border/50 last:border-0">
+                      <td className="px-6 py-4 text-sm font-medium">{getStageLabel(a.stage)}</td>
+                      <td className="px-6 py-4 text-sm">{a.approver_name}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${aStatusStyle.bg} ${aStatusStyle.text} ${aStatusStyle.border}`}>
+                          {getStatusLabel(a.status)}
                         </span>
                       </td>
-                      <td className="text-xs text-muted-foreground">{a.timestamp?.slice(0, 19)}</td>
-                      <td className="text-xs">{a.note}</td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {formatSaudiDateTime(a.timestamp)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">{a.note || '-'}</td>
                     </tr>
                   );
                 })}
