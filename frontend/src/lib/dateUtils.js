@@ -134,6 +134,66 @@ export function toHijri(date, lang = 'ar') {
   }
 }
 
+/**
+ * تنسيق التاريخ بالميلادي (أساسي) والهجري (ثانوي)
+ * Format: "2025-12-31 (1447-06-09 هـ)"
+ * @param {Date|string} date - التاريخ
+ * @param {object} options - خيارات التنسيق
+ * @returns {object} {primary: string, secondary: string, combined: string}
+ */
+export function formatGregorianHijri(date, options = {}) {
+  const { showTime = false, lang = 'ar' } = options;
+  
+  if (!date) return { primary: '-', secondary: '', combined: '-' };
+  
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return { primary: '-', secondary: '', combined: '-' };
+    
+    // التاريخ الميلادي (الأساسي)
+    const gregorianOptions = {
+      timeZone: SAUDI_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      ...(showTime && { hour: '2-digit', minute: '2-digit', hour12: false })
+    };
+    const gregorian = new Intl.DateTimeFormat('en-GB', gregorianOptions).format(d);
+    
+    // التاريخ الهجري (الثانوي) - بدون أسماء الشهور للاختصار
+    const hijriOptions = {
+      timeZone: SAUDI_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    };
+    
+    // استخدام التقويم الهجري
+    let hijri = '';
+    try {
+      hijri = new Intl.DateTimeFormat('en-SA-u-ca-islamic-nu-latn', hijriOptions).format(d);
+    } catch (e) {
+      hijri = '';
+    }
+    
+    // تنسيق النتيجة
+    const secondary = hijri ? `${hijri} هـ` : '';
+    const combined = hijri ? `${gregorian} (${secondary})` : gregorian;
+    
+    return { primary: gregorian, secondary, combined };
+  } catch (e) {
+    console.error('Date formatting error:', e);
+    return { primary: String(date).slice(0, 10), secondary: '', combined: String(date).slice(0, 10) };
+  }
+}
+
+/**
+ * تنسيق التاريخ والوقت بالميلادي والهجري
+ */
+export function formatGregorianHijriDateTime(date, lang = 'ar') {
+  return formatGregorianHijri(date, { showTime: true, lang });
+}
+
 export default {
   formatSaudiDateTime,
   formatSaudiDate,
