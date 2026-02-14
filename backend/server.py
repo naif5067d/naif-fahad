@@ -40,6 +40,7 @@ app.include_router(work_locations_router)
 app.include_router(custody_router)
 app.include_router(financial_custody_router)
 app.include_router(settings_router)
+app.include_router(maintenance_router)
 
 app.add_middleware(
     CORSMiddleware,
