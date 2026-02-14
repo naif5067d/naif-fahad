@@ -6,7 +6,8 @@ export const translations = {
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
       employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
       logout: "Logout", profile: "Profile", workLocations: "Work Locations",
-      custody: "Tangible Custody", financialCustody: "Financial Custody"
+      custody: "Tangible Custody", financialCustody: "Financial Custody",
+      companySettings: "Company Settings"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
