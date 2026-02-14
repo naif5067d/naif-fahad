@@ -41,7 +41,7 @@ def format_gregorian_hijri(date_str: str) -> str:
         hijri_day = dt.day
         
         return f"{gregorian} ({hijri_year}/{hijri_month:02d}/{hijri_day:02d} هـ)"
-    except:
+    except Exception:
         return date_str[:10] if date_str else "-"
 
 

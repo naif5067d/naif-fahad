@@ -316,7 +316,7 @@ async def activate_contract(
     })
     
     # 7. Create snapshot
-    snapshot = await create_contract_snapshot(contract_id, "activation", executor_id)
+    await create_contract_snapshot(contract_id, "activation", executor_id)
     
     updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
     return True, None, updated
