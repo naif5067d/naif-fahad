@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw } from 'lucide-react';
-import { formatSaudiDateTime, toHijri } from '@/lib/dateUtils';
+import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
 import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
 import { toast } from 'sonner';
