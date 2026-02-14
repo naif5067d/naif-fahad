@@ -47,6 +47,30 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 - **Workflow Fix:** STAS can now execute transactions that were previously returned and re-approved
 - **Cancel Logic Verified:** Cancelled transactions do not affect leave balance or trigger business logic
 
+### Phase 13: System Maintenance Module ✅ (2026-02-14)
+
+**Changes in Phase 13:**
+- **System Maintenance Page:** New page at `/system-maintenance` (STAS only)
+- **Storage Info:** Real-time statistics for all MongoDB collections
+  - Total documents, transaction documents, protected documents
+  - Size estimation per collection
+- **Full System Archive:** 
+  - Creates compressed JSON backup of entire database
+  - Stores in `system_archives` collection
+  - Downloadable as JSON file
+  - Restorable at any time
+- **Purge All Transactions:**
+  - Deletes all transaction data (transactions, leave_ledger, finance_ledger, etc.)
+  - Preserves protected data (users, employees, contracts, settings)
+  - Resets counters and initial leave balances
+  - Requires double confirmation ("DELETE ALL")
+- **Maintenance Log:** Tracks all archive/purge/restore operations
+
+**IMPORTANT RULE (من هنا للأبد):**
+- أي Collection جديدة يجب إضافتها في `/app/backend/routes/maintenance.py`
+- في `TRANSACTION_COLLECTIONS` (قابلة للحذف) أو `PROTECTED_COLLECTIONS` (محمية)
+- هذا يضمن شمولية الأرشفة والحذف
+
 ## Key API Endpoints
 - `/api/financial-custody/*` - Full custody lifecycle
 - `/api/custody/tangible/*` - Tangible custody
