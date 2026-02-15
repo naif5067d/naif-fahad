@@ -460,4 +460,49 @@ Contract activation flow:
 6. Generate PDF snapshot
 
 ---
-Version: 15.0 (2026-02-14)
+
+### Phase 16: Bug Fixes & Service Layer Enhancement ✅ (2026-02-15)
+
+**Completed Bug Fixes:**
+1. **A) Timezone** ✅ - All times display in Asia/Riyadh format using `formatSaudiTime()`
+2. **B) Ramadan Mode** ✅ - Now accepts `work_start` and `work_end` parameters for custom working hours
+3. **C) Map Visibility** ✅ - Added public endpoint `/api/stas/settings/map-visibility/public` accessible by all users
+4. **D) Sultan Self-Request** ✅ - Added `should_escalate_to_ceo()` function; sultan's self-requests skip ops and go to CEO
+5. **E) Supervisor Assignment** ✅ - Full UI dialog with supervisor selection dropdown in EmployeesPage
+6. **G) STAS Mirror** ✅ - Pre-checks correctly show PASS for active contracts, FAIL for terminated
+
+**New Endpoints:**
+- `POST /api/stas/ramadan/activate` with `work_start` and `work_end` parameters
+- `GET /api/stas/settings/map-visibility/public` (accessible by all authenticated users)
+- `PUT /api/employees/{id}/supervisor` with `supervisor_id: null` support for removal
+
+**Service Layer Functions Updated:**
+- `attendance_service.py`: `check_late_arrival()`, `check_early_leave()` now use `get_working_hours_for_date()`
+- `workflow.py`: Added `should_escalate_to_ceo()` for self-request detection
+- `stas_mirror_service.py`: `build_leave_checks()` correctly verifies active contracts
+
+**Test Report:** `/app/test_reports/iteration_17.json` - All tests passed
+
+---
+
+## Next Tasks (P0)
+
+### F) Request Separation
+- Attendance requests: Missed punch, external mission, early leave, late excuse
+- Leave requests: Annual, sick, emergency, unpaid, special
+
+### Settlement Module
+- Settlement request UI
+- Data Snapshot in STAS mirror
+- EOS calculation
+
+---
+
+## Future Tasks
+
+### P1: CEO Dashboard + Employee Profile Card
+### P2: Warnings & Loans Modules
+
+---
+
+Version: 16.0 (2026-02-15)
