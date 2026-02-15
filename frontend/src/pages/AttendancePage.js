@@ -696,14 +696,14 @@ export default function AttendancePage() {
                   const reqType = ATTENDANCE_REQUEST_TYPES[req.type];
                   const Icon = reqType?.icon || FileText;
                   return (
-                    <div key={i} className="card-premium p-3 flex items-center justify-between">
+                    <div key={i} className="card-premium p-3 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => window.location.href = `/transactions/${req.id}`}>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Icon size={18} className="text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">{lang === 'ar' ? reqType?.name_ar : reqType?.name_en}</p>
-                          <p className="text-xs text-muted-foreground">{req.ref_no} - {req.employee_name}</p>
+                          <p className="text-xs text-muted-foreground">{req.ref_no} - {lang === 'ar' ? req.employee_name_ar : req.employee_name}</p>
                         </div>
                       </div>
                       <span className={`badge ${req.status === 'executed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
@@ -717,6 +717,94 @@ export default function AttendancePage() {
           )}
         </div>
       )}
+
+      {/* Dialog: طلب حضور جديد */}
+      <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang === 'ar' ? 'طلب حضور جديد' : 'New Attendance Request'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium">{lang === 'ar' ? 'نوع الطلب' : 'Request Type'}</label>
+              <Select value={requestForm.request_type} onValueChange={v => setRequestForm({...requestForm, request_type: v})}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ATTENDANCE_REQUEST_TYPES).map(([key, val]) => (
+                    <SelectItem key={key} value={key}>
+                      {lang === 'ar' ? val.name_ar : val.name_en}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">{lang === 'ar' ? 'التاريخ' : 'Date'}</label>
+              <Input type="date" value={requestForm.date} onChange={e => setRequestForm({...requestForm, date: e.target.value})} className="mt-1" />
+            </div>
+            {['field_work', 'early_leave_request'].includes(requestForm.request_type) && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">{lang === 'ar' ? 'من الساعة' : 'From'}</label>
+                  <Input type="time" value={requestForm.from_time} onChange={e => setRequestForm({...requestForm, from_time: e.target.value})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{lang === 'ar' ? 'إلى الساعة' : 'To'}</label>
+                  <Input type="time" value={requestForm.to_time} onChange={e => setRequestForm({...requestForm, to_time: e.target.value})} className="mt-1" />
+                </div>
+              </div>
+            )}
+            <div>
+              <label className="text-sm font-medium">{lang === 'ar' ? 'السبب' : 'Reason'}</label>
+              <Input 
+                value={requestForm.reason} 
+                onChange={e => setRequestForm({...requestForm, reason: e.target.value})} 
+                placeholder={lang === 'ar' ? 'اكتب السبب...' : 'Enter reason...'} 
+                className="mt-1" 
+              />
+            </div>
+            <Button onClick={handleSubmitRequest} disabled={submittingRequest} className="w-full">
+              {submittingRequest ? (lang === 'ar' ? 'جاري الإرسال...' : 'Submitting...') : (lang === 'ar' ? 'إرسال الطلب' : 'Submit Request')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: تعديل حضور إداري */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang === 'ar' ? 'تعديل حضور إداري' : 'Admin Edit Attendance'}</DialogTitle>
+          </DialogHeader>
+          {editDialog && (
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium">{lang === 'ar' ? editDialog.employee_name_ar : editDialog.employee_name}</p>
+                <p className="text-xs text-muted-foreground">{editDialog.date}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الدخول' : 'Check-in'}</label>
+                  <Input type="time" value={editForm.check_in_time} onChange={e => setEditForm({...editForm, check_in_time: e.target.value})} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الخروج' : 'Check-out'}</label>
+                  <Input type="time" value={editForm.check_out_time} onChange={e => setEditForm({...editForm, check_out_time: e.target.value})} className="mt-1" />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">{lang === 'ar' ? 'ملاحظة' : 'Note'}</label>
+                <Input value={editForm.note} onChange={e => setEditForm({...editForm, note: e.target.value})} placeholder={lang === 'ar' ? 'سبب التعديل...' : 'Edit reason...'} className="mt-1" />
+              </div>
+              <Button onClick={handleAdminEdit} disabled={loading} className="w-full">
+                {loading ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ التعديل' : 'Save')}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
