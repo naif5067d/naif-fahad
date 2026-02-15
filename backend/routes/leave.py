@@ -129,12 +129,42 @@ async def get_my_leave_balance(user=Depends(get_current_user)):
     if not emp:
         raise HTTPException(status_code=400, detail="Not an employee")
     
-    # Calculate balance for each leave type
-    balance = {}
-    for leave_type in ['annual', 'sick', 'emergency']:
-        balance[leave_type] = await get_leave_balance(emp['id'], leave_type)
+    # استخدام خدمة الإجازات الجديدة
+    from services.leave_service import get_employee_leave_summary
     
-    return balance
+    try:
+        summary = await get_employee_leave_summary(emp['id'])
+        
+        # تنسيق النتيجة للفرونتند
+        balance = {
+            "annual": {
+                "balance": summary['annual_leave']['balance'],
+                "entitlement": summary['annual_leave']['entitlement'],
+                "used": summary['annual_leave']['used'],
+                "available": summary['annual_leave']['balance'],
+                "rule": summary['annual_leave']['rule'],
+                "message_ar": summary['annual_leave']['message_ar']
+            },
+            "sick": {
+                "used_12_months": summary['sick_leave']['used_12_months'],
+                "remaining": summary['sick_leave']['remaining'],
+                "total_limit": summary['sick_leave']['total_limit'],
+                "current_tier": summary['sick_leave']['current_tier'],
+                "note_ar": summary['sick_leave']['note_ar']
+            },
+            "marriage": summary['other_leaves'].get('marriage', {'total_days': 0}),
+            "bereavement": summary['other_leaves'].get('bereavement', {'total_days': 0}),
+            "exam": summary['other_leaves'].get('exam', {'total_days': 0}),
+            "unpaid": summary['other_leaves'].get('unpaid', {'total_days': 0}),
+        }
+        
+        return balance
+    except Exception as e:
+        # Fallback للنظام القديم
+        balance = {}
+        for leave_type in ['annual', 'sick', 'marriage', 'bereavement', 'exam', 'unpaid']:
+            balance[leave_type] = await get_leave_balance(emp['id'], leave_type)
+        return balance
 
 
 @router.get("/holidays")
