@@ -108,9 +108,9 @@ export default function EmployeesPage() {
                 <th>ID</th>
                 <th>{t('employees.name')}</th>
                 <th className="hidden sm:table-cell">{t('employees.department')}</th>
-                <th className="hidden md:table-cell">{t('employees.position')}</th>
+                <th className="hidden md:table-cell">{lang === 'ar' ? 'المشرف' : 'Supervisor'}</th>
                 <th>{t('employees.status')}</th>
-                {isStas && <th>{t('transactions.actions')}</th>}
+                {isOps && <th>{t('transactions.actions')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -119,17 +119,31 @@ export default function EmployeesPage() {
                   <td className="font-mono text-xs">{e.employee_number}</td>
                   <td className="text-sm font-medium">{lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}</td>
                   <td className="hidden sm:table-cell text-sm">{lang === 'ar' ? (e.department_ar || e.department) : e.department}</td>
-                  <td className="hidden md:table-cell text-sm">{lang === 'ar' ? (e.position_ar || e.position) : e.position}</td>
+                  <td className="hidden md:table-cell text-sm">{getSupervisorName(e)}</td>
                   <td>
                     <span className={`status-badge ${e.is_active ? 'status-executed' : 'status-rejected'}`}>
                       {e.is_active ? t('employees.active') : t('employees.inactive')}
                     </span>
                   </td>
-                  {isStas && (
+                  {isOps && (
                     <td>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(e)} data-testid={`edit-emp-${e.employee_number}`}>
-                        <Edit2 size={14} />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0" 
+                          onClick={() => openSupervisorDialog(e)} 
+                          data-testid={`assign-supervisor-${e.employee_number}`}
+                          title={lang === 'ar' ? 'تعيين مشرف' : 'Assign Supervisor'}
+                        >
+                          <UserCheck size={14} />
+                        </Button>
+                        {isStas && (
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(e)} data-testid={`edit-emp-${e.employee_number}`}>
+                            <Edit2 size={14} />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
