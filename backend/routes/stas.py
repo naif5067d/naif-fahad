@@ -308,7 +308,72 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
         "status": "executed",
         "ref_no": tx['ref_no'],
         "pdf_hash": pdf_hash,
-        "integrity_id": integrity_id
+        "integrity_id": integrity_id,
+        "warnings": execution_warnings if execution_warnings else None
+    }
+
+
+@router.post("/return/{transaction_id}")
+async def return_transaction(transaction_id: str, body: ReturnRequest, user=Depends(require_roles('stas'))):
+    """
+    إرجاع المعاملة للمرحلة السابقة - مرة واحدة فقط
+    """
+    tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    # التحقق من عدم الإرجاع سابقاً
+    if tx.get('returned_by_stas'):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "ALREADY_RETURNED",
+                "message_ar": "تم إرجاع هذه المعاملة مسبقاً - لا يمكن الإرجاع مرة أخرى",
+                "message_en": "Transaction already returned - cannot return again"
+            }
+        )
+    
+    if tx['status'] == 'executed':
+        raise HTTPException(status_code=400, detail="Cannot return executed transaction")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديد المرحلة السابقة من workflow
+    workflow = tx.get('workflow', ['supervisor', 'ops', 'stas'])
+    current_idx = workflow.index('stas') if 'stas' in workflow else len(workflow) - 1
+    previous_stage = workflow[current_idx - 1] if current_idx > 0 else workflow[0]
+    
+    # تحديث المعاملة
+    await db.transactions.update_one(
+        {"id": transaction_id},
+        {
+            "$set": {
+                "current_stage": previous_stage,
+                "status": f"pending_{previous_stage}",
+                "returned_by_stas": True,  # يمنع الإرجاع مرة أخرى
+                "return_count": 1,
+                "returned_at": now,
+                "updated_at": now
+            },
+            "$push": {
+                "timeline": {
+                    "event": "returned_by_stas",
+                    "actor": user['user_id'],
+                    "actor_name": "STAS",
+                    "timestamp": now,
+                    "note": body.note or "تم الإرجاع بواسطة STAS",
+                    "stage": "stas",
+                    "returned_to": previous_stage
+                }
+            }
+        }
+    )
+    
+    return {
+        "message": "تم إرجاع المعاملة بنجاح",
+        "message_en": "Transaction returned successfully",
+        "returned_to": previous_stage,
+        "note": body.note
     }
 
 
