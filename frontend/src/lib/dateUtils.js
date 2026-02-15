@@ -1,15 +1,17 @@
 /**
  * Date/Time utilities for Saudi Arabia timezone
  * All times displayed to users should be in Asia/Riyadh (UTC+3)
+ * تنسيق موحد: DD/MM/YYYY HH:MM (توقيت الرياض)
  */
 
 const SAUDI_TIMEZONE = 'Asia/Riyadh';
 
 /**
  * Format ISO timestamp to Saudi Arabia local time
+ * التنسيق الموحد للتاريخ والوقت بتوقيت الرياض
  * @param {string} isoString - ISO format timestamp
  * @param {object} options - Formatting options
- * @returns {string} Formatted date/time string
+ * @returns {string} Formatted date/time string e.g., "31/12/2025 14:30"
  */
 export function formatSaudiDateTime(isoString, options = {}) {
   if (!isoString) return '-';
@@ -34,6 +36,24 @@ export function formatSaudiDateTime(isoString, options = {}) {
     console.error('Date formatting error:', e);
     return isoString?.slice(0, 16) || '-';
   }
+}
+
+/**
+ * التنسيق الموحد للتطبيق - استخدم هذه الدالة في كل مكان
+ * @param {string} isoString - ISO format timestamp
+ * @returns {string} e.g., "31/12/2025 14:30"
+ */
+export function formatStandardDateTime(isoString) {
+  return formatSaudiDateTime(isoString);
+}
+
+/**
+ * التنسيق الموحد للتاريخ فقط (بدون وقت)
+ * @param {string} isoString - ISO format timestamp
+ * @returns {string} e.g., "31/12/2025"
+ */
+export function formatStandardDate(isoString) {
+  return formatSaudiDate(isoString);
 }
 
 /**
