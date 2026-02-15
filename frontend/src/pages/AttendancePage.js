@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, Navigation, CalendarDays, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, Navigation, CalendarDays, User, Moon, Edit, Eye, FileText, UserX, Timer, ChevronLeft } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -39,6 +40,14 @@ function formatDateWithHijri(date, lang) {
   return { gregorian, hijri };
 }
 
+// طلبات الحضور والبصمة (منفصلة عن طلبات الإجازات)
+const ATTENDANCE_REQUEST_TYPES = {
+  forget_checkin: { name_ar: 'نسيان بصمة', name_en: 'Forgot Check-in', icon: Timer },
+  field_work: { name_ar: 'مهمة خارجية', name_en: 'Field Work', icon: Navigation },
+  early_leave_request: { name_ar: 'طلب خروج مبكر', name_en: 'Early Leave Request', icon: ChevronLeft },
+  late_excuse: { name_ar: 'تبرير تأخير', name_en: 'Late Excuse', icon: Clock },
+};
+
 export default function AttendancePage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
@@ -51,9 +60,19 @@ export default function AttendancePage() {
   const [adminData, setAdminData] = useState([]);
   const [period, setPeriod] = useState('daily');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().slice(0, 10));
+  
+  // حالات جديدة
+  const [activeTab, setActiveTab] = useState('my-attendance');
+  const [teamSummary, setTeamSummary] = useState({ present: 0, absent: 0, on_leave: 0, late: 0 });
+  const [ramadanSettings, setRamadanSettings] = useState(null);
+  const [showRamadanDialog, setShowRamadanDialog] = useState(false);
+  const [ramadanForm, setRamadanForm] = useState({ start_date: '', end_date: '' });
+  const [mapVisible, setMapVisible] = useState(false);
+  const [attendanceRequests, setAttendanceRequests] = useState([]);
 
   const isEmployee = ['employee', 'supervisor'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
+  const isStas = user?.role === 'stas';
   
   // Get today's date formatted
   const todayFormatted = formatDateWithHijri(new Date(), lang);
@@ -75,6 +94,37 @@ export default function AttendancePage() {
     try {
       const res = await api.get('/api/attendance/admin', { params: { period, date: dateFilter } });
       setAdminData(res.data);
+      
+      // حساب ملخص الفريق
+      const present = res.data.filter(r => r.check_in).length;
+      const absent = res.data.filter(r => !r.check_in && !r.on_leave).length;
+      const onLeave = res.data.filter(r => r.on_leave).length;
+      const late = res.data.filter(r => r.is_late).length;
+      setTeamSummary({ present, absent, on_leave: onLeave, late });
+    } catch (err) {}
+  };
+
+  const fetchRamadanSettings = async () => {
+    try {
+      const res = await api.get('/api/stas/ramadan');
+      setRamadanSettings(res.data);
+    } catch (err) {}
+  };
+
+  const fetchMapVisibility = async () => {
+    try {
+      const res = await api.get('/api/stas/settings/map-visibility');
+      setMapVisible(res.data?.show_map_to_employees || false);
+    } catch (err) {}
+  };
+
+  const fetchAttendanceRequests = async () => {
+    try {
+      // جلب طلبات الحضور فقط (منفصلة عن الإجازات)
+      const res = await api.get('/api/transactions', {
+        params: { types: 'forget_checkin,field_work,early_leave_request,late_excuse' }
+      });
+      setAttendanceRequests(res.data || []);
     } catch (err) {}
   };
 
@@ -83,7 +133,12 @@ export default function AttendancePage() {
       api.get('/api/attendance/today').then(r => setToday(r.data)).catch(() => {});
       api.get('/api/attendance/history').then(r => setHistory(r.data)).catch(() => {});
     }
-    if (isAdmin) fetchAdmin();
+    if (isAdmin) {
+      fetchAdmin();
+      fetchRamadanSettings();
+      fetchMapVisibility();
+      fetchAttendanceRequests();
+    }
   };
 
   useEffect(() => { 
@@ -135,6 +190,54 @@ export default function AttendancePage() {
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // تفعيل دوام رمضان
+  const handleActivateRamadan = async () => {
+    try {
+      await api.post('/api/stas/ramadan/activate', ramadanForm);
+      toast.success(lang === 'ar' ? 'تم تفعيل دوام رمضان' : 'Ramadan mode activated');
+      setShowRamadanDialog(false);
+      fetchRamadanSettings();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
+    }
+  };
+
+  // إلغاء دوام رمضان
+  const handleDeactivateRamadan = async () => {
+    try {
+      await api.post('/api/stas/ramadan/deactivate');
+      toast.success(lang === 'ar' ? 'تم إلغاء دوام رمضان' : 'Ramadan mode deactivated');
+      fetchRamadanSettings();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
+    }
+  };
+
+  // تحديث إظهار الخريطة
+  const handleToggleMapVisibility = async () => {
+    try {
+      await api.post(`/api/stas/settings/map-visibility?show=${!mapVisible}`);
+      setMapVisible(!mapVisible);
+      toast.success(lang === 'ar' ? 'تم تحديث الإعداد' : 'Setting updated');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
+    }
+  };
+
+  // تشغيل حساب الغياب اليدوي
+  const handleCalculateAttendance = async () => {
+    try {
+      setLoading(true);
+      await api.post('/api/stas/attendance/calculate-daily');
+      toast.success(lang === 'ar' ? 'تم حساب الحضور اليومي' : 'Daily attendance calculated');
+      fetchAdmin();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
     } finally {
       setLoading(false);
     }
