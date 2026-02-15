@@ -92,6 +92,25 @@ async def should_skip_supervisor_stage(employee, requester_user_id: str) -> bool
     return False
 
 
+async def should_escalate_to_ceo(employee, requester_user_id: str, requester_role: str) -> bool:
+    """
+    التحقق إذا كان الطلب يجب أن يذهب مباشرة للـ CEO.
+    يحدث عندما:
+    1. سلطان يرفع طلب لنفسه (لا يمكنه الموافقة على نفسه)
+    2. الموظف ليس لديه مشرف وهو نفسه من دور ops
+    """
+    if not employee:
+        return False
+    
+    # إذا المُنشئ هو من دور ops ويرفع طلب لنفسه
+    if requester_role in ('sultan', 'naif'):
+        # تحقق إذا employee_id مطابق لـ user_id
+        if employee.get('user_id') == requester_user_id:
+            return True
+    
+    return False
+
+
 def build_workflow_for_transaction(base_workflow: list, skip_supervisor: bool) -> list:
     """Build the actual workflow based on conditions"""
     workflow = base_workflow[:]
