@@ -3,6 +3,12 @@ from pydantic import BaseModel
 from typing import Optional
 from database import db
 from utils.auth import get_current_user, require_roles
+from datetime import datetime, timezone
+
+# Import Services
+from services.leave_service import get_employee_leave_summary
+from services.attendance_service import get_employee_attendance_summary, get_unsettled_absences
+from services.service_calculator import get_employee_service_info
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
@@ -13,6 +19,10 @@ class EmployeeUpdate(BaseModel):
     is_active: Optional[bool] = None
     department: Optional[str] = None
     position: Optional[str] = None
+
+
+class SupervisorAssignment(BaseModel):
+    supervisor_id: str
 
 
 @router.get("")
