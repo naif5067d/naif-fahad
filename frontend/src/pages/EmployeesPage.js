@@ -185,12 +185,12 @@ export default function EmployeesPage() {
             </div>
             <div>
               <Label>{lang === 'ar' ? 'المشرف' : 'Supervisor'}</Label>
-              <Select value={selectedSupervisor} onValueChange={setSelectedSupervisor}>
+              <Select value={selectedSupervisor || "none"} onValueChange={(v) => setSelectedSupervisor(v === "none" ? "" : v)}>
                 <SelectTrigger className="mt-1" data-testid="select-supervisor">
                   <SelectValue placeholder={lang === 'ar' ? 'اختر مشرف...' : 'Select supervisor...'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{lang === 'ar' ? 'بدون مشرف' : 'No supervisor'}</SelectItem>
+                  <SelectItem value="none">{lang === 'ar' ? 'بدون مشرف' : 'No supervisor'}</SelectItem>
                   {availableSupervisors.map(sup => (
                     <SelectItem key={sup.id} value={sup.id}>
                       {lang === 'ar' ? (sup.full_name_ar || sup.full_name) : sup.full_name}
