@@ -138,6 +138,10 @@ async def get_mirror(transaction_id: str, user=Depends(require_roles('stas'))):
 
 @router.post("/execute/{transaction_id}")
 async def execute_transaction(transaction_id: str, user=Depends(require_roles('stas'))):
+    """
+    تنفيذ المعاملة - STAS فقط
+    يمنع التنفيذ إذا فشل أي فحص (FAIL)
+    """
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
@@ -145,15 +149,32 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
     if tx['status'] == 'executed':
         return {"message": "Already executed (idempotent)", "status": "executed", "ref_no": tx['ref_no']}
 
+    # تشغيل الفحوصات المسبقة
     pre_checks = await run_pre_checks(tx)
-    if not all(c['status'] == 'PASS' for c in pre_checks):
-        failed = [c['name'] for c in pre_checks if c['status'] == 'FAIL']
-        raise HTTPException(status_code=400, detail=f"Pre-checks failed: {', '.join(failed)}")
+    
+    # فصل الفحوصات الفاشلة والتحذيرات
+    failed_checks = [c for c in pre_checks if c['status'] == 'FAIL']
+    warning_checks = [c for c in pre_checks if c['status'] == 'WARN']
+    
+    # منع التنفيذ إذا فشل أي فحص
+    if failed_checks:
+        raise HTTPException(
+            status_code=400, 
+            detail={
+                "error": "EXECUTION_BLOCKED",
+                "message_ar": "لا يمكن التنفيذ - توجد شروط فاشلة",
+                "message_en": "Cannot execute - failed pre-checks",
+                "failed_checks": [{"name": c['name'], "name_ar": c['name_ar'], "detail": c['detail']} for c in failed_checks]
+            }
+        )
 
     now = datetime.now(timezone.utc).isoformat()
     tx_type = tx.get('type')
     data = tx.get('data', {})
     emp_id = tx.get('employee_id')
+
+    # تسجيل التحذيرات مع التنفيذ
+    execution_warnings = [{"name": c['name'], "name_ar": c['name_ar'], "detail": c['detail']} for c in warning_checks]
 
     # Execute based on type
     if tx_type == 'leave_request':
@@ -178,34 +199,22 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             "code_name": data.get('code_name', ''),
             "amount": data.get('amount', 0),
             "type": data.get('tx_type', 'credit'),
+            "category": data.get('category', 'finance_60'),
             "description": data.get('description', ''),
             "date": now,
             "created_at": now
         })
 
     elif tx_type == 'settlement':
-        # Check for active tangible custody - blocks clearance
-        if emp_id:
-            active_custody = await db.custody_ledger.count_documents(
-                {"employee_id": emp_id, "status": "active"}
+        # استخدام Settlement Service للتنفيذ
+        if data.get('snapshot'):
+            success, error, result = await execute_settlement(
+                transaction_id=tx['id'],
+                snapshot=data['snapshot'],
+                executor_id=user['user_id']
             )
-            if active_custody > 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Cannot execute settlement: Employee has {active_custody} unreturned custody item(s)"
-                )
-            await db.employees.update_one({"id": emp_id}, {"$set": {"is_active": False}})
-            await db.users.update_one({"employee_id": emp_id}, {"$set": {"is_active": False}})
-            contract = await db.contracts.find_one(
-                {"employee_id": emp_id, "is_snapshot": False}
-            )
-            if contract:
-                snapshot = {k: v for k, v in contract.items() if k != '_id'}
-                snapshot['id'] = str(uuid.uuid4())
-                snapshot['is_snapshot'] = True
-                snapshot['transaction_id'] = tx['id']
-                snapshot['created_at'] = now
-                await db.contracts.insert_one(snapshot)
+            if not success:
+                raise HTTPException(status_code=400, detail=error)
 
     elif tx_type == 'add_finance_code':
         await db.finance_codes.insert_one({
