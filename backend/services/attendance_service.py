@@ -271,18 +271,26 @@ async def calculate_daily_attendance(date: str = None) -> dict:
 # LATE & EARLY LEAVE DETECTION
 # ============================================================
 
-async def check_late_arrival(employee_id: str, check_in_time: str, expected_start: str = "08:00") -> Optional[dict]:
+async def check_late_arrival(employee_id: str, check_in_time: str, date: str = None, expected_start: str = None) -> Optional[dict]:
     """
-    التحقق من التأخير
+    التحقق من التأخير مع دعم دوام رمضان
     
     Args:
         employee_id: معرف الموظف
         check_in_time: وقت الدخول الفعلي (HH:MM)
-        expected_start: وقت الدخول المتوقع (HH:MM)
+        date: التاريخ (YYYY-MM-DD) للتحقق من رمضان
+        expected_start: وقت الدخول المتوقع (HH:MM) - إذا None يُحسب من الإعدادات
         
     Returns:
         dict أو None إذا لم يكن متأخراً
     """
+    # جلب ساعات العمل للتاريخ (عادي أو رمضان)
+    working_hours = await get_working_hours_for_date(date)
+    
+    # استخدام وقت البداية من الإعدادات أو القيمة المُمررة
+    if expected_start is None:
+        expected_start = working_hours.get('start_time') or "08:00"
+    
     actual = datetime.strptime(check_in_time, "%H:%M")
     expected = datetime.strptime(expected_start, "%H:%M")
     
@@ -296,24 +304,34 @@ async def check_late_arrival(employee_id: str, check_in_time: str, expected_star
             "actual_time": check_in_time,
             "minutes_late": minutes_late,
             "hours_late": minutes_late // 60,
-            "remaining_minutes": minutes_late % 60
+            "remaining_minutes": minutes_late % 60,
+            "working_mode": working_hours.get('mode', 'standard'),
+            "hours_per_day": working_hours.get('hours_per_day', 8)
         }
     
     return None
 
 
-async def check_early_leave(employee_id: str, check_out_time: str, expected_end: str = "17:00") -> Optional[dict]:
+async def check_early_leave(employee_id: str, check_out_time: str, date: str = None, expected_end: str = None) -> Optional[dict]:
     """
-    التحقق من المغادرة المبكرة
+    التحقق من المغادرة المبكرة مع دعم دوام رمضان
     
     Args:
         employee_id: معرف الموظف
         check_out_time: وقت الخروج الفعلي (HH:MM)
-        expected_end: وقت الخروج المتوقع (HH:MM)
+        date: التاريخ (YYYY-MM-DD) للتحقق من رمضان
+        expected_end: وقت الخروج المتوقع (HH:MM) - إذا None يُحسب من الإعدادات
         
     Returns:
         dict أو None إذا لم يكن مغادرة مبكرة
     """
+    # جلب ساعات العمل للتاريخ (عادي أو رمضان)
+    working_hours = await get_working_hours_for_date(date)
+    
+    # استخدام وقت النهاية من الإعدادات أو القيمة المُمررة
+    if expected_end is None:
+        expected_end = working_hours.get('end_time') or "17:00"
+    
     actual = datetime.strptime(check_out_time, "%H:%M")
     expected = datetime.strptime(expected_end, "%H:%M")
     
@@ -327,7 +345,9 @@ async def check_early_leave(employee_id: str, check_out_time: str, expected_end:
             "actual_time": check_out_time,
             "minutes_early": minutes_early,
             "hours_early": minutes_early // 60,
-            "remaining_minutes": minutes_early % 60
+            "remaining_minutes": minutes_early % 60,
+            "working_mode": working_hours.get('mode', 'standard'),
+            "hours_per_day": working_hours.get('hours_per_day', 8)
         }
     
     return None
