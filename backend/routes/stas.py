@@ -594,11 +594,20 @@ async def run_attendance_for_date(date: str, user=Depends(require_roles('stas'))
 
 @router.get("/settings/map-visibility")
 async def get_map_visibility(user=Depends(require_roles('stas'))):
-    """جلب إعداد إظهار الخريطة للموظفين"""
+    """جلب إعداد إظهار الخريطة للموظفين - للمدراء فقط"""
     setting = await db.settings.find_one({"type": "map_visibility"}, {"_id": 0})
     if not setting:
         return {"show_map_to_employees": False}
     return setting
+
+
+@router.get("/settings/map-visibility/public")
+async def get_map_visibility_public(user=Depends(get_current_user)):
+    """جلب إعداد إظهار الخريطة - للجميع"""
+    setting = await db.settings.find_one({"type": "map_visibility"}, {"_id": 0})
+    if not setting:
+        return {"show_map_to_employees": False}
+    return {"show_map_to_employees": setting.get('show_map_to_employees', False)}
 
 
 @router.post("/settings/map-visibility")
