@@ -155,14 +155,13 @@ export function toHijri(date, lang = 'ar') {
 }
 
 /**
- * تنسيق التاريخ بالميلادي (أساسي) والهجري (ثانوي)
- * Format: "2025-12-31 (1447-06-09 هـ)"
+ * تنسيق التاريخ الموحد - DD/MM/YYYY
  * @param {Date|string} date - التاريخ
  * @param {object} options - خيارات التنسيق
- * @returns {object} {primary: string, secondary: string, combined: string}
+ * @returns {object} {primary: string, combined: string}
  */
 export function formatGregorianHijri(date, options = {}) {
-  const { showTime = false, lang = 'ar' } = options;
+  const { showTime = false } = options;
   
   if (!date) return { primary: '-', secondary: '', combined: '-' };
   
@@ -170,7 +169,7 @@ export function formatGregorianHijri(date, options = {}) {
     const d = typeof date === 'string' ? new Date(date) : date;
     if (isNaN(d.getTime())) return { primary: '-', secondary: '', combined: '-' };
     
-    // التاريخ الميلادي (الأساسي)
+    // التاريخ الميلادي بتوقيت الرياض
     const gregorianOptions = {
       timeZone: SAUDI_TIMEZONE,
       year: 'numeric',
@@ -180,27 +179,7 @@ export function formatGregorianHijri(date, options = {}) {
     };
     const gregorian = new Intl.DateTimeFormat('en-GB', gregorianOptions).format(d);
     
-    // التاريخ الهجري (الثانوي) - بدون أسماء الشهور للاختصار
-    const hijriOptions = {
-      timeZone: SAUDI_TIMEZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    };
-    
-    // استخدام التقويم الهجري
-    let hijri = '';
-    try {
-      hijri = new Intl.DateTimeFormat('en-SA-u-ca-islamic-nu-latn', hijriOptions).format(d);
-    } catch (e) {
-      hijri = '';
-    }
-    
-    // تنسيق النتيجة
-    const secondary = hijri ? `${hijri} هـ` : '';
-    const combined = hijri ? `${gregorian} (${secondary})` : gregorian;
-    
-    return { primary: gregorian, secondary, combined };
+    return { primary: gregorian, secondary: '', combined: gregorian };
   } catch (e) {
     console.error('Date formatting error:', e);
     return { primary: String(date).slice(0, 10), secondary: '', combined: String(date).slice(0, 10) };
@@ -208,7 +187,7 @@ export function formatGregorianHijri(date, options = {}) {
 }
 
 /**
- * تنسيق التاريخ والوقت بالميلادي والهجري
+ * تنسيق التاريخ والوقت الموحد - DD/MM/YYYY, HH:MM
  */
 export function formatGregorianHijriDateTime(date, lang = 'ar') {
   return formatGregorianHijri(date, { showTime: true, lang });
