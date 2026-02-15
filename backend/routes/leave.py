@@ -4,7 +4,8 @@ from database import db
 from utils.auth import get_current_user
 from utils.workflow import (
     WORKFLOW_MAP, should_skip_supervisor_stage, 
-    build_workflow_for_transaction, get_employee_by_user_id
+    build_workflow_for_transaction, get_employee_by_user_id,
+    should_escalate_to_ceo
 )
 from utils.leave_rules import (
     get_employee_with_contract, validate_leave_request, 
@@ -56,8 +57,18 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     
     # Step 3: Determine workflow (skip supervisor if applicable)
     skip_supervisor = await should_skip_supervisor_stage(emp, user['user_id'])
+    escalate_to_ceo = await should_escalate_to_ceo(emp, user['user_id'], user.get('role', ''))
+    
     base_workflow = WORKFLOW_MAP["leave_request"][:]
     workflow = build_workflow_for_transaction(base_workflow, skip_supervisor)
+    
+    # إذا سلطان/ناif يرفع طلب لنفسه، يذهب مباشرة للـ CEO
+    if escalate_to_ceo:
+        # إزالة ops من workflow وإضافة ceo قبل stas
+        workflow = [s for s in workflow if s != 'ops']
+        if 'ceo' not in workflow:
+            stas_idx = workflow.index('stas') if 'stas' in workflow else len(workflow)
+            workflow.insert(stas_idx, 'ceo')
     
     first_stage = workflow[0]
     now = datetime.now(timezone.utc).isoformat()
