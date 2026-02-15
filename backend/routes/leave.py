@@ -96,7 +96,8 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
         },
         "current_stage": first_stage,
         "workflow": workflow,
-        "workflow_skipped_stages": ['supervisor'] if skip_supervisor else [],
+        "workflow_skipped_stages": (['supervisor'] if skip_supervisor else []) + (['ops'] if escalate_to_ceo else []),
+        "self_request_escalated": escalate_to_ceo,  # علامة للإشارة أن هذا طلب ذاتي تم تصعيده
         "timeline": [{
             "event": "created",
             "actor": user['user_id'],
