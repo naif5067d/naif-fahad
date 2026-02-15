@@ -347,6 +347,21 @@ export default function AttendancePage() {
             </div>
           )}
 
+          {/* عرض الخريطة للموظفين إذا مفعلة */}
+          {mapVisible && assignedLocations.length > 0 && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <p className="text-sm font-medium text-emerald-700 mb-2 flex items-center gap-2">
+                <Eye size={16} />
+                {lang === 'ar' ? 'موقعك على الخريطة متاح للمشرفين' : 'Your location is visible to supervisors'}
+              </p>
+              {gpsState.available && (
+                <p className="text-xs text-muted-foreground">
+                  {lang === 'ar' ? `إحداثياتك: ${gpsState.lat?.toFixed(4)}, ${gpsState.lng?.toFixed(4)}` : `Your coordinates: ${gpsState.lat?.toFixed(4)}, ${gpsState.lng?.toFixed(4)}`}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Location Selector & Buttons */}
           <div className="space-y-3">
             <Select value={workLocation} onValueChange={setWorkLocation} disabled={!!today.check_in}>
