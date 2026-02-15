@@ -1,188 +1,154 @@
 <analysis>**original_problem_statement:**
-The user wants to build DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system.
+The user is building DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system. The initial goal was to enhance the System Maintenance module and implement a Settlement (المخالصة) feature. However, after extensive architectural analysis, the user pivoted to a more foundational task: building a robust, legally-compliant **Contracts (V2) module** as the absolute prerequisite for any further development, especially the settlement process.
 
-**LATEST USER REQUIREMENTS (from this and previous sessions):**
-1.  **PDF & Preview Overhaul (CRITICAL BUG):** The user is extremely dissatisfied with the generated PDFs. They have reported multiple issues:
-    *   **Bilingual Text Rendering:** The English PDF version is completely blank (text has disappeared). The Arabic version has reversed/garbled text, missing approver names, and missing comments.
-    *   **Layout & Branding:** The company logo and name are not appearing on the PDF.
-    *   **Signatures:** Each approver's signature should be a **QR code**. The final executive decision by 'STAS' must be represented by a **BARCODE** (line code with the transaction number below), not a QR code.
-    *   **Single Page:** The PDF **must** be a single A4 page.
-2.  **Workflow Logic Refinements (CRITICAL BUG):**
-    *   **STAS Execution Error:** STAS receives a You have already taken an action on this transaction error when trying to execute a transaction that was previously returned by them, blocking the workflow.
-    *   **STAS Mirror & Cancellation:** When STAS approves a transaction, it must go to a preview area (STAS Mirror) for final review before execution. A transaction Cancelled by STAS must *not* be executed or have its contents processed (e.g., no leave deduction).
-    *   **No Double-Return:** A transaction can only be returned once. The final decision is to execute or cancel.
-3.  **UI/UX & Data Display:**
-    *   **Time & Date:** All times must be displayed in the Saudi Arabia timezone (). Dates must be Gregorian (primary) with Hijri (secondary). This needs a system-wide audit.
-    *   **Language:** The UI must be fully Arabic.
-4.  **Logo & Branding Management:**
-    *   A system for the 'STAS' role to upload a company logo and edit the company name/slogan (in Arabic and English) has been built but is not reflected in the application (e.g., in PDFs).
+The latest user request (Chat Message 336) is to refine the system's core HR logic based on this new contract foundation, before proceeding to the full settlement feature. This includes:
+1.  **Clarifying and separating request types** (Leave vs. Attendance).
+2.  Creating a **comprehensive attendance table** for admins.
+3.  Implementing **leave accrual logic** (e.g., 21/30 days annual leave, 30/60/30 sick leave) within a Service Layer, driven by the new contract data.
+4.  Enhancing the **STAS Mirror** to perform pre-execution validation by aggregating data from all ledgers (, , , ).
+5.  Adding the ability to **assign a supervisor** from the employee list, which dictates the first step in the approval workflow.
+6.  The user expects a detailed architectural explanation and a plan before any implementation begins.
 
-**User's preferred language**: **Arabic**. The next agent **MUST** respond in Arabic.
+**User's preferred language**: Arabic. The next agent **MUST** respond in Arabic.
 
 **what currently exists?**
-The agent has made significant changes across the stack. A major effort was put into refactoring the PDF generation in  using  and  to handle Arabic text, but this introduced severe regressions: the English PDF is now blank, and the Arabic PDF is missing key data. A new frontend page () was created for the 'STAS' user to upload a logo and company name, and it is linked from the dashboard. The backend workflow logic in  was adjusted to allow STAS to act on a transaction multiple times (e.g., return then approve), but this is what is causing the already acted error on the frontend. The STAS Mirror pre-flight checks were also improved. The agent ran the testing subagent which reported 100% success, but this was a false positive as the user immediately found critical bugs in the PDF and workflow.
+The agent has successfully completed two major user-requested tasks and conducted a deep architectural analysis of the system.
+
+1.  **System Maintenance Enhancements (DONE):**
+    *   **Backend ():** The API now returns the total database size. A new endpoint, , was created to allow uploading a  archive and restoring the database using . The maintenance logic was also updated to be aware of the new  collection.
+    *   **Frontend ():** The page was completely redesigned. It now displays the total data size, features a file upload component with a progress bar for restoring archives, and has a more organized layout using Shadcn UI components.
+
+2.  **System-Wide Date Format Audit (DONE):**
+    *   A reusable utility, , was created in .
+    *   This function was applied across the application (, , , etc.) to ensure all dates are consistently displayed in the  format as requested.
+
+3.  **Contracts V2 Module (CRITICAL FOUNDATION - DONE):**
+    *   A complete, from-scratch contract management system was built as the new foundation of the HR OS.
+    *   **Backend:** A new  was introduced with  to handle all business logic. New Pydantic models () and API routes () were created for full lifecycle management (, , , , ), versioning, and automatic serial number generation ().
+    *   **Frontend:** A new page, , was created for admins to list, view, and manage contracts. It includes statistics, status filtering, role-based actions (e.g., Terminate for STAS), and correct date formatting.
+    *   Existing employees in the database have been migrated with new  contracts.
+
+4.  **Architectural Analysis (DONE):**
+    *   The agent provided multiple, in-depth technical reports analyzing the existing architecture, answering the user's specific questions about ledgers, the STAS mirror, the contract lifecycle, and the overall system design. This analysis has guided the project's direction.
 
 **Last working item**:
--   Last item agent was working: Analyzing the user's latest critical feedback, including screenshots showing the broken English and Arabic PDFs, the incorrect STAS signature (QR instead of barcode), and the missing company branding. The agent correctly identified the root causes (e.g.,  breaking English text, missing data in PDF rendering, incorrect barcode logic).
--   Status: **IN PROGRESS**
--   Agent Testing Done: Y (but it was a false positive and did not catch the user's reported issues)
--   Which testing method agent to use? **both**. The backend  requires a complete overhaul. The frontend needs to be checked to ensure company branding is fetched and displayed. The entire workflow from rejection to STAS approval and execution needs end-to-end testing.
--   User Testing Done: Y (and it FAILED)
+-   **Last item agent was working:** The agent provided a final, comprehensive architectural assessment and a detailed plan to address the user's latest request (Chat Message 336). This plan covers refining request types, enhancing the attendance table, implementing leave accrual logic in the service layer, and improving the STAS mirror pre-checks. The agent is awaiting the user's approval of this plan before starting implementation.
+-   **Status:** **USER VERIFICATION PENDING**
+-   **Agent Testing Done:** Y (For all completed features, including Contracts V2).
+-   **Which testing method agent to use?** **both**. The proposed changes involve significant backend service layer logic and frontend UI enhancements (e.g., the attendance table), requiring full-stack testing.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   Issue 1: **PDF Generation is Unusable (P0, Recurring, BLOCKER)**
--   Issue 2: **Workflow blocked for STAS (P0)**
--   Issue 3: **Company Branding Not Applied (P1)**
--   Issue 4: **Logic of Cancelled transaction needs verification (P1)**
--   Issue 5: **System-Wide Date/Time Consistency (P2)**
--   Issue 6: **Missing CEO (Mohammed) Dashboard View (P2)**
+-   Issue 1: **Implement Core HR Logic & STAS Mirror Enhancements (P0)**
 
 **Issues Detail:**
--   **Issue 1: PDF Generation is Unusable**
-    -   **Attempted fixes:** The agent rewrote  to use  and . This fixed some Arabic rendering but broke everything else.
-    -   **Next debug checklist:**
-        1.  In , modify the text drawing function to be bilingual. It must detect if the text is English or Arabic and ONLY apply  and  to Arabic text.
-        2.  Fetch and draw the company logo and name from the  collection at the start of PDF generation.
-        3.  Fetch and draw the approver's  and  in the approval history table. They are currently missing.
-        4.  Implement a conditional check: if the approver is 'stas', generate a  barcode using . For all others, generate a QR code. Display the transaction ID under the barcode.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the user's #1 complaint. The application is useless without professional, accurate PDF records.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** backend
--   **Issue 2: Workflow blocked for STAS**
-    -   **Attempted fixes:** The agent modified  to allow STAS to act multiple times, but this didn't solve the frontend error.
-    -   **Next debug checklist:**
-        1.  In  inside , ensure the logic correctly exempts 'stas' from the already in approval chain check *specifically for final execution actions*.
-        2.  Verify the frontend logic in  doesn't have its own separate validation that is blocking the action.
-    -   **Why fix this issue and what will be achieved with the fix?** The core workflow for handling rejected transactions is currently blocked.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** both
--   **Issue 3: Company Branding Not Applied**
-    -   **Attempted fixes:** Created the API and frontend page for uploading settings.
-    -   **Next debug checklist:**
-        1.  In , call the  endpoint (or query the DB directly) to retrieve the logo URL and company names.
-        2.  On the frontend, consider creating a global context (e.g., ) to fetch and provide branding info to all components, like the main header.
-    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a key user requirement for personalizing the application.
+-   **Issue 1: Implement Core HR Logic & STAS Mirror Enhancements**
+    -   **Attempted fixes:** None (implementation has not started). The agent has completed the analysis and planning phase.
+    -   **Next debug checklist:** Upon user approval, execute the plan outlined in the last agent message ().
+        1.  **Refine Request Types:** Differentiate  from attendance-related requests in the  logic.
+        2.  **Build Comprehensive Attendance Table:** Enhance  to show a full attendance summary (present, absent, on leave, etc.) for admins. Add functionality for manual edits with audit logs.
+        3.  **Build Leave Accrual Service:** Create a new service (e.g., ) to calculate employee leave balances based on service years (from ) and apply sick leave rules. This service must be the single source of truth for leave balances, reading from the .
+        4.  **Enhance STAS Pre-Checks:** Refactor  in  to call a new  service. This service will aggregate data from all ledgers to provide a comprehensive financial snapshot (blockers and warnings) on the STAS Mirror.
+        5.  **Implement Supervisor Assignment UI:** Add a feature to the employee list page for admins to set an employee's . The workflow must then route requests to this supervisor first.
+    -   **Why fix this issue and what will be achieved with the fix?** This will build the essential business logic required for an automated, compliant HR system on top of the new  foundation, paving the way for the final settlement module.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
--   **Issue 4: Logic of Cancelled transaction needs verification**
-    -   **Attempted fixes:** None. This is a clarification from the user.
-    -   **Next debug checklist:**
-        1.  Review the  endpoint.
-        2.  When the action is , confirm that the transaction status is updated to  and that no other business logic (like leave balance deduction) is triggered.
-    -   **Why fix this issue and what will be achieved with the fix?** Ensures the cancellation workflow behaves as per the user's business rules.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** backend
 
 **In progress Task List**:
--   **Task 1: Fix PDF Generation and Workflow (P0)**
-    -   **Where to resume:** . The immediate priority is fixing the bilingual text, adding the missing data (comments, names), implementing the correct barcode for STAS, and displaying the company branding. Simultaneously, fix the STAS action validation in .
-    -   **What will be achieved with this?** A fully functional, professional PDF and an unblocked core workflow.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** None.
+-   None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1: Supervisor Assignment UI:** Add a UI for 'Sultan'/'Naif' to assign/change an employee's supervisor.
-    -   **P1: Contract Deletion for STAS:** Add a delete option for contracts, visible only to the 'STAS' role.
-    -   **P2: Implement New Transaction Types:** Add specific leave/attendance request types.
-    -   **P2: CEO Dashboard:** Create a dedicated dashboard view for the 'ceo' role.
+    -   **P0: Full Settlement (المخالصة) Module:** Build the complete UI and backend for creating, processing, and executing employee settlements, using the new service layer for all calculations.
+    -   **P1: STAS Control Center Dashboard:** Implement the proposed advanced dashboard for the STAS role, focusing on monitoring, alerts, and audit trails.
 -   **Future Tasks:**
-    -   Full implementation of contract versioning and snapshots.
-    -   Build out the remaining ledgers (Warning, Asset).
+    -   Complete employee lifecycle automation (onboarding, offboarding).
+    -   Policy Engine for configurable HR rules.
+    -   Advanced reporting module.
+    -   UI for new user/employee creation.
 
 **Completed work in this session**
--   **Company Settings Feature:** Created a new page () and API for STAS to manage the company logo and name.
--   **Workflow Adjustments:** Modified  to handle STAS re-approval, and fixed pre-check logic on .
--   **PDF Arabic Support (Partial):** Integrated  and  into .
--   **UI Enhancements:** Added a link to Company Settings on the STAS dashboard.
--   **Bug Fix:** Hid complex  fields from the transaction detail view.
+-   System Maintenance Module v2 (Total size, Upload/Restore).
+-   System-Wide Gregorian/Hijri Date Format Audit.
+-   **Comprehensive Contracts V2 Module:** A foundational contract management system with a service layer, API, lifecycle management, and dedicated UI.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: PDF Quality:** User has consistently rejected the PDF layout, font rendering, and data accuracy. This remains the primary unsolved issue.
--   **Issue 2: Missing CEO Dashboard:** A pending task from the previous session that has not been addressed.
+-   **CEO Dashboard:** A dedicated view for the 'ceo' role is a pending task from a previous session.
+-   **Full Settlement Calculation Engine:** The core calculation logic for settlements is the main upcoming task.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Poor PDF Formatting.
--   **Recurrence count:** Very High (The central point of failure in this and previous sessions).
--   **Status:** IN PROGRESS (and is the main blocker).
+-   **Date/Time Formatting:** **RESOLVED**. A system-wide audit was performed and all dates were standardized.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, Python, MongoDB, , , , , .
--   **Frontend:** React.js, Tailwind CSS, shadcn/ui, , .
--   **Key Logic:** Complex state machine for transaction approvals in . Bilingual PDF generation in .
+-   **Service Layer Architecture:** A significant architectural shift has begun, moving business logic from API routes into dedicated service files (e.g., ). This is a key principle to continue.
+-   **Ledger-Based Source of Truth:** The system is moving towards using ledgers (, ) as the definitive source for all calculations, avoiding duplicated state.
+-   **STAS Mirror:** A critical concept for a pre-execution validation screen for the super-admin role, ensuring all conditions are met before a transaction is finalized. This is a focus for future enhancement.
+-   **Contract-Centric Design:** The new  module is now the core of the system. All employee activities (attendance, leave, etc.) must be governed by an active contract.
 
 **key DB schema**
--   : {..., status, history: [{actor, action, timestamp}], ...}
--   : {logo_url, company_name_ar, company_name_en, slogan_ar, slogan_en}
-
-**changes in tech stack**
--   No new dependencies installed, but  and  are now critical for PDF generation.
+-   ****: 
 
 **All files of reference**
--   : **NEEDS IMMEDIATE, CAREFUL REWORK.** Source of most user complaints.
--   : Contains the validation logic () blocking STAS.
--   : The new UI for branding.
--   : Frontend for transaction actions.
+-   : The template for the new Service Layer architecture.
+-   : The API for the new core contract system.
+-   : The UI for managing the new contracts.
+-   : The location of the current STAS mirror and execution logic that needs to be refactored to use the service layer.
+-   : Contains the detailed plan and architectural explanation that the next agent must get approved by the user before starting work.
 
 **Areas that need refactoring**:
--    must be refactored to be robustly bilingual and data-complete. The current implementation is brittle.
+-   ****: The primary target for refactoring. The monolithic  and  functions must be broken down and their logic moved into dedicated services (e.g., , ).
+-   **Enforce Contract Status:** Logic needs to be added throughout the application (e.g., in , ) to check for an  V2 contract before allowing any action.
+-   **Single Source of Truth:** Any remaining logic that reads from stale/duplicated fields (e.g., ) should be refactored to calculate values directly from the relevant ledger.
 
 **key api endpoints**
--   : Generates the (currently broken) PDF.
--   : Core endpoint for workflow actions.
--   , : Endpoints for managing company branding.
+-   : List all V2 contracts.
+-   : Create a new V2 contract.
+-   : Change the status of a contract (e.g., send to STAS, activate).
+-   : Terminate an active contract.
+-   : The endpoint for the STAS pre-execution view, which is the focus of the next set of improvements.
 
 **Critical Info for New Agent**
--   **PRIORITIZE THE PDF:** The user is extremely unhappy. Do not work on anything else until the PDF is perfect according to all user requirements: correct bilingual text, all data visible, company branding present, and the correct signature types (QR vs. Barcode for STAS).
--   **TEST MANUALLY:** The automated tests gave a false positive. After every change, manually generate both the Arabic and English PDFs and verify every single element. Test the full STAS workflow (reject, return, approve, execute) as the STAS user.
--   **USER'S WORKFLOW IS LAW:**
-    -   STAS approval -> STAS Mirror page.
-    -   From Mirror -> Execute button performs final action.
-    -   STAS cancel -> Transaction is dead, no side effects.
-    -   STAS barcode is , not a QR code.
+-   **Your immediate task is to get user approval for the plan you proposed in the last message.** Do not start coding. Use the  tool to present the plan from Chat Message 337's response and await confirmation.
+-   The user is highly technical and values detailed architectural discussion **before** implementation. Continue this pattern of analyze, propose, get approval, then build.
+-   The  module is the new, unchangeable foundation. All new logic must build upon it.
+-   The primary architectural goal is to expand the **Service Layer**. All new business logic for leave, attendance, and settlements must be created in new service files, not added directly to the API routes.
+-   **Do not build new ledgers or major systems.** The user has been clear: enhance and connect the existing pieces as per the agreed-upon plan.
 
 **documents and test reports created in this job**
+-   
+-   
 -    (updated)
--    (Gave a false positive, do not trust its results for the PDF).
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (LATEST):** Provided screenshots of the broken PDFs. Pointed out that the English PDF is blank, the Arabic PDF is missing approver names and comments, the STAS signature is a QR code instead of a barcode, and the company logo/name is not being used. Questioned the logic for cancelled transactions.
--   **Agent:** Analyzed the screenshots and correctly identified the technical reasons for the PDF and workflow failures.
--   **User:** Stated that the tests passed but showed screenshots of multiple new, critical errors.
--   **Agent:** Finished a round of fixes, ran the testing agent, and declared 100% success right before the user reported the new issues.
--   **User:** Clarified the logic for STAS: Mirror is a final review area, execution happens from there, and a transaction can't be returned twice.
--   **Agent:** Acknowledged understanding of the complex workflow and PDF issues.
+1.  **User (LATEST):** Posed a long, detailed list of requirements and questions for the next phase, focusing on clarifying request types, building a comprehensive attendance table, implementing leave accrual logic, defining supervisor assignment, and refining the STAS mirror's function. Requested a detailed plan before execution. (Status: **PENDING AGENT RESPONSE/PLAN**)
+2.  **Agent:** Provided a detailed architectural assessment of the current system, answering the user's questions about its state (Workflow vs. Ledger system), separation of layers, and the role of STAS. Proposed a phased roadmap. (Status: **DONE**)
+3.  **User:** Asked for a deep architectural evaluation of the current system, covering its core identity, how to add new logic, the role of ledgers, separation of concerns, and the decision-making hierarchy. (Status: **ADDRESSED**)
+4.  **Agent:** Finished implementing the Contracts V2 module, updated the PRD, and asked the user what was next. (Status: **DONE**)
+5.  **User:** Provided extremely specific, non-negotiable requirements for a new Contracts V2 module, including the data model, lifecycle, serial numbering, PDF templates, and role permissions. Stated this must be completed before any settlement work. (Status: **ADDRESSED/COMPLETED**)
+6.  **Agent:** Proposed a detailed architectural vision for the STAS Mirror, outlining what it currently does and what a fully-featured version for settlements should look like, including financial calculations, blockers, warnings, and an audit trail. (Status: **DONE**)
+7.  **User:** Asked for a complete architectural explanation of the STAS Mirror concept, including what data it shows, how it validates transactions, and how it prevents errors. (Status: **ADDRESSED**)
+8.  **Agent:** Provided a detailed technical report answering the user's questions about the readiness of the system for a settlement feature. (Status: **DONE**)
+9.  **User:** Asked a series of deep technical questions about the system's readiness for a settlement feature, covering contract data, calculation engines, ledgers, and attendance. (Status: **ADDRESSED**)
+10. **Agent:** Provided an initial technical report on the system's data and logic available for calculating settlements. (Status: **DONE**)
 
 **Project Health Check:**
--   **Broken:**
-    -   **PDF Generation:** Fails on almost every requirement (bilingual text, data completeness, signature types, branding). **P0 BLOCKER**.
-    -   **Core Workflow:** STAS is blocked from executing transactions.
+-   **Broken:** None.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
--    & 
 -   
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. However, it produced a **false positive**. The tests were not comprehensive enough to catch the visual and data-related bugs in the PDF reported by the user.
--   **Troubleshoot agent used after agent stuck in loop:** NO.
+-   **Testing agent used after significant changes:** YES. Used successfully for the Contracts V2 module.
 -   **Test files created:** None.
--   **Known regressions:** PDF generation is significantly worse than before the latest changes (e.g., the English PDF is now completely blank).
 
 **Credentials to test flow:**
-Use the user-switcher dropdown in the app's header. Roles include , , , , , and  (CEO). No passwords required.
+Use the user-switcher dropdown in the app's header. Roles , , and  are relevant for contract management and upcoming tasks. No passwords are required.
 
 **What agent forgot to execute**
--   The agent failed to properly test the PDF output after making major changes. A simple visual check of both language versions would have caught the regressions.
--   The agent implemented the STAS signature incorrectly as a QR code despite the user specifying a barcode.
--   The agent built the branding feature but forgot the final step of actually applying the uploaded logo and name to the application, specifically the PDF.
--   The agent did not address the pending tasks of the CEO dashboard.</analysis>
+The agent is correctly paused, waiting for explicit user approval on the detailed plan for the next phase of development. Nothing has been forgotten.</analysis>
