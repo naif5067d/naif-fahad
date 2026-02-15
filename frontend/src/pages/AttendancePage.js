@@ -669,7 +669,13 @@ export default function AttendancePage() {
                       </td>
                       {isStas && (
                         <td>
-                          <Button variant="ghost" size="sm" className="h-8">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8"
+                            onClick={() => openEditDialog(r)}
+                            data-testid={`edit-attendance-${r.employee_id}`}
+                          >
                             <Edit size={14} />
                           </Button>
                         </td>
