@@ -518,3 +518,100 @@ async def get_archived_users(user=Depends(require_roles('stas'))):
     """Get list of archived users"""
     users = await db.users.find({"is_archived": True}, {"_id": 0, "password_hash": 0}).to_list(100)
     return users
+
+
+# ==================== RAMADAN MODE ====================
+
+@router.get("/ramadan")
+async def get_ramadan_mode(user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """جلب إعدادات دوام رمضان"""
+    settings = await get_ramadan_settings()
+    if not settings:
+        return {
+            "is_active": False,
+            "hours_per_day": 8,
+            "message_ar": "الدوام العادي (8 ساعات)"
+        }
+    return settings
+
+
+@router.post("/ramadan/activate")
+async def activate_ramadan_mode(req: RamadanModeRequest, user=Depends(require_roles('stas'))):
+    """تفعيل دوام رمضان - STAS فقط"""
+    settings = await set_ramadan_mode(
+        start_date=req.start_date,
+        end_date=req.end_date,
+        actor_id=user['user_id']
+    )
+    return {
+        "message": "تم تفعيل دوام رمضان بنجاح",
+        "message_en": "Ramadan mode activated",
+        "settings": settings
+    }
+
+
+@router.post("/ramadan/deactivate")
+async def deactivate_ramadan(user=Depends(require_roles('stas'))):
+    """إلغاء تفعيل دوام رمضان"""
+    settings = await deactivate_ramadan_mode(user['user_id'])
+    return {
+        "message": "تم إلغاء دوام رمضان",
+        "message_en": "Ramadan mode deactivated",
+        "settings": settings
+    }
+
+
+# ==================== ATTENDANCE DAILY JOB ====================
+
+@router.post("/attendance/calculate-daily")
+async def run_daily_attendance_calculation(user=Depends(require_roles('stas'))):
+    """
+    تشغيل حساب الحضور اليومي يدوياً
+    يُسجل الغياب لمن لم يسجل دخول ولا عنده إجازة
+    """
+    result = await calculate_daily_attendance()
+    return {
+        "message": "تم حساب الحضور اليومي",
+        "result": result
+    }
+
+
+@router.post("/attendance/calculate-for-date")
+async def run_attendance_for_date(date: str, user=Depends(require_roles('stas'))):
+    """تشغيل حساب الحضور لتاريخ محدد"""
+    result = await calculate_daily_attendance(date)
+    return {
+        "message": f"تم حساب الحضور لتاريخ {date}",
+        "result": result
+    }
+
+
+# ==================== MAP VISIBILITY SETTING ====================
+
+@router.get("/settings/map-visibility")
+async def get_map_visibility(user=Depends(require_roles('stas'))):
+    """جلب إعداد إظهار الخريطة للموظفين"""
+    setting = await db.settings.find_one({"type": "map_visibility"}, {"_id": 0})
+    if not setting:
+        return {"show_map_to_employees": False}
+    return setting
+
+
+@router.post("/settings/map-visibility")
+async def set_map_visibility(show: bool, user=Depends(require_roles('stas'))):
+    """تحديث إعداد إظهار الخريطة للموظفين"""
+    now = datetime.now(timezone.utc).isoformat()
+    await db.settings.update_one(
+        {"type": "map_visibility"},
+        {"$set": {
+            "type": "map_visibility",
+            "show_map_to_employees": show,
+            "updated_by": user['user_id'],
+            "updated_at": now
+        }},
+        upsert=True
+    )
+    return {
+        "message": "تم تحديث إعداد الخريطة",
+        "show_map_to_employees": show
+    }
