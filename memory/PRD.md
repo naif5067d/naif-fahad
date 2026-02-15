@@ -219,16 +219,15 @@ system_archives, maintenance_log
 ## Remaining Tasks
 
 ### P0 (Priority 0) - Next Phase
-- **نظام المخالصة (Settlement System):**
-  - محرك حساب EOS حسب نظام العمل السعودي
-  - حساب بدل الإجازات التلقائي
-  - تجميع الاستحقاقات والاستقطاعات
-  - مرآة STAS للمخالصة
+- **نظام المخالصة الكامل (Full Settlement System):**
+  - واجهة إنشاء طلب المخالصة
+  - عرض Snapshot في مرآة STAS
+  - تنفيذ المخالصة بالكامل
+  - PDF المخالصة النهائي
 
 ### P1 (Priority 1)
-- Employee Profile Card (بطاقة الموظف)
-- Mohammed CEO Dashboard - Escalated transactions view
-- Supervisor Assignment UI - Allow Sultan/Naif to assign supervisors
+- CEO Dashboard - Escalated transactions view
+- Employee Profile Card Enhancement
 
 ### P2 (Priority 2)
 - New Transaction Types (leave/attendance subtypes)
@@ -236,6 +235,148 @@ system_archives, maintenance_log
 - Geofencing enforcement
 - نظام الإنذارات والجزاءات
 - نظام السلف وتتبع الأقساط
+
+---
+
+## Phase 16: Core HR Logic & Settlement Foundation ✅ (2026-02-15)
+
+**المتطلبات المُنفذة:**
+
+### 1️⃣ تثبيت نظام العقود (Service Calculator)
+- **ملف جديد:** `backend/services/service_calculator.py`
+- **حساب مدة الخدمة:**
+  - يعتمد على `start_date` من العقد + `termination_date` أو تاريخ اليوم
+  - 365 يوم = سنة واحدة
+  - دعم كسور السنة بدقة 4 خانات عشرية
+  - لا يتم تخزين - يُحسب ديناميكياً
+- **حساب الأجر:**
+  - `basic_only` أو `basic_plus_fixed` حسب `wage_definition`
+- **حساب مكافأة نهاية الخدمة (EOS):**
+  - ≤5 سنوات: 0.5 × الأجر × عدد السنوات
+  - >5 سنوات: (0.5 × 5) + (1 × الباقي)
+  - نسب الاستقالة: 0% (<2 سنة) / 33% (2-5) / 66% (5-10) / 100% (10+)
+  - المعادلات مكتوبة في النتيجة
+
+### 2️⃣ نظام الإجازات 21/30
+- **ملف جديد:** `backend/services/leave_service.py`
+- **الإجازة السنوية:**
+  - أقل من 5 سنوات = 21 يوم
+  - 5 سنوات فأكثر = 30 يوم
+  - الرصيد يُحسب من `leave_ledger` فقط (credits - debits)
+  - لا يوجد رصيد مخزن يدوي
+- **الإجازة المرضية 30/60/30:**
+  - 30 يوم 100%
+  - 60 يوم 75%
+  - 30 يوم بدون أجر
+  - تُحسب تراكمياً خلال 12 شهر متحركة
+- **الإجازات الخاصة:**
+  - زواج (5 أيام)، وفاة (5 أيام)، أمومة (70 يوم)، أبوة (3 أيام)، اختبار، بدون أجر
+
+### 3️⃣ الحضور والانضباط
+- **ملف جديد:** `backend/services/attendance_service.py`
+- **حساب الغياب التلقائي:**
+  - نهاية كل يوم: من لم يسجل دخول ولا عنده إجازة = غياب
+  - يُسجل في `attendance_ledger` بـ `type: "absence"`
+- **أنواع السجلات:**
+  - `check_in`, `check_out`, `absence`, `late`, `early_leave`
+- **التعديل اليدوي:**
+  - مع `audit_log` في نفس السجل
+- **رمضان:**
+  - زر تفعيل/إلغاء من STAS
+  - 6 ساعات عمل
+  - تواريخ من/إلى
+
+### 4️⃣ طلبات الحضور منفصلة
+- **أنواع طلبات الحضور:**
+  - نسيان بصمة (`forget_checkin`)
+  - مهمة خارجية (`field_work`)
+  - خروج مبكر (`early_leave_request`)
+  - تبرير تأخير (`late_excuse`)
+- **تظهر في قسم الحضور فقط** - لا تظهر في قائمة الطلبات العامة
+
+### 5️⃣ مرآة STAS الشاملة
+- **ملف جديد:** `backend/services/stas_mirror_service.py`
+- **Pre-Checks لكل نوع معاملة:**
+  - PASS / FAIL / WARN
+  - FAIL يمنع التنفيذ
+  - WARN تحذير فقط مع تسجيله
+- **بيانات المرآة:**
+  - العقد ومدة الخدمة والأجر
+  - رصيد الإجازات قبل وبعد
+  - الغياب غير المسوى
+  - العهد النشطة
+  - السلف غير المسددة
+  - المعادلات الحسابية مكتوبة
+- **آلية القرار:**
+  - تنفيذ (PASS كامل)
+  - إرجاع (مرة واحدة فقط)
+  - إلغاء
+
+### 6️⃣ محرك المخالصة (Settlement Engine)
+- **ملف جديد:** `backend/services/settlement_service.py`
+- **Validator:** التحقق من شروط المخالصة
+  - FAIL: عقد غير منتهي، عهد نشطة
+  - WARN: سلف، غياب، جزاءات
+- **Aggregator:** تجميع البيانات
+  - من `contracts_v2`, `leave_ledger`, `attendance_ledger`, `finance_ledger`, `custody_ledger`
+- **Snapshot:**
+  - يُنشأ عند رفع طلب المخالصة
+  - لا يتغير بعد إنشائه
+  - التنفيذ يعتمد عليه فقط
+- **حساب المخالصة:**
+  - مكافأة نهاية الخدمة
+  - بدل الإجازات
+  - الاستقطاعات (سلف، غياب، جزاءات)
+  - الصافي النهائي
+
+### 7️⃣ تعيين المشرف
+- **Endpoint جديد:** `PUT /api/employees/{id}/supervisor`
+- الطلبات تمر للمشرف أولاً
+
+### 8️⃣ صفحة الحضور المحدثة
+- **بطاقات ملخص الفريق:** حاضر، غائب، إجازة، متأخر
+- **زر رمضان:** تفعيل/إلغاء من STAS
+- **زر إظهار الخريطة:** تفعيل/إلغاء من STAS
+- **زر حساب الغياب:** تشغيل يدوي
+- **جدول محسن:** عمود الحالة + عمود الإجراء
+- **قسم طلبات الحضور:** منفصل عن الإجازات
+
+### 9️⃣ ملخص الموظف الشامل
+- **Endpoint جديد:** `GET /api/employees/{id}/summary`
+- العقد الحالي، المشرف، رصيد الإجازات، نسبة الاستهلاك
+- حالة الحضور، الغياب، الخصومات، آخر حركة مالية
+
+**الملفات الجديدة:**
+```
+backend/services/
+├── service_calculator.py     # حساب مدة الخدمة و EOS
+├── leave_service.py          # منطق الإجازات 21/30
+├── attendance_service.py     # الغياب التلقائي + رمضان
+├── settlement_service.py     # محرك المخالصة
+└── stas_mirror_service.py    # مرآة STAS الشاملة
+```
+
+**الملفات المُعدّلة:**
+```
+backend/routes/stas.py        # Pre-checks من Service Layer + إرجاع مرة واحدة + رمضان
+backend/routes/employees.py   # تعيين المشرف + ملخص الموظف
+frontend/src/pages/AttendancePage.js  # واجهة محدثة بالكامل
+```
+
+**APIs الجديدة:**
+```
+GET  /api/stas/ramadan                    # إعدادات رمضان
+POST /api/stas/ramadan/activate           # تفعيل رمضان
+POST /api/stas/ramadan/deactivate         # إلغاء رمضان
+POST /api/stas/attendance/calculate-daily # حساب الغياب يدوياً
+GET  /api/stas/settings/map-visibility    # إظهار الخريطة
+POST /api/stas/settings/map-visibility    # تحديث إظهار الخريطة
+POST /api/stas/return/{id}                # إرجاع المعاملة (مرة واحدة)
+PUT  /api/employees/{id}/supervisor       # تعيين المشرف
+GET  /api/employees/{id}/summary          # ملخص شامل
+```
+
+---
 
 ## Key Files
 - `/app/backend/utils/pdf.py` - PDF generator with bilingual support (FIXED)
