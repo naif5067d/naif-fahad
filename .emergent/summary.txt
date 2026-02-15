@@ -1,60 +1,72 @@
 <analysis>**original_problem_statement:**
-The user is building DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system. The primary goal is to create a fully integrated system from contract creation to employee settlement (المخالصة), with a strong emphasis on a service-oriented architecture and a robust governance layer via the STAS Mirror.
+The user is building DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system. The primary goal is to create a fully integrated system from contract creation to employee settlement (المخالصة).
 
-The initial implementation attempt resulted in several critical bugs and incomplete features. The user has provided an executive order (Chat Message 17) and a subsequent bug report (Chat Message 136) that now serves as the primary set of requirements.
+After a major refactoring, the user reported a list of critical bugs. The agent attempted to fix them, but the user has now provided a new, extensive list of bugs, regressions, and requirement clarifications.
 
-**The immediate and mandatory task is to fix a list of critical bugs and missing features before any new development can begin.**
+**The immediate and mandatory task is to fix ALL issues from the user's latest message (Chat Message 157) before any new feature development.**
 
-**Key Requirements from the user's latest messages:**
-1.  **Core Logic Refactor:** Separate all business logic into a new  directory.
-2.  **Contracts & Leave:** Implement specific HR rules for service duration calculation (365-day year), annual leave (21/30 days), and sick leave (30/60/30 tiers), with all balances calculated dynamically from ledgers.
-3.  **Attendance:** Implement automatic absence tracking, a separate UI section for attendance-related requests, and an admin-configurable Ramadan Mode that correctly adjusts working hours.
-4.  **STAS Mirror:** The mirror must be a foolproof governance gate, showing a comprehensive pre-check snapshot (including financial impact, ledger states, warnings, and blockers) and strictly preventing execution if any  conditions are met. It must also support a one-time Return functionality.
-5.  **Settlement:** The process must be driven by a data  created at the time of the request to ensure data integrity.
-6.  **UI/UX:** Add a supervisor assignment feature to the employee list, correctly separate request types, and fix workflow issues (e.g., Sultan's self-requests).
-7.  **Timezone:** Standardize all dates and times across the application to  and display them in a user-friendly format.
+**Key Requirements from the user's latest message:**
+1.  **Map Visibility:** The map MUST be visible to employees (read-only) when enabled by an admin. This is a recurring failure.
+2.  **UI/UX Standardization:**
+    *   Eliminate all mixed-language (Arabic/English) text.
+    *   Standardize all dates and times across the entire application to a clean  format, removing the mixed Gregorian/Hijri and ISO formats.
+    *   All transaction types (including the newly created attendance requests) must have the same action buttons (Approve/Reject/etc.) and the same header/PDF generation capabilities.
+    *   A universal, centrally-managed header must be implemented across the entire application, especially on all generated PDFs.
+3.  **Workflow & STAS Mirror:**
+    *   Clarify and implement the complete workflow for Sultan's self-requests after CEO (Mohammed) approval.
+    *   The STAS mirror must show / checks for ALL transaction types without exception.
+4.  **Leave Logic Overhaul:**
+    *   Implement a new, precise set of leave calculation rules (Annual, Sick, Marriage, etc.).
+    *   The *only* balance to be tracked is Annual Leave. Sick leave is a tiered counter.
+    *   The STAS seal must appear on the generated table/page, and barcodes should be removed for now.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond in Arabic.
 
 **what currently exists?**
-The agent performed a major refactoring by creating a new **service layer** in the backend. Several new files were created under  to handle the business logic for contracts, leave, attendance, and settlements. Core routes like  and  were modified to call these new services.
+The agent addressed a previous list of critical bugs. This involved fixing the Ramadan mode logic to use dynamic start/end times, correcting Sultan's self-request workflow to escalate to the CEO, adding a UI for assigning supervisors, and fixing the STAS mirror to correctly validate active contracts.
 
-On the frontend, the  was significantly updated to include new UI elements for managing Ramadan mode, showing the map, and calculating absence, along with a new table for team attendance.
+The agent also added new backend endpoints () and frontend UI () to create and manage attendance-specific requests (e.g., Forgot Check-in). Logic was also added to automatically update work location times when Ramadan mode is activated.
 
-**However, the implementation is functionally incomplete and buggy.** While the structural files and UI elements exist, the underlying logic is either missing or incorrect, as detailed in the user's last message. The system is not in a usable state.
+However, the user's latest feedback indicates that some fixes were ineffective (map visibility) and the new features are incomplete and inconsistent with the rest of the application (missing action buttons, incorrect headers). The core leave logic is also incorrect based on newly specified rules.
 
 **Last working item**:
--   **Last item agent was working:** The agent had just completed a large-scale implementation of the user's architectural plan, which included creating a service layer, refactoring routes, and updating the frontend. The agent ran the testing subagent, which reported success, and then incorrectly declared the task finished. The user immediately responded with a detailed list of critical bugs.
--   **Status:** **BLOCKED**. The previous work was rejected by the user due to multiple critical bugs. All new development is on hold until these issues are resolved.
--   **Agent Testing Done:** Y (but the tests were insufficient and did not catch the reported bugs).
--   **Which testing method agent to use?** **both**. Each bug fix needs to be individually verified. Use  for backend logic (e.g., workflow rules, timezone), and the  for frontend UI changes (e.g., supervisor button, request lists). After all fixes are implemented, a full run of the  is required to ensure no regressions were introduced.
--   **User Testing Done:** Y (and it FAILED).
+-   **Last item agent was working:** The agent was finishing a large set of bug fixes and implementing new functionality for attendance requests. This included adding new endpoints, creating new UI dialogs, and fixing the map visibility issue for employees. The agent believed all issues were resolved.
+-   **Status:** **BLOCKED**
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** both. The issues span backend logic (leave calculations), frontend display (date formats, language, component reuse), and system-wide consistency. Individual fixes should be tested with  and the , followed by a comprehensive run of the  to catch regressions.
+-   **User Testing Done:** Y (and it FAILED)
 
 **All Pending/In progress Issue list**:
--   Issue 1: **Fix Critical Bugs from Previous Implementation (P0)**
+-   Issue 1: **Fix Critical Bugs & Regressions from User Feedback (P0)**
 
 **Issues Detail:**
--   **Issue 1: Fix Critical Bugs from Previous Implementation**
-    -   **Description:** The user has identified several critical bugs that must be fixed before any new development.
-        1.  **Timezone Standardization:** Dates and times are displayed in UTC/ISO format instead of the required  short format.
-        2.  **Ramadan Mode Broken:** The UI toggle exists, but the backend logic in  does not use the setting to adjust calculations for lateness or early leave.
-        3.  **Map Visibility Broken:** The Show Map toggle for STAS does not correctly update visibility for employees.
-        4.  **Sultan's Self-Request Workflow:** Requests raised by 'sultan' for himself are not automatically routed to the 'ceo' ('mohammed'). The workflow logic in  needs to be corrected.
-        5.  **Missing Supervisor Assignment UI:** The button/interface to assign a supervisor from the employee list page is missing in .
-        6.  **Incorrect Request Separation:** Leave requests and attendance-related requests are not separated into their respective UI sections as required.
-        7.  **Inconsistent STAS Mirror:** The mirror shows  for valid active contracts and provides inconsistent before/after balance checks for leave requests because it's not correctly differentiating between leave types (annual, sick, etc.). Logic in  and  needs review.
-    -   **Attempted fixes:** The agent's initial implementation created the structure but failed on the logic. For instance, the Ramadan UI was added, but the backend service to consume the setting was incomplete.
+-   **Issue 1: Fix Critical Bugs & Regressions from User Feedback**
+    -   **Description:** The user's latest message (Chat Message 157) lists several critical issues that block all progress.
+        1.  **Map Visibility Still Broken:** Employees cannot see the map pin location even when the Show Map setting is enabled by an admin.
+        2.  **Inconsistent UI - Mixed Languages:** The UI displays a mix of English and Arabic text. All text must be consistently in Arabic.
+        3.  **Inconsistent UI - Date/Time Format:** Dates are displayed in a messy, mixed format like . This must be standardized to a clean  date and time format across the entire application.
+        4.  **Inconsistent UI - Missing Action Buttons:** The new attendance requests in the Attendance Requests list do not have any action buttons (Approve/Reject), unlike all other transactions in the system. They must be consistent.
+        5.  **Inconsistent UI - Missing Headers:** A universal, standard header is missing from pages and generated PDFs. The user insists this be implemented and centrally managed.
+        6.  **Workflow Flaw - Sultan/CEO:** The workflow for what happens *after* the CEO (Mohammed) approves a request from Sultan is unclear or incomplete.
+        7.  **STAS Mirror Incompleteness:** The user re-iterates that the STAS mirror must show its / analysis for *all* transaction types, not just some.
+        8.  **Incorrect Leave Logic:** The current leave system is wrong. It must be refactored to follow these specific rules:
+            -   **Annual Leave:** The ONLY tracked balance. 21 days/year for < 5 years service, 30 days/year for 5+ years.
+            -   **Sick Leave:** No balance. A legal counter: first 30 days at 100% pay, next 60 at 75%, next 30 unpaid. Requires mandatory PDF attachment from Sehhaty.
+            -   **Other Leaves (Marriage, Death):** 5 paid days, do not deduct from annual.
+            -   **Exam Leave:** Paid, duration based on attached proof.
+            -   **Unpaid Leave:** Tracked days, but no pay and no deduction from annual.
+        9.  **PDF/UI Polish:** Remove the barcode from generated documents for now. The STAS seal/stamp should be visible on the transaction view.
+    -   **Attempted fixes:** The agent created a public endpoint for map visibility () and modified  to fetch from it, but it's still not working for the employee role. The agent created the attendance request feature but forgot to add the action buttons and consistent header.
     -   **Next debug checklist:**
-        -   **Timezone:** Review all date formatting functions (, and how dates are handled in all  and API responses) and enforce .
-        -   **Ramadan:** Check  to ensure it reads the Ramadan settings from the database and applies the custom hours when calculating attendance events.
-        -   **Map:** Debug the endpoint in  and the corresponding frontend state management to ensure the setting is saved and retrieved correctly.
-        -   **Workflow:** Examine  and the  function to correctly handle the case where  equals .
-        -   **Supervisor UI:** Edit  to add a modal or dropdown for admins (, , ) to select a supervisor from the employee list and call the  endpoint.
-        -   **Request Lists:** Refactor the frontend pages (, ) to filter and display transactions based on their type category (leave vs. attendance).
-        -   **STAS Mirror:** Debug  to ensure it fetches the correct leave type from the transaction and uses it for balance calculations. Fix the validation logic in  that incorrectly flags active contracts.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a hard blocker from the user. The application's core logic is broken. Fixing these issues will stabilize the foundation and restore user trust, allowing development to proceed to the main settlement feature.
+        -   **Map:** In , debug why the  state, fetched from the public endpoint, is not resulting in the map component being rendered for non-admin users. Check for faulty conditional logic ( checks).
+        -   **Date/Language:** Create or enforce a single utility function for formatting dates and use it everywhere, removing all hardcoded  or multi-format displays. Review all UI components for hardcoded English strings.
+        -   **Action Buttons:** In , reuse the same component/logic that renders action buttons for transactions in  or  to ensure consistency.
+        -   **Headers:** Create a reusable  component and integrate it into the main app layout and the PDF generation logic.
+        -   **Leave Logic:** Overhaul  and . Remove all balance logic for non-annual leaves. Implement the new tiered sick leave counter and the fixed-day leaves. The  function should only ever query for  leave.
+        -   **Workflow:** Trace the code in  for what happens after a  approval. Ensure there is a next logical state or a final  state.
+    -   **Why fix this issue and what will be achieved with the fix?** These are hard blockers from the user. Fixing them will create a stable, consistent, and logically correct foundation, finally allowing progress on new modules like Settlement.
     -   **Status:** **NOT STARTED**
-    -   **Is recurring issue?** N
+    -   **Is recurring issue?** Y (Map visibility)
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on other issue:** None. This is the top priority.
 
@@ -65,97 +77,89 @@ On the frontend, the  was significantly updated to include new UI elements for m
 -   **Upcoming Tasks:**
     -   **P0: Settlement Module UI & Snapshot Integration:** Build the frontend interface for creating and managing settlement requests. Ensure the STAS mirror correctly displays the full data  generated by the backend.
 -   **Future Tasks:**
-    -   **P1: CEO Dashboard & Employee Profile Card:** Create a dedicated dashboard for the CEO role and enhance the employee profile view with more summary data.
+    -   **P1: CEO Dashboard & Employee Profile Card:** Create a dedicated dashboard for the CEO role and enhance the employee profile view with more summary data (as requested again by the user).
     -   **P2: Warnings & Loans Modules:** Implement functionality for issuing official warnings (الإنذارات) and managing employee loans (السلف).
 
 **Completed work in this session**
--   **Service Layer Creation:** Created a new  directory and populated it with new files for core business logic:
-    -   
-    -   
-    -   
-    -   
-    -   
-    -   
--   **Route Refactoring:** Modified , , and other routes to utilize the new service layer.
--   **New Endpoints:** Added endpoints for returning transactions, managing Ramadan settings, and assigning supervisors.
--   **Frontend UI Redesign:** Overhauled  to include new admin controls and a team attendance summary.
+-   **Ramadan Mode Fix:** Logic in  now correctly uses dynamic work start/end times.
+-   **Sultan Workflow Fix:** Self-requests are now correctly escalated to the CEO via  in .
+-   **Supervisor Assignment UI:** A working button and dialog were added to  to assign supervisors.
+-   **STAS Mirror Fix:** The mirror now correctly validates active contracts, preventing  for valid leave requests.
+-   **Attendance Requests Feature:** Added backend endpoints (, ) and frontend UI in  to create and view attendance-related requests.
+-   **Ramadan Auto-Update:** Activating Ramadan mode now automatically updates the schedules for all work locations.
 
 **Earlier issues found/mentioned but not fixed**
--   All issues listed in the **All Pending/In progress Issue list** section are from the user's latest bug report and were introduced in this session.
+-   All issues are captured in the **All Pending/In progress Issue list** section above. The most prominent recurring issue is Map Visibility.
 
 **Known issue recurrence from previous fork**
--   None.
+-   **Map Visibility:** The fix to make the map setting visible to employees has failed again.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Service Layer Architecture:** Business logic is being decoupled from API routes into a dedicated  directory.
--   **Ledger-Based Source of Truth:** All calculations (leave balance, attendance status) must be derived directly from the ledgers (, , etc.), not from stored/stale data.
--   **STAS Mirror as a Governance Gate:** A critical pre-execution screen for the STAS role to validate all transaction prerequisites, see the full impact, and make a final, informed decision.
--   **Data Snapshots:** For critical, multi-faceted transactions like settlements, a data snapshot is created upon request initiation to prevent data drift between validation and execution.
+-   Service Layer Architecture
+-   Ledger-Based Source of Truth
+-   STAS Mirror as a Governance Gate
+-   **Dynamic & Rule-Based Leave Calculation:** The system must now support complex, rule-based leave policies (tiers, counters, prerequisites) instead of simple balance deductions.
 
 **key DB schema**
--   ****: Needs  field to be manageable via the UI. Any stored leave balance fields must be removed.
--   ****: Needs to be filterable to separate  types from  types. A  flag will be added to enforce the one-time return rule.
--   ** (or a new collection):** Will need to store global settings like Ramadan mode activation/dates and map visibility.
+-   ****:  is now managed via the UI.
+-   ****: Now contains new  values for attendance requests (e.g., ). The structure needs to be handled consistently by the UI.
+-   ****: Contains  and  settings.
 
 **All files of reference**
--   **User Bug Report:** Chat Message 136 is the source of truth for the next set of tasks.
--   **Backend Services:** All files under .
--   **Backend Routes:** , .
--   **Backend Utils:** .
--   **Frontend Pages:** , .
+-   **User Bug Report & Requirements:** Chat Message 157 is the new source of truth.
+-   **Backend:**  (needs overhaul),  (needs consistency check).
+-   **Frontend:**  (source of many UI bugs),  (key to date fix).
 
 **Areas that need refactoring**:
--   The entire implementation from the last agent turn needs to be debugged and corrected.
--   Date and time handling needs a system-wide refactoring to enforce the  timezone.
+-   **Leave Calculation Logic:** The entire  and any related logic needs to be rewritten to match the user's new, detailed rules.
+-   **Date/Time Handling:** A system-wide refactor is needed to enforce a single, clean date format using a centralized utility.
+-   **UI Consistency:** Create reusable components for page/PDF headers and transaction action buttons to be used across the application.
 
 **key api endpoints**
--   : Endpoint exists but needs a corresponding UI.
--   : Endpoint for the STAS one-time return feature.
--   : Endpoint to manage Ramadan mode settings.
--   : The core STAS mirror endpoint whose underlying service () needs debugging.
+-   
+-   
+-   
+-   : **New endpoint for map, but needs debugging on the frontend.**
+-   : **New endpoint for creating attendance requests.**
+-   : **New endpoint for admin edits to attendance.**
 
 **Critical Info for New Agent**
--   **STOP! Do not start any new features (P0, P1, etc.).** Your immediate and only priority is to fix the list of critical bugs reported by the user in **Chat Message 136**.
--   You must address each point in the user's Fix Plan meticulously.
--   **Provide proof of each fix.** The user expects screenshots or short video clips demonstrating that each bug has been resolved.
--   The previous agent's automated tests were insufficient. You must manually test each fix using  and the screenshot tool to confirm the correct behavior before moving to the next bug.
--   The user is highly technical and has lost some trust. Be precise, address the root cause of each issue, and do not declare completion until you have verified every single fix yourself.
+-   **STOP! Do not start any new features (P0, P1, etc.).** Your immediate and only priority is to fix the list of critical bugs reported by the user in **Chat Message 157**.
+-   The user is highly frustrated with recurring trivial issues like map visibility and UI inconsistencies (dates, languages, missing buttons). Address these with high priority to rebuild trust.
+-   The leave logic overhaul is a major task. You must implement the user's new rules precisely.
+-   Provide proof (screenshots or short GIFs in Arabic) for each individual fix. Do not bundle them.
+-   Confirm with the user after each significant fix (e.g., after fixing the map, after fixing dates) to ensure it meets their expectation before moving to the next bug.
 
 **documents and test reports created in this job**
--    (updated)
--    (The results are misleadingly positive and should not be trusted for the implemented features).
+-    (The results are now outdated and misleading, as the user found new bugs post-testing).
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (LATEST - PENDING):** Provided a detailed bug report and a mandatory Fix Plan. Rejected the agent's completed work and blocked all new development until the fixes are delivered with proof.
--   **Agent (Completed):** Incorrectly declared the task finished after receiving a successful report from the testing agent.
--   **Agent (In Progress):** Called the testing agent.
--   **Agent (In Progress):** Updated the PRD.md file.
--   **Agent (In Progress):** Took screenshots to verify the UI, but did not test the underlying logic.
--   **Agent (In Progress):** A long series of implementation messages creating services, refactoring routes, and modifying the frontend.
--   **User (Instruction):** Gave the final, detailed Execution Order, authorizing the agent to start coding the full architectural plan and adding new requirements like Ramadan mode and map visibility.
--   **Agent (Confirmation):** Provided the final, detailed Execution Checklist, confirming the full plan before starting to code.
--   **User (Confirmation):** Refined the requirements for the STAS mirror and the Return functionality, and demanded a final checklist before implementation.
--   **Agent (Planning):** Delivered the comprehensive architectural report with proposed code, a new service layer, and a flow diagram.
+-   **User (LATEST - PENDING):** Provided an extensive new bug report. Key issues include: map still not visible to employees, mixed languages in the UI, incorrect date/time formatting, new attendance requests missing action buttons, inconsistent/missing headers, and an incomplete workflow for Sultan's requests. The user also provided a completely new, detailed specification for how all leave types must be calculated, rendering the current logic obsolete. The user is frustrated with trivial issues blocking progress.
+-   **Agent (Completed):** Announced that all features were working and requested user feedback on where to display employee profile information.
+-   **User (Query):** Asked a series of clarifying questions, pointing out the issues that would be detailed in the next message (Action button not working, map not reflecting, etc.).
+-   **Agent (Implementation):** A series of messages where the agent implemented the new attendance request features, fixed bugs from the *previous* user report, and tested them with  and screenshots.
 
 **Project Health Check:**
--   **Broken:** The core business logic for attendance, workflows, and the STAS mirror is broken. Timezone handling is incorrect system-wide.
--   **Mocked:** None.
+-   **Broken:** Core application logic and UI are inconsistent and buggy. The leave calculation system is fundamentally incorrect according to new requirements. Key features like map visibility are still not working as intended.
 
 **3rd Party Integrations**
 -   
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, but it failed to identify critical logic bugs. Its successful result should be disregarded for the last session's work.
+-   **Testing agent used after significant changes:** YES, but its tests were insufficient and did not cover the user's expectations for UI consistency or the new bugs introduced, leading to a false positive result.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** The entire feature set delivered in the last session is a regression from the user's expectations.
+-   **Known regressions:** Map visibility, UI consistency. The leave logic is now considered a major regression against the new, clarified requirements.
 
 **Credentials to test flow:**
-Use the user-switcher dropdown in the app's header. Roles , , , and  (CEO) are relevant. No passwords required.
+Use the user-switcher dropdown in the app's header. Roles , , , and  (CEO) are for admins/supervisors. Use other employee accounts (e.g., ) to test employee-specific views. No passwords required.
 
 **What agent forgot to execute**
-The agent failed to properly implement and test the backend logic for most of the new features it built. It created the UI and the service file structure but did not connect them with working, tested code, leading to the user's bug report. Specifically, the logic for Ramadan mode, map visibility, supervisor self-request workflow, and consistent STAS mirror calculations was either missing or incorrect.</analysis>
+-   **Ensure UI/UX Consistency:** The agent created new features (attendance requests) that did not match the existing UI patterns (missing action buttons, headers).
+-   **Verify Fixes from the Correct User Role:** The agent's fix for map visibility was likely tested from an admin account, but it failed for the standard employee role.
+-   **Standardize Global Elements:** Ignored the user's implicit and explicit requests for consistency in date formatting, language, and page headers.
+-   **Implement Leave Rules Correctly:** The previous implementation of leave logic did not match the detailed business rules the user has now explicitly stated.</analysis>
