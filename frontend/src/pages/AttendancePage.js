@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MapPin, Clock, CheckCircle, XCircle, AlertTriangle, Building2, Navigation, CalendarDays, User, Moon, Edit, Eye, FileText, UserX, Timer, ChevronLeft } from 'lucide-react';
-import { formatGregorianHijri } from '@/lib/dateUtils';
+import { formatGregorianHijri, formatSaudiTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -334,7 +334,7 @@ export default function AttendancePage() {
                 <MapPin size={20} className="me-2" />
                 {t('attendance.checkIn')}
                 {today.check_in && (
-                  <span className="ms-2 text-xs opacity-80">✓ {today.check_in.timestamp?.slice(11, 16)}</span>
+                  <span className="ms-2 text-xs opacity-80">✓ {formatSaudiTime(today.check_in.timestamp)}</span>
                 )}
               </Button>
               <Button
@@ -347,7 +347,7 @@ export default function AttendancePage() {
                 <Clock size={20} className="me-2" />
                 {t('attendance.checkOut')}
                 {today.check_out && (
-                  <span className="ms-2 text-xs opacity-80">✓ {today.check_out.timestamp?.slice(11, 16)}</span>
+                  <span className="ms-2 text-xs opacity-80">✓ {formatSaudiTime(today.check_out.timestamp)}</span>
                 )}
               </Button>
             </div>
