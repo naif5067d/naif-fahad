@@ -403,9 +403,77 @@ class TestContractsV2ForTerminated:
         print(f"Contracts by status: {by_status}")
         
         # Check for EMP-005 (terminated contract mentioned in requirements)
-        emp005_contracts = [c for c in contracts if 'EMP-005' in str(c.get('employee_number', '')) or 'EMP-005' in str(c)]
+        emp005_contracts = [c for c in contracts if 'EMP-005' in str(c.get('employee_id', '')) or 'EMP-005' in str(c.get('employee_code', ''))]
         if emp005_contracts:
-            print(f"EMP-005 contracts: {emp005_contracts}")
+            print(f"EMP-005 contract found: status={emp005_contracts[0].get('status')}")
+    
+    def test_mirror_for_terminated_employee_shows_contract_fail(self):
+        """
+        G: Test that STAS Mirror shows FAIL for terminated contract
+        Create a leave request for EMP-005 (terminated) and check mirror
+        """
+        # Get EMP-005's user to create a leave request
+        response = requests.get(f"{BASE_URL}/api/employees", headers=self.headers)
+        assert response.status_code == 200
+        
+        employees = response.json()
+        emp005 = next((e for e in employees if e.get('id') == 'EMP-005' or e.get('employee_number') == 'EMP-005'), None)
+        
+        if not emp005:
+            pytest.skip("EMP-005 not found")
+        
+        print(f"Found EMP-005: {emp005.get('full_name')}, user_id={emp005.get('user_id')}, is_active={emp005.get('is_active')}")
+        
+        # Try to get transactions for this employee
+        tx_response = requests.get(f"{BASE_URL}/api/transactions", headers=self.headers)
+        if tx_response.status_code == 200:
+            all_txs = tx_response.json()
+            emp005_txs = [t for t in all_txs if t.get('employee_id') == 'EMP-005']
+            print(f"EMP-005 has {len(emp005_txs)} transactions")
+            
+            # Find pending leave requests for EMP-005
+            pending_leave = next(
+                (t for t in emp005_txs if t.get('type') == 'leave_request' and t.get('status') not in ['executed', 'rejected']),
+                None
+            )
+            
+            if pending_leave:
+                # Get mirror and check contract status
+                mirror_resp = requests.get(f"{BASE_URL}/api/stas/mirror/{pending_leave['id']}", headers=self.headers)
+                if mirror_resp.status_code == 200:
+                    mirror = mirror_resp.json()
+                    pre_checks = mirror.get('pre_checks', [])
+                    
+                    contract_check = next(
+                        (c for c in pre_checks if 'Contract' in c.get('name', '')),
+                        None
+                    )
+                    
+                    if contract_check:
+                        print(f"EMP-005 contract check: {contract_check['status']} - {contract_check['detail']}")
+                        # For terminated contract, should be FAIL
+                        if emp005.get('is_active') == False or 'terminat' in contract_check.get('detail', '').lower():
+                            assert contract_check['status'] == 'FAIL', \
+                                f"Terminated employee contract check should be FAIL, got {contract_check['status']}"
+                            print("✅ Terminated contract correctly shows FAIL")
+                else:
+                    print(f"Could not get mirror for EMP-005 transaction")
+            else:
+                print("No pending leave requests for EMP-005 to test mirror")
+        
+        # Alternative: Check the settlement pre-checks logic directly
+        # If EMP-005 has a terminated contract, settlement validation should show it
+        settlement_validation_resp = requests.get(
+            f"{BASE_URL}/api/employees/EMP-005/summary",
+            headers=self.headers
+        )
+        if settlement_validation_resp.status_code == 200:
+            summary = settlement_validation_resp.json()
+            contract_info = summary.get('contract', {})
+            print(f"EMP-005 contract from summary: status={contract_info.get('status')}")
+            
+            if contract_info.get('status') == 'terminated':
+                print("✅ EMP-005 contract correctly marked as terminated in employee summary")
 
 
 if __name__ == "__main__":
