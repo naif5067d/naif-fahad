@@ -56,6 +56,39 @@ export default function EmployeesPage() {
     } finally { setSaving(false); }
   };
 
+  // تعيين المشرف
+  const openSupervisorDialog = (emp) => {
+    setSelectedSupervisor(emp.supervisor_id || '');
+    setSupervisorDialog(emp);
+  };
+
+  const handleSaveSupervisor = async () => {
+    if (!supervisorDialog) return;
+    setSavingSupervisor(true);
+    try {
+      await api.put(`/api/employees/${supervisorDialog.id}/supervisor`, {
+        supervisor_id: selectedSupervisor || null
+      });
+      toast.success(lang === 'ar' ? 'تم تعيين المشرف' : 'Supervisor assigned');
+      setSupervisorDialog(null);
+      api.get('/api/employees').then(r => setEmployees(r.data));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed');
+    } finally { setSavingSupervisor(false); }
+  };
+
+  // الحصول على اسم المشرف
+  const getSupervisorName = (emp) => {
+    if (!emp.supervisor_id) return '-';
+    const supervisor = employees.find(e => e.id === emp.supervisor_id);
+    return supervisor ? (lang === 'ar' ? supervisor.full_name_ar || supervisor.full_name : supervisor.full_name) : '-';
+  };
+
+  // الموظفون المتاحون كمشرفين (ليسوا الموظف نفسه)
+  const availableSupervisors = employees.filter(e => 
+    supervisorDialog && e.id !== supervisorDialog.id && e.is_active
+  );
+
   return (
     <div className="space-y-4" data-testid="employees-page">
       <div className="flex items-center justify-between">
