@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Users, Search, Edit2 } from 'lucide-react';
+import { Users, Search, Edit2, UserCheck } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -18,8 +19,14 @@ export default function EmployeesPage() {
   const [editDialog, setEditDialog] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
+  
+  // حالات تعيين المشرف
+  const [supervisorDialog, setSupervisorDialog] = useState(null);
+  const [selectedSupervisor, setSelectedSupervisor] = useState('');
+  const [savingSupervisor, setSavingSupervisor] = useState(false);
 
   const isStas = user?.role === 'stas';
+  const isOps = ['sultan', 'naif', 'stas'].includes(user?.role);
 
   useEffect(() => {
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
