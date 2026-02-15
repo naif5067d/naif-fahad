@@ -8,6 +8,21 @@ from datetime import datetime, timezone
 import uuid
 import hashlib
 
+# Import Services
+from services.stas_mirror_service import build_pre_checks, build_mirror_data
+from services.settlement_service import (
+    validate_settlement_request, 
+    aggregate_settlement_data, 
+    execute_settlement
+)
+from services.leave_service import get_leave_balance
+from services.attendance_service import (
+    get_ramadan_settings, 
+    set_ramadan_mode, 
+    deactivate_ramadan_mode,
+    calculate_daily_attendance
+)
+
 router = APIRouter(prefix="/api/stas", tags=["stas"])
 
 
@@ -21,118 +36,20 @@ class PurgeRequest(BaseModel):
     confirm: bool = False
 
 
+class RamadanModeRequest(BaseModel):
+    start_date: str
+    end_date: str
+
+
+class ReturnRequest(BaseModel):
+    note: Optional[str] = None
+
+
 async def run_pre_checks(tx):
-    checks = []
-    tx_type = tx.get('type')
-    data = tx.get('data', {})
-
-    # Check 1: Approval chain validation
-    # A transaction is ready if:
-    # - It has reached STAS stage (current_stage = stas or status = stas)
-    # - OR it has been approved by all required stages up to the current point
-    # - Escalations are valid (escalate counts as approval for that stage)
-    
-    approval_chain = tx.get('approval_chain', [])
-    current_stage = tx.get('current_stage', '')
-    status = tx.get('status', '')
-    
-    # If it's at STAS stage or has status=stas, the chain is valid for execution
-    is_at_stas = current_stage == 'stas' or status == 'stas' or status == 'pending_stas'
-    
-    # Count valid actions (approve OR escalate) - both move the transaction forward
-    valid_actions = [a for a in approval_chain if a.get('status') in ('approve', 'escalate')]
-    
-    checks.append({
-        "name": "All Approvals Complete",
-        "name_ar": "جميع الموافقات مكتملة",
-        "status": "PASS" if is_at_stas or len(valid_actions) > 0 else "FAIL",
-        "detail": f"Actions: {len(valid_actions)}, At STAS: {is_at_stas}"
-    })
-
-    if tx_type == 'leave_request':
-        emp_id = tx.get('employee_id')
-        leave_type = data.get('leave_type', 'annual')
-        working_days = data.get('working_days', 0)
-        entries = await db.leave_ledger.find(
-            {"employee_id": emp_id, "leave_type": leave_type}, {"_id": 0}
-        ).to_list(1000)
-        balance = sum(e['days'] if e['type'] == 'credit' else -e['days'] for e in entries)
-        checks.append({
-            "name": "Leave Balance Sufficient",
-            "name_ar": "رصيد الإجازات كافٍ",
-            "status": "PASS" if balance >= working_days else "FAIL",
-            "detail": f"Balance: {balance}, Requested: {working_days}"
-        })
-
-        start = data.get('start_date')
-        existing = await db.transactions.find_one({
-            "employee_id": emp_id, "type": "leave_request", "status": "executed",
-            "data.start_date": {"$lte": data.get('end_date', '')},
-            "data.adjusted_end_date": {"$gte": start},
-            "id": {"$ne": tx['id']}
-        })
-        checks.append({
-            "name": "No Calendar Conflict",
-            "name_ar": "لا يوجد تعارض في التقويم",
-            "status": "PASS" if not existing else "FAIL",
-            "detail": "No overlapping leaves" if not existing else f"Conflicts with {existing.get('ref_no')}"
-        })
-
-    elif tx_type == 'finance_60':
-        checks.append({
-            "name": "Finance Code Valid",
-            "name_ar": "رمز المالية صالح",
-            "status": "PASS",
-            "detail": f"Code {data.get('code')} - {data.get('code_name')}"
-        })
-
-    elif tx_type == 'settlement':
-        # Check for active tangible custody
-        if tx.get('employee_id'):
-            active_custody = await db.custody_ledger.count_documents(
-                {"employee_id": tx['employee_id'], "status": "active"}
-            )
-            checks.append({
-                "name": "No Active Custody",
-                "name_ar": "لا توجد عهدة نشطة",
-                "status": "PASS" if active_custody == 0 else "FAIL",
-                "detail": f"Active custody items: {active_custody}" if active_custody > 0 else "No active custody"
-            })
-        checks.append({
-            "name": "Settlement Amount Verified",
-            "name_ar": "مبلغ التسوية مُتحقق",
-            "status": "PASS",
-            "detail": f"Total: {data.get('total_settlement', 0)} SAR"
-        })
-
-    elif tx_type == 'tangible_custody':
-        checks.append({
-            "name": "Employee Active",
-            "name_ar": "الموظف نشط",
-            "status": "PASS",
-            "detail": f"Item: {data.get('item_name', '')}"
-        })
-
-    elif tx_type == 'tangible_custody_return':
-        custody_id = data.get('custody_id')
-        if custody_id:
-            custody = await db.custody_ledger.find_one({"id": custody_id}, {"_id": 0})
-            checks.append({
-                "name": "Custody Record Found",
-                "name_ar": "سجل العهدة موجود",
-                "status": "PASS" if custody and custody.get('status') == 'active' else "FAIL",
-                "detail": f"Item: {data.get('item_name', '')}"
-            })
-
-    # Check: transaction not already executed
-    checks.append({
-        "name": "Not Already Executed",
-        "name_ar": "لم يتم التنفيذ مسبقاً",
-        "status": "PASS" if tx['status'] != 'executed' else "FAIL",
-        "detail": f"Current status: {tx['status']}"
-    })
-
-    return checks
+    """
+    تشغيل الفحوصات المسبقة باستخدام Service Layer
+    """
+    return await build_pre_checks(tx)
 
 
 async def get_trace_links(tx):
