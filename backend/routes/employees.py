@@ -22,7 +22,7 @@ class EmployeeUpdate(BaseModel):
 
 
 class SupervisorAssignment(BaseModel):
-    supervisor_id: str
+    supervisor_id: Optional[str] = None
 
 
 @router.get("")
@@ -145,6 +145,19 @@ async def assign_supervisor(
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # إذا supervisor_id فارغ أو None - إزالة المشرف
+    if not body.supervisor_id:
+        await db.employees.update_one(
+            {"id": employee_id},
+            {
+                "$unset": {"supervisor_id": "", "supervisor_name": "", "supervisor_name_ar": ""},
+                "$set": {"supervisor_updated_at": now, "supervisor_updated_by": user['user_id']}
+            }
+        )
+        return {"message": "تم إزالة المشرف بنجاح", "employee_id": employee_id}
+    
     # التحقق من وجود المشرف
     supervisor = await db.employees.find_one({"id": body.supervisor_id})
     if not supervisor:
@@ -153,8 +166,6 @@ async def assign_supervisor(
     # التأكد أن المشرف ليس هو نفس الموظف
     if employee_id == body.supervisor_id:
         raise HTTPException(status_code=400, detail="لا يمكن تعيين الموظف كمشرف لنفسه")
-    
-    now = datetime.now(timezone.utc).isoformat()
     
     # تحديث الموظف
     await db.employees.update_one(
