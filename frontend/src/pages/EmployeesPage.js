@@ -58,7 +58,7 @@ export default function EmployeesPage() {
 
   // تعيين المشرف
   const openSupervisorDialog = (emp) => {
-    setSelectedSupervisor(emp.supervisor_id || '');
+    setSelectedSupervisor(emp.supervisor_id || 'none');
     setSupervisorDialog(emp);
   };
 
@@ -66,8 +66,9 @@ export default function EmployeesPage() {
     if (!supervisorDialog) return;
     setSavingSupervisor(true);
     try {
+      const supervisorId = selectedSupervisor === 'none' ? null : selectedSupervisor;
       await api.put(`/api/employees/${supervisorDialog.id}/supervisor`, {
-        supervisor_id: selectedSupervisor || null
+        supervisor_id: supervisorId
       });
       toast.success(lang === 'ar' ? 'تم تعيين المشرف' : 'Supervisor assigned');
       setSupervisorDialog(null);
