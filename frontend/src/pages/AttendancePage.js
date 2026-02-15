@@ -704,8 +704,8 @@ export default function AttendancePage() {
                         </div>
                       </td>
                       <td className="font-mono text-muted-foreground">{formatSaudiDate(r.date)}</td>
-                      <td className="font-mono">{r.check_in || '-'}</td>
-                      <td className="font-mono">{r.check_out || '-'}</td>
+                      <td className="font-mono">{r.check_in_time || (r.check_in ? formatSaudiTime(r.check_in) : '-')}</td>
+                      <td className="font-mono">{r.check_out_time || (r.check_out ? formatSaudiTime(r.check_out) : '-')}</td>
                       <td>
                         {r.on_leave ? (
                           <span className="badge bg-blue-100 text-blue-700">إجازة</span>
