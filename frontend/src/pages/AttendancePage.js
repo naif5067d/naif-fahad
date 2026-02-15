@@ -394,7 +394,131 @@ export default function AttendancePage() {
       {/* Admin View */}
       {isAdmin && (
         <div className="border-t border-border pt-5">
-          <h2 className="text-lg font-semibold mb-4">{t('attendance.adminView')}</h2>
+          {/* Admin Header with Actions */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="text-lg font-semibold">{lang === 'ar' ? 'حضور الفريق' : 'Team Attendance'}</h2>
+            
+            <div className="flex flex-wrap gap-2">
+              {/* رمضان Mode Button - STAS Only */}
+              {isStas && (
+                <>
+                  {ramadanSettings?.is_active ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleDeactivateRamadan}
+                      className="text-amber-600 border-amber-600 hover:bg-amber-50"
+                    >
+                      <Moon size={14} className="me-1" />
+                      {lang === 'ar' ? 'إلغاء دوام رمضان' : 'Deactivate Ramadan'}
+                    </Button>
+                  ) : (
+                    <Dialog open={showRamadanDialog} onOpenChange={setShowRamadanDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Moon size={14} className="me-1" />
+                          {lang === 'ar' ? 'تفعيل دوام رمضان' : 'Activate Ramadan'}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{lang === 'ar' ? 'تفعيل دوام رمضان (6 ساعات)' : 'Activate Ramadan Mode (6 hours)'}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div>
+                            <label className="text-sm font-medium">{lang === 'ar' ? 'من تاريخ' : 'Start Date'}</label>
+                            <Input 
+                              type="date" 
+                              value={ramadanForm.start_date}
+                              onChange={e => setRamadanForm({...ramadanForm, start_date: e.target.value})}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">{lang === 'ar' ? 'إلى تاريخ' : 'End Date'}</label>
+                            <Input 
+                              type="date" 
+                              value={ramadanForm.end_date}
+                              onChange={e => setRamadanForm({...ramadanForm, end_date: e.target.value})}
+                              className="mt-1"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {lang === 'ar' 
+                              ? 'ملاحظة: ساعات الدوام 6 ساعات، أوقات الدخول والخروج تُحدد حسب القسم'
+                              : 'Note: 6 working hours, entry/exit times vary by department'}
+                          </p>
+                          <Button onClick={handleActivateRamadan} className="w-full">
+                            {lang === 'ar' ? 'تفعيل' : 'Activate'}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  
+                  {/* Map Visibility Toggle */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleToggleMapVisibility}
+                    className={mapVisible ? 'text-emerald-600 border-emerald-600' : ''}
+                  >
+                    <Eye size={14} className="me-1" />
+                    {mapVisible 
+                      ? (lang === 'ar' ? 'إخفاء الخريطة' : 'Hide Map')
+                      : (lang === 'ar' ? 'إظهار الخريطة' : 'Show Map')}
+                  </Button>
+                  
+                  {/* Calculate Attendance Button */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleCalculateAttendance}
+                    disabled={loading}
+                  >
+                    <FileText size={14} className="me-1" />
+                    {lang === 'ar' ? 'حساب الغياب' : 'Calculate Absence'}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Ramadan Mode Notice */}
+          {ramadanSettings?.is_active && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4 flex items-center gap-2">
+              <Moon size={18} className="text-amber-600" />
+              <span className="text-sm text-amber-700">
+                {lang === 'ar' 
+                  ? `دوام رمضان مفعل (6 ساعات) - من ${ramadanSettings.start_date} إلى ${ramadanSettings.end_date}`
+                  : `Ramadan mode active (6 hours) - ${ramadanSettings.start_date} to ${ramadanSettings.end_date}`}
+              </span>
+            </div>
+          )}
+
+          {/* Team Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="card-premium p-4 text-center">
+              <CheckCircle className="mx-auto text-emerald-500 mb-2" size={24} />
+              <p className="text-2xl font-bold text-emerald-600">{teamSummary.present}</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'حاضر' : 'Present'}</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <UserX className="mx-auto text-red-500 mb-2" size={24} />
+              <p className="text-2xl font-bold text-red-600">{teamSummary.absent}</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'غائب' : 'Absent'}</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <CalendarDays className="mx-auto text-blue-500 mb-2" size={24} />
+              <p className="text-2xl font-bold text-blue-600">{teamSummary.on_leave}</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجازة' : 'On Leave'}</p>
+            </div>
+            <div className="card-premium p-4 text-center">
+              <Timer className="mx-auto text-amber-500 mb-2" size={24} />
+              <p className="text-2xl font-bold text-amber-600">{teamSummary.late}</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'متأخر' : 'Late'}</p>
+            </div>
+          </div>
           
           {/* Period Filter */}
           <div className="flex gap-3 mb-4 flex-wrap">
@@ -414,7 +538,7 @@ export default function AttendancePage() {
             />
           </div>
 
-          {/* Admin Table */}
+          {/* Admin Table - Enhanced */}
           <div className="overflow-x-auto rounded-xl border border-border">
             <table className="hr-table">
               <thead>
@@ -423,13 +547,15 @@ export default function AttendancePage() {
                   <th>{t('attendance.date')}</th>
                   <th>{t('attendance.checkIn')}</th>
                   <th>{t('attendance.checkOut')}</th>
+                  <th>{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                   <th>GPS</th>
+                  {isStas && <th>{lang === 'ar' ? 'إجراء' : 'Action'}</th>}
                 </tr>
               </thead>
               <tbody>
                 {adminData.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td>
+                    <td colSpan={isStas ? 7 : 6} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td>
                   </tr>
                 ) : (
                   adminData.map((r, i) => (
@@ -446,18 +572,67 @@ export default function AttendancePage() {
                       <td className="font-mono">{r.check_in || '-'}</td>
                       <td className="font-mono">{r.check_out || '-'}</td>
                       <td>
+                        {r.on_leave ? (
+                          <span className="badge bg-blue-100 text-blue-700">{lang === 'ar' ? 'إجازة' : 'Leave'}</span>
+                        ) : r.check_in ? (
+                          r.is_late ? (
+                            <span className="badge bg-amber-100 text-amber-700">{lang === 'ar' ? 'متأخر' : 'Late'}</span>
+                          ) : (
+                            <span className="badge bg-emerald-100 text-emerald-700">{lang === 'ar' ? 'حاضر' : 'Present'}</span>
+                          )
+                        ) : (
+                          <span className="badge bg-red-100 text-red-700">{lang === 'ar' ? 'غائب' : 'Absent'}</span>
+                        )}
+                      </td>
+                      <td>
                         {r.gps_status === 'valid' ? (
                           <span className="badge badge-success">✓</span>
                         ) : (
                           <span className="badge badge-warning">-</span>
                         )}
                       </td>
+                      {isStas && (
+                        <td>
+                          <Button variant="ghost" size="sm" className="h-8">
+                            <Edit size={14} />
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* طلبات الحضور والبصمة */}
+          {attendanceRequests.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-base font-semibold mb-3">{lang === 'ar' ? 'طلبات الحضور والبصمة' : 'Attendance Requests'}</h3>
+              <div className="space-y-2">
+                {attendanceRequests.slice(0, 5).map((req, i) => {
+                  const reqType = ATTENDANCE_REQUEST_TYPES[req.type];
+                  const Icon = reqType?.icon || FileText;
+                  return (
+                    <div key={i} className="card-premium p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                          <Icon size={18} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{lang === 'ar' ? reqType?.name_ar : reqType?.name_en}</p>
+                          <p className="text-xs text-muted-foreground">{req.ref_no} - {req.employee_name}</p>
+                        </div>
+                      </div>
+                      <span className={`badge ${req.status === 'executed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {req.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
