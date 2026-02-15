@@ -236,3 +236,193 @@ async def get_admin_attendance(
     
     result = sorted(grouped.values(), key=lambda x: (x['date'], x['employee_name']), reverse=True)
     return result
+
+
+
+# ==================== طلبات الحضور والبصمة ====================
+
+class AttendanceRequestCreate(BaseModel):
+    request_type: str  # forget_checkin, field_work, early_leave_request, late_excuse
+    date: str  # YYYY-MM-DD
+    reason: str
+    from_time: Optional[str] = None  # للمهمة الخارجية والخروج المبكر
+    to_time: Optional[str] = None
+
+
+ATTENDANCE_REQUEST_TYPES = {
+    'forget_checkin': {'name_ar': 'نسيان بصمة', 'name_en': 'Forgot Check-in'},
+    'field_work': {'name_ar': 'مهمة خارجية', 'name_en': 'Field Work'},
+    'early_leave_request': {'name_ar': 'طلب خروج مبكر', 'name_en': 'Early Leave Request'},
+    'late_excuse': {'name_ar': 'تبرير تأخير', 'name_en': 'Late Excuse'},
+    'admin_edit': {'name_ar': 'تعديل حضور إداري', 'name_en': 'Admin Edit Attendance'},
+}
+
+
+@router.post("/request")
+async def create_attendance_request(req: AttendanceRequestCreate, user=Depends(get_current_user)):
+    """إنشاء طلب حضور (نسيان بصمة / مهمة خارجية / الخ)"""
+    if req.request_type not in ATTENDANCE_REQUEST_TYPES:
+        raise HTTPException(status_code=400, detail="نوع الطلب غير صالح")
+    
+    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # جلب المعاملات للرقم المرجعي
+    from routes.transactions import get_next_ref_no
+    ref_no = await get_next_ref_no()
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديد workflow
+    workflow = ['ops', 'stas']
+    if emp.get('supervisor_id'):
+        supervisor = await db.employees.find_one({"id": emp['supervisor_id']}, {"_id": 0})
+        if supervisor:
+            supervisor_user = await db.users.find_one({"id": supervisor.get('user_id')}, {"_id": 0})
+            if supervisor_user and supervisor_user.get('role') == 'supervisor':
+                workflow = ['supervisor'] + workflow
+    
+    req_type_info = ATTENDANCE_REQUEST_TYPES[req.request_type]
+    
+    transaction = {
+        "id": str(uuid.uuid4()),
+        "ref_no": ref_no,
+        "type": req.request_type,
+        "category": "attendance",  # تصنيف: حضور
+        "employee_id": emp['id'],
+        "employee_name": emp.get('full_name', ''),
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "employee_number": emp.get('employee_number', ''),
+        "created_by": user['user_id'],
+        "data": {
+            "request_type": req.request_type,
+            "request_type_ar": req_type_info['name_ar'],
+            "request_type_en": req_type_info['name_en'],
+            "date": req.date,
+            "reason": req.reason,
+            "from_time": req.from_time,
+            "to_time": req.to_time,
+        },
+        "status": f"pending_{workflow[0]}",
+        "current_stage": workflow[0],
+        "workflow": workflow,
+        "approval_chain": [],
+        "timeline": [{
+            "action": "created",
+            "actor_id": user['user_id'],
+            "actor_name": user.get('username', ''),
+            "timestamp": now,
+            "note": f"طلب {req_type_info['name_ar']}"
+        }],
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.transactions.insert_one(transaction)
+    
+    # إزالة _id من الإرجاع
+    transaction.pop('_id', None)
+    
+    return transaction
+
+
+@router.get("/requests")
+async def get_attendance_requests(user=Depends(get_current_user)):
+    """جلب طلبات الحضور"""
+    role = user.get('role')
+    query = {"category": "attendance"}
+    
+    if role == 'employee':
+        emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+        if emp:
+            query["employee_id"] = emp['id']
+        else:
+            return []
+    elif role == 'supervisor':
+        emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+        if emp:
+            reports = await db.employees.find({"supervisor_id": emp['id']}, {"_id": 0}).to_list(100)
+            report_ids = [r['id'] for r in reports] + [emp['id']]
+            query["employee_id"] = {"$in": report_ids}
+    # admins see all
+    
+    reqs = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return reqs
+
+
+@router.post("/admin-edit/{employee_id}")
+async def admin_edit_attendance(
+    employee_id: str,
+    date: str,
+    check_in_time: Optional[str] = None,
+    check_out_time: Optional[str] = None,
+    note: str = "",
+    user=Depends(get_current_user)
+):
+    """تعديل حضور موظف إدارياً (STAS فقط)"""
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديث أو إضافة سجل الحضور
+    if check_in_time:
+        check_in_ts = f"{date}T{check_in_time}:00+03:00"
+        existing = await db.attendance_ledger.find_one({
+            "employee_id": employee_id,
+            "date": date,
+            "type": "check_in"
+        })
+        if existing:
+            await db.attendance_ledger.update_one(
+                {"_id": existing['_id']},
+                {"$set": {"timestamp": check_in_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": note}}
+            )
+        else:
+            await db.attendance_ledger.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id,
+                "date": date,
+                "type": "check_in",
+                "timestamp": check_in_ts,
+                "admin_edited": True,
+                "edited_by": user['user_id'],
+                "edited_at": now,
+                "edit_note": note,
+                "gps_valid": False,
+                "work_location": "admin_edit"
+            })
+    
+    if check_out_time:
+        check_out_ts = f"{date}T{check_out_time}:00+03:00"
+        existing = await db.attendance_ledger.find_one({
+            "employee_id": employee_id,
+            "date": date,
+            "type": "check_out"
+        })
+        if existing:
+            await db.attendance_ledger.update_one(
+                {"_id": existing['_id']},
+                {"$set": {"timestamp": check_out_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": note}}
+            )
+        else:
+            await db.attendance_ledger.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id,
+                "date": date,
+                "type": "check_out",
+                "timestamp": check_out_ts,
+                "admin_edited": True,
+                "edited_by": user['user_id'],
+                "edited_at": now,
+                "edit_note": note,
+                "gps_valid": False,
+                "work_location": "admin_edit"
+            })
+    
+    return {"message": "تم تعديل الحضور بنجاح", "employee_id": employee_id, "date": date}
