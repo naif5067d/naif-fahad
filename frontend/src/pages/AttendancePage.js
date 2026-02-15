@@ -69,6 +69,15 @@ export default function AttendancePage() {
   const [ramadanForm, setRamadanForm] = useState({ start_date: '', end_date: '', work_start: '09:00', work_end: '15:00' });
   const [mapVisible, setMapVisible] = useState(false);
   const [attendanceRequests, setAttendanceRequests] = useState([]);
+  
+  // حالات طلبات الحضور
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [requestForm, setRequestForm] = useState({ request_type: 'forget_checkin', date: new Date().toISOString().slice(0, 10), reason: '', from_time: '', to_time: '' });
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  
+  // حالات تعديل الحضور الإداري
+  const [editDialog, setEditDialog] = useState(null);
+  const [editForm, setEditForm] = useState({ check_in_time: '', check_out_time: '', note: '' });
 
   const isEmployee = ['employee', 'supervisor'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
