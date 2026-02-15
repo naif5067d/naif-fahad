@@ -29,6 +29,11 @@ WORKFLOW_MAP = {
     "add_finance_code": ["ops", "stas"],
     "tangible_custody": ["employee_accept", "stas"],  # Sultan/Naif create → Employee accepts → STAS executes
     "tangible_custody_return": ["stas"],  # Sultan creates return → STAS executes
+    # طلبات الحضور والبصمة
+    "forget_checkin": ["supervisor", "ops", "stas"],
+    "field_work": ["supervisor", "ops", "stas"],
+    "early_leave_request": ["supervisor", "ops", "stas"],
+    "late_excuse": ["supervisor", "ops", "stas"],
 }
 
 # Role to stage mapping
