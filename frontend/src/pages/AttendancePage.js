@@ -113,7 +113,8 @@ export default function AttendancePage() {
 
   const fetchMapVisibility = async () => {
     try {
-      const res = await api.get('/api/stas/settings/map-visibility');
+      // استخدام endpoint عام للقراءة
+      const res = await api.get('/api/stas/settings/map-visibility/public');
       setMapVisible(res.data?.show_map_to_employees || false);
     } catch (err) {}
   };
