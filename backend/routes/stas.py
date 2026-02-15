@@ -590,10 +590,30 @@ async def activate_ramadan_mode(req: RamadanModeRequest, user=Depends(require_ro
 async def deactivate_ramadan(user=Depends(require_roles('stas'))):
     """إلغاء تفعيل دوام رمضان"""
     settings = await deactivate_ramadan_mode(user['user_id'])
+    
+    # استعادة أوقات مواقع العمل الأصلية
+    locations = await db.work_locations.find({}, {"_id": 0}).to_list(100)
+    for loc in locations:
+        if loc.get('original_work_start_saved'):
+            await db.work_locations.update_one(
+                {"id": loc['id']},
+                {"$set": {
+                    "work_start": loc.get('original_work_start_saved', '08:00'),
+                    "work_end": loc.get('original_work_end_saved', '17:00'),
+                    "ramadan_hours_active": False
+                },
+                "$unset": {
+                    "original_work_start_saved": "",
+                    "original_work_end_saved": ""
+                }}
+            )
+    
     return {
         "message": "تم إلغاء دوام رمضان",
         "message_en": "Ramadan mode deactivated",
-        "settings": settings
+        "settings": settings,
+        "work_locations_restored": True,
+        "note_ar": "تم استعادة أوقات العمل الأصلية لجميع المواقع"
     }
 
 
