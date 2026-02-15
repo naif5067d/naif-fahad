@@ -1,16 +1,19 @@
 """
-Leave Service - نظام الإجازات 21/30
+Leave Service - نظام الإجازات الجديد
 ============================================================
-- أقل من 5 سنوات = 21 يوم
-- 5 سنوات فأكثر = 30 يوم
-- الرصيد يُحسب فقط من leave_ledger (credits - debits)
-- لا يوجد رصيد مخزن يدوي
+نوع الإجازة | الأيام | الأجر | الرصيد
+============================================================
+السنوية    | 21/30  | 100%  | يُحسب ويُخصم
+المرضية    | 30/60/30 | 100%/75%/0% | عداد تراكمي - لا يُخصم من السنوية
+الزواج     | 5      | 100%  | لا يُخصم من السنوية
+الوفاة     | 5      | 100%  | لا يُخصم من السنوية
+الاختبار   | حسب الإثبات | 100% | لا يُخصم من السنوية
+بدون راتب  | حسب الحاجة | 0% | لا يُخصم من السنوية
 
-المرضية 30/60/30:
-- 30 يوم 100%
-- 60 يوم 75%
-- 30 يوم بدون أجر
-- تُحسب تراكمياً خلال 12 شهر متحركة
+ملاحظات مهمة:
+- الرصيد الوحيد المتتبع هو الإجازة السنوية
+- الإجازة المرضية: عداد تراكمي خلال 12 شهر متحركة
+- الإجازة المرضية تتطلب مرفق من "صحتي"
 """
 
 from datetime import datetime, timezone, timedelta
@@ -20,62 +23,90 @@ from services.service_calculator import calculate_service_years, get_employee_se
 
 
 # ============================================================
-# LEAVE RULES CONFIGURATION
+# تعريفات الإجازات
 # ============================================================
 
+# أنواع الإجازات المعتمدة مع القواعد
+LEAVE_TYPES = {
+    "annual": {
+        "name_ar": "الإجازة السنوية",
+        "name_en": "Annual Leave",
+        "has_balance": True,  # الوحيد الذي له رصيد
+        "pay_percentage": 100,
+        "deduct_from_annual": False,  # لا يُخصم من نفسه
+        "requires_attachment": False,
+    },
+    "sick": {
+        "name_ar": "الإجازة المرضية",
+        "name_en": "Sick Leave",
+        "has_balance": False,  # عداد وليس رصيد
+        "pay_percentage": "tiered",  # حسب الشرائح
+        "deduct_from_annual": False,
+        "requires_attachment": True,  # يتطلب مرفق من صحتي
+        "attachment_source": "صحتي",
+    },
+    "marriage": {
+        "name_ar": "إجازة الزواج",
+        "name_en": "Marriage Leave",
+        "has_balance": False,
+        "fixed_days": 5,
+        "pay_percentage": 100,
+        "deduct_from_annual": False,
+        "once_per_employee": True,  # مرة واحدة فقط
+    },
+    "bereavement": {
+        "name_ar": "إجازة الوفاة",
+        "name_en": "Bereavement Leave",
+        "has_balance": False,
+        "fixed_days": 5,
+        "pay_percentage": 100,
+        "deduct_from_annual": False,
+    },
+    "exam": {
+        "name_ar": "إجازة الاختبار",
+        "name_en": "Exam Leave",
+        "has_balance": False,
+        "fixed_days": -1,  # حسب الإثبات
+        "pay_percentage": 100,
+        "deduct_from_annual": False,
+        "requires_attachment": True,
+    },
+    "unpaid": {
+        "name_ar": "إجازة بدون راتب",
+        "name_en": "Unpaid Leave",
+        "has_balance": False,
+        "pay_percentage": 0,
+        "deduct_from_annual": False,
+        "track_days": True,  # تُحسب الأيام فقط
+    },
+}
+
+# قواعد الإجازة السنوية 21/30
 ANNUAL_LEAVE_RULES = {
     "under_5_years": 21,  # أقل من 5 سنوات
     "5_years_plus": 30,   # 5 سنوات فأكثر
     "threshold_years": 5  # الحد الفاصل
 }
 
+# شرائح الإجازة المرضية 30/60/30
 SICK_LEAVE_TIERS = [
-    {"days": 30, "pay_percentage": 100, "name": "full_pay", "name_ar": "أجر كامل"},
-    {"days": 60, "pay_percentage": 75, "name": "three_quarter_pay", "name_ar": "75% من الأجر"},
-    {"days": 30, "pay_percentage": 0, "name": "unpaid", "name_ar": "بدون أجر"},
+    {"days": 30, "pay_percentage": 100, "name": "full_pay", "name_ar": "أجر كامل (30 يوم)"},
+    {"days": 60, "pay_percentage": 75, "name": "three_quarter_pay", "name_ar": "75% من الأجر (60 يوم)"},
+    {"days": 30, "pay_percentage": 0, "name": "unpaid", "name_ar": "بدون أجر (30 يوم)"},
 ]
 
-SPECIAL_LEAVE_TYPES = {
-    "marriage": {"days": 5, "pay_percentage": 100, "name_ar": "إجازة زواج"},
-    "bereavement": {"days": 5, "pay_percentage": 100, "name_ar": "إجازة وفاة"},
-    "maternity": {"days": 70, "pay_percentage": 100, "name_ar": "إجازة أمومة"},
-    "paternity": {"days": 3, "pay_percentage": 100, "name_ar": "إجازة أبوة"},
-    "exam": {"days": -1, "pay_percentage": 100, "name_ar": "إجازة اختبار"},  # -1 = حسب الحاجة
-    "unpaid": {"days": -1, "pay_percentage": 0, "name_ar": "إجازة بدون أجر"},
-}
-
-# أنواع الإجازات المعتمدة
-LEAVE_TYPES = {
-    "annual": {"name_ar": "سنوية", "name_en": "Annual"},
-    "sick": {"name_ar": "مرضية", "name_en": "Sick"},
-    "marriage": {"name_ar": "زواج", "name_en": "Marriage"},
-    "bereavement": {"name_ar": "وفاة", "name_en": "Bereavement"},
-    "maternity": {"name_ar": "أمومة", "name_en": "Maternity"},
-    "paternity": {"name_ar": "أبوة", "name_en": "Paternity"},
-    "exam": {"name_ar": "اختبار", "name_en": "Exam"},
-    "unpaid": {"name_ar": "بدون أجر", "name_en": "Unpaid"},
-    "emergency": {"name_ar": "طارئة", "name_en": "Emergency"},
-}
-
 
 # ============================================================
-# LEAVE BALANCE CALCULATION (FROM LEDGER ONLY)
+# حساب رصيد الإجازة السنوية (الوحيد المتتبع)
 # ============================================================
 
-async def get_leave_balance(employee_id: str, leave_type: str) -> int:
+async def get_annual_leave_balance(employee_id: str) -> int:
     """
-    حساب رصيد الإجازات من leave_ledger فقط
+    حساب رصيد الإجازة السنوية فقط من leave_ledger
     الرصيد = sum(credits) - sum(debits)
-    
-    Args:
-        employee_id: معرف الموظف
-        leave_type: نوع الإجازة
-        
-    Returns:
-        int: الرصيد المتبقي
     """
     entries = await db.leave_ledger.find(
-        {"employee_id": employee_id, "leave_type": leave_type}, 
+        {"employee_id": employee_id, "leave_type": "annual"}, 
         {"_id": 0}
     ).to_list(5000)
     
@@ -86,44 +117,46 @@ async def get_leave_balance(employee_id: str, leave_type: str) -> int:
         else:  # debit
             balance -= entry.get('days', 0)
     
-    return balance
+    return max(0, balance)
+
+
+async def get_leave_balance(employee_id: str, leave_type: str) -> int:
+    """
+    حساب رصيد الإجازة - فقط للسنوية
+    باقي الأنواع ليس لها رصيد
+    """
+    if leave_type != 'annual':
+        return 0  # لا رصيد لغير السنوية
+    
+    return await get_annual_leave_balance(employee_id)
 
 
 async def get_all_leave_balances(employee_id: str) -> Dict[str, int]:
     """
-    جلب جميع أرصدة الإجازات للموظف
-    
-    Args:
-        employee_id: معرف الموظف
-        
-    Returns:
-        dict: {leave_type: balance}
+    جلب الأرصدة - فقط السنوية لها رصيد
     """
-    balances = {}
+    annual_balance = await get_annual_leave_balance(employee_id)
     
-    for leave_type in LEAVE_TYPES.keys():
-        balances[leave_type] = await get_leave_balance(employee_id, leave_type)
-    
-    return balances
+    # إرجاع الرصيد السنوي فقط، الباقي صفر
+    return {
+        "annual": annual_balance,
+        "sick": 0,
+        "marriage": 0,
+        "bereavement": 0,
+        "exam": 0,
+        "unpaid": 0,
+    }
 
 
 # ============================================================
-# ANNUAL LEAVE ENTITLEMENT (21/30)
+# استحقاق الإجازة السنوية (21/30)
 # ============================================================
 
 async def calculate_annual_entitlement(employee_id: str) -> dict:
     """
     حساب استحقاق الإجازة السنوية بناءً على سنوات الخدمة
-    
-    Args:
-        employee_id: معرف الموظف
-        
-    Returns:
-        dict: {
-            entitlement: عدد أيام الاستحقاق السنوي,
-            service_years: سنوات الخدمة,
-            rule_applied: القاعدة المطبقة
-        }
+    - أقل من 5 سنوات = 21 يوم
+    - 5 سنوات فأكثر = 30 يوم
     """
     service_info = await get_employee_service_info(employee_id)
     
@@ -157,12 +190,6 @@ async def calculate_annual_entitlement(employee_id: str) -> dict:
 async def calculate_monthly_accrual(employee_id: str) -> dict:
     """
     حساب الاستحقاق الشهري للإجازة السنوية
-    
-    Args:
-        employee_id: معرف الموظف
-        
-    Returns:
-        dict: تفاصيل الاستحقاق الشهري
     """
     annual = await calculate_annual_entitlement(employee_id)
     
@@ -187,18 +214,19 @@ async def calculate_monthly_accrual(employee_id: str) -> dict:
 
 
 # ============================================================
-# SICK LEAVE TIERS (30/60/30)
+# عداد الإجازة المرضية (30/60/30)
 # ============================================================
 
 async def get_sick_leave_usage_12_months(employee_id: str) -> dict:
     """
     حساب استخدام الإجازة المرضية خلال آخر 12 شهر متحركة
     
-    Args:
-        employee_id: معرف الموظف
-        
-    Returns:
-        dict: تفاصيل الاستخدام حسب الشرائح
+    الشرائح:
+    - 30 يوم الأولى: 100% من الأجر
+    - 60 يوم التالية: 75% من الأجر
+    - 30 يوم الأخيرة: بدون أجر
+    
+    المجموع: 120 يوم كحد أقصى خلال 12 شهر
     """
     # حساب فترة 12 شهر
     today = datetime.now(timezone.utc)
@@ -243,7 +271,7 @@ async def get_sick_leave_usage_12_months(employee_id: str) -> dict:
     if current_tier_index >= len(SICK_LEAVE_TIERS):
         current_tier = {
             "name": "exhausted",
-            "name_ar": "استنفدت",
+            "name_ar": "استُنفدت جميع الشرائح",
             "pay_percentage": 0
         }
     else:
@@ -251,7 +279,7 @@ async def get_sick_leave_usage_12_months(employee_id: str) -> dict:
     
     return {
         "total_used_12_months": total_used,
-        "total_limit": sum(t['days'] for t in SICK_LEAVE_TIERS),
+        "total_limit": sum(t['days'] for t in SICK_LEAVE_TIERS),  # 120 يوم
         "usage_breakdown": usage_breakdown,
         "current_tier": {
             "index": current_tier_index,
@@ -269,13 +297,6 @@ async def get_sick_leave_usage_12_months(employee_id: str) -> dict:
 async def calculate_sick_leave_pay(employee_id: str, days_requested: int) -> dict:
     """
     حساب نسبة الأجر للإجازة المرضية المطلوبة
-    
-    Args:
-        employee_id: معرف الموظف
-        days_requested: عدد الأيام المطلوبة
-        
-    Returns:
-        dict: توزيع الأيام حسب نسب الأجر
     """
     usage = await get_sick_leave_usage_12_months(employee_id)
     
@@ -308,21 +329,88 @@ async def calculate_sick_leave_pay(employee_id: str, days_requested: int) -> dic
 
 
 # ============================================================
-# LEAVE COMPENSATION (FOR SETTLEMENT)
+# التحقق من صحة طلب الإجازة
+# ============================================================
+
+async def validate_leave_request(
+    employee_id: str, 
+    leave_type: str, 
+    days_requested: int,
+    has_attachment: bool = False
+) -> dict:
+    """
+    التحقق من صحة طلب الإجازة
+    
+    Returns:
+        dict: {valid: bool, errors: list, warnings: list}
+    """
+    errors = []
+    warnings = []
+    
+    leave_config = LEAVE_TYPES.get(leave_type)
+    if not leave_config:
+        errors.append(f"نوع إجازة غير معروف: {leave_type}")
+        return {"valid": False, "errors": errors, "warnings": warnings}
+    
+    # التحقق من المرفقات المطلوبة
+    if leave_config.get('requires_attachment') and not has_attachment:
+        if leave_type == 'sick':
+            errors.append("الإجازة المرضية تتطلب مرفق من تطبيق صحتي")
+        elif leave_type == 'exam':
+            errors.append("إجازة الاختبار تتطلب إثبات موعد الاختبار")
+    
+    # التحقق من الرصيد للإجازة السنوية فقط
+    if leave_type == 'annual':
+        balance = await get_annual_leave_balance(employee_id)
+        if days_requested > balance:
+            errors.append(f"رصيد الإجازة السنوية غير كافٍ. المتاح: {balance} يوم، المطلوب: {days_requested} يوم")
+    
+    # التحقق من شرائح الإجازة المرضية
+    elif leave_type == 'sick':
+        sick_usage = await get_sick_leave_usage_12_months(employee_id)
+        total_available = sick_usage['total_limit'] - sick_usage['total_used_12_months']
+        
+        if days_requested > total_available:
+            errors.append(f"تجاوزت الحد المسموح للإجازة المرضية. المتبقي: {total_available} يوم")
+        
+        # تحذير إذا كان سيدخل في شريحة بدون أجر
+        pay_calc = await calculate_sick_leave_pay(employee_id, days_requested)
+        unpaid_days = sum(d['days'] for d in pay_calc['days_breakdown'] if d['pay_percentage'] == 0)
+        if unpaid_days > 0:
+            warnings.append(f"ستكون {unpaid_days} يوم من هذه الإجازة بدون أجر")
+    
+    # التحقق من الإجازات ذات الأيام الثابتة
+    elif leave_config.get('fixed_days', -1) > 0:
+        if days_requested > leave_config['fixed_days']:
+            errors.append(f"{leave_config['name_ar']} لا تتجاوز {leave_config['fixed_days']} أيام")
+    
+    # التحقق من إجازة الزواج (مرة واحدة فقط)
+    if leave_type == 'marriage':
+        existing = await db.leave_ledger.find_one({
+            "employee_id": employee_id,
+            "leave_type": "marriage",
+            "type": "debit"
+        })
+        if existing:
+            errors.append("إجازة الزواج تُمنح مرة واحدة فقط")
+    
+    return {
+        "valid": len(errors) == 0,
+        "errors": errors,
+        "warnings": warnings
+    }
+
+
+# ============================================================
+# حساب بدل الإجازات للمخالصة
 # ============================================================
 
 async def calculate_leave_compensation(employee_id: str, daily_wage: float) -> dict:
     """
     حساب بدل الإجازات للمخالصة
-    
-    Args:
-        employee_id: معرف الموظف
-        daily_wage: الأجر اليومي
-        
-    Returns:
-        dict: تفاصيل بدل الإجازات
+    يُحسب فقط للإجازة السنوية المتبقية
     """
-    balance = await get_leave_balance(employee_id, 'annual')
+    balance = await get_annual_leave_balance(employee_id)
     
     compensation = balance * daily_wage if balance > 0 else 0
     
@@ -330,54 +418,81 @@ async def calculate_leave_compensation(employee_id: str, daily_wage: float) -> d
         "leave_balance": balance,
         "daily_wage": daily_wage,
         "compensation": round(compensation, 2),
-        "formula": f"{balance} يوم × {daily_wage:,.2f} ر.س = {compensation:,.2f} ر.س"
+        "formula": f"{balance} يوم × {daily_wage:,.2f} ر.س = {compensation:,.2f} ر.س",
+        "note_ar": "بدل الإجازة السنوية المتبقية فقط"
     }
 
 
 # ============================================================
-# LEAVE SUMMARY FOR EMPLOYEE
+# ملخص شامل لحالة إجازات الموظف
 # ============================================================
 
 async def get_employee_leave_summary(employee_id: str) -> dict:
     """
     ملخص شامل لحالة إجازات الموظف
-    
-    Args:
-        employee_id: معرف الموظف
-        
-    Returns:
-        dict: ملخص كامل
     """
-    # الأرصدة
-    balances = await get_all_leave_balances(employee_id)
+    # رصيد الإجازة السنوية
+    annual_balance = await get_annual_leave_balance(employee_id)
     
-    # الاستحقاق السنوي
+    # استحقاق الإجازة السنوية
     annual_entitlement = await calculate_annual_entitlement(employee_id)
     
-    # الإجازة المرضية
+    # عداد الإجازة المرضية
     sick_usage = await get_sick_leave_usage_12_months(employee_id)
     
     # حساب نسبة الاستهلاك
-    annual_balance = balances.get('annual', 0)
     annual_total = annual_entitlement.get('entitlement', 21)
     consumption_rate = ((annual_total - annual_balance) / annual_total * 100) if annual_total > 0 else 0
     
+    # إحصائيات الإجازات الأخرى
+    other_leaves = {}
+    for leave_type in ['marriage', 'bereavement', 'exam', 'unpaid']:
+        count = await db.leave_ledger.count_documents({
+            "employee_id": employee_id,
+            "leave_type": leave_type,
+            "type": "debit"
+        })
+        days = 0
+        if count > 0:
+            entries = await db.leave_ledger.find({
+                "employee_id": employee_id,
+                "leave_type": leave_type,
+                "type": "debit"
+            }, {"_id": 0}).to_list(100)
+            days = sum(e.get('days', 0) for e in entries)
+        
+        other_leaves[leave_type] = {
+            "name_ar": LEAVE_TYPES[leave_type]['name_ar'],
+            "count": count,
+            "total_days": days
+        }
+    
     return {
         "employee_id": employee_id,
-        "balances": balances,
         "annual_leave": {
             "balance": annual_balance,
             "entitlement": annual_total,
             "used": annual_total - annual_balance,
             "consumption_rate": round(consumption_rate, 1),
             "rule": annual_entitlement.get('rule_applied'),
-            "service_years": annual_entitlement.get('service_years', 0)
+            "service_years": annual_entitlement.get('service_years', 0),
+            "message_ar": annual_entitlement.get('message_ar', '')
         },
         "sick_leave": {
             "used_12_months": sick_usage['total_used_12_months'],
             "total_limit": sick_usage['total_limit'],
+            "remaining": sick_usage['total_limit'] - sick_usage['total_used_12_months'],
             "current_tier": sick_usage['current_tier'],
-            "breakdown": sick_usage['usage_breakdown']
+            "breakdown": sick_usage['usage_breakdown'],
+            "note_ar": "عداد تراكمي خلال 12 شهر - لا يُخصم من السنوية"
         },
+        "other_leaves": other_leaves,
+        "notes_ar": [
+            "الرصيد الوحيد المتتبع هو الإجازة السنوية",
+            "الإجازة المرضية: عداد تراكمي (30 يوم 100% + 60 يوم 75% + 30 يوم بدون أجر)",
+            "إجازة الزواج والوفاة: 5 أيام مدفوعة - لا تُخصم من السنوية",
+            "إجازة الاختبار: حسب الإثبات - مدفوعة",
+            "إجازة بدون راتب: لا أجر ولا خصم من السنوية"
+        ],
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
