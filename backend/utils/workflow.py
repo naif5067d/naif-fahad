@@ -94,10 +94,13 @@ async def should_skip_supervisor_stage(employee, requester_user_id: str) -> bool
 
 async def should_escalate_to_ceo(employee, requester_user_id: str, requester_role: str) -> bool:
     """
-    التحقق إذا كان الطلب يجب أن يذهب مباشرة للـ CEO.
+    التحقق إذا كان الطلب يجب أن يذهب للـ CEO أولاً ثم STAS.
     يحدث عندما:
     1. سلطان يرفع طلب لنفسه (لا يمكنه الموافقة على نفسه)
     2. الموظف ليس لديه مشرف وهو نفسه من دور ops
+    
+    مسار سير العمل بعد التصعيد:
+    سلطان يرفع لنفسه → CEO (محمد) يوافق/يرفض → STAS تنفذ/ترفض
     """
     if not employee:
         return False
@@ -109,6 +112,16 @@ async def should_escalate_to_ceo(employee, requester_user_id: str, requester_rol
             return True
     
     return False
+
+
+def build_workflow_with_ceo_escalation(base_workflow: list) -> list:
+    """
+    بناء مسار العمل مع تصعيد CEO
+    المسار: ops → ceo → stas
+    بعد موافقة CEO يذهب مباشرة إلى STAS
+    """
+    workflow = ['ceo', 'stas']
+    return workflow
 
 
 def build_workflow_for_transaction(base_workflow: list, skip_supervisor: bool) -> list:
