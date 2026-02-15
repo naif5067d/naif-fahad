@@ -50,7 +50,13 @@ async def get_ramadan_settings() -> Optional[dict]:
     return settings
 
 
-async def set_ramadan_mode(start_date: str, end_date: str, actor_id: str) -> dict:
+async def set_ramadan_mode(
+    start_date: str, 
+    end_date: str, 
+    actor_id: str,
+    work_start: str = "09:00",
+    work_end: str = "15:00"
+) -> dict:
     """
     تفعيل دوام رمضان
     
@@ -58,6 +64,8 @@ async def set_ramadan_mode(start_date: str, end_date: str, actor_id: str) -> dic
         start_date: تاريخ بداية رمضان
         end_date: تاريخ نهاية رمضان
         actor_id: من قام بالتفعيل
+        work_start: وقت بداية الدوام (افتراضي 09:00)
+        work_end: وقت نهاية الدوام (افتراضي 15:00)
         
     Returns:
         dict: الإعدادات المحدثة
@@ -70,6 +78,8 @@ async def set_ramadan_mode(start_date: str, end_date: str, actor_id: str) -> dic
         "start_date": start_date,
         "end_date": end_date,
         "hours_per_day": 6,
+        "start_time": work_start,
+        "end_time": work_end,
         "activated_by": actor_id,
         "activated_at": now,
         "updated_at": now
@@ -136,8 +146,13 @@ async def get_working_hours_for_date(date: str = None) -> dict:
         dict: إعدادات ساعات العمل
     """
     if await is_ramadan_active(date):
+        # جلب إعدادات رمضان الكاملة
+        ramadan_settings = await get_ramadan_settings()
         return {
-            **DEFAULT_WORKING_HOURS['ramadan'],
+            "hours_per_day": 6,
+            "start_time": ramadan_settings.get('start_time') or "09:00",
+            "end_time": ramadan_settings.get('end_time') or "15:00",
+            "break_minutes": 0,
             "mode": "ramadan"
         }
     
