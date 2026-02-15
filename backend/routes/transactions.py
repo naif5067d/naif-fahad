@@ -38,6 +38,7 @@ async def get_next_ref_no():
 async def list_transactions(
     status: Optional[str] = None,
     tx_type: Optional[str] = None,
+    types: Optional[str] = None,  # دعم أنواع متعددة مفصولة بفاصلة
     user=Depends(get_current_user)
 ):
     role = user.get('role')
@@ -85,6 +86,10 @@ async def list_transactions(
         query["status"] = status
     if tx_type:
         query["type"] = tx_type
+    # دعم أنواع متعددة
+    if types:
+        type_list = [t.strip() for t in types.split(',')]
+        query["type"] = {"$in": type_list}
 
     txs = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return txs
