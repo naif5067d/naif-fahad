@@ -253,6 +253,52 @@ export default function AttendancePage() {
     }
   };
 
+  // إرسال طلب حضور
+  const handleSubmitRequest = async () => {
+    if (!requestForm.reason.trim()) {
+      toast.error(lang === 'ar' ? 'يرجى كتابة السبب' : 'Please enter reason');
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      await api.post('/api/attendance/request', requestForm);
+      toast.success(lang === 'ar' ? 'تم إرسال الطلب بنجاح' : 'Request submitted');
+      setShowRequestDialog(false);
+      setRequestForm({ request_type: 'forget_checkin', date: new Date().toISOString().slice(0, 10), reason: '', from_time: '', to_time: '' });
+      fetchAttendanceRequests();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
+  // تعديل حضور إداري
+  const handleAdminEdit = async () => {
+    if (!editDialog) return;
+    try {
+      setLoading(true);
+      await api.post(`/api/attendance/admin-edit/${editDialog.employee_id}?date=${editDialog.date}&check_in_time=${editForm.check_in_time || ''}&check_out_time=${editForm.check_out_time || ''}&note=${editForm.note || ''}`);
+      toast.success(lang === 'ar' ? 'تم تعديل الحضور' : 'Attendance updated');
+      setEditDialog(null);
+      fetchAdmin();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // فتح dialog تعديل الحضور
+  const openEditDialog = (record) => {
+    setEditForm({
+      check_in_time: record.check_in_time || '',
+      check_out_time: record.check_out_time || '',
+      note: ''
+    });
+    setEditDialog(record);
+  };
+
   return (
     <div className="space-y-5" data-testid="attendance-page">
       {/* Header */}
