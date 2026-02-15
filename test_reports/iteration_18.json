@@ -1,0 +1,125 @@
+{
+  "summary": "Iteration 18: All requested features verified and working. Fixed date format bug in attendance admin table. Changed default language to Arabic.",
+  
+  "features_tested": {
+    "1_map_visibility_for_employees": {
+      "status": "VERIFIED",
+      "test_results": [
+        "GET /api/stas/settings/map-visibility/public accessible by employee users",
+        "Frontend shows 'موقعك على الخريطة متاح للمشرفين' message in attendance page",
+        "Message visible for all users when mapVisible=true"
+      ]
+    },
+    "2_arabic_language_unified": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Changed default language from 'en' to 'ar' in LanguageContext.js",
+        "Sidebar now shows Arabic: لوحتي, المعاملات, مرآة ستاس, الإجازات, الحضور, etc.",
+        "Page direction is RTL",
+        "All transaction types, status labels, and stage labels in Arabic"
+      ]
+    },
+    "3_date_format_unified": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Transactions page shows dates as DD/MM/YYYY, HH:MM (e.g., 15/02/2026, 23:26)",
+        "Attendance page admin table now shows formatted times (HH:MM:SS) instead of raw ISO",
+        "Fixed bug: check_in_time and check_out_time now properly displayed"
+      ]
+    },
+    "4_approve_reject_buttons": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Approve button (موافقة) visible for authorized users (STAS)",
+        "Reject button (X icon) visible for authorized users",
+        "Buttons have proper data-testid attributes for testing",
+        "Buttons only appear for users who can approve the current stage"
+      ]
+    },
+    "5_leave_balance_6_types": {
+      "status": "VERIFIED",
+      "test_results": [
+        "GET /api/leave/balance returns all 6 leave types",
+        "Types: annual, sick, marriage, bereavement, exam, unpaid",
+        "Annual leave includes balance, entitlement, rule, message_ar",
+        "Sick leave includes tier info and 12-month rolling calculation"
+      ]
+    },
+    "6_sultan_workflow_ceo_stas": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Sultan's self leave request goes directly to CEO (skipping ops)",
+        "workflow=['ceo', 'stas'], status='pending_ceo'",
+        "self_request_escalated=true flag is set",
+        "workflow_skipped_stages includes 'ops'",
+        "After CEO approval, moves to STAS for execution"
+      ]
+    }
+  },
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "bugs_fixed_by_testing_agent": [
+    {
+      "file": "/app/frontend/src/pages/AttendancePage.js",
+      "issue": "Admin attendance table showing raw ISO timestamps instead of formatted times",
+      "fix": "Changed r.check_in to r.check_in_time || formatSaudiTime(r.check_in)",
+      "lines": "707-708"
+    },
+    {
+      "file": "/app/frontend/src/contexts/LanguageContext.js",
+      "issue": "Default language was English, requirement is Arabic",
+      "fix": "Changed default from 'en' to 'ar'",
+      "line": "7"
+    }
+  ],
+  
+  "test_report_links": [
+    "/app/backend/tests/test_iteration18_features.py",
+    "/app/test_reports/pytest/iteration18_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "dateUtils.js formatSaudiDateTime uses en-GB locale for DD/MM/YYYY format - working correctly",
+    "leave_service.py LEAVE_TYPES defines all 6 types with proper Arabic names",
+    "workflow.py should_escalate_to_ceo() correctly routes Sultan requests to CEO",
+    "AttendancePage.js mapVisible state fetched from public endpoint for all users"
+  ],
+  
+  "updated_files": [
+    "/app/frontend/src/pages/AttendancePage.js",
+    "/app/frontend/src/contexts/LanguageContext.js",
+    "/app/backend/tests/test_iteration18_features.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  
+  "test_credentials": {
+    "stas_user_id": "fedffe24-ec69-5c65-809d-5d24f8a16b9d",
+    "sultan_user_id": "54e422b8-357c-5fdc-81d5-de6cac565810",
+    "employee1_user_id": "46c9dd1a-7f0f-584b-9bab-b37b949afece",
+    "mohammed_user_id": "32c4ee4f-72a4-565f-a4bd-1d763d95d584",
+    "method": "POST /api/auth/switch/{user_id}"
+  },
+  
+  "seed_data_creation": "Used existing test data. Created new leave requests for Sultan workflow testing.",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "Iteration 18 verified all requested bug fixes:\n\n1. Map visibility - /api/stas/settings/map-visibility/public accessible to all users, message shown in attendance page\n2. Arabic unified - Default language changed to 'ar', sidebar and all UI now in Arabic\n3. Date format - DD/MM/YYYY, HH:MM format working. Fixed attendance admin table times.\n4. Approve/Reject buttons - Visible for authorized users with proper Arabic text (موافقة/رفض)\n5. Leave balance 6 types - API returns annual, sick, marriage, bereavement, exam, unpaid\n6. Sultan workflow - Self requests go Sultan → CEO → STAS (ops skipped)\n\nTest file: /app/backend/tests/test_iteration18_features.py\n\nAll features working correctly. Two minor frontend bugs fixed."
+}
