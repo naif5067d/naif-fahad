@@ -202,4 +202,6 @@ export default {
   toHijri,
   formatGregorianHijri,
   formatGregorianHijriDateTime,
+  formatStandardDateTime,
+  formatStandardDate,
 };
