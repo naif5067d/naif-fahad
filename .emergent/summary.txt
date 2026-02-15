@@ -1,142 +1,147 @@
 <analysis>**original_problem_statement:**
-The user is building DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system. The initial goal was to enhance the System Maintenance module and implement a Settlement (المخالصة) feature. However, after extensive architectural analysis, the user pivoted to a more foundational task: building a robust, legally-compliant **Contracts (V2) module** as the absolute prerequisite for any further development, especially the settlement process.
+The user is building DAR AL CODE HR OS, a comprehensive, mobile-first HR operating system. The primary goal is to create a fully integrated system from contract creation to employee settlement (المخالصة), with a strong emphasis on a service-oriented architecture and a robust governance layer via the STAS Mirror.
 
-The latest user request (Chat Message 336) is to refine the system's core HR logic based on this new contract foundation, before proceeding to the full settlement feature. This includes:
-1.  **Clarifying and separating request types** (Leave vs. Attendance).
-2.  Creating a **comprehensive attendance table** for admins.
-3.  Implementing **leave accrual logic** (e.g., 21/30 days annual leave, 30/60/30 sick leave) within a Service Layer, driven by the new contract data.
-4.  Enhancing the **STAS Mirror** to perform pre-execution validation by aggregating data from all ledgers (, , , ).
-5.  Adding the ability to **assign a supervisor** from the employee list, which dictates the first step in the approval workflow.
-6.  The user expects a detailed architectural explanation and a plan before any implementation begins.
+The initial implementation attempt resulted in several critical bugs and incomplete features. The user has provided an executive order (Chat Message 17) and a subsequent bug report (Chat Message 136) that now serves as the primary set of requirements.
+
+**The immediate and mandatory task is to fix a list of critical bugs and missing features before any new development can begin.**
+
+**Key Requirements from the user's latest messages:**
+1.  **Core Logic Refactor:** Separate all business logic into a new  directory.
+2.  **Contracts & Leave:** Implement specific HR rules for service duration calculation (365-day year), annual leave (21/30 days), and sick leave (30/60/30 tiers), with all balances calculated dynamically from ledgers.
+3.  **Attendance:** Implement automatic absence tracking, a separate UI section for attendance-related requests, and an admin-configurable Ramadan Mode that correctly adjusts working hours.
+4.  **STAS Mirror:** The mirror must be a foolproof governance gate, showing a comprehensive pre-check snapshot (including financial impact, ledger states, warnings, and blockers) and strictly preventing execution if any  conditions are met. It must also support a one-time Return functionality.
+5.  **Settlement:** The process must be driven by a data  created at the time of the request to ensure data integrity.
+6.  **UI/UX:** Add a supervisor assignment feature to the employee list, correctly separate request types, and fix workflow issues (e.g., Sultan's self-requests).
+7.  **Timezone:** Standardize all dates and times across the application to  and display them in a user-friendly format.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond in Arabic.
 
 **what currently exists?**
-The agent has successfully completed two major user-requested tasks and conducted a deep architectural analysis of the system.
+The agent performed a major refactoring by creating a new **service layer** in the backend. Several new files were created under  to handle the business logic for contracts, leave, attendance, and settlements. Core routes like  and  were modified to call these new services.
 
-1.  **System Maintenance Enhancements (DONE):**
-    *   **Backend ():** The API now returns the total database size. A new endpoint, , was created to allow uploading a  archive and restoring the database using . The maintenance logic was also updated to be aware of the new  collection.
-    *   **Frontend ():** The page was completely redesigned. It now displays the total data size, features a file upload component with a progress bar for restoring archives, and has a more organized layout using Shadcn UI components.
+On the frontend, the  was significantly updated to include new UI elements for managing Ramadan mode, showing the map, and calculating absence, along with a new table for team attendance.
 
-2.  **System-Wide Date Format Audit (DONE):**
-    *   A reusable utility, , was created in .
-    *   This function was applied across the application (, , , etc.) to ensure all dates are consistently displayed in the  format as requested.
-
-3.  **Contracts V2 Module (CRITICAL FOUNDATION - DONE):**
-    *   A complete, from-scratch contract management system was built as the new foundation of the HR OS.
-    *   **Backend:** A new  was introduced with  to handle all business logic. New Pydantic models () and API routes () were created for full lifecycle management (, , , , ), versioning, and automatic serial number generation ().
-    *   **Frontend:** A new page, , was created for admins to list, view, and manage contracts. It includes statistics, status filtering, role-based actions (e.g., Terminate for STAS), and correct date formatting.
-    *   Existing employees in the database have been migrated with new  contracts.
-
-4.  **Architectural Analysis (DONE):**
-    *   The agent provided multiple, in-depth technical reports analyzing the existing architecture, answering the user's specific questions about ledgers, the STAS mirror, the contract lifecycle, and the overall system design. This analysis has guided the project's direction.
+**However, the implementation is functionally incomplete and buggy.** While the structural files and UI elements exist, the underlying logic is either missing or incorrect, as detailed in the user's last message. The system is not in a usable state.
 
 **Last working item**:
--   **Last item agent was working:** The agent provided a final, comprehensive architectural assessment and a detailed plan to address the user's latest request (Chat Message 336). This plan covers refining request types, enhancing the attendance table, implementing leave accrual logic in the service layer, and improving the STAS mirror pre-checks. The agent is awaiting the user's approval of this plan before starting implementation.
--   **Status:** **USER VERIFICATION PENDING**
--   **Agent Testing Done:** Y (For all completed features, including Contracts V2).
--   **Which testing method agent to use?** **both**. The proposed changes involve significant backend service layer logic and frontend UI enhancements (e.g., the attendance table), requiring full-stack testing.
--   **User Testing Done:** N
+-   **Last item agent was working:** The agent had just completed a large-scale implementation of the user's architectural plan, which included creating a service layer, refactoring routes, and updating the frontend. The agent ran the testing subagent, which reported success, and then incorrectly declared the task finished. The user immediately responded with a detailed list of critical bugs.
+-   **Status:** **BLOCKED**. The previous work was rejected by the user due to multiple critical bugs. All new development is on hold until these issues are resolved.
+-   **Agent Testing Done:** Y (but the tests were insufficient and did not catch the reported bugs).
+-   **Which testing method agent to use?** **both**. Each bug fix needs to be individually verified. Use  for backend logic (e.g., workflow rules, timezone), and the  for frontend UI changes (e.g., supervisor button, request lists). After all fixes are implemented, a full run of the  is required to ensure no regressions were introduced.
+-   **User Testing Done:** Y (and it FAILED).
 
 **All Pending/In progress Issue list**:
--   Issue 1: **Implement Core HR Logic & STAS Mirror Enhancements (P0)**
+-   Issue 1: **Fix Critical Bugs from Previous Implementation (P0)**
 
 **Issues Detail:**
--   **Issue 1: Implement Core HR Logic & STAS Mirror Enhancements**
-    -   **Attempted fixes:** None (implementation has not started). The agent has completed the analysis and planning phase.
-    -   **Next debug checklist:** Upon user approval, execute the plan outlined in the last agent message ().
-        1.  **Refine Request Types:** Differentiate  from attendance-related requests in the  logic.
-        2.  **Build Comprehensive Attendance Table:** Enhance  to show a full attendance summary (present, absent, on leave, etc.) for admins. Add functionality for manual edits with audit logs.
-        3.  **Build Leave Accrual Service:** Create a new service (e.g., ) to calculate employee leave balances based on service years (from ) and apply sick leave rules. This service must be the single source of truth for leave balances, reading from the .
-        4.  **Enhance STAS Pre-Checks:** Refactor  in  to call a new  service. This service will aggregate data from all ledgers to provide a comprehensive financial snapshot (blockers and warnings) on the STAS Mirror.
-        5.  **Implement Supervisor Assignment UI:** Add a feature to the employee list page for admins to set an employee's . The workflow must then route requests to this supervisor first.
-    -   **Why fix this issue and what will be achieved with the fix?** This will build the essential business logic required for an automated, compliant HR system on top of the new  foundation, paving the way for the final settlement module.
-    -   **Status:** NOT STARTED
+-   **Issue 1: Fix Critical Bugs from Previous Implementation**
+    -   **Description:** The user has identified several critical bugs that must be fixed before any new development.
+        1.  **Timezone Standardization:** Dates and times are displayed in UTC/ISO format instead of the required  short format.
+        2.  **Ramadan Mode Broken:** The UI toggle exists, but the backend logic in  does not use the setting to adjust calculations for lateness or early leave.
+        3.  **Map Visibility Broken:** The Show Map toggle for STAS does not correctly update visibility for employees.
+        4.  **Sultan's Self-Request Workflow:** Requests raised by 'sultan' for himself are not automatically routed to the 'ceo' ('mohammed'). The workflow logic in  needs to be corrected.
+        5.  **Missing Supervisor Assignment UI:** The button/interface to assign a supervisor from the employee list page is missing in .
+        6.  **Incorrect Request Separation:** Leave requests and attendance-related requests are not separated into their respective UI sections as required.
+        7.  **Inconsistent STAS Mirror:** The mirror shows  for valid active contracts and provides inconsistent before/after balance checks for leave requests because it's not correctly differentiating between leave types (annual, sick, etc.). Logic in  and  needs review.
+    -   **Attempted fixes:** The agent's initial implementation created the structure but failed on the logic. For instance, the Ramadan UI was added, but the backend service to consume the setting was incomplete.
+    -   **Next debug checklist:**
+        -   **Timezone:** Review all date formatting functions (, and how dates are handled in all  and API responses) and enforce .
+        -   **Ramadan:** Check  to ensure it reads the Ramadan settings from the database and applies the custom hours when calculating attendance events.
+        -   **Map:** Debug the endpoint in  and the corresponding frontend state management to ensure the setting is saved and retrieved correctly.
+        -   **Workflow:** Examine  and the  function to correctly handle the case where  equals .
+        -   **Supervisor UI:** Edit  to add a modal or dropdown for admins (, , ) to select a supervisor from the employee list and call the  endpoint.
+        -   **Request Lists:** Refactor the frontend pages (, ) to filter and display transactions based on their type category (leave vs. attendance).
+        -   **STAS Mirror:** Debug  to ensure it fetches the correct leave type from the transaction and uses it for balance calculations. Fix the validation logic in  that incorrectly flags active contracts.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a hard blocker from the user. The application's core logic is broken. Fixing these issues will stabilize the foundation and restore user trust, allowing development to proceed to the main settlement feature.
+    -   **Status:** **NOT STARTED**
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on other issue:** None. This is the top priority.
 
 **In progress Task List**:
 -   None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0: Full Settlement (المخالصة) Module:** Build the complete UI and backend for creating, processing, and executing employee settlements, using the new service layer for all calculations.
-    -   **P1: STAS Control Center Dashboard:** Implement the proposed advanced dashboard for the STAS role, focusing on monitoring, alerts, and audit trails.
+    -   **P0: Settlement Module UI & Snapshot Integration:** Build the frontend interface for creating and managing settlement requests. Ensure the STAS mirror correctly displays the full data  generated by the backend.
 -   **Future Tasks:**
-    -   Complete employee lifecycle automation (onboarding, offboarding).
-    -   Policy Engine for configurable HR rules.
-    -   Advanced reporting module.
-    -   UI for new user/employee creation.
+    -   **P1: CEO Dashboard & Employee Profile Card:** Create a dedicated dashboard for the CEO role and enhance the employee profile view with more summary data.
+    -   **P2: Warnings & Loans Modules:** Implement functionality for issuing official warnings (الإنذارات) and managing employee loans (السلف).
 
 **Completed work in this session**
--   System Maintenance Module v2 (Total size, Upload/Restore).
--   System-Wide Gregorian/Hijri Date Format Audit.
--   **Comprehensive Contracts V2 Module:** A foundational contract management system with a service layer, API, lifecycle management, and dedicated UI.
+-   **Service Layer Creation:** Created a new  directory and populated it with new files for core business logic:
+    -   
+    -   
+    -   
+    -   
+    -   
+    -   
+-   **Route Refactoring:** Modified , , and other routes to utilize the new service layer.
+-   **New Endpoints:** Added endpoints for returning transactions, managing Ramadan settings, and assigning supervisors.
+-   **Frontend UI Redesign:** Overhauled  to include new admin controls and a team attendance summary.
 
 **Earlier issues found/mentioned but not fixed**
--   **CEO Dashboard:** A dedicated view for the 'ceo' role is a pending task from a previous session.
--   **Full Settlement Calculation Engine:** The core calculation logic for settlements is the main upcoming task.
+-   All issues listed in the **All Pending/In progress Issue list** section are from the user's latest bug report and were introduced in this session.
 
 **Known issue recurrence from previous fork**
--   **Date/Time Formatting:** **RESOLVED**. A system-wide audit was performed and all dates were standardized.
+-   None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Service Layer Architecture:** A significant architectural shift has begun, moving business logic from API routes into dedicated service files (e.g., ). This is a key principle to continue.
--   **Ledger-Based Source of Truth:** The system is moving towards using ledgers (, ) as the definitive source for all calculations, avoiding duplicated state.
--   **STAS Mirror:** A critical concept for a pre-execution validation screen for the super-admin role, ensuring all conditions are met before a transaction is finalized. This is a focus for future enhancement.
--   **Contract-Centric Design:** The new  module is now the core of the system. All employee activities (attendance, leave, etc.) must be governed by an active contract.
+-   **Service Layer Architecture:** Business logic is being decoupled from API routes into a dedicated  directory.
+-   **Ledger-Based Source of Truth:** All calculations (leave balance, attendance status) must be derived directly from the ledgers (, , etc.), not from stored/stale data.
+-   **STAS Mirror as a Governance Gate:** A critical pre-execution screen for the STAS role to validate all transaction prerequisites, see the full impact, and make a final, informed decision.
+-   **Data Snapshots:** For critical, multi-faceted transactions like settlements, a data snapshot is created upon request initiation to prevent data drift between validation and execution.
 
 **key DB schema**
--   ****: 
+-   ****: Needs  field to be manageable via the UI. Any stored leave balance fields must be removed.
+-   ****: Needs to be filterable to separate  types from  types. A  flag will be added to enforce the one-time return rule.
+-   ** (or a new collection):** Will need to store global settings like Ramadan mode activation/dates and map visibility.
 
 **All files of reference**
--   : The template for the new Service Layer architecture.
--   : The API for the new core contract system.
--   : The UI for managing the new contracts.
--   : The location of the current STAS mirror and execution logic that needs to be refactored to use the service layer.
--   : Contains the detailed plan and architectural explanation that the next agent must get approved by the user before starting work.
+-   **User Bug Report:** Chat Message 136 is the source of truth for the next set of tasks.
+-   **Backend Services:** All files under .
+-   **Backend Routes:** , .
+-   **Backend Utils:** .
+-   **Frontend Pages:** , .
 
 **Areas that need refactoring**:
--   ****: The primary target for refactoring. The monolithic  and  functions must be broken down and their logic moved into dedicated services (e.g., , ).
--   **Enforce Contract Status:** Logic needs to be added throughout the application (e.g., in , ) to check for an  V2 contract before allowing any action.
--   **Single Source of Truth:** Any remaining logic that reads from stale/duplicated fields (e.g., ) should be refactored to calculate values directly from the relevant ledger.
+-   The entire implementation from the last agent turn needs to be debugged and corrected.
+-   Date and time handling needs a system-wide refactoring to enforce the  timezone.
 
 **key api endpoints**
--   : List all V2 contracts.
--   : Create a new V2 contract.
--   : Change the status of a contract (e.g., send to STAS, activate).
--   : Terminate an active contract.
--   : The endpoint for the STAS pre-execution view, which is the focus of the next set of improvements.
+-   : Endpoint exists but needs a corresponding UI.
+-   : Endpoint for the STAS one-time return feature.
+-   : Endpoint to manage Ramadan mode settings.
+-   : The core STAS mirror endpoint whose underlying service () needs debugging.
 
 **Critical Info for New Agent**
--   **Your immediate task is to get user approval for the plan you proposed in the last message.** Do not start coding. Use the  tool to present the plan from Chat Message 337's response and await confirmation.
--   The user is highly technical and values detailed architectural discussion **before** implementation. Continue this pattern of analyze, propose, get approval, then build.
--   The  module is the new, unchangeable foundation. All new logic must build upon it.
--   The primary architectural goal is to expand the **Service Layer**. All new business logic for leave, attendance, and settlements must be created in new service files, not added directly to the API routes.
--   **Do not build new ledgers or major systems.** The user has been clear: enhance and connect the existing pieces as per the agreed-upon plan.
+-   **STOP! Do not start any new features (P0, P1, etc.).** Your immediate and only priority is to fix the list of critical bugs reported by the user in **Chat Message 136**.
+-   You must address each point in the user's Fix Plan meticulously.
+-   **Provide proof of each fix.** The user expects screenshots or short video clips demonstrating that each bug has been resolved.
+-   The previous agent's automated tests were insufficient. You must manually test each fix using  and the screenshot tool to confirm the correct behavior before moving to the next bug.
+-   The user is highly technical and has lost some trust. Be precise, address the root cause of each issue, and do not declare completion until you have verified every single fix yourself.
 
 **documents and test reports created in this job**
--   
--   
 -    (updated)
+-    (The results are misleadingly positive and should not be trusted for the implemented features).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (LATEST):** Posed a long, detailed list of requirements and questions for the next phase, focusing on clarifying request types, building a comprehensive attendance table, implementing leave accrual logic, defining supervisor assignment, and refining the STAS mirror's function. Requested a detailed plan before execution. (Status: **PENDING AGENT RESPONSE/PLAN**)
-2.  **Agent:** Provided a detailed architectural assessment of the current system, answering the user's questions about its state (Workflow vs. Ledger system), separation of layers, and the role of STAS. Proposed a phased roadmap. (Status: **DONE**)
-3.  **User:** Asked for a deep architectural evaluation of the current system, covering its core identity, how to add new logic, the role of ledgers, separation of concerns, and the decision-making hierarchy. (Status: **ADDRESSED**)
-4.  **Agent:** Finished implementing the Contracts V2 module, updated the PRD, and asked the user what was next. (Status: **DONE**)
-5.  **User:** Provided extremely specific, non-negotiable requirements for a new Contracts V2 module, including the data model, lifecycle, serial numbering, PDF templates, and role permissions. Stated this must be completed before any settlement work. (Status: **ADDRESSED/COMPLETED**)
-6.  **Agent:** Proposed a detailed architectural vision for the STAS Mirror, outlining what it currently does and what a fully-featured version for settlements should look like, including financial calculations, blockers, warnings, and an audit trail. (Status: **DONE**)
-7.  **User:** Asked for a complete architectural explanation of the STAS Mirror concept, including what data it shows, how it validates transactions, and how it prevents errors. (Status: **ADDRESSED**)
-8.  **Agent:** Provided a detailed technical report answering the user's questions about the readiness of the system for a settlement feature. (Status: **DONE**)
-9.  **User:** Asked a series of deep technical questions about the system's readiness for a settlement feature, covering contract data, calculation engines, ledgers, and attendance. (Status: **ADDRESSED**)
-10. **Agent:** Provided an initial technical report on the system's data and logic available for calculating settlements. (Status: **DONE**)
+-   **User (LATEST - PENDING):** Provided a detailed bug report and a mandatory Fix Plan. Rejected the agent's completed work and blocked all new development until the fixes are delivered with proof.
+-   **Agent (Completed):** Incorrectly declared the task finished after receiving a successful report from the testing agent.
+-   **Agent (In Progress):** Called the testing agent.
+-   **Agent (In Progress):** Updated the PRD.md file.
+-   **Agent (In Progress):** Took screenshots to verify the UI, but did not test the underlying logic.
+-   **Agent (In Progress):** A long series of implementation messages creating services, refactoring routes, and modifying the frontend.
+-   **User (Instruction):** Gave the final, detailed Execution Order, authorizing the agent to start coding the full architectural plan and adding new requirements like Ramadan mode and map visibility.
+-   **Agent (Confirmation):** Provided the final, detailed Execution Checklist, confirming the full plan before starting to code.
+-   **User (Confirmation):** Refined the requirements for the STAS mirror and the Return functionality, and demanded a final checklist before implementation.
+-   **Agent (Planning):** Delivered the comprehensive architectural report with proposed code, a new service layer, and a flow diagram.
 
 **Project Health Check:**
--   **Broken:** None.
+-   **Broken:** The core business logic for attendance, workflows, and the STAS mirror is broken. Timezone handling is incorrect system-wide.
 -   **Mocked:** None.
 
 **3rd Party Integrations**
@@ -144,11 +149,13 @@ The agent has successfully completed two major user-requested tasks and conducte
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. Used successfully for the Contracts V2 module.
--   **Test files created:** None.
+-   **Testing agent used after significant changes:** YES, but it failed to identify critical logic bugs. Its successful result should be disregarded for the last session's work.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** []
+-   **Known regressions:** The entire feature set delivered in the last session is a regression from the user's expectations.
 
 **Credentials to test flow:**
-Use the user-switcher dropdown in the app's header. Roles , , and  are relevant for contract management and upcoming tasks. No passwords are required.
+Use the user-switcher dropdown in the app's header. Roles , , , and  (CEO) are relevant. No passwords required.
 
 **What agent forgot to execute**
-The agent is correctly paused, waiting for explicit user approval on the detailed plan for the next phase of development. Nothing has been forgotten.</analysis>
+The agent failed to properly implement and test the backend logic for most of the new features it built. It created the UI and the service file structure but did not connect them with working, tested code, leading to the user's bug report. Specifically, the logic for Ramadan mode, map visibility, supervisor self-request workflow, and consistent STAS mirror calculations was either missing or incorrect.</analysis>

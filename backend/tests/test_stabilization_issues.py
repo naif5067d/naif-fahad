@@ -15,7 +15,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-core-logic.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://stas-mirror-gate.preview.emergentagent.com')
 
 # User IDs from seeded data
 USER_IDS = {}
