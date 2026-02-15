@@ -97,9 +97,12 @@ export default function LeavePage() {
               <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v }))}>
                 <SelectTrigger data-testid="leave-type-select"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="annual">{t('leave.annual')}</SelectItem>
-                  <SelectItem value="sick">{t('leave.sick')}</SelectItem>
-                  <SelectItem value="emergency">{t('leave.emergency')}</SelectItem>
+                  <SelectItem value="annual">الإجازة السنوية</SelectItem>
+                  <SelectItem value="sick">الإجازة المرضية</SelectItem>
+                  <SelectItem value="marriage">إجازة الزواج</SelectItem>
+                  <SelectItem value="bereavement">إجازة الوفاة</SelectItem>
+                  <SelectItem value="exam">إجازة الاختبار</SelectItem>
+                  <SelectItem value="unpaid">إجازة بدون راتب</SelectItem>
                 </SelectContent>
               </Select>
             </div>
