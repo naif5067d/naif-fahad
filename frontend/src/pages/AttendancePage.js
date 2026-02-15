@@ -279,7 +279,12 @@ export default function AttendancePage() {
     if (!editDialog) return;
     try {
       setLoading(true);
-      await api.post(`/api/attendance/admin-edit/${editDialog.employee_id}?date=${editDialog.date}&check_in_time=${editForm.check_in_time || ''}&check_out_time=${editForm.check_out_time || ''}&note=${editForm.note || ''}`);
+      await api.post(`/api/attendance/admin-edit/${editDialog.employee_id}`, {
+        date: editDialog.date,
+        check_in_time: editForm.check_in_time || null,
+        check_out_time: editForm.check_out_time || null,
+        note: editForm.note || ''
+      });
       toast.success(lang === 'ar' ? 'تم تعديل الحضور' : 'Attendance updated');
       setEditDialog(null);
       fetchAdmin();
