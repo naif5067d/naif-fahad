@@ -39,6 +39,8 @@ class PurgeRequest(BaseModel):
 class RamadanModeRequest(BaseModel):
     start_date: str
     end_date: str
+    work_start: Optional[str] = "09:00"
+    work_end: Optional[str] = "15:00"
 
 
 class ReturnRequest(BaseModel):
@@ -541,7 +543,9 @@ async def activate_ramadan_mode(req: RamadanModeRequest, user=Depends(require_ro
     settings = await set_ramadan_mode(
         start_date=req.start_date,
         end_date=req.end_date,
-        actor_id=user['user_id']
+        actor_id=user['user_id'],
+        work_start=req.work_start,
+        work_end=req.work_end
     )
     return {
         "message": "تم تفعيل دوام رمضان بنجاح",
