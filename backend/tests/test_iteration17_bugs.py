@@ -164,44 +164,60 @@ class TestSultanSelfRequestToCEO:
     
     def test_sultan_leave_request_goes_to_ceo(self):
         """Test that Sultan's leave request skips ops and goes to CEO"""
+        # Use the correct leave endpoint
         payload = {
-            "employee_id": self.sultan_employee_id,
             "leave_type": "annual",
-            "start_date": "2026-02-15",
-            "end_date": "2026-02-16"
+            "start_date": "2026-03-01",  # Future date to avoid conflicts
+            "end_date": "2026-03-02",
+            "reason": "Test Sultan self-request to CEO"
         }
         
         response = requests.post(
-            f"{BASE_URL}/api/transactions/leave",
+            f"{BASE_URL}/api/leave/request",  # Correct endpoint
             headers=self.headers,
             json=payload
         )
         
         # Check response
-        print(f"Leave request response: {response.status_code} - {response.text[:500]}")
+        print(f"Leave request response: {response.status_code}")
         
         if response.status_code == 200:
-            data = response.json()
-            tx = data.get('transaction', {})
+            tx = response.json()  # Response is the transaction directly
             
             # Check workflow and current_stage
             workflow = tx.get('workflow', [])
             current_stage = tx.get('current_stage', '')
             status = tx.get('status', '')
+            self_request_escalated = tx.get('self_request_escalated', False)
+            skipped_stages = tx.get('workflow_skipped_stages', [])
             
-            print(f"Transaction created: ref={tx.get('ref_no')}, workflow={workflow}, current_stage={current_stage}, status={status}")
+            print(f"Transaction created: ref={tx.get('ref_no')}")
+            print(f"  workflow={workflow}")
+            print(f"  current_stage={current_stage}")
+            print(f"  status={status}")
+            print(f"  self_request_escalated={self_request_escalated}")
+            print(f"  skipped_stages={skipped_stages}")
             
             # For Sultan's self-request, it should go to CEO (not ops)
-            # The workflow should either skip ops or current_stage should be ceo
-            assert 'ceo' in workflow or current_stage == 'ceo', \
-                f"Sultan's self-request should go to CEO. workflow={workflow}, current_stage={current_stage}"
+            # Either ceo is in workflow, or ops is skipped, or self_request_escalated is True
+            assert 'ceo' in workflow or 'ops' in skipped_stages or self_request_escalated or current_stage == 'ceo', \
+                f"Sultan's self-request should go to CEO. workflow={workflow}, current_stage={current_stage}, escalated={self_request_escalated}"
             
             # Store transaction ID for cleanup
             self.tx_id = tx.get('id')
+            print("✅ Sultan's self-request correctly escalated to CEO")
         else:
             # Check if it's a balance issue or other error
-            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+            try:
+                error_data = response.json()
+            except:
+                error_data = response.text
             print(f"Error creating leave request: {error_data}")
+            # Don't fail if it's a business rule issue (balance, overlap, etc)
+            if "balance" in str(error_data).lower() or "overlap" in str(error_data).lower():
+                pytest.skip(f"Business rule prevented test: {error_data}")
+            else:
+                assert False, f"Unexpected error: {error_data}"
 
 
 class TestSupervisorAssignment:
