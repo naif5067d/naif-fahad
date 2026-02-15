@@ -1,154 +1,136 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS.
+The user's primary goal is to build a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. After a successful bug-fixing phase, the project's direction has shifted to a complete overhaul of the **Contract Management System**, deprecating the old system in favor of a new Contracts V2 workflow.
 
-Initially, the project focused on fixing a large set of critical bugs related to map visibility, UI inconsistencies, workflows, and leave logic. The agent successfully addressed all these issues.
+However, before starting this new development, the user has issued a mandatory, high-priority request for a **comprehensive, text-only, code-based audit** of the entire existing application. This audit must be completed and approved by the user before any work on Contracts V2 can begin.
 
-However, the user has now provided a new, extensive, and mandatory set of requirements for the next phase of development. This involves a complete overhaul of the **Contract Management System**, deprecating the old system in favor of a new Contracts V2 workflow. This new system must handle new employee onboarding and migration of existing employees, with all processes governed by the STAS user role.
-
-Furthermore, the user has imposed strict, non-negotiable rules for the entire application:
-1.  **Full Language Standardization:** The app must support only two modes: 100% Arabic (default) or 100% English. No mixed-language UI is permitted. This applies to all text, buttons, reports, and PDFs.
-2.  **Strict Date/Time Formatting:** All dates and times displayed in the UI must be in a human-readable  format (e.g., ), with no ISO strings visible to the user.
-
-The immediate task is to create a detailed implementation plan based on these new requirements, get user approval, and then execute the contract system overhaul.
+The user has also imposed two strict, non-negotiable rules for the application:
+1.  **Full Language Standardization:** The app must support only two modes: 100% Arabic (default) or 100% English, with no mixed-language UI.
+2.  **Strict Date/Time Formatting:** All dates and times in the UI must be in a human-readable  format.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The agent has successfully completed a major bug-fixing effort, resulting in a stable version of the application. Key accomplishments include:
--   Fixing map visibility for employees.
--   Translating the entire UI to Arabic and standardizing date formats.
--   Adding missing action buttons to make all transaction types consistent.
--   Overhauling the leave calculation logic to support 6 different leave types as per the user's initial business rules.
--   Fixing the Sultan workflow to correctly escalate to the CEO and then to STAS.
--   All these fixes were validated through automated tests run by the .
+The application is in a stable, functional state following a major bug-fixing phase where issues with map visibility, UI translation, date formats, workflows, and leave logic were resolved and verified.
 
-The application is currently functional but does not meet the user's new, more stringent requirements for contract management and UI standardization.
+The current agent's session has been dedicated to fulfilling the user's new request for a system-wide audit. To this end, the agent has performed an extensive review of the codebase, reading dozens of frontend () and backend () files to build a deep understanding of the system's architecture, workflows, and data models. The application is running, and the agent has confirmed its state via preliminary file checks.
 
 **Last working item**:
--   **Last item agent was working:** The agent had just finished the comprehensive bug-fixing phase. The final steps involved updating documentation () and confirming the success of all fixes with automated testing and screenshots. The user then intervened with a completely new set of requirements for the next development phase.
--   **Status:** COMPLETED (The bug-fixing task is finished and verified by the agent).
--   **Agent Testing Done:** Y
+-   **Last item agent was working:** Performing a comprehensive, code-based system audit as per the user's explicit and detailed instructions in the latest message. The user requires a textual report analysing routes, data connections, STAS Mirror logic, language/date implementation, and a final GAP analysis, strictly forbidding screenshots. The agent was gathering information by reading files.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N/A (Task is analysis, not implementation)
 -   **Which testing method agent to use?** N/A
--   **User Testing Done:** N (User did not test the fixes; instead, they provided instructions for the next major feature.)
+-   **User Testing Done:** N/A
 
 **All Pending/In progress Issue list**:
--   None. The previous list of issues was fully resolved. The user's latest messages introduce a new epic/feature, not pending bugs.
+-   **Issue 1: Complete the Comprehensive System Audit (P0 - Highest Priority)**
+    -   **Description:** The user has blocked all development pending a detailed, text-only, code-based report on the current system. The agent must deliver this report, addressing every point from the user's last message, before proceeding.
+    -   **Attempted fixes:** The agent has read most of the relevant project files. The initial approach was based on a more general checklist, but the user clarified they need a purely programmatic analysis. The gathered information is still valid, but it needs to be synthesized into the specific textual format the user demanded.
+    -   **Next debug checklist:**
+        1.  Synthesize all the information gathered from reading frontend and backend files.
+        2.  Structure the findings into a clear, textual report that directly answers each of the user's questions from their last message (Routes Map, Wiring/Trace Links, STAS Mirror Coverage, Language/Date Gaps, Feature Logic, Final GAP list).
+        3.  Use  to find all API endpoints in  and trace their usage in the  directory to create the Routes Map.
+        4.  Analyze  and  to document the transaction workflows, data dependencies (), and the logic for  in the STAS mirror.
+        5.  Use  to find any remaining hardcoded English text in the frontend and identify the central date-formatting utilities.
+        6.  Present this complete textual report to the user in Arabic for approval.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a mandatory prerequisite from the user. Completing it will provide a shared, accurate understanding of the current system, unblock the Contracts V2 development, and prevent future rework.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** N/A
+    -   **Blocked on other issue:** None. This task is the primary blocker.
 
 **In progress Task List**:
--   None.
+-   **Task 1: Comprehensive System Audit**
+    -   **Where to resume:** The agent has completed the file-reading phase. The next step is to process and structure this information into the specific textual report format requested by the user. The agent must now generate the final report for the user's review.
+    -   **What will be achieved with this?** A detailed, code-based audit report that meets the user's requirements and unblocks further development.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** N/A
+    -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0: Implement New Contract Management System (V2) & Enforce Strict Standardization Rules:** This is the immediate, top-priority task, based on the user's detailed instructions in messages 138, 141, and 162. It must be broken down and a plan presented to the user for approval before coding.
-        -   **Phase 1: Planning & Cleanup**
-            -   **Present a detailed checklist to the user for approval**, outlining what will be deleted, modified, and created.
-            -   **Delete Old Contract System:** Remove the old Contracts icon from the sidebar and delete all related frontend pages and backend routes ().
-            -   **Archive Old Data:** The  MongoDB collection should **not** be deleted. It must be kept for archival purposes but remain unused by the new V2 system.
-        -   **Phase 2: New Contract & User Lifecycle**
-            -   **Create New Contract Flow:** Build a form that creates a new  and  record simultaneously. This flow **must not** use a dropdown to select an existing employee.
-            -   **Implement STAS Workflow:** On submission, the contract creation request goes to STAS. Upon STAS approval, a user account (username/password) is generated, and the employee is automatically linked to all HR modules (Attendance, Leave, Finance).
-            -   **Update STAS Mirror:** The mirror must display  confirmation checks for each successful linking step (account created, attendance linked, leave linked, etc.).
-        -   **Phase 3: Employee Migration & Data Snapshot**
-            -   **Create Migrate Employee Flow:** Build a separate UI for migrating existing employees. It should allow selecting an employee (via search, not a full list) and entering a one-time opening snapshot of their data (remaining annual leave, sick days used, outstanding loans/assets).
-        -   **Phase 4: System-Wide Standardization**
-            -   **Implement Language Toggle:** Refactor the entire application to remove all hardcoded English strings and implement a global state toggle between a full Arabic UI (default) and a full English UI.
-            -   **Enforce Date/Time Format:** Create and enforce a centralized utility to ensure all dates/times shown to the user are in the  timezone and a clean, readable format.
-        -   **Phase 5: STAS Enhancements**
-            -   **Build User Management View:** Add a new screen within STAS to monitor user linking status, last login, device/IP, and login/logout history.
-            -   **Implement STAS Admin Actions:** Give STAS the ability to reset passwords, edit usernames, and modify employee names, with changes reflected instantly in the UI.
-
+    -   **P0: Implement New Contract Management System (V2) & Enforce Strict Standardization Rules (BLOCKED by System Audit)**
+        -   **Phase 1: Planning & Cleanup:** Delete old contract system UI/API, archive  collection.
+        -   **Phase 2: New Contract & User Lifecycle:** Build New Contract flow with STAS approval and automated user provisioning.
+        -   **Phase 3: Employee Migration & Data Snapshot:** Build Migrate Employee flow with opening data snapshot.
+        -   **Phase 4: System-Wide Standardization:** Implement global language toggle (Ar/En) and enforce  date format.
+        -   **Phase 5: STAS Enhancements:** Build User Management view for STAS.
 -   **Future Tasks:**
-    -   **P1: Settlement Module:** Build the UI for managing employee settlements, integrating with the STAS mirror.
-    -   **P2: CEO Dashboard & Employee Profile Card:** Create a dedicated dashboard for the CEO.
-    -   **P3: Warnings & Loans Modules:** Implement features for issuing warnings and managing employee loans.
+    -   **P1:** Settlement Module
+    -   **P2:** CEO Dashboard & Employee Profile Card
+    -   **P3:** Warnings & Loans Modules
 
 **Completed work in this session**
--   **Comprehensive Bug Fixes (DONE):**
-    -   **Map Visibility:** Fixed for employee role ().
-    -   **Full Arabic UI:** Translated all pages, including , , and .
-    -   **Standardized Date/Time:** Enforced a consistent, clean date format across the UI.
-    -   **Consistent Action Buttons:** Added missing Approve/Reject buttons to attendance requests ().
-    -   **Leave Logic Overhaul:** Reworked  to support 6 specified leave types with correct calculation rules.
-    -   **Workflow Correction:** Ensured Sultan's requests route correctly (CEO -> STAS) in .
+-   None. The current session has been dedicated to investigation and analysis for the audit task.
 
 **Earlier issues found/mentioned but not fixed**
--   None. All previously known issues were resolved in this session.
+-   **Issue 1: Missing translation key**
+    -   **Debug checklist:** The agent observed the text  in the UI. Investigation confirmed the key is missing from .
+    -   **Why to solve this issue and what will be achieved with this?** Fixing this will ensure the UI is 100% translated as per the user's strict rules.
+    -   **Should Test frontend/backend/both after fix:** Frontend
+    -   **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
--   None. The recurring Map Visibility issue was successfully resolved and tested.
+-   None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **i18n (Internationalization):** The application requires a robust implementation for full language toggling (Arabic/English).
--   **User/Contract Lifecycle Management:** The core logic is moving to a contract-driven lifecycle where creating a contract also provisions a user account and links them to all subsystems.
--   **Data Governance & Auditing:** The STAS mirror is evolving into a central hub for auditing system linkages and user activity.
--   **Data Migration:** A specific flow is required to onboard existing employees with a snapshot of their current state.
+-   **i18n (Internationalization):** Full language toggling (Arabic/English).
+-   **User/Contract Lifecycle Management:** A contract-driven process for user creation and system integration.
+-   **Data Governance & Auditing:** The STAS mirror serves as a central hub for auditing system linkages and user activity.
+-   **Data Migration:** A dedicated flow for onboarding existing employees with a data snapshot.
 
 **key DB schema**
--   ****: This collection is now considered **legacy/archival**. It must not be deleted, but no new data should be written to it.
--   ****: The new source of truth for all employee contracts.
--   ****: Will be created/linked through the new  flow.
--   ****: A new collection will be needed to store user session data (login/logout, IP, device) for the STAS mirror.
+-   ****: Legacy/Archival. Do not delete the collection, but do not use.
+-   ****: New source of truth for all contracts.
+-   ****: Linked to .
+-   ****: New collection needed for STAS user session monitoring.
 
 **All files of reference**
--   **New Requirements Source of Truth:** User messages **138, 141, and 162**.
--   **Key files for modification/creation:**
-    -   
-    -   
-    -    (and )
-    -   
-    -   
-    -   
+-   **User Instructions:** User messages **#72 (latest and most critical)** and #4. The handoff summary detailing the V2 requirements (derived from messages 138, 141, 162) is also relevant for post-audit planning.
+-   **Key files for audit:** The entire  and  directories.
 
 **Areas that need refactoring**:
--   **Contract Management:** Complete removal of the old system's UI and routes, and implementation of the new V2 system.
--   **Internationalization (i18n):** All hardcoded text strings throughout the frontend must be removed and replaced with keys that use a translation library (like ).
--   **Date/Time Handling:** A system-wide enforcement of a single utility function for all date formatting to ensure consistency and adherence to the  timezone.
+-   **Contract Management:** Complete removal of the old system's UI and routes.
+-   **Internationalization (i18n):** All hardcoded text must be moved to translation files.
+-   **Date/Time Handling:** Centralize and enforce a single utility for all date formatting to the  timezone.
 
 **key api endpoints**
 -   : **TO BE DELETED.**
--   : (e.g.) To create a new contract and employee.
--   : (e.g.) To create a V2 contract for an existing employee with a data snapshot.
--   : (e.g.) To fetch data for the new User Management and Linking view.
+-   : To create a new contract and employee.
+-   : To migrate an existing employee to a V2 contract.
+-   : To fetch data for the STAS user management view.
 
 **Critical Info for New Agent**
--   **DO NOT START CODING.** Your first action must be to create a detailed checklist based on the **Upcoming Tasks (P0)** and present it to the user for approval using . The user has explicitly demanded this.
--   The user's requirements in messages 138, 141, and 162 are the **only source of truth** for the current task. The previous bug-fixing work is complete.
--   Pay extreme attention to the user's strict rules:
-    -   **No mixed languages.** The app must have a full Arabic/English toggle.
-    -   **No ISO dates in the UI.** Use the specified human-readable Riyadh time format.
-    -   **Do not delete the  database collection.** Only delete the UI and API routes for the old system.
--   The contract creation flow is central. Differentiate clearly between the New Contract flow and the Migrate Employee flow.
+-   Your **only** immediate task is to complete the comprehensive, code-based audit and present it to the user as a **textual report in Arabic**.
+-   **DO NOT** start coding Contracts V2. **DO NOT** use screenshots or perform UI-based checks. The user has been very explicit about this.
+-   The user's last message (#72) is the single source of truth for the audit requirements. Address every point meticulously.
+-   This audit is a **hard blocker** for all other development tasks. You must get the user's approval on the audit report before doing anything else.
 
 **documents and test reports created in this job**
--   
--    (updated by the agent, but now needs to be significantly updated again to reflect the new contract system).
+-   None in this session.
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (162 - LATEST/PENDING):** Provided final, mandatory corrections to the agent's plan. Key points: 1) Do NOT delete the old  DB collection, only the UI/API. 2) The  page needs two distinct flows: one for new contracts (no employee selection) and one for migrating existing employees (with employee selection). 3) Re-emphasized the strict language and date/time formatting rules. Demanded a final checklist for approval *before* any implementation.
--   **Agent (161):** Proposed a plan to implement the new contract system based on the user's prior message. This plan was what the user corrected in message 162.
--   **User (141):** Corrected the agent's initial understanding after the agent finished the bug fixes. Clarified that  is the system to build upon, while the old  system must be removed from the UI/API entirely. Imposed strict, non-negotiable rules on language purity (no mixing) and STAS functionality.
--   **User (138):** Interrupted the agent's completion flow to introduce a massive new feature request: a completely new contract management system with detailed specifications for creation, migration, leave policy, STAS governance, and user management.
--   **Other messages (130-137, 139-140):** The agent was in the process of updating  and finishing the bug-fix task before being interrupted by the user's new requirements.
+-   **User (Message #72 - LATEST & PENDING):** Provided very specific, mandatory instructions for a programmatic and textual-only inspection of the system. Forbade the use of screenshots. Outlined the exact structure and content of the required audit report, covering routes, data wiring, STAS logic, language/date handling, and a GAP analysis. Stated clearly not to begin any new implementation before this textual inspection is delivered.
+-   **User (Message #4):** Initially requested a comprehensive system check via a Checklist format. This request is now superseded and refined by message #72.
 
 **Project Health Check:**
--   **Stable:** The application is currently in a working state after a major bug-fixing pass.
--   **Outdated:** The current implementation is now misaligned with the user's new, superseding vision for contract management and UI standards. A major refactoring and feature build is required.
+-   **Stable:** The application is in a working state.
+-   **Outdated:** The implementation is misaligned with the user's new vision for contract management and UI standards. The requested audit will document the precise state before the major overhaul begins.
 
 **3rd Party Integrations**
 -   
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (for the previous bug-fixing session).
+-   **Testing agent used after significant changes:** NO (current task is analysis).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** None from the previous state, but the entire contract system is now considered legacy and needs replacement.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
--   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). Use other employees to test non-admin views. No passwords are required.
+-   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). No passwords are required.
 
 **What agent forgot to execute**
--   The agent did not forget anything. They successfully completed their assigned task (bug fixing). The user then changed the project's direction entirely, providing a new set of requirements before the agent could formally finish the job. The next logical step, which the agent was about to take, is to formulate a new plan based on this new user input.</analysis>
+-   The agent has not forgotten to execute anything. It was actively working to fulfill the user's request when a new, more specific set of instructions was provided. The agent correctly pivoted to the new instructions. The next step is to deliver on the latest request.</analysis>
