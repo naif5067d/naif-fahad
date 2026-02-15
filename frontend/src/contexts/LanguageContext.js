@@ -4,7 +4,7 @@ import { translations } from '@/lib/translations';
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem('hr_lang') || 'en');
+  const [lang, setLang] = useState(() => localStorage.getItem('hr_lang') || 'ar');
 
   useEffect(() => {
     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
