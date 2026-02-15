@@ -66,7 +66,7 @@ export default function AttendancePage() {
   const [teamSummary, setTeamSummary] = useState({ present: 0, absent: 0, on_leave: 0, late: 0 });
   const [ramadanSettings, setRamadanSettings] = useState(null);
   const [showRamadanDialog, setShowRamadanDialog] = useState(false);
-  const [ramadanForm, setRamadanForm] = useState({ start_date: '', end_date: '' });
+  const [ramadanForm, setRamadanForm] = useState({ start_date: '', end_date: '', work_start: '09:00', work_end: '15:00' });
   const [mapVisible, setMapVisible] = useState(false);
   const [attendanceRequests, setAttendanceRequests] = useState([]);
 
@@ -444,10 +444,30 @@ export default function AttendancePage() {
                               className="mt-1"
                             />
                           </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الدخول' : 'Work Start'}</label>
+                              <Input 
+                                type="time" 
+                                value={ramadanForm.work_start}
+                                onChange={e => setRamadanForm({...ramadanForm, work_start: e.target.value})}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الخروج' : 'Work End'}</label>
+                              <Input 
+                                type="time" 
+                                value={ramadanForm.work_end}
+                                onChange={e => setRamadanForm({...ramadanForm, work_end: e.target.value})}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
                           <p className="text-xs text-muted-foreground">
                             {lang === 'ar' 
-                              ? 'ملاحظة: ساعات الدوام 6 ساعات، أوقات الدخول والخروج تُحدد حسب القسم'
-                              : 'Note: 6 working hours, entry/exit times vary by department'}
+                              ? 'ملاحظة: ستُطبق أوقات الدوام على حساب التأخير والخروج المبكر'
+                              : 'Note: Work hours will apply to late/early leave calculations'}
                           </p>
                           <Button onClick={handleActivateRamadan} className="w-full">
                             {lang === 'ar' ? 'تفعيل' : 'Activate'}
