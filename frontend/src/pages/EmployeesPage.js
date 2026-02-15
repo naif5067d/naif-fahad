@@ -170,6 +170,46 @@ export default function EmployeesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Supervisor Assignment Dialog */}
+      <Dialog open={!!supervisorDialog} onOpenChange={() => setSupervisorDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang === 'ar' ? 'تعيين مشرف' : 'Assign Supervisor'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {lang === 'ar' ? 'الموظف:' : 'Employee:'} {supervisorDialog && (lang === 'ar' ? supervisorDialog.full_name_ar : supervisorDialog.full_name)}
+              </p>
+            </div>
+            <div>
+              <Label>{lang === 'ar' ? 'المشرف' : 'Supervisor'}</Label>
+              <Select value={selectedSupervisor} onValueChange={setSelectedSupervisor}>
+                <SelectTrigger className="mt-1" data-testid="select-supervisor">
+                  <SelectValue placeholder={lang === 'ar' ? 'اختر مشرف...' : 'Select supervisor...'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{lang === 'ar' ? 'بدون مشرف' : 'No supervisor'}</SelectItem>
+                  {availableSupervisors.map(sup => (
+                    <SelectItem key={sup.id} value={sup.id}>
+                      {lang === 'ar' ? (sup.full_name_ar || sup.full_name) : sup.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              data-testid="save-supervisor" 
+              onClick={handleSaveSupervisor} 
+              className="w-full bg-primary text-primary-foreground" 
+              disabled={savingSupervisor}
+            >
+              {savingSupervisor ? t('common.loading') : t('common.save')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
