@@ -485,24 +485,81 @@ Contract activation flow:
 
 ---
 
+### Phase 17: Critical Bug Fixes - UI/UX Standardization ✅ (2026-02-15)
+
+**إصلاحات P0 الحرجة:**
+
+1. **رؤية الخريطة للموظفين** ✅
+   - `AttendancePage.js` الآن يعرض رسالة "موقعك على الخريطة متاح للمشرفين" لجميع المستخدمين عند تفعيل الخريطة
+   - يجلب الإعداد من `/api/stas/settings/map-visibility/public`
+
+2. **توحيد اللغة العربية** ✅
+   - تغيير اللغة الافتراضية من 'en' إلى 'ar' في `LanguageContext.js`
+   - جميع عناصر الواجهة بالعربية: القوائم، الأزرار، الحالات، المراحل
+   - صفحة المعاملات `TransactionsPage.js` أعيد كتابتها بالكامل بالعربية
+
+3. **توحيد تنسيق التاريخ** ✅
+   - التنسيق الموحد: DD/MM/YYYY, HH:MM بتوقيت الرياض
+   - `formatGregorianHijri()` تُرجع التاريخ الميلادي فقط (بدون هجري)
+   - إضافة `formatStandardDateTime()` و `formatStandardDate()` للاستخدام الموحد
+
+4. **أزرار الإجراءات لجميع المعاملات** ✅
+   - أزرار "موافقة" و "رفض" تظهر للمستخدمين المخولين حسب المرحلة
+   - طلبات الحضور (`forget_checkin`, `late_excuse`, etc.) لها نفس أزرار باقي المعاملات
+   - زر "تصعيد" للعمليات
+
+5. **إعادة بناء منطق الإجازات** ✅
+   - 6 أنواع إجازات:
+     - **السنوية**: 21 يوم (أقل من 5 سنوات) / 30 يوم (5+ سنوات) - الرصيد الوحيد المتتبع
+     - **المرضية**: عداد تراكمي (30 يوم 100% + 60 يوم 75% + 30 يوم بدون راتب)
+     - **الزواج**: 5 أيام مدفوعة - مرة واحدة
+     - **الوفاة**: 5 أيام مدفوعة
+     - **الاختبار**: حسب الإثبات - مدفوعة
+     - **بدون راتب**: لا أجر ولا خصم من السنوية
+   - `leave_service.py` أُعيد كتابته بالكامل مع:
+     - `get_annual_leave_balance()` - حساب رصيد السنوية فقط
+     - `get_sick_leave_usage_12_months()` - عداد المرضية
+     - `validate_leave_request()` - التحقق من صحة الطلب
+     - `get_employee_leave_summary()` - ملخص شامل للموظف
+
+6. **مسار سير عمل سلطان** ✅
+   - طلبات سلطان الذاتية: sultan → CEO → STAS (تتجاوز ops)
+   - `build_workflow_with_ceo_escalation()` يُرجع `['ceo', 'stas']`
+   - بعد موافقة CEO يذهب مباشرة إلى STAS
+
+**الملفات المُحدّثة:**
+- `/app/frontend/src/pages/AttendancePage.js` - إعادة كتابة كاملة
+- `/app/frontend/src/pages/TransactionsPage.js` - إعادة كتابة كاملة
+- `/app/frontend/src/lib/dateUtils.js` - توحيد التنسيق
+- `/app/frontend/src/contexts/LanguageContext.js` - اللغة الافتراضية عربية
+- `/app/backend/services/leave_service.py` - إعادة كتابة كاملة
+- `/app/backend/utils/workflow.py` - إضافة أنواع طلبات الحضور + تصعيد CEO
+- `/app/backend/routes/leave.py` - 6 أنواع إجازات
+
+**تقرير الاختبار:** `/app/test_reports/iteration_18.json` - 100% نجاح
+
+---
+
 ## Next Tasks (P0)
 
-### F) Request Separation
-- Attendance requests: Missed punch, external mission, early leave, late excuse
-- Leave requests: Annual, sick, emergency, unpaid, special
-
-### Settlement Module
-- Settlement request UI
-- Data Snapshot in STAS mirror
-- EOS calculation
+### Settlement Module (المخالصة)
+- واجهة طلب المخالصة
+- Data Snapshot في مرآة STAS
+- حساب مستحقات نهاية الخدمة (EOS)
+- بدل الإجازات المتبقية
 
 ---
 
 ## Future Tasks
 
 ### P1: CEO Dashboard + Employee Profile Card
+- لوحة تحكم خاصة بالمدير التنفيذي
+- بطاقة ملخص الموظف
+
 ### P2: Warnings & Loans Modules
+- نظام الإنذارات
+- نظام السلف
 
 ---
 
-Version: 16.0 (2026-02-15)
+Version: 17.0 (2026-02-15)
