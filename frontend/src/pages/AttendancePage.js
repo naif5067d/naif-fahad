@@ -407,6 +407,17 @@ export default function AttendancePage() {
                 )}
               </Button>
             </div>
+            
+            {/* زر طلب حضور جديد */}
+            <Button 
+              variant="outline" 
+              className="w-full mt-3 h-11"
+              onClick={() => setShowRequestDialog(true)}
+              data-testid="new-attendance-request-btn"
+            >
+              <FileText size={18} className="me-2" />
+              {lang === 'ar' ? 'طلب حضور جديد (نسيان بصمة / مهمة خارجية / ...)' : 'New Attendance Request'}
+            </Button>
           </div>
         </div>
       )}
