@@ -351,13 +351,17 @@ async def get_attendance_requests(user=Depends(get_current_user)):
     return reqs
 
 
+class AdminEditRequest(BaseModel):
+    date: str
+    check_in_time: Optional[str] = None
+    check_out_time: Optional[str] = None
+    note: Optional[str] = ""
+
+
 @router.post("/admin-edit/{employee_id}")
 async def admin_edit_attendance(
     employee_id: str,
-    date: str,
-    check_in_time: Optional[str] = None,
-    check_out_time: Optional[str] = None,
-    note: str = "",
+    req: AdminEditRequest,
     user=Depends(get_current_user)
 ):
     """تعديل حضور موظف إدارياً (STAS فقط)"""
@@ -371,58 +375,58 @@ async def admin_edit_attendance(
     now = datetime.now(timezone.utc).isoformat()
     
     # تحديث أو إضافة سجل الحضور
-    if check_in_time:
-        check_in_ts = f"{date}T{check_in_time}:00+03:00"
+    if req.check_in_time:
+        check_in_ts = f"{req.date}T{req.check_in_time}:00+03:00"
         existing = await db.attendance_ledger.find_one({
             "employee_id": employee_id,
-            "date": date,
+            "date": req.date,
             "type": "check_in"
         })
         if existing:
             await db.attendance_ledger.update_one(
                 {"_id": existing['_id']},
-                {"$set": {"timestamp": check_in_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": note}}
+                {"$set": {"timestamp": check_in_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": req.note}}
             )
         else:
             await db.attendance_ledger.insert_one({
                 "id": str(uuid.uuid4()),
                 "employee_id": employee_id,
-                "date": date,
+                "date": req.date,
                 "type": "check_in",
                 "timestamp": check_in_ts,
                 "admin_edited": True,
                 "edited_by": user['user_id'],
                 "edited_at": now,
-                "edit_note": note,
+                "edit_note": req.note,
                 "gps_valid": False,
                 "work_location": "admin_edit"
             })
     
-    if check_out_time:
-        check_out_ts = f"{date}T{check_out_time}:00+03:00"
+    if req.check_out_time:
+        check_out_ts = f"{req.date}T{req.check_out_time}:00+03:00"
         existing = await db.attendance_ledger.find_one({
             "employee_id": employee_id,
-            "date": date,
+            "date": req.date,
             "type": "check_out"
         })
         if existing:
             await db.attendance_ledger.update_one(
                 {"_id": existing['_id']},
-                {"$set": {"timestamp": check_out_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": note}}
+                {"$set": {"timestamp": check_out_ts, "admin_edited": True, "edited_by": user['user_id'], "edited_at": now, "edit_note": req.note}}
             )
         else:
             await db.attendance_ledger.insert_one({
                 "id": str(uuid.uuid4()),
                 "employee_id": employee_id,
-                "date": date,
+                "date": req.date,
                 "type": "check_out",
                 "timestamp": check_out_ts,
                 "admin_edited": True,
                 "edited_by": user['user_id'],
                 "edited_at": now,
-                "edit_note": note,
+                "edit_note": req.note,
                 "gps_valid": False,
                 "work_location": "admin_edit"
             })
     
-    return {"message": "تم تعديل الحضور بنجاح", "employee_id": employee_id, "date": date}
+    return {"message": "تم تعديل الحضور بنجاح", "employee_id": employee_id, "date": req.date}
