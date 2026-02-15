@@ -142,11 +142,12 @@ export default function AttendancePage() {
     if (isEmployee || isAdmin) {
       api.get('/api/attendance/today').then(r => setToday(r.data)).catch(() => {});
       api.get('/api/attendance/history').then(r => setHistory(r.data)).catch(() => {});
+      // جلب إعداد الخريطة للجميع
+      fetchMapVisibility();
     }
     if (isAdmin) {
       fetchAdmin();
       fetchRamadanSettings();
-      fetchMapVisibility();
       fetchAttendanceRequests();
     }
   };
