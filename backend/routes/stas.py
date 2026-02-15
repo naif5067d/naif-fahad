@@ -114,27 +114,26 @@ async def get_before_after(tx):
 
 @router.get("/mirror/{transaction_id}")
 async def get_mirror(transaction_id: str, user=Depends(require_roles('stas'))):
+    """
+    مرآة STAS الشاملة - تعرض جميع البيانات قبل التنفيذ
+    """
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    pre_checks = await run_pre_checks(tx)
-    trace_links = await get_trace_links(tx)
-    before_after = await get_before_after(tx)
-    all_pass = all(c['status'] == 'PASS' for c in pre_checks)
-
-    emp = None
-    if tx.get('employee_id'):
-        emp = await db.employees.find_one({"id": tx['employee_id']}, {"_id": 0})
-
-    return {
-        "transaction": tx,
-        "employee": emp,
-        "pre_checks": pre_checks,
-        "all_checks_pass": all_pass,
-        "trace_links": trace_links,
-        "before_after": before_after,
-    }
+    # استخدام Service Layer لبناء بيانات المرآة
+    mirror_data = await build_mirror_data(tx)
+    
+    # إضافة بيانات إضافية للتوافقية
+    mirror_data["trace_links"] = await get_trace_links(tx)
+    
+    # للمخالصة - إضافة تفاصيل إضافية
+    if tx.get('type') == 'settlement' and tx.get('employee_id'):
+        from services.settlement_service import get_settlement_mirror_data
+        settlement_data = await get_settlement_mirror_data(tx['employee_id'])
+        mirror_data["settlement_details"] = settlement_data
+    
+    return mirror_data
 
 
 @router.post("/execute/{transaction_id}")
