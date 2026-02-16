@@ -542,19 +542,29 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             # Timestamp
             timestamp = format_saudi_time(approval.get('timestamp'))
             
-            # Signature: BARCODE for STAS, QR for others
+            # Signature: BARCODE for STAS with Ref No underneath, QR for others
             approver_id = approval.get('approver_id', '')[:8]
             if stage == 'stas':
-                # BARCODE for STAS with transaction ID
+                # BARCODE for STAS with Ref No underneath
                 sig_code = f"STAS-{ref_no[-8:]}"
-                sig_img = create_barcode_image(sig_code, width=35, height=8)
+                barcode_drawing = create_barcode_image(sig_code, width=35, height=8)
+                if barcode_drawing:
+                    # Create a table with barcode + ref_no text underneath
+                    ref_text = Paragraph(f"<font size='5'>{ref_no}</font>", ParagraphStyle('ref', alignment=TA_CENTER, fontSize=5))
+                    sig_table = Table([[barcode_drawing], [ref_text]], colWidths=[40*mm], rowHeights=[10*mm, 4*mm])
+                    sig_table.setStyle(TableStyle([
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ]))
+                    sig_img = sig_table
+                else:
+                    sig_img = f"[STAS-{ref_no[-8:]}]"
             else:
                 # QR code for others
                 sig_data = f"{stage}-{approver_id}"
                 sig_img = create_qr_image(sig_data, size=12)
-            
-            if sig_img is None:
-                sig_img = f"[{approver_id[:6]}]"
+                if sig_img is None:
+                    sig_img = f"[{approver_id[:6]}]"
             
             approval_data.append([stage_display, approver_display, action_display, timestamp, sig_img])
         
