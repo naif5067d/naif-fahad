@@ -181,16 +181,17 @@ def get_labels(lang: str):
             'settlement': 'تسوية',
             'contract': 'عقد',
             'salary_advance': 'سلفة راتب',
-            # Statuses
+            # Statuses - تجنب شخصنة STAS
             'executed': 'منفذة',
             'rejected': 'مرفوضة',
             'cancelled': 'ملغاة',
-            'stas': 'STAS',
+            'stas': 'بانتظار التنفيذ',
             'pending_supervisor': 'بانتظار المشرف',
             'pending_ops': 'بانتظار العمليات',
             'pending_finance': 'بانتظار المالية',
             'pending_ceo': 'بانتظار CEO',
             'pending_employee_accept': 'بانتظار الموظف',
+            'returned': 'معادة',
             # Stages
             'supervisor': 'المشرف',
             'ops': 'العمليات',
