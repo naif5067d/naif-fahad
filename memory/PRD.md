@@ -562,7 +562,40 @@ Contract activation flow:
 
 ---
 
-Version: 19.0 (2026-02-16)
+Version: 20.0 (2026-02-16)
+
+---
+
+### Phase 20: STAS Barcode Cut-Out & UI Labels ✅ (2026-02-16)
+
+**Completed - PDF Barcode Cut-Out Section:**
+- ✓ PDF يحتوي على قسم باركود قابل للقص أسفل الورقة
+- ✓ خط منقط مع رمز المقص (✂) فوق المربع للقص السهل
+- ✓ المربع يحتوي على: اسم الشركة، نوع المعاملة، اسم الموظف، الباركود، Ref No، التاريخ
+- ✓ نسختين من الباركود: واحدة في جدول الموافقات + واحدة للقص
+
+**Completed - Arabic Approver Names:**
+- ✓ اسم المعتمد (approver_name) يستخدم full_name_ar بدلاً من full_name
+- ✓ المعاملات الجديدة ستظهر الاسم العربي للمعتمد
+
+**Completed - STAS De-personalization:**
+- ✓ استبدال "بانتظار STAS" → "بانتظار التنفيذ"
+- ✓ استبدال "المرحلة: STAS" → "المرحلة: التنفيذ"
+- ✓ STAS يبقى كاسم النظام فقط (ليس شخص)
+
+**Completed - Status Colors:**
+- ✓ 🟢 أخضر = منفذة (executed - approved)
+- ✓ 🔴 أحمر = مرفوضة/ملغاة (rejected/cancelled)
+- ✓ 🔵 أزرق = معادة (returned)
+
+**Files Modified:**
+- `/app/backend/utils/pdf.py` - CUT-OUT BARCODE SECTION (lines 651-718)
+- `/app/backend/routes/transactions.py` - approver_name uses full_name_ar (line 177)
+- `/app/frontend/src/pages/TransactionsPage.js` - STATUS_CONFIG + STAGE_CONFIG updates
+- `/app/frontend/src/lib/translations.js` - stas → بانتظار التنفيذ
+
+**Test Report:**
+- `/app/test_reports/iteration_20.json` - 100% pass rate for all features
 
 ---
 
@@ -604,9 +637,12 @@ Version: 19.0 (2026-02-16)
 ## Current Priority Queue (User's 7-Point List)
 
 ### ✅ Completed:
-1. ~~STAS Seal: Barcode instead of QR with Ref No underneath~~
-2. ~~STAS Execution: One-time execution only~~
-7. ~~Map Logic: Employees see read-only map with colored pins~~
+1. ~~STAS Seal: Barcode instead of QR with Ref No underneath~~ ✓
+2. ~~STAS Execution: One-time execution only~~ ✓
+7. ~~Map Logic: Employees see read-only map with colored pins~~ ✓
+8. ~~STAS De-personalization: Remove "بانتظار STAS" terminology~~ ✓
+9. ~~PDF Cut-Out: Barcode section at bottom for filing~~ ✓
+10. ~~Status Colors: Green=approved, Red=rejected, Blue=returned~~ ✓
 
 ### 🔴 Remaining P0:
 3. **Language Integrity (100%)** - Ensure UI & PDF are fully Arabic OR fully English with no mixing
