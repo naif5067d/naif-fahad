@@ -148,8 +148,30 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
+    # منع التنفيذ المكرر - CRITICAL: one-time execution only
     if tx['status'] == 'executed':
-        return {"message": "Already executed (idempotent)", "status": "executed", "ref_no": tx['ref_no']}
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "ALREADY_EXECUTED",
+                "message_ar": "تم تنفيذ هذه المعاملة مسبقاً - لا يمكن التنفيذ مرة أخرى",
+                "message_en": "Transaction already executed - cannot execute again",
+                "ref_no": tx['ref_no'],
+                "executed_at": tx.get('executed_at')
+            }
+        )
+    
+    # حالات إضافية تمنع التنفيذ
+    if tx['status'] in ('cancelled', 'rejected'):
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "INVALID_STATUS",
+                "message_ar": f"لا يمكن تنفيذ معاملة بحالة {tx['status']}",
+                "message_en": f"Cannot execute transaction with status {tx['status']}",
+                "status": tx['status']
+            }
+        )
 
     # تشغيل الفحوصات المسبقة
     pre_checks = await run_pre_checks(tx)
