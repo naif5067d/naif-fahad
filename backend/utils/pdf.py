@@ -59,7 +59,7 @@ for font_name, regular_file, bold_file in [
             ARABIC_FONT = f'{font_name}Arabic'
             ARABIC_FONT_BOLD = f'{font_name}ArabicBold'
             break
-    except Exception as e:
+    except Exception:
         continue
 
 
