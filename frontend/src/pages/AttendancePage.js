@@ -428,18 +428,35 @@ export default function AttendancePage() {
             </div>
           )}
 
-          {/* عرض الخريطة للموظفين - يظهر للجميع إذا مفعل */}
-          {mapVisible && (
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <p className="text-sm font-medium text-emerald-700 mb-2 flex items-center gap-2">
-                <Eye size={16} />
-                موقعك على الخريطة متاح للمشرفين
-              </p>
-              {gpsState.available && (
-                <p className="text-xs text-muted-foreground">
-                  إحداثياتك: {gpsState.lat?.toFixed(4)}, {gpsState.lng?.toFixed(4)}
+          {/* عرض الخريطة للموظفين - يظهر للجميع إذا مفعل من الإدارة */}
+          {mapVisible && allLocations.length > 0 && (
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-primary flex items-center gap-2">
+                  <Map size={16} />
+                  مواقع العمل
                 </p>
-              )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMapDialog(true)}
+                  className="h-8"
+                  data-testid="view-map-btn"
+                >
+                  <Eye size={14} className="me-1" />
+                  عرض الخريطة
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                  موقعك المعين
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                  مواقع أخرى
+                </span>
+              </div>
             </div>
           )}
 
