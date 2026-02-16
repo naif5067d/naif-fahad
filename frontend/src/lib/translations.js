@@ -282,9 +282,10 @@ export const translations = {
       ops: "العمليات",
       finance: "المالية",
       ceo: "CEO",
-      stas: "STAS",
+      stas: "بانتظار التنفيذ",
       executed: "منفذة",
       rejected: "مرفوضة",
+      returned: "معادة",
       employee_accept: "قبول الموظف",
       cancelled: "ملغاة",
       completed: "مكتملة"
@@ -292,10 +293,11 @@ export const translations = {
     status: {
       created: "تم الإنشاء", pending_supervisor: "بانتظار المشرف",
       pending_ops: "بانتظار العمليات", pending_finance: "بانتظار المالية",
-      pending_ceo: "بانتظار CEO", stas: "STAS",
+      pending_ceo: "بانتظار CEO", stas: "بانتظار التنفيذ",
       pending_employee_accept: "بانتظار الموظف",
       executed: "منفذة", rejected: "مرفوضة", completed: "مكتملة",
-      cancelled: "ملغاة", approved: "تمت الموافقة", pending: "معلق"
+      cancelled: "ملغاة", approved: "تمت الموافقة", pending: "معلق",
+      returned: "معادة"
     },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
     theme: { light: "فاتح", dark: "داكن", toggle: "تبديل المظهر" },
