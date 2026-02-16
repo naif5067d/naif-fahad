@@ -589,16 +589,16 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ]))
         elements.append(approval_table)
     
-    # ============ EXECUTION STAMP (STAS BARCODE) ============
+    # ============ EXECUTION STAMP (STAS BARCODE with Ref No) ============
     if transaction.get('status') == 'executed':
         elements.append(Spacer(1, 4*mm))
         
         executed_label = format_text_bilingual(labels['executed_by'], lang)
         stamp_date = format_saudi_time(transaction.get('updated_at'))
         
-        # Create execution barcode with transaction ref
-        exec_code = f"EXEC-{ref_no[-8:]}-{integrity_id[:4]}"
-        barcode_img = create_barcode_image(exec_code, width=50, height=12)
+        # Create execution barcode with unique transaction identifier
+        exec_code = f"EXEC-{ref_no.replace('TXN-', '')}"
+        barcode_img = create_barcode_image(exec_code, width=55, height=14)
         
         # Build stamp content
         stamp_elements = [
@@ -608,21 +608,21 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         
         if barcode_img:
             stamp_elements.append([barcode_img])
-            stamp_heights.append(18*mm)
+            stamp_heights.append(20*mm)
         
-        # Transaction ID under barcode
-        tx_id_label = format_text_bilingual(labels['transaction_id'], lang)
-        stamp_elements.append([Paragraph(f"{tx_id_label}: {ref_no}", styles['small_bold'])])
-        stamp_heights.append(5*mm)
+        # Ref No clearly displayed under barcode (REQUIRED)
+        ref_no_style = ParagraphStyle('ref_bold', fontName=bold_font, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
+        stamp_elements.append([Paragraph(f"Ref No: {ref_no}", ref_no_style)])
+        stamp_heights.append(6*mm)
         
         stamp_elements.append([Paragraph(stamp_date, styles['small'])])
         stamp_heights.append(4*mm)
         
-        stamp_table = Table(stamp_elements, colWidths=[60*mm], rowHeights=stamp_heights)
+        stamp_table = Table(stamp_elements, colWidths=[65*mm], rowHeights=stamp_heights)
         stamp_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BOX', (0, 0), (-1, -1), 1, NAVY),
+            ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
             ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
         ]))
         
