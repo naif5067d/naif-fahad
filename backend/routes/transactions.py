@@ -270,7 +270,7 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                 "$push": {"timeline": {
                     "event": "returned",
                     "actor": user['user_id'],
-                    "actor_name": user.get('full_name', user['username']),
+                    "actor_name": user.get('full_name_ar', user.get('full_name', user['username'])),
                     "timestamp": now,
                     "note": body.note or "Returned to Sultan by STAS",
                     "stage": "stas"
@@ -299,7 +299,7 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                 "$push": {"timeline": {
                     "event": "returned",
                     "actor": user['user_id'],
-                    "actor_name": user.get('full_name', user['username']),
+                    "actor_name": user.get('full_name_ar', user.get('full_name', user['username'])),
                     "timestamp": now,
                     "note": body.note or "Returned to CEO by STAS",
                     "stage": "stas"
