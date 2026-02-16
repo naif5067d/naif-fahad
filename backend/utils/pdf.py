@@ -202,7 +202,7 @@ def get_labels(lang: str):
             'approve': 'موافقة',
             'approved': 'موافقة',
             'reject': 'رفض',
-            'rejected': 'مرفوض',
+            'reject_action': 'مرفوض',
             'escalate': 'تصعيد',
             'escalated': 'تم التصعيد',
             # Data fields
