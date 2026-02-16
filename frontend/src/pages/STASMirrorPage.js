@@ -480,7 +480,7 @@ export default function STASMirrorPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Mobile Decision Bar - Fixed at bottom */}
+      {/* Mobile Decision Bar - Fixed at bottom - منع التنفيذ المكرر */}
       {mirror && (
         <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t border-border p-4 shadow-lg z-40" data-testid="mobile-decision-bar">
           <div className="flex gap-3 max-w-lg mx-auto">
@@ -492,15 +492,21 @@ export default function STASMirrorPage() {
             >
               <FileText size={16} className="me-1" /> {t('common.preview')}
             </Button>
-            <Button
-              data-testid="stas-execute-btn-mobile"
-              onClick={handleExecute}
-              disabled={!mirror.all_checks_pass || executing}
-              className={`flex-1 ${mirror.all_checks_pass ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground'}`}
-            >
-              {executing ? <Loader2 size={16} className="me-1 animate-spin" /> : <Shield size={16} className="me-1" />}
-              {t('stas.execute')}
-            </Button>
+            {mirror.transaction?.status === 'executed' ? (
+              <div className="flex-1 h-10 bg-emerald-100 text-emerald-700 rounded-md flex items-center justify-center gap-1 text-sm font-medium">
+                <CheckCircle size={14} /> {lang === 'ar' ? 'تم التنفيذ' : 'Executed'}
+              </div>
+            ) : (
+              <Button
+                data-testid="stas-execute-btn-mobile"
+                onClick={handleExecute}
+                disabled={!mirror.all_checks_pass || executing}
+                className={`flex-1 ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground'}`}
+              >
+                {executing ? <Loader2 size={16} className="me-1 animate-spin" /> : <Shield size={16} className="me-1" />}
+                {t('stas.execute')}
+              </Button>
+            )}
           </div>
         </div>
       )}
