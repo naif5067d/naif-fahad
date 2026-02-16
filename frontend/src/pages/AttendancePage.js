@@ -137,6 +137,14 @@ export default function AttendancePage() {
     } catch (err) {}
   };
 
+  // جلب جميع مواقع الشركة عندما تكون الخريطة مفعلة
+  const fetchAllLocations = async () => {
+    try {
+      const res = await api.get('/api/work-locations');
+      setAllLocations(res.data?.filter(l => l.is_active !== false) || []);
+    } catch (err) {}
+  };
+
   const fetchAttendanceRequests = async () => {
     try {
       const res = await api.get('/api/transactions', {
@@ -149,6 +157,8 @@ export default function AttendancePage() {
   const fetchData = () => {
     // جلب إعداد الخريطة للجميع
     fetchMapVisibility();
+    // جلب جميع المواقع للخريطة
+    fetchAllLocations();
     
     if (isEmployee || isAdmin) {
       api.get('/api/attendance/today').then(r => setToday(r.data)).catch(() => {});
