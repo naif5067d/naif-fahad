@@ -50,10 +50,11 @@ const STAGE_CONFIG = {
   ops: 'العمليات',
   finance: 'المالية',
   ceo: 'المدير التنفيذي',
-  stas: 'STAS',
+  stas: 'التنفيذ',
   employee_accept: 'قبول الموظف',
   completed: 'مكتملة',
   cancelled: 'ملغاة',
+  returned: 'معادة',
 };
 
 export default function TransactionsPage() {
