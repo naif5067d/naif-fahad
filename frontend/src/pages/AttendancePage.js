@@ -61,6 +61,7 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(false);
   const [workLocation, setWorkLocation] = useState('');
   const [assignedLocations, setAssignedLocations] = useState([]);
+  const [allLocations, setAllLocations] = useState([]); // جميع مواقع الشركة
   const [adminData, setAdminData] = useState([]);
   const [period, setPeriod] = useState('daily');
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().slice(0, 10));
@@ -71,6 +72,7 @@ export default function AttendancePage() {
   const [showRamadanDialog, setShowRamadanDialog] = useState(false);
   const [ramadanForm, setRamadanForm] = useState({ start_date: '', end_date: '', work_start: '09:00', work_end: '15:00' });
   const [mapVisible, setMapVisible] = useState(false);
+  const [showMapDialog, setShowMapDialog] = useState(false); // dialog لعرض الخريطة
   const [attendanceRequests, setAttendanceRequests] = useState([]);
   
   // حالات طلبات الحضور
