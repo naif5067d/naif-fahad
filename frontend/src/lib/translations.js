@@ -128,9 +128,10 @@ export const translations = {
       ops: "Operations",
       finance: "Finance",
       ceo: "CEO",
-      stas: "STAS",
+      stas: "Pending Execution",
       executed: "Executed",
       rejected: "Rejected",
+      returned: "Returned",
       employee_accept: "Employee Acceptance",
       cancelled: "Cancelled",
       completed: "Completed"
@@ -138,10 +139,11 @@ export const translations = {
     status: {
       created: "Created", pending_supervisor: "Pending Supervisor",
       pending_ops: "Pending Ops", pending_finance: "Pending Finance",
-      pending_ceo: "Pending CEO", stas: "STAS",
+      pending_ceo: "Pending CEO", stas: "Pending Execution",
       pending_employee_accept: "Pending Employee",
       executed: "Executed", rejected: "Rejected", completed: "Completed",
-      cancelled: "Cancelled", approved: "Approved", pending: "Pending"
+      cancelled: "Cancelled", approved: "Approved", pending: "Pending",
+      returned: "Returned"
     },
     theme: { light: "Light", dark: "Dark", toggle: "Toggle Theme" },
     lang: { toggle: "العربية", current: "English" },
