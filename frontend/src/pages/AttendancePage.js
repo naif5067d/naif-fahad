@@ -1027,6 +1027,101 @@ export default function AttendancePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: خريطة مواقع العمل للقراءة فقط */}
+      <Dialog open={showMapDialog} onOpenChange={setShowMapDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Map size={20} className="text-primary" />
+              خريطة مواقع العمل
+              <span className="text-xs text-muted-foreground font-normal ms-2">(للقراءة فقط)</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* شرح الألوان */}
+            <div className="flex flex-wrap gap-4 p-3 bg-muted/50 rounded-lg text-sm">
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-red-500 rounded-full"></span>
+                <span>موقعك المعين للبصمة</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 bg-blue-500 rounded-full"></span>
+                <span>مواقع الشركة الأخرى</span>
+              </span>
+            </div>
+            
+            {/* الخريطة */}
+            <div className="h-96 rounded-xl overflow-hidden border border-border">
+              {allLocations.length > 0 && (
+                <MapContainer
+                  center={[
+                    assignedLocations[0]?.latitude || allLocations[0]?.latitude || 24.7136,
+                    assignedLocations[0]?.longitude || allLocations[0]?.longitude || 46.6753
+                  ]}
+                  zoom={12}
+                  style={{ height: '100%', width: '100%' }}
+                  zoomControl={true}
+                  dragging={true}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenStreetMap'
+                  />
+                  {allLocations.map(loc => {
+                    // هل هذا الموقع معين للموظف الحالي؟
+                    const isAssignedToMe = assignedLocations.some(a => a.id === loc.id);
+                    return (
+                      <div key={loc.id}>
+                        <Marker
+                          position={[loc.latitude, loc.longitude]}
+                          icon={isAssignedToMe ? redIcon : blueIcon}
+                        />
+                        <Circle
+                          center={[loc.latitude, loc.longitude]}
+                          radius={loc.radius_meters || 500}
+                          pathOptions={{
+                            color: isAssignedToMe ? '#EF4444' : '#3B82F6',
+                            fillColor: isAssignedToMe ? '#EF4444' : '#3B82F6',
+                            fillOpacity: 0.15
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </MapContainer>
+              )}
+            </div>
+            
+            {/* قائمة المواقع */}
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {allLocations.map(loc => {
+                const isAssignedToMe = assignedLocations.some(a => a.id === loc.id);
+                return (
+                  <div 
+                    key={loc.id} 
+                    className={`p-3 rounded-lg border flex items-center justify-between ${
+                      isAssignedToMe ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3 h-3 rounded-full ${isAssignedToMe ? 'bg-red-500' : 'bg-blue-500'}`}></span>
+                      <div>
+                        <p className="text-sm font-medium">{loc.name_ar || loc.name}</p>
+                        <p className="text-xs text-muted-foreground">{loc.work_start} - {loc.work_end}</p>
+                      </div>
+                    </div>
+                    {isAssignedToMe && (
+                      <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">معين لك</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
