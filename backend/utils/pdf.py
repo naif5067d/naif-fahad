@@ -268,7 +268,7 @@ def get_labels(lang: str):
             'approve': 'Approved',
             'approved': 'Approved',
             'reject': 'Rejected',
-            'rejected': 'Rejected',
+            'reject_action': 'Rejected',
             'escalate': 'Escalated',
             'escalated': 'Escalated',
             # Data fields
