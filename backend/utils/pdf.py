@@ -318,9 +318,15 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     
     labels = get_labels(lang)
     
-    # Get branding if not provided
+    # Get branding if not provided - use default if not passed
     if branding is None:
-        branding = get_company_branding_sync()
+        branding = {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي",
+            "logo_data": None
+        }
     
     # Choose fonts based on language
     if lang == 'ar' and ARABIC_FONT:
