@@ -196,7 +196,7 @@ export default function TransactionsPage() {
                 <SelectItem value="pending_supervisor">بانتظار المشرف</SelectItem>
                 <SelectItem value="pending_ops">بانتظار العمليات</SelectItem>
                 <SelectItem value="pending_finance">بانتظار المالية</SelectItem>
-                <SelectItem value="stas">بانتظار STAS</SelectItem>
+                <SelectItem value="stas">بانتظار التنفيذ</SelectItem>
                 <SelectItem value="executed">منفذة</SelectItem>
                 <SelectItem value="rejected">مرفوضة</SelectItem>
               </SelectContent>
