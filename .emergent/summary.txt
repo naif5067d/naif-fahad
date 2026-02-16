@@ -1,73 +1,112 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. After a successful bug-fixing phase, the project's direction has shifted to a complete overhaul of the **Contract Management System**, deprecating the old system in favor of a new Contracts V2 workflow.
+The user's primary goal is to build a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The project has moved past an initial bug-fixing and audit phase. The current focus is on a series of high-priority refinements based on the audit's findings, which are a prerequisite for the main upcoming task: a complete overhaul of the Contract Management System (Contracts V2).
 
-However, before starting this new development, the user has issued a mandatory, high-priority request for a **comprehensive, text-only, code-based audit** of the entire existing application. This audit must be completed and approved by the user before any work on Contracts V2 can begin.
+The user has provided a strict, prioritized list of tasks:
+1.  **STAS Seal:** Replace the QR code in PDF transaction seals with a  generated barcode, including the  underneath.
+2.  **STAS Execution:** Enforce one-time execution for all STAS transactions, blocking repeated clicks on the Execute button.
+3.  **Language & PDF Integrity:** Ensure 100% language purity (either full Arabic or full English, no mixing) in both the UI preview and the final PDF output. Text must render correctly without broken characters or RTL/LTR issues.
+4.  **Standardized Letterhead:** Implement a fixed, official header/footer for all transaction previews and generated PDFs.
+5.  **UI Display Limit:** Limit the display of transactions to a maximum of 4 items in specified views.
+6.  **Transaction Blocking Rule:** Implement a backend rule to prevent a user from creating a new transaction of a certain type (e.g., leave request) if another one of the same type is already pending.
+7.  **Map Logic Finalization:** Clarify and implement the map visibility rules: employees see only work locations, while managers see the employee's live location pin.
 
-The user has also imposed two strict, non-negotiable rules for the application:
-1.  **Full Language Standardization:** The app must support only two modes: 100% Arabic (default) or 100% English, with no mixed-language UI.
-2.  **Strict Date/Time Formatting:** All dates and times in the UI must be in a human-readable  format.
+Only after these seven points are completed can the agent proceed with the larger tasks of implementing Contracts V2, migrating old employees, and building the new settlement flow.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The application is in a stable, functional state following a major bug-fixing phase where issues with map visibility, UI translation, date formats, workflows, and leave logic were resolved and verified.
-
-The current agent's session has been dedicated to fulfilling the user's new request for a system-wide audit. To this end, the agent has performed an extensive review of the codebase, reading dozens of frontend () and backend () files to build a deep understanding of the system's architecture, workflows, and data models. The application is running, and the agent has confirmed its state via preliminary file checks.
+The previous agent successfully completed a comprehensive, text-only, code-based audit of the entire application as requested by the user. The agent delivered a detailed report covering the application's routes, data connections, STAS Mirror logic, language/date implementation, and a GAP analysis. The user has acknowledged this report and provided a new set of prioritized instructions based on its findings. The application is in a stable, running state.
 
 **Last working item**:
--   **Last item agent was working:** Performing a comprehensive, code-based system audit as per the user's explicit and detailed instructions in the latest message. The user requires a textual report analysing routes, data connections, STAS Mirror logic, language/date implementation, and a final GAP analysis, strictly forbidding screenshots. The agent was gathering information by reading files.
+-   **Last item agent was working:** Starting the implementation of the user's new 7-point priority list. The first task is to replace the QR code in generated PDFs with a barcode. The agent was in the process of reading the relevant files to begin this work.
 -   **Status:** IN PROGRESS
--   **Agent Testing Done:** N/A (Task is analysis, not implementation)
--   **Which testing method agent to use?** N/A
--   **User Testing Done:** N/A
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** A combination of methods will be needed:
+    -   For PDF generation changes (barcode, letterhead): Backend testing.  the PDF endpoint and manually inspect the downloaded file.
+    -   For UI changes (language, display limits, map): Use the screenshot tool.
+    -   For complex backend logic (one-time execution, transaction blocking): Backend testing via  with validation and/or calling the  to create automated tests for these critical rules.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Complete the Comprehensive System Audit (P0 - Highest Priority)**
-    -   **Description:** The user has blocked all development pending a detailed, text-only, code-based report on the current system. The agent must deliver this report, addressing every point from the user's last message, before proceeding.
-    -   **Attempted fixes:** The agent has read most of the relevant project files. The initial approach was based on a more general checklist, but the user clarified they need a purely programmatic analysis. The gathered information is still valid, but it needs to be synthesized into the specific textual format the user demanded.
+This list is derived directly from the user's latest request (message #23).
+
+-   **Issue 1: Implement Barcode for STAS Seal in PDFs (P0)**
+-   **Issue 2: Enforce One-Time STAS Execution (P0)**
+-   **Issue 3: Ensure 100% Language Integrity in UI & PDFs (P0)**
+-   **Issue 4: Implement Standardized Official Letterhead (P1)**
+-   **Issue 5: Limit Transaction View to 4 Items (P1)**
+-   **Issue 6: Block Duplicate Pending Transactions (P1)**
+-   **Issue 7: Finalize and Implement Map Visibility Logic (P1)**
+
+**Issues Detail:**
+-   **Issue 1: Implement Barcode for STAS Seal in PDFs (P0)**
+    -   **Attempted fixes:** None. This is a new task.
     -   **Next debug checklist:**
-        1.  Synthesize all the information gathered from reading frontend and backend files.
-        2.  Structure the findings into a clear, textual report that directly answers each of the user's questions from their last message (Routes Map, Wiring/Trace Links, STAS Mirror Coverage, Language/Date Gaps, Feature Logic, Final GAP list).
-        3.  Use  to find all API endpoints in  and trace their usage in the  directory to create the Routes Map.
-        4.  Analyze  and  to document the transaction workflows, data dependencies (), and the logic for  in the STAS mirror.
-        5.  Use  to find any remaining hardcoded English text in the frontend and identify the central date-formatting utilities.
-        6.  Present this complete textual report to the user in Arabic for approval.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a mandatory prerequisite from the user. Completing it will provide a shared, accurate understanding of the current system, unblock the Contracts V2 development, and prevent future rework.
-    -   **Status:** IN PROGRESS
+        1.  Install the  library (Looking in indexes: https://pypi.org/simple, https://d33sy5i8bnduwe.cloudfront.net/simple/
+Collecting python-barcode
+  Downloading python_barcode-0.16.1-py3-none-any.whl.metadata (2.7 kB)
+Downloading python_barcode-0.16.1-py3-none-any.whl (228 kB)
+Installing collected packages: python-barcode
+Successfully installed python-barcode-0.16.1).
+        2.  Locate the PDF generation logic (likely in a file like  or within ).
+        3.  Replace the existing  generation logic with . The barcode should encode the transaction ID or a unique hash.
+        4.  Render the transaction's  as text directly below the generated barcode image in the PDF.
+        5.  Test by calling the PDF endpoint and visually inspecting the output.
+    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's specific requirement for a barcode seal, which they perceive as more official than a QR code for STAS-executed transactions.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** N/A
-    -   **Blocked on other issue:** None. This task is the primary blocker.
+    -   **Should Test frontend/backend/both after fix?** Backend (manual PDF inspection).
+    -   **Blocked on other issue:** None.
+
+-   **Issue 2: Enforce One-Time STAS Execution (P0)**
+    -   **Next debug checklist:**
+        1.  **Backend:** In , modify the  endpoint. Before executing, check the  collection for the given transaction's status. If it's already  or , return a 400 error with a clear message.
+        2.  **STAS Mirror:** In , add a  that returns  if the transaction has already been executed.
+        3.  **Frontend:** In the  component, disable the Execute button immediately after a successful API call or if the loaded mirror data indicates the transaction was already executed.
+    -   **Why fix this issue and what will be achieved with the fix?** Prevents accidental duplicate processing of transactions, which could have serious financial or operational consequences. Ensures data integrity.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both.
+
+-   **Issue 3: Ensure 100% Language Integrity in UI & PDFs (P0)**
+    -   **Next debug checklist:**
+        1.  Reference the GAP analysis from the audit (message #22) to find all hardcoded text in files like  and .
+        2.  Replace all hardcoded strings with  and add the corresponding entries to  and .
+        3.  Fix the missing  key.
+        4.  Review the PDF generation logic to ensure it accepts a  parameter and uses the correct translations and RTL/LTR direction when rendering text.
+    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a non-negotiable user requirement for a fully bilingual application with no mixed-language interfaces.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y (Hardcoded text is a recurring theme).
+    -   **Should Test frontend/backend/both after fix?** Both (UI screenshots and PDF inspection).
 
 **In progress Task List**:
--   **Task 1: Comprehensive System Audit**
-    -   **Where to resume:** The agent has completed the file-reading phase. The next step is to process and structure this information into the specific textual report format requested by the user. The agent must now generate the final report for the user's review.
-    -   **What will be achieved with this?** A detailed, code-based audit report that meets the user's requirements and unblocks further development.
+-   **Task 1: Complete 7-Point Priority List**
+    -   **Where to resume:** Begin with Issue 1: Implementing the barcode seal. The first step is to read the relevant PDF generation and transaction route files.
+    -   **What will be achieved with this?** This will complete all user-mandated prerequisites, unblocking the development of the Contracts V2 system.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** N/A
+    -   **Should Test frontend/backend/both after fix?** Both
     -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0: Implement New Contract Management System (V2) & Enforce Strict Standardization Rules (BLOCKED by System Audit)**
-        -   **Phase 1: Planning & Cleanup:** Delete old contract system UI/API, archive  collection.
-        -   **Phase 2: New Contract & User Lifecycle:** Build New Contract flow with STAS approval and automated user provisioning.
-        -   **Phase 3: Employee Migration & Data Snapshot:** Build Migrate Employee flow with opening data snapshot.
-        -   **Phase 4: System-Wide Standardization:** Implement global language toggle (Ar/En) and enforce  date format.
-        -   **Phase 5: STAS Enhancements:** Build User Management view for STAS.
+    -   **P0:** Implement Contract V2 System (Create new contract flow).
+    -   **P1:** Implement Employee Migration to V2 (with opening data snapshot).
+    -   **P2:** Implement Settlement Module (linked to V2 contracts and final STAS execution).
 -   **Future Tasks:**
-    -   **P1:** Settlement Module
-    -   **P2:** CEO Dashboard & Employee Profile Card
-    -   **P3:** Warnings & Loans Modules
+    -   **P1:** Settlement Module (This was also listed as future, but is now part of the upcoming V2 work).
+    -   **P2:** CEO Dashboard & Employee Profile Card.
+    -   **P3:** Warnings & Loans Modules.
 
 **Completed work in this session**
--   None. The current session has been dedicated to investigation and analysis for the audit task.
+-   Delivered a comprehensive, text-only, code-based system audit as per the user's detailed specifications. This included a full GAP Analysis identifying current system flaws and areas for improvement.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Missing translation key**
-    -   **Debug checklist:** The agent observed the text  in the UI. Investigation confirmed the key is missing from .
-    -   **Why to solve this issue and what will be achieved with this?** Fixing this will ensure the UI is 100% translated as per the user's strict rules.
-    -   **Should Test frontend/backend/both after fix:** Frontend
-    -   **Is recurring issue?** N
+The audit (message #22) revealed several GAPs. The user's new priority list addresses some, but the following are still outstanding:
+-   **Issue 1: Incomplete Admin Attendance Data:** The  endpoint does not calculate or return the  and  fields, causing the frontend summary to always show '0' for these stats.
+-   **Issue 2: Global-Only Ramadan Hours:** The Ramadan schedule is applied globally to all work locations. There is no support for per-location or per-project Ramadan hours.
+-   **Issue 3: Lax GPS Validation:** The backend accepts check-in/out records even if the  flag is .
+-   **Issue 4: Missing Frontend Date Validation:** The frontend allows users to submit leave requests for dates in the past.
+-   **Issue 5: Unsynced Leave Balance:** The leave entitlement from contracts is not automatically synchronized as a credit into the , requiring manual intervention.
 
 **Known issue recurrence from previous fork**
 -   None.
@@ -76,55 +115,63 @@ The current agent's session has been dedicated to fulfilling the user's new requ
 
 
 **Key Technical Concepts**
--   **i18n (Internationalization):** Full language toggling (Arabic/English).
--   **User/Contract Lifecycle Management:** A contract-driven process for user creation and system integration.
--   **Data Governance & Auditing:** The STAS mirror serves as a central hub for auditing system linkages and user activity.
--   **Data Migration:** A dedicated flow for onboarding existing employees with a data snapshot.
+-   **Barcode Generation:** Using  for generating transaction seals.
+-   **PDF Generation:** Server-side PDF creation from HTML/CSS templates.
+-   **Stateful Backend Rules:** Implementing logic that checks the current state of other documents before allowing an action (e.g., blocking duplicate transactions).
+-   **i18n (Internationalization):** Full language toggling (Arabic/English) with no mixed content.
 
 **key DB schema**
--   ****: Legacy/Archival. Do not delete the collection, but do not use.
--   ****: New source of truth for all contracts.
--   ****: Linked to .
--   ****: New collection needed for STAS user session monitoring.
+-   ****: The  field will be critical for the one-time execution and duplicate transaction blocking rules.
+-   ****: New source of truth for all contracts (To be created).
+-   ****: Core employee data.
+-   ****: Stores system-wide configurations like map visibility.
+
+**changes in tech stack**
+-   **** will be introduced to replace  for generating STAS seals in PDFs.
 
 **All files of reference**
--   **User Instructions:** User messages **#72 (latest and most critical)** and #4. The handoff summary detailing the V2 requirements (derived from messages 138, 141, 162) is also relevant for post-audit planning.
--   **Key files for audit:** The entire  and  directories.
+-   **Primary User Request:** User Message #23. This is the source of truth for the current set of tasks.
+-   **Audit Report:** Agent Message #22. Contains the GAP analysis useful for fixing smaller issues.
+-   **PDF Generation:**  (specifically ) and any related service/utility files.
+-   **STAS Logic:**  (specifically ).
+-   **Language Files:** , .
+-   **Hardcoded Text:** , .
 
 **Areas that need refactoring**:
--   **Contract Management:** Complete removal of the old system's UI and routes.
--   **Internationalization (i18n):** All hardcoded text must be moved to translation files.
--   **Date/Time Handling:** Centralize and enforce a single utility for all date formatting to the  timezone.
+-   **Contract Management:** The entire legacy  V1 system (routes, models, UI) must be deprecated and removed once V2 is established.
+-   **Hardcoded Text:** A systematic removal of all hardcoded UI text in favor of the i18n translation files is required.
+-   **PDF Generation:** Logic should be centralized to easily apply the new standard letterhead across all transaction types.
 
 **key api endpoints**
--   : **TO BE DELETED.**
--   : To create a new contract and employee.
--   : To migrate an existing employee to a V2 contract.
--   : To fetch data for the STAS user management view.
+-   : To be modified for barcode seal and standard letterhead.
+-   : To be modified to prevent re-execution.
+-    (and similar creation endpoints): To be modified with a pre-check to block creation if a pending transaction of the same type exists for the user.
 
 **Critical Info for New Agent**
--   Your **only** immediate task is to complete the comprehensive, code-based audit and present it to the user as a **textual report in Arabic**.
--   **DO NOT** start coding Contracts V2. **DO NOT** use screenshots or perform UI-based checks. The user has been very explicit about this.
--   The user's last message (#72) is the single source of truth for the audit requirements. Address every point meticulously.
--   This audit is a **hard blocker** for all other development tasks. You must get the user's approval on the audit report before doing anything else.
+-   You MUST complete the 7 high-priority tasks from the user's latest message before starting any work on the Contracts V2 system. The user is tracking this sequence closely.
+-   The very first task is to replace the QR code with a barcode in PDFs.
+-   The user wants to see proof of changes to conserve cards, so be clear and concise about what you have modified in your responses.
+-   Adherence to the 100% Arabic or 100% English rule is critical and applies to all UI and PDF outputs.
 
 **documents and test reports created in this job**
--   None in this session.
+-   None.
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (Message #72 - LATEST & PENDING):** Provided very specific, mandatory instructions for a programmatic and textual-only inspection of the system. Forbade the use of screenshots. Outlined the exact structure and content of the required audit report, covering routes, data wiring, STAS logic, language/date handling, and a GAP analysis. Stated clearly not to begin any new implementation before this textual inspection is delivered.
--   **User (Message #4):** Initially requested a comprehensive system check via a Checklist format. This request is now superseded and refined by message #72.
+-   **User (Message #23 - LATEST & PENDING):** After reviewing the agent's audit, the user provided a new, definitive 10-point plan. The first 7 points are high-priority fixes and enhancements (barcode seal, one-time execution, language purity, etc.) that MUST be completed before starting the last 3 points (Contracts V2, migration, settlement).
+-   **Agent (Message #22):** Delivered the complete, text-only system audit report as requested by the user, including a detailed GAP analysis.
+-   **User (Message #6 / from history):** The original detailed request for the programmatic, text-only system audit which has now been fulfilled.
 
 **Project Health Check:**
--   **Stable:** The application is in a working state.
--   **Outdated:** The implementation is misaligned with the user's new vision for contract management and UI standards. The requested audit will document the precise state before the major overhaul begins.
+-   **Broken**: N/A
+-   **Mocked**: N/A
+-   The application is stable, but the current implementation requires significant refactoring and feature development to align with the user's explicit new requirements.
 
 **3rd Party Integrations**
--   
--   
+-    (To be added)
+-    (To be deprecated/removed)
 
 **Testing status**
--   **Testing agent used after significant changes:** NO (current task is analysis).
+-   **Testing agent used after significant changes:** NO (current session was audit and planning).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
 -   **Known regressions:** None.
@@ -133,4 +180,4 @@ The current agent's session has been dedicated to fulfilling the user's new requ
 -   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). No passwords are required.
 
 **What agent forgot to execute**
--   The agent has not forgotten to execute anything. It was actively working to fulfill the user's request when a new, more specific set of instructions was provided. The agent correctly pivoted to the new instructions. The next step is to deliver on the latest request.</analysis>
+-   The agent has not forgotten anything. It successfully completed the user's audit request and correctly pivoted to the new set of instructions for implementation.</analysis>
