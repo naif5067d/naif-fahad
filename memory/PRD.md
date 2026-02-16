@@ -562,4 +562,64 @@ Contract activation flow:
 
 ---
 
-Version: 17.0 (2026-02-15)
+Version: 19.0 (2026-02-16)
+
+---
+
+### Phase 19: STAS Enhancements & Map Feature ✅ (2026-02-16)
+
+**P0 Completed - STAS Barcode Seal:**
+- ✓ PDF generation now uses Code128 barcode instead of QR code for STAS execution stamp
+- ✓ Ref No displayed clearly underneath the barcode
+- ✓ STAS approval in chain also uses barcode with ref_no
+- ✓ Other approvers still use QR codes for their signatures
+
+**P0 Completed - One-Time STAS Execution:**
+- ✓ Backend: Returns 400 error with ALREADY_EXECUTED if transaction already executed
+- ✓ Error message includes Arabic and English messages
+- ✓ Also blocks execution of cancelled/rejected transactions
+- ✓ Frontend: Execute button is disabled and shows "تم التنفيذ مسبقاً" when transaction is executed
+- ✓ Both desktop and mobile buttons are protected
+
+**P1 Completed - Read-Only Map for Employees:**
+- ✓ Employees can view company work locations when map is enabled by admin (via map_visibility setting)
+- ✓ Red markers indicate employee's assigned check-in location(s)
+- ✓ Blue markers indicate other company locations (for information only)
+- ✓ Map dialog is read-only - no editing capability
+- ✓ Location list shows "معين لك" badge for assigned locations
+- ✓ Uses react-leaflet with OpenStreetMap tiles
+
+**Files Modified:**
+- `/app/backend/utils/pdf.py` - Barcode implementation for STAS seal
+- `/app/backend/routes/stas.py` - Duplicate execution prevention (lines 151-172)
+- `/app/frontend/src/pages/STASMirrorPage.js` - Execute button protection
+- `/app/frontend/src/pages/AttendancePage.js` - Map dialog with red/blue markers
+
+**Test Report:**
+- `/app/test_reports/iteration_19.json` - 100% pass rate for all features
+- `/app/backend/tests/test_iteration19_p0_features.py` - Backend tests
+
+---
+
+## Current Priority Queue (User's 7-Point List)
+
+### ✅ Completed:
+1. ~~STAS Seal: Barcode instead of QR with Ref No underneath~~
+2. ~~STAS Execution: One-time execution only~~
+7. ~~Map Logic: Employees see read-only map with colored pins~~
+
+### 🔴 Remaining P0:
+3. **Language Integrity (100%)** - Ensure UI & PDF are fully Arabic OR fully English with no mixing
+4. **Standardized Letterhead** - Fixed official header/footer for all transaction PDFs
+
+### 🟠 Remaining P1:
+5. **Display Limit** - Limit transaction display to 4 items in specified views
+6. **Transaction Blocking Rule** - Prevent new transaction if pending one of same type exists
+
+### 🟢 After 7-Point Completion:
+- Contract V2 System (new contract flow)
+- Employee Migration to V2 (with opening data snapshot)
+- Settlement Module (linked to V2 contracts)
+
+---
+
