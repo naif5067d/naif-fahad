@@ -301,16 +301,22 @@ export default function STASMirrorPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Desktop Execute Button */}
+                  {/* Desktop Execute Button - منع التنفيذ المكرر */}
                   <div className="hidden md:block">
-                    <Button
-                      data-testid="stas-execute-btn-desktop"
-                      onClick={handleExecute}
-                      disabled={!mirror.all_checks_pass || executing}
-                      className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
-                    >
-                      {executing ? <><Loader2 size={18} className="me-2 animate-spin" /> {t('stas.executing')}</> : <><Shield size={18} className="me-2" /> {t('stas.execute')}</>}
-                    </Button>
+                    {mirror.transaction?.status === 'executed' ? (
+                      <div className="w-full h-12 text-base font-semibold bg-emerald-100 text-emerald-700 rounded-md flex items-center justify-center gap-2">
+                        <CheckCircle size={18} /> {lang === 'ar' ? 'تم التنفيذ مسبقاً' : 'Already Executed'}
+                      </div>
+                    ) : (
+                      <Button
+                        data-testid="stas-execute-btn-desktop"
+                        onClick={handleExecute}
+                        disabled={!mirror.all_checks_pass || executing}
+                        className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
+                      >
+                        {executing ? <><Loader2 size={18} className="me-2 animate-spin" /> {t('stas.executing')}</> : <><Shield size={18} className="me-2" /> {t('stas.execute')}</>}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
