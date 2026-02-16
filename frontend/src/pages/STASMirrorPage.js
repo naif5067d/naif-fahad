@@ -60,17 +60,34 @@ export default function STASMirrorPage() {
   };
 
   const handleExecute = async () => {
+    // منع التنفيذ المكرر
     if (!selectedTx || executing) return;
+    
+    // تحقق إضافي من حالة المعاملة
+    if (mirror?.transaction?.status === 'executed') {
+      toast.error(lang === 'ar' ? 'تم تنفيذ هذه المعاملة مسبقاً' : 'Transaction already executed');
+      return;
+    }
+    
     setExecuting(true);
     try {
       const res = await api.post(`/api/stas/execute/${selectedTx}`);
-      toast.success(`${res.data.ref_no} ${lang === 'ar' ? 'تم التنفيذ' : 'executed'}. Hash: ${res.data.pdf_hash?.slice(0, 12)}...`);
+      toast.success(`${res.data.ref_no} ${lang === 'ar' ? 'تم التنفيذ بنجاح' : 'executed successfully'}. Hash: ${res.data.pdf_hash?.slice(0, 12)}...`);
+      // إعادة تعيين الحالة ومنع أي ضغط آخر
       setMirror(null);
       setSelectedTx(null);
       fetchPending();
     } catch (err) {
-      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل التنفيذ' : 'Execution failed'));
-    } finally { setExecuting(false); }
+      // عرض رسالة الخطأ بشكل واضح
+      const errorDetail = err.response?.data?.detail;
+      if (typeof errorDetail === 'object') {
+        toast.error(lang === 'ar' ? errorDetail.message_ar : errorDetail.message_en);
+      } else {
+        toast.error(errorDetail || (lang === 'ar' ? 'فشل التنفيذ' : 'Execution failed'));
+      }
+    } finally { 
+      setExecuting(false); 
+    }
   };
 
   const previewPdf = async () => {
