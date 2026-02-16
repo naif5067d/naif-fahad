@@ -165,7 +165,7 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     timeline_event = {
         "event": f"{body.action}d" if body.action == 'approve' else ('rejected' if body.action == 'reject' else body.action),
         "actor": user['user_id'],
-        "actor_name": user.get('full_name', user['username']),
+        "actor_name": user.get('full_name_ar', user.get('full_name', user['username'])),
         "timestamp": now,
         "note": body.note or "",
         "stage": stage
@@ -174,7 +174,8 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     approval_entry = {
         "stage": stage,
         "approver_id": user['user_id'],
-        "approver_name": user.get('full_name', user['username']),
+        "approver_name": user.get('full_name_ar', user.get('full_name', user['username'])),
+        "approver_name_en": user.get('full_name', user['username']),
         "status": body.action,
         "timestamp": now,
         "note": body.note or ""
