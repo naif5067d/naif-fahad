@@ -601,13 +601,13 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         elements.append(Spacer(1, 4*mm))
         
         executed_label = format_text_bilingual(labels['executed_by'], lang)
-        stamp_date = format_saudi_time(transaction.get('updated_at'))
+        stamp_date = format_saudi_time(transaction.get('executed_at') or transaction.get('updated_at'))
         
         # Create execution barcode with unique transaction identifier
         exec_code = f"EXEC-{ref_no.replace('TXN-', '')}"
         barcode_img = create_barcode_image(exec_code, width=55, height=14)
         
-        # Build stamp content
+        # Build stamp content (في الصفحة الرئيسية)
         stamp_elements = [
             [Paragraph(executed_label, styles['section'])],
         ]
@@ -647,6 +647,75 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     footer_text = f"DAR AL CODE HR OS | {integrity_id} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
     elements.append(Spacer(1, 1*mm))
     elements.append(Paragraph(footer_text, styles['small']))
+    
+    # ============ CUT-OUT BARCODE SECTION (قابل للقص) ============
+    if transaction.get('status') == 'executed':
+        elements.append(Spacer(1, 8*mm))
+        
+        # خط منقط للقص
+        cut_line_style = ParagraphStyle('cutline', fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
+        cut_text = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ✂ قص من هنا ✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+        elements.append(Paragraph(format_text_bilingual(cut_text, lang), cut_line_style))
+        elements.append(Spacer(1, 3*mm))
+        
+        # مربع الباركود القابل للقص
+        exec_code_cut = f"EXEC-{ref_no.replace('TXN-', '')}"
+        barcode_cut = create_barcode_image(exec_code_cut, width=60, height=16)
+        
+        # Get transaction type label
+        tx_type = transaction.get('type', '')
+        type_label = labels.get(tx_type, tx_type.replace('_', ' ').title())
+        type_display = format_text_bilingual(type_label, lang)
+        
+        # Get employee name
+        emp_name = ''
+        if employee:
+            emp_name = employee.get('full_name_ar' if lang == 'ar' else 'full_name', employee.get('full_name', ''))
+            emp_name = format_text_bilingual(emp_name, lang)
+        
+        # Build cut-out content
+        cut_elements = []
+        cut_heights = []
+        
+        # Company name header
+        company_header = format_text_bilingual(branding.get('company_name_ar' if lang == 'ar' else 'company_name_en', labels['company']), lang)
+        cut_elements.append([Paragraph(f"<font size='7'>{company_header}</font>", ParagraphStyle('cut_header', alignment=TA_CENTER, fontSize=7, textColor=NAVY))])
+        cut_heights.append(5*mm)
+        
+        # Transaction type
+        cut_elements.append([Paragraph(f"<font size='8'><b>{type_display}</b></font>", ParagraphStyle('cut_type', alignment=TA_CENTER, fontSize=8))])
+        cut_heights.append(5*mm)
+        
+        # Employee name
+        if emp_name:
+            cut_elements.append([Paragraph(f"<font size='7'>{emp_name}</font>", ParagraphStyle('cut_emp', alignment=TA_CENTER, fontSize=7))])
+            cut_heights.append(4*mm)
+        
+        # Barcode
+        if barcode_cut:
+            cut_elements.append([barcode_cut])
+            cut_heights.append(22*mm)
+        
+        # Ref No (bold and clear)
+        cut_elements.append([Paragraph(f"<font size='10'><b>{ref_no}</b></font>", ParagraphStyle('cut_ref', alignment=TA_CENTER, fontSize=10, textColor=NAVY))])
+        cut_heights.append(6*mm)
+        
+        # Date
+        cut_elements.append([Paragraph(f"<font size='6'>{stamp_date}</font>", ParagraphStyle('cut_date', alignment=TA_CENTER, fontSize=6, textColor=TEXT_GRAY))])
+        cut_heights.append(4*mm)
+        
+        cut_table = Table(cut_elements, colWidths=[80*mm], rowHeights=cut_heights)
+        cut_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOX', (0, 0), (-1, -1), 1, NAVY),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+        ]))
+        
+        # Center the cut-out
+        cut_outer = Table([[cut_table]], colWidths=[CONTENT_WIDTH])
+        cut_outer.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+        elements.append(cut_outer)
     
     # Build PDF
     doc.build(elements)
