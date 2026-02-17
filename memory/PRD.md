@@ -572,7 +572,8 @@ Version: 22.0 (2026-02-17)
 - ✓ Fixed multiple maps rendering in Work Locations page
 - ✓ Map in dialog now wrapped with `{dialogOpen && <MapContainer />}` condition
 - ✓ Unique key prop prevents duplicate instances: `key={dialog-map-${id}-${dialogOpen}}`
-- ✓ Single map displays in dialog, preview maps on cards work correctly
+- ✓ Removed MapContainer from location cards - replaced with simple coordinate display
+- ✓ Single map displays in dialog only, no overlapping maps issue
 
 **P0 Completed - Employee Credentials Management:**
 - ✓ New Key icon button in Employees table (STAS only)
