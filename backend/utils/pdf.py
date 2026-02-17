@@ -751,3 +751,371 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
     
     return pdf_bytes, pdf_hash, integrity_id
+
+
+
+# ============================================================
+# SETTLEMENT PDF GENERATION
+# ============================================================
+
+def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
+    """
+    Generate Professional Settlement PDF
+    - A4 Single Page
+    - Arabic/English Hybrid
+    - Barcode for STAS (not QR)
+    - Company Letterhead
+    - Signature Spaces
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=MARGIN,
+        rightMargin=MARGIN,
+        topMargin=MARGIN,
+        bottomMargin=MARGIN
+    )
+    
+    elements = []
+    snapshot = settlement.get("snapshot", {})
+    
+    # ============ STYLES ============
+    styles = {
+        'title': ParagraphStyle(
+            'title',
+            fontName=ARABIC_FONT_BOLD,
+            fontSize=18,
+            alignment=TA_CENTER,
+            textColor=NAVY,
+            spaceAfter=3*mm,
+            wordWrap='RTL'
+        ),
+        'subtitle': ParagraphStyle(
+            'subtitle',
+            fontName=ARABIC_FONT,
+            fontSize=12,
+            alignment=TA_CENTER,
+            textColor=TEXT_GRAY,
+            wordWrap='RTL'
+        ),
+        'section': ParagraphStyle(
+            'section',
+            fontName=ARABIC_FONT_BOLD,
+            fontSize=11,
+            alignment=TA_RIGHT,
+            textColor=NAVY,
+            wordWrap='RTL'
+        ),
+        'body': ParagraphStyle(
+            'body',
+            fontName=ARABIC_FONT,
+            fontSize=10,
+            alignment=TA_RIGHT,
+            textColor=colors.black,
+            wordWrap='RTL',
+            leading=14
+        ),
+        'body_ltr': ParagraphStyle(
+            'body_ltr',
+            fontName=ENGLISH_FONT,
+            fontSize=10,
+            alignment=TA_LEFT,
+            textColor=colors.black,
+            wordWrap='LTR'
+        ),
+        'label': ParagraphStyle(
+            'label',
+            fontName=ARABIC_FONT,
+            fontSize=9,
+            alignment=TA_RIGHT,
+            textColor=TEXT_GRAY,
+            wordWrap='RTL'
+        ),
+        'value': ParagraphStyle(
+            'value',
+            fontName=ARABIC_FONT_BOLD,
+            fontSize=10,
+            alignment=TA_RIGHT,
+            textColor=colors.black,
+            wordWrap='RTL'
+        ),
+        'small': ParagraphStyle(
+            'small',
+            fontName='Helvetica',
+            fontSize=8,
+            alignment=TA_CENTER,
+            textColor=TEXT_GRAY,
+            wordWrap='LTR'
+        ),
+        'total': ParagraphStyle(
+            'total',
+            fontName=ARABIC_FONT_BOLD,
+            fontSize=12,
+            alignment=TA_CENTER,
+            textColor=NAVY,
+            wordWrap='RTL'
+        )
+    }
+    
+    def make_rtl_para(text, style):
+        """Create RTL paragraph for Arabic text"""
+        if has_arabic(text):
+            text = reshape_arabic(text)
+        return Paragraph(text, style)
+    
+    def make_ltr_para_local(text, style):
+        """Create LTR paragraph for numbers/dates"""
+        return Paragraph(str(text), style)
+    
+    # ============ HEADER / LETTERHEAD ============
+    company_name_ar = "دار الكود للاستشارات الهندسية"
+    company_name_en = "DAR AL CODE Engineering Consultancy"
+    
+    if branding:
+        company_name_ar = branding.get("company_name_ar", company_name_ar)
+        company_name_en = branding.get("company_name_en", company_name_en)
+    
+    # Company header
+    header_data = [[
+        make_ltr_para_local(company_name_en, styles['body_ltr']),
+        make_rtl_para(company_name_ar, styles['section'])
+    ]]
+    header_table = Table(header_data, colWidths=[CONTENT_WIDTH/2, CONTENT_WIDTH/2])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, NAVY),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 5*mm))
+    
+    # ============ TITLE ============
+    title_ar = reshape_arabic("وثيقة المخالصة النهائية")
+    elements.append(Paragraph(title_ar, styles['title']))
+    elements.append(Paragraph("Final Settlement Document", styles['body_ltr']))
+    elements.append(Spacer(1, 3*mm))
+    
+    # Transaction number
+    txn_no = settlement.get("transaction_number", "")
+    txn_style = ParagraphStyle('txn', fontName='Helvetica-Bold', fontSize=11, alignment=TA_CENTER, textColor=NAVY)
+    elements.append(Paragraph(f"Transaction No: {txn_no}", txn_style))
+    elements.append(Spacer(1, 5*mm))
+    
+    # ============ EMPLOYEE INFO ============
+    emp = snapshot.get("employee", {})
+    contract = snapshot.get("contract", {})
+    
+    emp_data = [
+        [make_rtl_para(emp.get("name_ar", ""), styles['value']), make_rtl_para("الموظف", styles['label'])],
+        [make_ltr_para_local(emp.get("employee_number", ""), styles['body_ltr']), make_rtl_para("الرقم الوظيفي", styles['label'])],
+        [make_ltr_para_local(contract.get("serial", ""), styles['body_ltr']), make_rtl_para("رقم العقد", styles['label'])],
+        [make_rtl_para(contract.get("termination_type_label", ""), styles['value']), make_rtl_para("نوع الإنهاء", styles['label'])],
+        [make_ltr_para_local(contract.get("last_working_day", ""), styles['body_ltr']), make_rtl_para("آخر يوم عمل", styles['label'])],
+    ]
+    
+    # Bank info
+    bank_name = contract.get("bank_name", "")
+    bank_iban = contract.get("bank_iban", "")
+    if bank_name or bank_iban:
+        emp_data.append([make_rtl_para(bank_name, styles['value']), make_rtl_para("البنك", styles['label'])])
+        emp_data.append([make_ltr_para_local(bank_iban, styles['body_ltr']), make_rtl_para("IBAN", styles['label'])])
+    
+    emp_table = Table(emp_data, colWidths=[CONTENT_WIDTH*0.6, CONTENT_WIDTH*0.4])
+    emp_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
+        ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER_GRAY),
+        ('TOPPADDING', (0, 0), (-1, -1), 2*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2*mm),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3*mm),
+    ]))
+    elements.append(emp_table)
+    elements.append(Spacer(1, 4*mm))
+    
+    # ============ SERVICE INFO ============
+    service = snapshot.get("service", {})
+    wages = snapshot.get("wages", {})
+    
+    service_text = reshape_arabic(f"مدة الخدمة: {service.get('formatted_ar', '')}")
+    elements.append(Paragraph(service_text, styles['body']))
+    
+    wage_text = reshape_arabic(f"آخر راتب شامل: {wages.get('last_wage', 0):,.2f} ريال")
+    elements.append(Paragraph(wage_text, styles['body']))
+    elements.append(Spacer(1, 3*mm))
+    
+    # ============ FINANCIAL SUMMARY TABLE ============
+    totals = snapshot.get("totals", {})
+    eos = snapshot.get("eos", {})
+    leave = snapshot.get("leave", {})
+    
+    # الاستحقاقات
+    entitlements = totals.get("entitlements", {})
+    deductions = totals.get("deductions", {})
+    
+    fin_data = [
+        # Header
+        [make_rtl_para("المبلغ (ريال)", styles['section']), make_rtl_para("البيان", styles['section'])],
+        # EOS
+        [make_ltr_para_local(f"{eos.get('final_amount', 0):,.2f}", styles['value']), make_rtl_para("مكافأة نهاية الخدمة", styles['label'])],
+        # Leave
+        [make_ltr_para_local(f"{leave.get('compensation', 0):,.2f}", styles['value']), make_rtl_para(f"بدل إجازات ({leave.get('balance', 0):.2f} يوم)", styles['label'])],
+        # Bonuses
+        [make_ltr_para_local(f"{entitlements.get('bonuses', 0):,.2f}", styles['value']), make_rtl_para("مكافآت", styles['label'])],
+        # Total entitlements
+        [make_ltr_para_local(f"{entitlements.get('total', 0):,.2f}", styles['section']), make_rtl_para("إجمالي الاستحقاقات", styles['section'])],
+        # Separator
+        ['', ''],
+        # Deductions
+        [make_ltr_para_local(f"-{deductions.get('deductions', 0):,.2f}", styles['value']), make_rtl_para("خصومات", styles['label'])],
+        # Loans
+        [make_ltr_para_local(f"-{deductions.get('loans', 0):,.2f}", styles['value']), make_rtl_para("سلف", styles['label'])],
+        # Total deductions
+        [make_ltr_para_local(f"-{deductions.get('total', 0):,.2f}", styles['section']), make_rtl_para("إجمالي الاستقطاعات", styles['section'])],
+    ]
+    
+    fin_table = Table(fin_data, colWidths=[CONTENT_WIDTH*0.4, CONTENT_WIDTH*0.6])
+    fin_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, 4), (-1, 4), colors.Color(0.9, 0.95, 0.9)),
+        ('BACKGROUND', (0, 8), (-1, 8), colors.Color(0.95, 0.9, 0.9)),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
+        ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER_GRAY),
+        ('TOPPADDING', (0, 0), (-1, -1), 2*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2*mm),
+    ]))
+    elements.append(fin_table)
+    elements.append(Spacer(1, 4*mm))
+    
+    # ============ NET AMOUNT (BIG) ============
+    net = totals.get("net_amount", 0)
+    net_text = reshape_arabic(f"صافي المخالصة: {net:,.2f} ريال سعودي")
+    net_style = ParagraphStyle(
+        'net',
+        fontName=ARABIC_FONT_BOLD,
+        fontSize=14,
+        alignment=TA_CENTER,
+        textColor=colors.white,
+        backColor=NAVY,
+        wordWrap='RTL',
+        leading=20
+    )
+    
+    net_table = Table([[Paragraph(net_text, net_style)]], colWidths=[CONTENT_WIDTH], rowHeights=[12*mm])
+    net_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BACKGROUND', (0, 0), (-1, -1), NAVY),
+    ]))
+    elements.append(net_table)
+    elements.append(Spacer(1, 5*mm))
+    
+    # ============ SIGNATURES SECTION ============
+    sig_header = reshape_arabic("التوقيعات")
+    elements.append(Paragraph(sig_header, styles['section']))
+    elements.append(Spacer(1, 2*mm))
+    
+    sig_data = [
+        [make_rtl_para("الموظف", styles['label']), make_rtl_para("محمد (CEO)", styles['label']), make_rtl_para("سلطان (HR)", styles['label'])],
+        ['_________________', '_________________', '_________________'],
+    ]
+    sig_table = Table(sig_data, colWidths=[CONTENT_WIDTH/3, CONTENT_WIDTH/3, CONTENT_WIDTH/3])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
+    ]))
+    elements.append(sig_table)
+    elements.append(Spacer(1, 5*mm))
+    
+    # ============ STAS BARCODE EXECUTION STAMP ============
+    if settlement.get("status") == "executed":
+        exec_code = f"EXEC-{txn_no.replace('STL-', '')}"
+        barcode_img = create_barcode_image(exec_code, width=55, height=14)
+        
+        exec_date = settlement.get("executed_at", "")
+        if exec_date:
+            exec_date = format_saudi_time(exec_date)
+        
+        stamp_elements = [
+            [make_rtl_para("تم التنفيذ - STAS", styles['section'])],
+        ]
+        stamp_heights = [6*mm]
+        
+        if barcode_img:
+            stamp_elements.append([barcode_img])
+            stamp_heights.append(20*mm)
+        
+        ref_style = ParagraphStyle('ref_bold', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER, textColor=NAVY)
+        stamp_elements.append([Paragraph(f"Ref No: {txn_no}", ref_style)])
+        stamp_heights.append(6*mm)
+        
+        stamp_elements.append([Paragraph(exec_date, styles['small'])])
+        stamp_heights.append(4*mm)
+        
+        stamp_table = Table(stamp_elements, colWidths=[65*mm], rowHeights=stamp_heights)
+        stamp_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
+            ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
+        ]))
+        
+        outer = Table([[stamp_table]], colWidths=[CONTENT_WIDTH])
+        outer.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+        elements.append(outer)
+    
+    # ============ CUT-OUT BARCODE SECTION ============
+    elements.append(Spacer(1, 8*mm))
+    
+    # Scissors line
+    scissors_line = "✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
+    elements.append(Paragraph(scissors_line, styles['small']))
+    elements.append(Spacer(1, 3*mm))
+    
+    # Cut-out box
+    cutout_barcode = create_barcode_image(f"STL-{txn_no}", width=50, height=12)
+    
+    cutout_data = [
+        [make_rtl_para(company_name_ar, styles['label'])],
+        [make_rtl_para("مخالصة نهائية", styles['section'])],
+        [make_rtl_para(emp.get("name_ar", ""), styles['value'])],
+        [cutout_barcode if cutout_barcode else ''],
+        [Paragraph(f"Ref: {txn_no}", styles['small'])],
+        [Paragraph(settlement.get("executed_at", "")[:10] if settlement.get("executed_at") else "", styles['small'])],
+    ]
+    
+    cutout_table = Table(cutout_data, colWidths=[70*mm], rowHeights=[5*mm, 6*mm, 6*mm, 18*mm, 5*mm, 4*mm])
+    cutout_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+    ]))
+    
+    outer_cutout = Table([[cutout_table]], colWidths=[CONTENT_WIDTH])
+    outer_cutout.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+    elements.append(outer_cutout)
+    
+    # ============ FOOTER ============
+    elements.append(Spacer(1, 4*mm))
+    footer_line = Table([['']], colWidths=[CONTENT_WIDTH], rowHeights=[0.5])
+    footer_line.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, 0), 0.5, BORDER_GRAY)]))
+    elements.append(footer_line)
+    
+    footer_text = f"DAR AL CODE HR OS | {txn_no} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
+    elements.append(Spacer(1, 1*mm))
+    elements.append(Paragraph(footer_text, styles['small']))
+    
+    # Build PDF
+    doc.build(elements)
+    return buffer.getvalue()
