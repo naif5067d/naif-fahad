@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CalendarDays, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Loader2, Clock, CalendarCheck } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -15,6 +15,8 @@ export default function LeavePage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
   const [balance, setBalance] = useState({});
+  const [usedLeaves, setUsedLeaves] = useState({});  // الإجازات المستهلكة
+  const [permissionHours, setPermissionHours] = useState({ used: 0, total: 2 });  // ساعات الاستئذان
   const [holidays, setHolidays] = useState([]);
   const [form, setForm] = useState({ leave_type: 'annual', start_date: '', end_date: '', reason: '', medical_file: null });
   const [submitting, setSubmitting] = useState(false);
@@ -25,19 +27,62 @@ export default function LeavePage() {
   const canRequest = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
   const canEditHolidays = ['sultan', 'naif', 'stas'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
+  const isEmployee = user?.role === 'employee';
 
-  // أنواع الإجازات بالعربي مع الأرصدة
+  // أنواع الإجازات - للإدارة فقط تفاصيل كاملة
   const LEAVE_TYPES = {
-    annual: { label: lang === 'ar' ? 'الإجازة السنوية' : 'Annual Leave', hasBalance: true },
-    sick: { label: lang === 'ar' ? 'الإجازة المرضية' : 'Sick Leave', hasBalance: true, requiresFile: true },
-    marriage: { label: lang === 'ar' ? 'إجازة الزواج' : 'Marriage Leave', hasBalance: false, days: 5 },
-    bereavement: { label: lang === 'ar' ? 'إجازة الوفاة' : 'Bereavement Leave', hasBalance: false, days: 5 },
-    exam: { label: lang === 'ar' ? 'إجازة الاختبار' : 'Exam Leave', hasBalance: false },
-    unpaid: { label: lang === 'ar' ? 'إجازة بدون راتب' : 'Unpaid Leave', hasBalance: false },
+    annual: { 
+      label: lang === 'ar' ? 'الاعتيادية' : 'Annual Leave', 
+      labelFull: lang === 'ar' ? 'إجازة اعتيادية' : 'Annual Leave',
+      hasBalance: true,
+      showToEmployee: true
+    },
+    sick: { 
+      label: lang === 'ar' ? 'المرضية' : 'Sick Leave', 
+      labelFull: lang === 'ar' ? 'إجازة مرضية' : 'Sick Leave',
+      hasBalance: false, 
+      requiresFile: true,
+      showToEmployee: false  // لا تظهر للموظف - مسار إداري
+    },
+    marriage: { 
+      label: lang === 'ar' ? 'الزواج' : 'Marriage', 
+      labelFull: lang === 'ar' ? 'إجازة زواج' : 'Marriage Leave',
+      hasBalance: false, 
+      days: 5,
+      showToEmployee: false
+    },
+    bereavement: { 
+      label: lang === 'ar' ? 'الوفاة' : 'Bereavement', 
+      labelFull: lang === 'ar' ? 'إجازة وفاة' : 'Bereavement Leave',
+      hasBalance: false, 
+      days: 5,
+      showToEmployee: false
+    },
+    exam: { 
+      label: lang === 'ar' ? 'الاختبار' : 'Exam', 
+      labelFull: lang === 'ar' ? 'إجازة اختبار' : 'Exam Leave',
+      hasBalance: false,
+      showToEmployee: false
+    },
+    unpaid: { 
+      label: lang === 'ar' ? 'بدون راتب' : 'Unpaid', 
+      labelFull: lang === 'ar' ? 'إجازة بدون راتب' : 'Unpaid Leave',
+      hasBalance: false,
+      showToEmployee: false
+    },
   };
 
+  // أنواع الإجازات المتاحة حسب الدور
+  const availableLeaveTypes = isEmployee 
+    ? Object.entries(LEAVE_TYPES).filter(([k, v]) => v.showToEmployee)
+    : Object.entries(LEAVE_TYPES);
+
   useEffect(() => {
-    if (canRequest) api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
+    if (canRequest) {
+      api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
+      api.get('/api/leave/used').then(r => setUsedLeaves(r.data)).catch(() => {});
+      api.get('/api/leave/permission-hours').then(r => setPermissionHours(r.data)).catch(() => {});
+    }
     api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
   }, [canRequest]);
 
