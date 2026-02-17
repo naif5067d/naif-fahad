@@ -1,132 +1,152 @@
 <analysis>**original_problem_statement:**
-The user wants to build a complete Settlement (المخالصة) and final clearance module, deeply integrated with the existing contract and HR systems of DAR AL CODE HR OS. This is a major new feature set requested after the previous critical PDF bugs were fixed.
+The user wants to build a complete Settlement (المخالصة) and final clearance module, deeply integrated with the existing contract and HR systems of DAR AL CODE HR OS.
 
 **PRODUCT REQUIREMENTS (Based on latest user requests):**
 
-1.  **P0: Settlement Module:**
-    *   Create a Settlement process initiated from the Contracts V2 page, accessible only to 'sultan' and 'STAS'.
-    *   The process must be tied to an existing contract and support multiple termination types (end of contract, resignation, termination during probation, mutual agreement).
-    *   **Bank Details (CRITICAL):** Add Bank Name and IBAN fields to the contract model and all UIs. These fields must be editable at any time and reflected in the final settlement.
+1.  **P0: Settlement Module Core Functionality:**
+    *   Create a Settlement process initiated from the Contracts V2 page.
+    *   **Bank Details:** Add Bank Name and IBAN fields to the contract model. These fields must be editable at any time, even on active contracts, and must be reflected in the final settlement.
     *   **Accurate Calculations (Backend):**
-        *   : Must be calculated as  from the contract (Housing, Transport, etc.), not just the basic salary.
-        *   : Calculated as . The leave balance must be calculated on a pro-rata basis ().
-        *   : Calculated based on Saudi Labor Law, factoring in years of service and reason for termination (resignation vs. termination).
-    *   **Settlement PDF:**
-        *   Generate a single-page, A4, hybrid Arabic/English formal document.
-        *   Must include company letterhead, transaction number, employee and contract details.
-        *   Crucially, it must feature a **Barcode** (not a QR code) for STAS execution, and spaces for signatures.
+        *   : Must be calculated as  from the contract.
+        *   : Calculated as , with the balance being pro-rated.
+        *   : Calculated based on Saudi Labor Law.
     *   **Workflow:**
-        *   Admin previews all calculations.
+        *   An Admin/Sultan creates a settlement. A detailed preview screen () must be shown before execution.
         *   STAS gives final, one-time execution.
-        *   After execution, the employee's contract is marked Terminated, all balances are frozen, and their account is locked, showing a message to contact HR.
+        *   After execution, the employee's contract is marked Terminated, and their account is locked.
 
-2.  **P1: Attendance & Payroll Enhancements:**
-    *   **Deductions & Bonuses:** Create a UI for 'sultan' to add deductions or bonuses for any employee. These require STAS approval and must be automatically included in the settlement calculation.
-    *   **Attendance System:** Implement a comprehensive daily attendance view (Present, Absent, On Leave, Permission) that admins can edit.
-    *   **Employee Card:** Activate the Employee Card in the profile to show a live summary: daily status, leave balances, and monthly hour balance.
-    *   **Leave Notifications:** Implement a system to notify admins ('sultan', 'NQ', 'STAS') three months before a contract ends if the employee has a remaining leave balance.
+2.  **P0: Settlement PDF Generation:**
+    *   Generate a single-page, A4, portrait, hybrid Arabic/English document.
+    *   Must include the company logo (retrieved from system settings).
+    *   Must feature a **Barcode** for the transaction number and **QR codes** for signatures.
+    *   Must contain specific, user-provided bilingual text for all sections.
+    *   Must have a space for the employee's manual signature.
+
+3.  **P1: Deductions, Bonuses, and HR Enhancements:**
+    *   Create a UI for 'sultan' to add deductions or bonuses, which require STAS approval.
+    *   Implement a comprehensive daily attendance view.
+    *   Activate the Employee Card in the profile with live summaries.
+    *   Implement notifications for expiring contracts with remaining leave.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The previous agent achieved a major breakthrough by fixing the critical PDF generation bugs. The core Arabic text rendering issue (appearing as squares or garbled) and the blank English PDF regression have been **resolved**. This was done by completely refactoring  to use separate  Paragraph styles for RTL (Arabic text with ) and LTR (English/numbers with ). The fix was validated by the testing agent.
-
-Following the fix, the agent received the new, large feature request for the Settlement module. The agent has laid the groundwork by creating the necessary placeholder files:
-*   Backend: , , , .
-*   Frontend: , .
+The agent has successfully implemented the foundational pieces of the settlement module. This includes adding the crucial 'Bank Name', 'IBAN', and 'Nature of Work Allowance' fields to the contract model and updating both the contract creation and editing forms in the UI after an initial miss. The backend has been scaffolded with new models (), routes (), and services (, ). A basic settlement page has been added to the frontend, and a preliminary, but incomplete, PDF generation function () has been created. The agent was in the middle of refining this PDF generation when the user provided more detailed requirements.
 
 **Last working item**:
--   **Last item agent was working:** The agent was scaffolding the new modules required for the settlement feature. The final action was creating the placeholder file . The foundation is laid, but no business logic has been implemented yet.
+-   **Last item agent was working:** The agent was working on fixing the Settlement PDF. The user reported that the company logo was missing. The agent identified that the logo is stored as a base64 string in the  collection in the database and was about to modify the PDF generation logic in  to fetch, decode, and embed this logo into the document header.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. The backend testing agent will be crucial for verifying the complex financial calculations in  and the end-to-end settlement API flow. The frontend testing agent will be needed to test the new  and  UIs.
+-   **Which testing method agent to use?** backend testing agent. After implementing the fix, the agent should call the settlement PDF generation API endpoint and verify that the output PDF file correctly displays the company logo.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no outstanding *bugs*. The focus has shifted entirely to new feature development. The pending work is the implementation of the user's large request, which is broken down into tasks below.
+-   **Issue 1: Missing Company Logo in Settlement PDF (P0)**
+-   **Issue 2: Incorrect/Incomplete Acknowledgment Text in Settlement PDF (P0)**
+
+**Issues Detail:**
+-   **Issue 1: Missing Company Logo in Settlement PDF**
+    -   **Attempted fixes:** The agent located the base64-encoded logo in the  collection. The next step is to implement the code to use it.
+    -   **Next debug checklist:**
+        1.  In , modify the  function.
+        2.  Fetch the  document from the database.
+        3.  Extract the base64 logo string.
+        4.  Use  and  to create an in-memory image file.
+        5.  Use  to open the in-memory file and add it as a   object to the PDF's header section.
+    -   **Why fix this issue and what will be achieved with the fix?** To fulfill the user's requirement for a professional, branded settlement document.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend.
+    -   **Blocked on other issue:** None.
+-   **Issue 2: Incorrect/Incomplete Acknowledgment Text in Settlement PDF**
+    -   **Attempted fixes:** None.
+    -   **Next debug checklist:**
+        1.  In , find the section rendering the acknowledgment text ().
+        2.  Replace the current text with the exact bilingual text provided by the user in Chat Message 227.
+        3.  Ensure the Arabic part uses the RTL  and the English part uses the LTR .
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure the legal declaration on the settlement document is accurate.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend.
+    -   **Blocked on other issue:** None.
 
 **In progress Task List**:
--   **Task 1: Build the Settlement, Attendance, and HR Calculation Module (P0)**
-    -   **Where to resume:** Begin by implementing the first and most critical user requirement: adding the 'Bank Name' and 'IBAN' fields.
-        1.  Modify the contract model in .
-        2.  Update the contract creation/editing API routes in .
-        3.  Update the contract creation/editing form in .
-    -   **What will be achieved with this?** This will complete the foundational data model changes required before starting the settlement calculations.
-    -   **Status:** NOT STARTED
-    -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on something:** No.
+-   **Task 1: Complete the Settlement PDF generation as per detailed specs (P0)**
+    -   **Where to resume:** Continue editing . Immediately address the two pending issues (Logo and Acknowledgment Text).
+    -   **What will be achieved with this?** A settlement PDF that is closer to the user's final vision.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Backend.
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0:** Implement Core Settlement Backend Logic:
-        *   In , implement the functions for , End of Service (EOS), and Leave Encashment based on the user's exact formulas.
-        *   In  and , build the API to create, preview, calculate, and execute a settlement, pulling data from the contract and .
-    -   **P1:** Implement Settlement and Payroll UI:
-        *   Develop the  to guide the admin through the settlement process.
-        *   Develop the  component and integrate it into the employee list/profile.
-        *   Implement the new editable attendance grid as requested.
-    -   **P1:** Implement Settlement PDF Generation:
-        *   Create a new PDF generation function for the settlement document, ensuring it is a hybrid Arabic/English A4 page with a **Barcode** for STAS.
-    -   **P2:** Implement Finalization Logic:
-        *   Add the logic to lock the employee account and update the contract status to 'Terminated' after settlement execution.
-        *   Implement the notification system for expiring contracts with remaining leave.
+    -   **P0: Implement PDF Barcode and QR Codes:** In , use  to generate a barcode for the transaction ID and a library like  to generate QR codes for signatures as requested.
+    -   **P0: Implement Settlement UI - Preview & Audit Mirror:** In , build the detailed preview screen. This screen must show the settlement sheet exactly as it will appear in the PDF and include an Audit Mirror panel that details how each calculation was made. It should also allow for temporary edits to values before execution.
+    -   **P0: Implement Finalization Logic:** Create the execute settlement API endpoint in . This should update the contract status to 'Terminated', freeze employee balances, and lock their account.
+    -   **P1: Implement Deductions & Bonuses Module:** Build the full feature for adding/approving deductions and bonuses and integrate them into the settlement calculation.
 
 -   **Future Tasks:**
-    -   CEO Dashboard & enhanced Employee Profile Card.
-    -   Warnings & Loans Modules.
+    -   Comprehensive attendance system.
+    -   Employee Profile Card activation.
+    -   Leave balance notifications for expiring contracts.
+    -   CEO Dashboard, Warnings & Loans Modules.
 
 **Completed work in this session**
--   **Fixed Critical PDF Generation (P0):** Completely rewrote  to correctly render Arabic text using  and , fixing the squares bug. The fix also resolved issues with numbers, dates (), and reference numbers () appearing incorrectly.
--   **Fixed Blank English PDF Regression:** Ensured the English version of the PDF generates correctly by using separate LTR text styles.
--   **Validated Fixes with Testing Agent:** Successfully ran the testing agent (), which confirmed all PDF-related fixes worked as expected for both Arabic and English.
--   **Created Skeleton for Settlement Module:** Created placeholder files for the new settlement, service calculator, and deduction/bonus features to prepare for the next phase of development.
+-   **Added Bank/IBAN Fields to Contracts:** Modified the backend model () and frontend form () to include , , and .
+-   **Fixed 'Edit Contract' Dialog Bug:** Corrected the edit contract modal to display and save the newly added bank and allowance fields, which were initially missing.
+-   **Allowed Bank Details Update on Active Contracts:** Modified the backend update logic in  to permit changes to bank information at any time.
+-   **Scaffolded Settlement Module:** Created placeholder files for the settlement feature's backend (models, routes, services) and frontend (page, routing, sidebar link).
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Lax GPS Validation:** The backend still accepts check-in/out records even if the  flag is . This was not part of the current scope.
+-   **Issue 1: Lax GPS Validation:** The backend accepts check-in/out records even if the  flag is .
 -   **Issue 2: Global-Only Ramadan Hours:** The system lacks support for per-location or per-project Ramadan hours.
 
 **Known issue recurrence from previous fork**
--   **Issue:** Broken Arabic rendering in PDFs.
--   **Recurrence count:** High.
--   **Status:** **RESOLVED**. The agent successfully implemented a robust solution using  Paragraph styles, which was verified by the testing agent. This major blocker is now closed.
+-   None. The major Arabic PDF rendering bug from the previous fork remains fixed.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **ReportLab RTL/LTR Styling:** The key to the PDF fix was using separate  objects within . One for Arabic (, Arabic font) and one for English/numbers (, LTR font like ).
--   **HR Financial Calculations:** The upcoming work will involve implementing precise financial formulas for End of Service awards and Pro-rata leave accrual as specified by the user.
+-   **Hybrid PDF Generation (ReportLab):** Using separate  objects for RTL (Arabic) and LTR (English) text to create a single, bilingual document.
+-   **Base64 Image Handling:** The immediate task requires decoding a base64 string fetched from the database and embedding it as an image into the  PDF.
+-   **FastAPI Update Logic:** The agent had to modify a route to allow partial updates (only bank details) on an otherwise restricted model (active contracts).
 
 **key DB schema**
--   ****: Will be updated to include  and .
--   **** (New Collection): Will store the details of each final settlement transaction, including all calculated values, status (, ), and a reference to the contract and employee.
+-   ****: Updated with , , .
+-   **** (New): Will store final settlement transaction details.
+-   ****: A collection that stores global settings, including the company logo as a base64 string.
 
 **All files of reference**
--   **Fixed PDF utility:** 
--   **New Settlement Model:** 
--   **New Settlement Service:** 
--   **New Calculation Service:** 
--   **New Settlement Route:** 
--   **New Settlement UI:** 
--   **Contract Model (to be modified):** 
--   **Contract UI (to be modified):** 
+-   **Primary file to modify:**  (To add logo and fix text).
+-   **File to reference for logo data:**  (Shows how settings are fetched).
+-   **File to modify next:**  (To build the Preview & Audit UI).
+-   **User requirements source:** Chat Messages 197 and 227 contain the most detailed PDF and workflow specifications.
 
 **Critical Info for New Agent**
--   **Your main goal is to build the entire Settlement and HR calculation module.** The user has provided extremely detailed requirements. Follow them precisely. The previous critical issue (PDFs) is now solved.
--   **Start with the Bank/IBAN fields.** This is a mandatory first step requested by the user and is a prerequisite for the rest of the settlement feature.
--   **All communication with the user must be in Arabic.**
--   The user is highly detail-oriented. The financial calculations must be implemented exactly according to the formulas they provided.
--   Refer to the user's last two long messages (Chat Messages 210 & 217) as the primary Product Requirements Document for this phase.
+-   Your first priority is to fix the settlement PDF. Address the two pending issues: **add the company logo** and **correct the acknowledgment text** using the user's latest instructions.
+-   The logo is stored in the  collection as a base64 string. You must fetch it from the database, decode it, and embed it in the PDF.
+-   The user is highly detail-oriented. After fixing the PDF content, your next major task is building the frontend **Preview screen and Audit Mirror** on  as specified in Chat Message 197. Do not proceed to PDF finalization (Barcode/QR) until the preview UI is complete.
+-   All communication with the user must be in **Arabic**.
 
 **documents and test reports created in this job**
--    (Shows successful test run for the PDF fix)
+-    (Note: This report is from before the user found the edit-dialog and PDF-logo bugs, so its results are outdated).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (LATEST):** Provided a comprehensive and detailed specification for the Settlement module, including payroll calculations (Last Wage, EOS, Leave), workflow (Admin preview, STAS execution), PDF requirements (hybrid, barcode), and a critical last-minute addition of **Bank Name and IBAN** fields to the contract.
-2.  **User:** Provided the initial high-level requirements for the next phase, covering Settlement, Attendance system overhaul, Employee Card activation, and the STAS logic. Demanded a technical report of changes, not screenshots.
+1.  **User (LATEST):** Clarified that the company logo exists in system settings and re-provided the exact, full acknowledgment text that is missing/incomplete in the current settlement PDF.
+2.  **Agent:** Acknowledged the user's feedback and stated they will search for the logo and fix the text.
+3.  **User:** Asked why the company logo is missing from the settlement PDF.
+4.  **Agent:** Was creating a temporary placeholder logo.
+5.  **User:** Provided extremely detailed requirements for the final settlement PDF, including the single-page A4 layout, hybrid language, QR/Barcodes for signatures, and the critical need for a Preview/Audit screen before execution.
+6.  **Agent:** Confirmed the fix for the Edit Contract dialog and showed a screenshot of the working modal.
+7.  **User:** Reported that the bank/IBAN fields were missing from the **edit** contract dialog, making it impossible to update details for existing employees.
+8.  **Agent:** Finished the initial implementation of the settlement module (before the bug was found) and was preparing to finish the task.
+9.  **Agent:** Ran the testing agent, which passed 100% (before the bug was found).
+10. **User:** Provided the full, detailed requirements for the entire settlement module, including all calculations, workflows, and PDF specs.
 
 **Project Health Check:**
-- The project is now stable. The primary Broken component (PDF Generation) has been fixed and verified. The focus is now on major feature development.
+-   **Broken:** The settlement PDF () is incomplete and does not meet the user's specifications (missing logo, incorrect text, no barcode/QR codes).
+-   **Mocked:** The main settlement UI () is just a placeholder and requires the complex Preview and Audit Mirror components to be built.
 
 **3rd Party Integrations**
 -   
@@ -136,13 +156,13 @@ There are no outstanding *bugs*. The focus has shifted entirely to new feature d
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, successfully used to verify the PDF generation fix.
+-   **Testing agent used after significant changes:** YES, but the test was run before the user discovered a significant bug in the Edit Contract form and the issues with the PDF. The last fix (edit form) was only verified with a screenshot.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None persistent. Temporary test files were created and deleted.
--   **Known regressions:** None. The previous English PDF regression was fixed.
+-   **Test files created:** None.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
--   Use the user-switcher dropdown in the app's header. Roles include , , , and various employees. No passwords are required.
+-   Use the user-switcher dropdown in the app's header to switch between roles like  and . No passwords are required.
 
 **What agent forgot to execute**
--   The agent has correctly transitioned from fixing bugs to planning the next major feature. Nothing was forgotten; the next step is to begin the implementation of the large settlement module as per the new user requirements, starting with the Bank and IBAN fields.</analysis>
+-   The agent initially forgot to add the new bank/IBAN fields to the Edit Contract dialog, focusing only on the Create Contract form. This was caught by the user and has since been corrected. The current focus is now aligned with the user's latest, very specific requirements for the PDF.</analysis>
