@@ -560,8 +560,8 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                 formatted_val = format_text_bilingual(leave_label, lang)
         elif key in ('amount', 'estimatedvalue', 'estimated_value'):
             formatted_val = f"{value} SAR"
-        elif key in ('start_date', 'end_date', 'date'):
-            # تنسيق التواريخ مع فواصل
+        elif key in ('start_date', 'end_date', 'date', 'adjusted_end_date'):
+            # تنسيق التواريخ مع فواصل: YYYY-MM-DD
             formatted_val = format_date_only(str(value))
         elif key == 'reason':
             # السبب - تأكد من تنسيق العربي
