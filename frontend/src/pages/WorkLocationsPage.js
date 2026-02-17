@@ -511,6 +511,11 @@ export default function WorkLocationsPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock size={14} />
                     <span>{loc.work_start} - {loc.work_end}</span>
+                    {loc.grace_period_minutes > 0 && (
+                      <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                        ±{loc.grace_period_minutes}{lang === 'ar' ? 'د' : 'm'}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar size={14} />
