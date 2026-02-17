@@ -1135,6 +1135,10 @@ export default function ContractsManagementPage() {
                     <span className="text-muted-foreground">فترة الإنذار:</span>
                     <span>{viewContract.notice_period_days} يوم</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">سياسة الإجازة السنوية:</span>
+                    <span className="font-bold text-primary">{viewContract.annual_policy_days || viewContract.annual_leave_days || 21} يوم</span>
+                  </div>
                 </CardContent>
               </Card>
               
