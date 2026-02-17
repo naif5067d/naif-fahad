@@ -426,25 +426,22 @@ async def calculate_leave_compensation(employee_id: str, daily_wage: float) -> d
 
 
 # ============================================================
-# ملخص شامل لحالة إجازات الموظف
+# ملخص شامل لحالة إجازات الموظف (محدث Pro-Rata)
 # ============================================================
 
 async def get_employee_leave_summary(employee_id: str) -> dict:
     """
     ملخص شامل لحالة إجازات الموظف
+    يستخدم Pro-Rata للإجازة السنوية
     """
-    # رصيد الإجازة السنوية
-    annual_balance = await get_annual_leave_balance(employee_id)
+    # رصيد الإجازة السنوية Pro-Rata
+    pro_rata = await calculate_pro_rata_entitlement(employee_id)
     
     # استحقاق الإجازة السنوية
     annual_entitlement = await calculate_annual_entitlement(employee_id)
     
     # عداد الإجازة المرضية
     sick_usage = await get_sick_leave_usage_12_months(employee_id)
-    
-    # حساب نسبة الاستهلاك
-    annual_total = annual_entitlement.get('entitlement', 21)
-    consumption_rate = ((annual_total - annual_balance) / annual_total * 100) if annual_total > 0 else 0
     
     # إحصائيات الإجازات الأخرى
     other_leaves = {}
@@ -466,19 +463,30 @@ async def get_employee_leave_summary(employee_id: str) -> dict:
         other_leaves[leave_type] = {
             "name_ar": LEAVE_TYPES[leave_type]['name_ar'],
             "count": count,
-            "total_days": days
+            "total_days": days,
+            "fixed_days": FIXED_LEAVE_DAYS.get(leave_type, 0)
         }
+    
+    # حساب نسبة الاستهلاك
+    earned = pro_rata.get('earned_to_date', 0)
+    used = pro_rata.get('used_executed', 0)
+    consumption_rate = (used / earned * 100) if earned > 0 else 0
     
     return {
         "employee_id": employee_id,
         "annual_leave": {
-            "balance": annual_balance,
-            "entitlement": annual_total,
-            "used": annual_total - annual_balance,
+            "balance": round(pro_rata.get('available_balance', 0), 2),
+            "entitlement": pro_rata.get('annual_policy_days', DEFAULT_ANNUAL_ENTITLEMENT),
+            "earned_to_date": round(earned, 2),
+            "used": used,
+            "daily_accrual": pro_rata.get('daily_accrual', 0),
+            "days_worked": pro_rata.get('days_worked', 0),
             "consumption_rate": round(consumption_rate, 1),
             "rule": annual_entitlement.get('rule_applied'),
-            "service_years": annual_entitlement.get('service_years', 0),
-            "message_ar": annual_entitlement.get('message_ar', '')
+            "policy_source": annual_entitlement.get('policy_source', 'default'),
+            "policy_source_ar": annual_entitlement.get('policy_source_ar', 'الافتراضي'),
+            "formula": pro_rata.get('formula', ''),
+            "message_ar": pro_rata.get('message_ar', '')
         },
         "sick_leave": {
             "used_12_months": sick_usage['total_used_12_months'],
@@ -490,11 +498,12 @@ async def get_employee_leave_summary(employee_id: str) -> dict:
         },
         "other_leaves": other_leaves,
         "notes_ar": [
-            "الرصيد الوحيد المتتبع هو الإجازة السنوية",
-            "الإجازة المرضية: عداد تراكمي (30 يوم 100% + 60 يوم 75% + 30 يوم بدون أجر)",
-            "إجازة الزواج والوفاة: 5 أيام مدفوعة - لا تُخصم من السنوية",
-            "إجازة الاختبار: حسب الإثبات - مدفوعة",
-            "إجازة بدون راتب: لا أجر ولا خصم من السنوية"
+            f"الاستحقاق السنوي: {pro_rata.get('annual_policy_days', 21)} يوم (Pro-Rata)",
+            f"المكتسب حتى الآن: {round(earned, 2)} يوم",
+            f"المستخدم (المنفذ): {used} يوم",
+            f"المتاح: {round(pro_rata.get('available_balance', 0), 2)} يوم",
+            "الخصم يتم فقط عند تنفيذ STAS",
+            "لا ترحيل تلقائي للإجازات"
         ],
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
