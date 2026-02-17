@@ -183,16 +183,35 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
 
     # Handle rejection
     if body.action == 'reject':
-        # STAS rejection = Cancel the transaction
+        # STAS rejection = Cancel the transaction (يتطلب تعليق)
         if stage == 'stas' and user.get('role') == 'stas':
+            # تعليق مطلوب عند الإلغاء
+            if not body.note or len(body.note.strip()) < 5:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "COMMENT_REQUIRED",
+                        "message_ar": "يجب كتابة سبب الإلغاء (5 أحرف على الأقل)",
+                        "message_en": "Cancellation reason is required (at least 5 characters)"
+                    }
+                )
+            
             await db.transactions.update_one(
                 {"id": transaction_id},
                 {
-                    "$set": {"status": "cancelled", "current_stage": "cancelled", "updated_at": now},
+                    "$set": {
+                        "status": "cancelled", 
+                        "current_stage": "cancelled", 
+                        "updated_at": now,
+                        "cancellation_reason": body.note.strip(),
+                        "cancelled_by": user['user_id'],
+                        "cancelled_by_name": user.get('full_name', user['username']),
+                        "cancelled_at": now
+                    },
                     "$push": {"timeline": {**timeline_event, "event": "cancelled"}, "approval_chain": approval_entry}
                 }
             )
-            return {"message": "Transaction cancelled by STAS", "status": "cancelled"}
+            return {"message": "Transaction cancelled by STAS", "status": "cancelled", "reason": body.note}
         
         # CEO rejection → goes to STAS for final decision (execute rejection or return)
         if stage == 'ceo':
