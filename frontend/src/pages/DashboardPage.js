@@ -101,6 +101,10 @@ export default function DashboardPage() {
   const [nextHoliday, setNextHoliday] = useState(null);
   const [announcements, setAnnouncements] = useState({ pinned: [], regular: [] });
   const [appVersion, setAppVersion] = useState('');
+  const [expiringContracts, setExpiringContracts] = useState({ employees: [], summary: {} });
+
+  const role = user?.role || 'employee';
+  const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => {});
@@ -108,7 +112,14 @@ export default function DashboardPage() {
     api.get('/api/dashboard/next-holiday').then(r => setNextHoliday(r.data)).catch(() => {});
     api.get('/api/announcements').then(r => setAnnouncements(r.data)).catch(() => {});
     api.get('/api/health').then(r => setAppVersion(r.data.version)).catch(() => {});
-  }, []);
+    
+    // جلب العقود المنتهية للمدراء
+    if (isAdmin) {
+      api.get('/api/notifications/expiring-contracts?days_ahead=90')
+        .then(r => setExpiringContracts(r.data))
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   const dismissAnnouncement = async (id) => {
     try {
@@ -120,7 +131,6 @@ export default function DashboardPage() {
     } catch (err) {}
   };
 
-  const role = user?.role || 'employee';
   const statCards = STAT_CONFIG[role] || STAT_CONFIG.employee;
   const quickActions = QUICK_ACTIONS[role] || QUICK_ACTIONS.employee;
   const displayName = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
