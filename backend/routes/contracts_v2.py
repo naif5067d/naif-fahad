@@ -394,28 +394,44 @@ async def update_contract(
 ):
     """
     Update a contract.
-    Only allowed for draft and pending_stas status.
-    After execution, must create new version.
+    - Draft/Pending: All fields can be edited
+    - Active: Only bank_name, bank_iban, notes can be edited (للمخالصة)
     """
     contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
     if not contract:
         raise HTTPException(status_code=404, detail="العقد غير موجود")
-    
-    # Only draft and pending_stas can be edited
-    if contract["status"] not in ("draft", "pending_stas"):
-        raise HTTPException(
-            status_code=400, 
-            detail=f"لا يمكن تعديل عقد بحالة {contract['status']}. يجب إنشاء إصدار جديد."
-        )
     
     now = datetime.now(timezone.utc).isoformat()
     
     # Build update dict
     update_data = {"updated_at": now}
     
-    for field, value in req.dict(exclude_unset=True).items():
-        if value is not None:
-            update_data[field] = value
+    # Fields that can ALWAYS be updated (even for active contracts)
+    always_editable = ["bank_name", "bank_iban", "notes"]
+    
+    if contract["status"] in ("draft", "pending_stas"):
+        # Draft/Pending: All fields can be edited
+        for field, value in req.dict(exclude_unset=True).items():
+            if value is not None:
+                update_data[field] = value
+    elif contract["status"] == "active":
+        # Active: Only bank/notes fields can be edited
+        for field in always_editable:
+            value = getattr(req, field, None)
+            if value is not None:
+                update_data[field] = value
+        
+        # Check if user tried to update other fields
+        for field, value in req.dict(exclude_unset=True).items():
+            if field not in always_editable and value is not None:
+                if contract.get(field) != value:
+                    # Silently ignore non-bank fields for active contracts
+                    pass
+    else:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"لا يمكن تعديل عقد بحالة {contract['status']}."
+        )
     
     # If salary fields updated and category is internship_unpaid, reset to 0
     if contract["contract_category"] == "internship_unpaid":
