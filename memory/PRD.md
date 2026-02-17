@@ -180,18 +180,20 @@ system_archives, maintenance_log
 
 ## Remaining Tasks
 
-### P0 (Priority 0) - Next Phase
-- **نظام المخالصة الكامل (Full Settlement System):**
-  - واجهة إنشاء طلب المخالصة
-  - عرض Snapshot في مرآة STAS
-  - تنفيذ المخالصة بالكامل
-  - PDF المخالصة النهائي
+### P0 (Priority 0) - COMPLETED ✅
 
-### P1 (Priority 1)
+### P1 (Priority 1) - Next Phase
+- **نظام الخصومات والمكافآت الكامل:**
+  - واجهة إدخال الخصم والمكافأة
+  - سلسلة الموافقات: Sultan → STAS → تنفيذ
+  - الربط بالمخالصة تلقائياً
 - CEO Dashboard - Escalated transactions view
 - Employee Profile Card Enhancement
+- بطاقة الموظف المفعّلة
 
 ### P2 (Priority 2)
+- نظام الحضور والانصراف المحسّن (Present/Absent/On Leave/Permission)
+- إشعارات انتهاء العقود مع رصيد إجازات
 - New Transaction Types (leave/attendance subtypes)
 - STAS Financial Custody Mirror
 - Geofencing enforcement
