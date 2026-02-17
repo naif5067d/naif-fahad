@@ -562,7 +562,50 @@ Contract activation flow:
 
 ---
 
-Version: 21.2 (2026-02-17)
+Version: 22.0 (2026-02-17)
+
+---
+
+### Phase 22.0: Employee Management & Map Fix ✅ (2026-02-17)
+
+**P0 Completed - Overlapping Maps Bug Fix:**
+- ✓ Fixed multiple maps rendering in Work Locations page
+- ✓ Map in dialog now wrapped with `{dialogOpen && <MapContainer />}` condition
+- ✓ Unique key prop prevents duplicate instances: `key={dialog-map-${id}-${dialogOpen}}`
+- ✓ Single map displays in dialog, preview maps on cards work correctly
+
+**P0 Completed - Employee Credentials Management:**
+- ✓ New Key icon button in Employees table (STAS only)
+- ✓ Dialog shows username and password fields
+- ✓ Existing users: Shows current username, password update optional
+- ✓ New users: Create username and password
+- ✓ Password visibility toggle (eye icon)
+- ✓ API: GET/PUT /api/users/{employee_id}/credentials
+
+**P0 Completed - Employee Deletion:**
+- ✓ New Trash icon button in Employees table (STAS only)
+- ✓ Confirmation dialog in Arabic
+- ✓ Prevents deletion if employee has active contract
+- ✓ Deletes associated user account
+- ✓ API: DELETE /api/employees/{employee_id}
+
+**New Files:**
+- `/app/backend/routes/users.py` - User credential management APIs
+
+**Files Modified:**
+- `/app/frontend/src/pages/WorkLocationsPage.js` - Map fix
+- `/app/frontend/src/pages/EmployeesPage.js` - Credentials + Delete dialogs
+- `/app/backend/routes/employees.py` - Delete endpoint
+- `/app/backend/server.py` - Added users router
+
+**New API Endpoints:**
+- `GET /api/users` - List all users (STAS/Sultan/Naif)
+- `GET /api/users/{employee_id}` - Get user by employee ID
+- `PUT /api/users/{employee_id}/credentials` - Update username/password (STAS)
+- `POST /api/users/create` - Create user for employee (STAS)
+- `DELETE /api/employees/{employee_id}` - Delete employee (STAS)
+
+**Test Report:** `/app/test_reports/iteration_23.json` - 100% pass rate
 
 ---
 
