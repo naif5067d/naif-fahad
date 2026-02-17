@@ -65,7 +65,7 @@ async def get_employee_contracts(employee_id: str, user=Depends(get_current_user
 async def create_contract(req: ContractCreate, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
 
     existing = await db.contracts.find({"employee_id": req.employee_id}).sort("version", -1).to_list(1)
     version = (existing[0]['version'] + 1) if existing else 1
@@ -99,13 +99,13 @@ async def create_contract(req: ContractCreate, user=Depends(require_roles('stas'
 async def update_contract(contract_id: str, req: ContractUpdate, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     contract = await db.contracts.find_one({"id": contract_id})
     if not contract:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
     if contract.get('is_snapshot'):
-        raise HTTPException(status_code=400, detail="Cannot edit a snapshot contract")
+        raise HTTPException(status_code=400, detail="لا يمكن تعديل عقد سابق")
 
     updates = {k: v for k, v in req.model_dump().items() if v is not None}
     if not updates:
-        raise HTTPException(status_code=400, detail="No updates")
+        raise HTTPException(status_code=400, detail="لا توجد تحديثات")
     await db.contracts.update_one({"id": contract_id}, {"$set": updates})
     updated = await db.contracts.find_one({"id": contract_id}, {"_id": 0})
     return updated
@@ -121,11 +121,11 @@ async def create_settlement(req: SettlementRequest, user=Depends(require_roles('
     """
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
     # Check employee is active
     if not emp.get('is_active', True):
-        raise HTTPException(status_code=400, detail="Employee is already inactive")
+        raise HTTPException(status_code=400, detail="الموظف غير نشط بالفعل")
     
     # Check for existing pending settlement
     existing = await db.transactions.find_one({
