@@ -137,7 +137,7 @@ async def request_add_finance_code(req: dict, user=Depends(get_current_user)):
 
     existing = await db.finance_codes.find_one({"code": code})
     if existing:
-        raise HTTPException(status_code=400, detail=f"Code {code} already exists")
+        raise HTTPException(status_code=400, detail=f"الكود {code} موجود مسبقاً")
 
     code_doc = {
         "id": str(uuid.uuid4()),
@@ -159,11 +159,11 @@ async def update_finance_code(code_id: str, req: dict, user=Depends(get_current_
     """Edit a finance code - Sultan, Naif, Salah, STAS can edit."""
     role = user.get('role')
     if role not in ('stas', 'sultan', 'naif', 'salah'):
-        raise HTTPException(status_code=403, detail="Not authorized to edit codes")
+        raise HTTPException(status_code=403, detail="غير مصرح بتعديل الأكواد")
 
     code_doc = await db.finance_codes.find_one({"id": code_id})
     if not code_doc:
-        raise HTTPException(status_code=404, detail="Code not found")
+        raise HTTPException(status_code=404, detail="الكود غير موجود")
 
     update = {}
     if 'name' in req:
@@ -174,7 +174,7 @@ async def update_finance_code(code_id: str, req: dict, user=Depends(get_current_
         # Check for duplicate
         dup = await db.finance_codes.find_one({"code": req['code'], "id": {"$ne": code_id}})
         if dup:
-            raise HTTPException(status_code=400, detail=f"Code {req['code']} already exists")
+            raise HTTPException(status_code=400, detail=f"الكود {req['code']} موجود مسبقاً")
         update['code'] = req['code']
     if 'category' in req:
         update['category'] = req['category']

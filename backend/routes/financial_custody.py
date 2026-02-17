@@ -58,7 +58,7 @@ async def _get_next_custody_number():
 async def list_custodies(user=Depends(get_current_user)):
     role = user.get("role")
     if role not in ("sultan", "naif", "salah", "mohammed", "stas"):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     custodies = await db.custody_financial.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
     return custodies
 
@@ -67,7 +67,7 @@ async def list_custodies(user=Depends(get_current_user)):
 async def get_custody(custody_id: str, user=Depends(get_current_user)):
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c:
-        raise HTTPException(status_code=404, detail="Custody not found")
+        raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     return c
 
 
@@ -75,7 +75,7 @@ async def get_custody(custody_id: str, user=Depends(get_current_user)):
 async def create_custody(req: CreateCustodyRequest, user=Depends(get_current_user)):
     role = user.get("role")
     if role not in ("sultan", "naif", "mohammed", "stas"):
-        raise HTTPException(status_code=403, detail="Only Sultan/Naif/Mohammed can create")
+        raise HTTPException(status_code=403, detail="فقط سلطان/نايف/محمد يمكنهم الإنشاء")
     if req.total_amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be positive")
 
@@ -127,7 +127,7 @@ async def receive_custody(custody_id: str, user=Depends(get_current_user)):
     """Receive the custody - even creator must receive it."""
     role = user.get("role")
     if role not in ("sultan", "naif", "mohammed", "stas"):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c:
@@ -489,7 +489,7 @@ async def get_custody_summary(user=Depends(get_current_user)):
     """Get summary totals across all custodies."""
     role = user.get("role")
     if role not in ("sultan", "naif", "salah", "mohammed", "stas"):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
 
     all_custodies = await db.custody_financial.find({}, {"_id": 0}).to_list(500)
     total_amount = sum(c.get("total_amount", 0) + c.get("carried_amount", 0) for c in all_custodies)
