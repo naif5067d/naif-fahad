@@ -329,8 +329,6 @@ system_archives, maintenance_log
   - سلسلة الموافقات: Sultan → STAS → تنفيذ
   - الربط بالمخالصة تلقائياً
 - CEO Dashboard - Escalated transactions view
-- Employee Profile Card Enhancement
-- بطاقة الموظف المفعّلة
 
 ### P2 (Priority 2)
 - نظام الحضور والانصراف المحسّن (Present/Absent/On Leave/Permission)
