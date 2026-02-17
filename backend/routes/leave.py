@@ -101,6 +101,18 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     now = datetime.now(timezone.utc).isoformat()
     ref_no = await get_next_ref_no()
 
+    # ترجمة نوع الإجازة
+    leave_type_labels = {
+        'annual': 'سنوية',
+        'sick': 'مرضية',
+        'emergency': 'طارئة',
+        'marriage': 'زواج',
+        'bereavement': 'وفاة',
+        'exam': 'اختبار',
+        'unpaid': 'بدون راتب'
+    }
+    leave_type_ar = leave_type_labels.get(req.leave_type, req.leave_type)
+    
     tx = {
         "id": str(uuid.uuid4()),
         "ref_no": ref_no,
@@ -110,6 +122,7 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
         "employee_id": emp['id'],
         "data": {
             "leave_type": req.leave_type,
+            "leave_type_ar": leave_type_ar,
             "start_date": req.start_date,
             "end_date": req.end_date,
             "adjusted_end_date": validation['adjusted_end_date'],
