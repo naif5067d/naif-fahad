@@ -8,11 +8,11 @@ import { useState, useEffect, useRef } from 'react';
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'finance', 'financialCustody'],
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contracts', 'contractsManagement', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
