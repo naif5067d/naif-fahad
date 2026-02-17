@@ -51,12 +51,19 @@ async def get_employee_with_contract(user_id: str) -> Tuple[Optional[dict], Opti
         })
         return emp, None, errors
     
-    # Check for active contract
+    # Check for active contract - البحث في V1 و V2
     contract = await db.contracts.find_one({
         "employee_id": emp['id'],
         "is_active": True,
         "is_snapshot": {"$ne": True}
     }, {"_id": 0})
+    
+    # إذا لم يوجد في V1، ابحث في V2
+    if not contract:
+        contract = await db.contracts_v2.find_one({
+            "employee_id": emp['id'],
+            "status": "active"
+        }, {"_id": 0})
     
     if not contract:
         errors.append({
