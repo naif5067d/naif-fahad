@@ -16,7 +16,7 @@ export default function LeavePage() {
   const { user } = useAuth();
   const [balance, setBalance] = useState({});
   const [holidays, setHolidays] = useState([]);
-  const [form, setForm] = useState({ leave_type: 'annual', start_date: '', end_date: '', reason: '' });
+  const [form, setForm] = useState({ leave_type: 'annual', start_date: '', end_date: '', reason: '', medical_file: null });
   const [submitting, setSubmitting] = useState(false);
   const [holidayForm, setHolidayForm] = useState({ name: '', name_ar: '', date: '' });
   const [editHoliday, setEditHoliday] = useState(null);
@@ -25,6 +25,16 @@ export default function LeavePage() {
   const canRequest = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
   const canEditHolidays = ['sultan', 'naif', 'stas'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
+
+  // أنواع الإجازات بالعربي مع الأرصدة
+  const LEAVE_TYPES = {
+    annual: { label: lang === 'ar' ? 'الإجازة السنوية' : 'Annual Leave', hasBalance: true },
+    sick: { label: lang === 'ar' ? 'الإجازة المرضية' : 'Sick Leave', hasBalance: true, requiresFile: true },
+    marriage: { label: lang === 'ar' ? 'إجازة الزواج' : 'Marriage Leave', hasBalance: false, days: 5 },
+    bereavement: { label: lang === 'ar' ? 'إجازة الوفاة' : 'Bereavement Leave', hasBalance: false, days: 5 },
+    exam: { label: lang === 'ar' ? 'إجازة الاختبار' : 'Exam Leave', hasBalance: false },
+    unpaid: { label: lang === 'ar' ? 'إجازة بدون راتب' : 'Unpaid Leave', hasBalance: false },
+  };
 
   useEffect(() => {
     if (canRequest) api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
