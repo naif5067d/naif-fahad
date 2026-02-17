@@ -147,7 +147,14 @@ def format_saudi_time(ts):
         return '-'
     try:
         if isinstance(ts, str):
-            dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+            # Handle various formats
+            ts_clean = ts.replace('Z', '+00:00')
+            # Remove any extra characters
+            if 'T' in ts_clean:
+                dt = datetime.fromisoformat(ts_clean)
+            else:
+                # Try parsing as date string
+                dt = datetime.strptime(ts_clean[:19], '%Y-%m-%d %H:%M:%S')
         else:
             dt = ts
         if dt.tzinfo is None:
@@ -155,7 +162,11 @@ def format_saudi_time(ts):
         saudi_time = dt + timedelta(hours=3)
         # تنسيق التاريخ مع فواصل: YYYY-MM-DD HH:MM
         return saudi_time.strftime('%Y-%m-%d %H:%M')
-    except Exception:
+    except Exception as e:
+        # إذا فشل التحليل، حاول إضافة الفواصل يدوياً
+        ts_str = str(ts)
+        if len(ts_str) >= 8 and ts_str[:8].isdigit():
+            return f"{ts_str[:4]}-{ts_str[4:6]}-{ts_str[6:8]} {ts_str[8:] if len(ts_str) > 8 else ''}"
         return str(ts)[:16] if ts else '-'
 
 
@@ -164,13 +175,16 @@ def format_date_only(date_str):
     if not date_str:
         return '-'
     try:
+        date_str = str(date_str).strip()
+        
         # If already in YYYY-MM-DD format, return as is
-        if '-' in str(date_str):
-            return str(date_str)
+        if '-' in date_str and len(date_str.split('-')[0]) == 4:
+            return date_str.split('T')[0] if 'T' in date_str else date_str
+        
         # If in YYYYMMDD format, add separators
-        date_str = str(date_str)
-        if len(date_str) == 8 and date_str.isdigit():
+        if len(date_str) >= 8 and date_str[:8].isdigit():
             return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+        
         return date_str
     except Exception:
         return str(date_str)
