@@ -44,13 +44,7 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
             status_code=400, 
             detail="الإجازة المرضية تتطلب رفع ملف تقرير طبي PDF"
         )
-    Create a leave request with full pre-validation.
-    Validates:
-    - Employee is active with contract
-    - Sufficient leave balance
-    - No overlapping dates
-    - Holiday adjustments
-    """
+    
     # Step 1: Validate employee and contract
     emp, contract, errors = await get_employee_with_contract(user['user_id'])
     
