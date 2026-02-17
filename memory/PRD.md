@@ -562,7 +562,34 @@ Contract activation flow:
 
 ---
 
-Version: 22.0 (2026-02-17)
+Version: 22.1 (2026-02-17)
+
+---
+
+### Phase 22.1: Employee-User Linking & Arabic Errors ✅ (2026-02-17)
+
+**P0 Completed - Employee User Linking Fix:**
+- ✓ Fixed user_id not being set in employees table when contract is executed
+- ✓ Updated contract_service.py to set employee.user_id = new user.id
+- ✓ Fixed نايف القريشي's account - now fully functional
+- ✓ Leave requests now check both contracts and contracts_v2 collections
+
+**P0 Completed - Arabic Error Messages:**
+- ✓ Converted ALL HTTPException messages to Arabic
+- ✓ Files updated: auth.py, attendance.py, employees.py, contracts.py, custody.py, finance.py, financial_custody.py, leave.py, settings.py, stas.py
+- ✓ Error messages now use message_ar where available
+
+**Files Modified:**
+- `/app/backend/services/contract_service.py` - Added user_id update
+- `/app/backend/utils/leave_rules.py` - Added contracts_v2 lookup
+- Multiple route files - Arabic error messages
+
+**Employee Creation Flow (What gets linked):**
+1. Employee created in `employees` collection with `id` and `user_id` (initially same value)
+2. When contract executed: User created in `users` with new `id` and `employee_id`
+3. Employee's `user_id` updated to match user's `id` (this was missing!)
+
+**Test Result:** نايف القريشي can now login and request leave successfully
 
 ---
 
