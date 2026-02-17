@@ -9,41 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import { 
-  Receipt, 
-  Plus, 
-  Search, 
-  Eye, 
-  Play, 
-  XCircle, 
-  CheckCircle, 
-  Clock, 
-  FileText,
-  Users,
-  Building2,
-  Calendar,
-  DollarSign,
-  AlertTriangle,
-  RefreshCw,
-  Calculator,
-  Ban,
-  Download,
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  Landmark
+  Receipt, Plus, Search, Eye, Play, XCircle, CheckCircle, Clock, FileText,
+  Users, Building2, Calendar, DollarSign, AlertTriangle, RefreshCw,
+  Calculator, Ban, Download, Wallet, TrendingUp, TrendingDown, Landmark,
+  ClipboardCheck, Shield, FileCheck, AlertCircle, CheckCircle2, Info
 } from 'lucide-react';
 
 // أنواع إنهاء الخدمة
 const TERMINATION_TYPES = {
-  contract_expiry: { label: 'انتهاء العقد', color: 'bg-blue-500' },
-  resignation: { label: 'استقالة', color: 'bg-amber-500' },
-  probation_termination: { label: 'إنهاء خلال التجربة', color: 'bg-red-500' },
-  mutual_agreement: { label: 'اتفاق طرفين', color: 'bg-green-500' },
-  termination: { label: 'إنهاء من الشركة', color: 'bg-purple-500' },
+  contract_expiry: { label: 'انتهاء العقد', label_en: 'Contract Expiry', color: 'bg-blue-500' },
+  resignation: { label: 'استقالة', label_en: 'Resignation', color: 'bg-amber-500' },
+  probation_termination: { label: 'إنهاء خلال التجربة', label_en: 'Probation Termination', color: 'bg-red-500' },
+  mutual_agreement: { label: 'اتفاق طرفين', label_en: 'Mutual Agreement', color: 'bg-green-500' },
+  termination: { label: 'إنهاء من الشركة', label_en: 'Termination by Company', color: 'bg-purple-500' },
 };
 
 // حالات المخالصة
@@ -65,8 +49,15 @@ export default function SettlementPage() {
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
+  const [previewStep, setPreviewStep] = useState('form'); // form | preview | audit
   const [viewSettlement, setViewSettlement] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  
+  // Editable preview data
+  const [editablePreview, setEditablePreview] = useState(null);
+  
+  // Validation warnings
+  const [warnings, setWarnings] = useState([]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -100,7 +91,7 @@ export default function SettlementPage() {
     setLoading(false);
   };
 
-  // جلب الموظفين الذين لديهم عقد نشط أو منتهي (قابل للمخالصة)
+  // جلب الموظفين الذين لديهم عقد نشط
   const eligibleEmployees = employees.filter(emp => {
     const contract = contracts.find(c => 
       c.employee_id === emp.id && 
@@ -108,6 +99,33 @@ export default function SettlementPage() {
     );
     return contract && emp.is_active !== false;
   });
+
+  // Validation function
+  const validateSettlement = (data) => {
+    const warns = [];
+    
+    // تحقق من البنك
+    if (!data.contract?.bank_name || !data.contract?.bank_iban) {
+      warns.push({ type: 'error', message: 'معلومات البنك (الاسم والآيبان) مطلوبة للمخالصة', field: 'bank' });
+    }
+    
+    // تحقق من الراتب
+    if (!data.wages?.last_wage || data.wages.last_wage <= 0) {
+      warns.push({ type: 'error', message: 'لا يوجد راتب محدد في العقد', field: 'salary' });
+    }
+    
+    // تحذير إذا كان هناك خصومات كبيرة
+    if (data.totals?.deductions?.total > data.totals?.entitlements?.total) {
+      warns.push({ type: 'warning', message: 'إجمالي الاستقطاعات أكبر من الاستحقاقات', field: 'balance' });
+    }
+    
+    // تحذير إذا كانت المكافأة صفر
+    if (data.eos?.final_amount === 0 && data.service?.years >= 2) {
+      warns.push({ type: 'info', message: `مكافأة نهاية الخدمة صفر بسبب: ${data.eos?.percentage_reason}`, field: 'eos' });
+    }
+    
+    return warns;
+  };
 
   const handlePreview = async () => {
     if (!formData.employee_id || !formData.last_working_day) {
@@ -119,6 +137,13 @@ export default function SettlementPage() {
     try {
       const res = await api.post('/api/settlement/preview', formData);
       setPreviewData(res.data);
+      setEditablePreview(JSON.parse(JSON.stringify(res.data))); // Deep copy for editing
+      
+      // Validate
+      const warns = validateSettlement(res.data);
+      setWarnings(warns);
+      
+      setPreviewStep('preview');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'فشل حساب المخالصة');
     }
@@ -126,8 +151,10 @@ export default function SettlementPage() {
   };
 
   const handleCreateSettlement = async () => {
-    if (!previewData) {
-      toast.error('يرجى معاينة الحسابات أولاً');
+    // Check for blocking errors
+    const blockingErrors = warnings.filter(w => w.type === 'error');
+    if (blockingErrors.length > 0) {
+      toast.error('يوجد أخطاء يجب إصلاحها قبل الإنشاء');
       return;
     }
     
@@ -137,6 +164,7 @@ export default function SettlementPage() {
       toast.success(`تم إنشاء طلب المخالصة: ${res.data.transaction_number}`);
       setCreateDialogOpen(false);
       setPreviewData(null);
+      setPreviewStep('form');
       resetForm();
       loadData();
     } catch (err) {
@@ -146,7 +174,7 @@ export default function SettlementPage() {
   };
 
   const handleExecute = async (settlementId) => {
-    if (!confirm('هل تريد تنفيذ هذه المخالصة؟ هذا الإجراء نهائي ولا يمكن التراجع عنه.')) return;
+    if (!confirm('هل تريد تنفيذ هذه المخالصة؟\n\nهذا الإجراء نهائي ولا يمكن التراجع عنه.\nسيتم:\n- قفل حساب الموظف\n- إغلاق العقد\n- إنشاء PDF المخالصة')) return;
     
     setActionLoading(true);
     try {
@@ -190,10 +218,13 @@ export default function SettlementPage() {
       note: '',
     });
     setPreviewData(null);
+    setEditablePreview(null);
+    setPreviewStep('form');
+    setWarnings([]);
   };
 
   const formatCurrency = (amount) => `${(amount || 0).toLocaleString()} ريال`;
-  const formatDate = (dateStr) => formatGregorianHijri(dateStr).primary;
+  const formatDate = (dateStr) => dateStr ? formatGregorianHijri(dateStr).primary : '-';
 
   const filteredSettlements = settlements.filter(s => {
     if (statusFilter !== 'all' && s.status !== statusFilter) return false;
@@ -207,6 +238,305 @@ export default function SettlementPage() {
       </div>
     );
   }
+
+  // Audit Trail Component
+  const AuditTrail = ({ data }) => {
+    const auditItems = [];
+    
+    // Service calculation
+    auditItems.push({
+      icon: Calendar,
+      title: 'مدة الخدمة',
+      title_en: 'Service Period',
+      detail: `${data.service?.formatted_ar} (${data.service?.total_days} يوم)`,
+      status: 'success'
+    });
+    
+    // Last wage calculation
+    auditItems.push({
+      icon: Wallet,
+      title: 'آخر راتب شامل',
+      title_en: 'Last Wage',
+      detail: `${data.wages?.formula}`,
+      value: formatCurrency(data.wages?.last_wage),
+      status: 'success'
+    });
+    
+    // EOS calculation
+    auditItems.push({
+      icon: TrendingUp,
+      title: 'مكافأة نهاية الخدمة',
+      title_en: 'End of Service',
+      detail: data.eos?.formula,
+      subdetail: data.eos?.percentage_reason,
+      value: formatCurrency(data.eos?.final_amount),
+      status: data.eos?.final_amount > 0 ? 'success' : 'info'
+    });
+    
+    // Leave compensation
+    auditItems.push({
+      icon: Calendar,
+      title: 'بدل الإجازات',
+      title_en: 'Leave Compensation',
+      detail: data.leave?.formula,
+      value: formatCurrency(data.leave?.compensation),
+      status: 'success'
+    });
+    
+    // Deductions
+    if (data.deductions?.total > 0) {
+      auditItems.push({
+        icon: TrendingDown,
+        title: 'خصومات',
+        title_en: 'Deductions',
+        detail: `${data.deductions?.count} عملية خصم`,
+        value: `-${formatCurrency(data.deductions?.total)}`,
+        status: 'warning'
+      });
+    }
+    
+    // Loans
+    if (data.loans?.total > 0) {
+      auditItems.push({
+        icon: Wallet,
+        title: 'سلف',
+        title_en: 'Loans',
+        detail: `${data.loans?.count} سلفة`,
+        value: `-${formatCurrency(data.loans?.total)}`,
+        status: 'warning'
+      });
+    }
+    
+    // Bank info
+    const hasBank = data.contract?.bank_name && data.contract?.bank_iban;
+    auditItems.push({
+      icon: Landmark,
+      title: 'معلومات البنك',
+      title_en: 'Bank Info',
+      detail: hasBank ? `${data.contract?.bank_name} - ${data.contract?.bank_iban}` : 'غير محدد',
+      status: hasBank ? 'success' : 'error'
+    });
+    
+    // Final calculation
+    auditItems.push({
+      icon: Calculator,
+      title: 'المعادلة النهائية',
+      title_en: 'Final Calculation',
+      detail: `${formatCurrency(data.totals?.entitlements?.total)} - ${formatCurrency(data.totals?.deductions?.total)}`,
+      value: formatCurrency(data.totals?.net_amount),
+      status: 'final'
+    });
+    
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="w-5 h-5 text-primary" />
+          <h3 className="font-bold">مرآة التدقيق - Audit Mirror</h3>
+        </div>
+        
+        {auditItems.map((item, idx) => {
+          const Icon = item.icon;
+          const statusColors = {
+            success: 'border-emerald-200 bg-emerald-50',
+            warning: 'border-amber-200 bg-amber-50',
+            error: 'border-red-200 bg-red-50',
+            info: 'border-blue-200 bg-blue-50',
+            final: 'border-primary bg-primary/5'
+          };
+          
+          return (
+            <div key={idx} className={`p-3 rounded-lg border ${statusColors[item.status]}`}>
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-2">
+                  <Icon className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium text-sm">{item.title}</div>
+                    <div className="text-xs text-muted-foreground">{item.title_en}</div>
+                    <div className="text-xs mt-1">{item.detail}</div>
+                    {item.subdetail && <div className="text-xs text-muted-foreground">{item.subdetail}</div>}
+                  </div>
+                </div>
+                {item.value && (
+                  <div className={`font-bold text-sm ${item.status === 'final' ? 'text-primary text-lg' : ''}`}>
+                    {item.value}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Preview Sheet Component (محاكاة شكل PDF)
+  const PreviewSheet = ({ data }) => {
+    const snapshot = data;
+    
+    return (
+      <div className="border rounded-lg p-4 bg-white text-sm max-h-[60vh] overflow-y-auto" style={{ fontFamily: 'Arial, sans-serif' }}>
+        {/* Header */}
+        <div className="grid grid-cols-2 border-b pb-2 mb-3">
+          <div className="text-left text-xs">
+            <div>Kingdom of Saudi Arabia – Riyadh</div>
+            <div className="font-bold">Dar Al Code Engineering Consultancy</div>
+            <div className="text-muted-foreground">License No: 5110004935 – CR: 1010463476</div>
+          </div>
+          <div className="text-right text-xs" dir="rtl">
+            <div>المملكة العربية السعودية – الرياض</div>
+            <div className="font-bold">شركة دار الكود للاستشارات الهندسية</div>
+            <div className="text-muted-foreground">ترخيص رقم: 5110004935 – سجل تجاري: 1010463476</div>
+          </div>
+        </div>
+        
+        {/* Employee Info */}
+        <div className="mb-3">
+          <div className="grid grid-cols-2 bg-primary text-white text-xs p-1">
+            <div className="text-left">Employee Information</div>
+            <div className="text-right" dir="rtl">بيانات الموظف</div>
+          </div>
+          <table className="w-full text-xs border">
+            <tbody>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.employee?.name_ar}</td>
+                <td className="p-1 text-left bg-gray-50">Employee Name</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">اسم الموظف</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.employee?.name_ar}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.employee?.employee_number}</td>
+                <td className="p-1 text-left bg-gray-50">Employee ID</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">الرقم الوظيفي</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.employee?.employee_number}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.contract?.last_working_day}</td>
+                <td className="p-1 text-left bg-gray-50">Last Working Day</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">آخر يوم عمل</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.contract?.last_working_day}</td>
+              </tr>
+              <tr>
+                <td className="p-1 text-left">{TERMINATION_TYPES[snapshot.contract?.termination_type]?.label_en}</td>
+                <td className="p-1 text-left bg-gray-50">Clearance Type</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">نوع المخالصة</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.contract?.termination_type_label}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Salary Details */}
+        <div className="mb-3">
+          <div className="grid grid-cols-2 bg-primary text-white text-xs p-1">
+            <div className="text-left">Salary & Allowances Details</div>
+            <div className="text-right" dir="rtl">تفاصيل الراتب والبدلات</div>
+          </div>
+          <table className="w-full text-xs border">
+            <tbody>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.wages?.basic?.toLocaleString()}</td>
+                <td className="p-1 text-left bg-gray-50">Basic Salary</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">الراتب الأساسي</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.wages?.basic?.toLocaleString()}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.wages?.housing?.toLocaleString()}</td>
+                <td className="p-1 text-left bg-gray-50">Housing Allowance</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">بدل السكن</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.wages?.housing?.toLocaleString()}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.wages?.nature_of_work?.toLocaleString()}</td>
+                <td className="p-1 text-left bg-gray-50">Nature of Work Allowance</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">بدل طبيعة العمل</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.wages?.nature_of_work?.toLocaleString()}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-1 text-left">{snapshot.wages?.transport?.toLocaleString()}</td>
+                <td className="p-1 text-left bg-gray-50">Transportation Allowance</td>
+                <td className="p-1 text-right bg-gray-50" dir="rtl">بدل نقل</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.wages?.transport?.toLocaleString()}</td>
+              </tr>
+              <tr className="bg-emerald-50 font-bold">
+                <td className="p-1 text-left">{snapshot.wages?.last_wage?.toLocaleString()}</td>
+                <td className="p-1 text-left">Total Salary</td>
+                <td className="p-1 text-right" dir="rtl">إجمالي الراتب</td>
+                <td className="p-1 text-right" dir="rtl">{snapshot.wages?.last_wage?.toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Entitlements & Deductions */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div>
+            <div className="bg-emerald-600 text-white text-xs p-1 text-center">Entitlements / الاستحقاقات</div>
+            <table className="w-full text-xs border">
+              <tbody>
+                <tr className="border-b">
+                  <td className="p-1">End of Service</td>
+                  <td className="p-1 text-right">{snapshot.eos?.final_amount?.toLocaleString()}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="p-1">Leave Compensation</td>
+                  <td className="p-1 text-right">{snapshot.leave?.compensation?.toLocaleString()}</td>
+                </tr>
+                <tr className="bg-emerald-50 font-bold">
+                  <td className="p-1">Total</td>
+                  <td className="p-1 text-right">{snapshot.totals?.entitlements?.total?.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div className="bg-red-600 text-white text-xs p-1 text-center">Deductions / الاستقطاعات</div>
+            <table className="w-full text-xs border">
+              <tbody>
+                <tr className="border-b">
+                  <td className="p-1">Loans</td>
+                  <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="p-1">Other</td>
+                  <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
+                </tr>
+                <tr className="bg-red-50 font-bold">
+                  <td className="p-1">Total</td>
+                  <td className="p-1 text-right">{snapshot.totals?.deductions?.total?.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Net Amount */}
+        <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
+          <div className="text-xs text-muted-foreground">Net Amount Payable to Employee / الصافي النهائي المستحق للموظف</div>
+          <div className="text-2xl font-bold text-primary">{snapshot.totals?.net_amount?.toLocaleString()} SAR</div>
+        </div>
+        
+        {/* Signatures placeholder */}
+        <div className="grid grid-cols-4 gap-2 text-center text-xs border-t pt-2">
+          <div>
+            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
+            <div>STAS</div>
+          </div>
+          <div>
+            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
+            <div>CEO</div>
+          </div>
+          <div>
+            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
+            <div>HR</div>
+          </div>
+          <div>
+            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">توقيع يدوي</div>
+            <div>Employee</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 p-4 md:p-6" data-testid="settlement-page">
@@ -376,253 +706,168 @@ export default function SettlementPage() {
         </CardContent>
       </Card>
 
-      {/* Create Settlement Dialog */}
+      {/* Create Settlement Dialog - Multi-step */}
       <Dialog open={createDialogOpen} onOpenChange={(open) => { setCreateDialogOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>إنشاء مخالصة جديدة</DialogTitle>
-            <DialogDescription>اختر الموظف ونوع الإنهاء لحساب المخالصة</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              {previewStep === 'form' && 'إنشاء مخالصة جديدة'}
+              {previewStep === 'preview' && 'معاينة المخالصة'}
+              {previewStep === 'audit' && 'تدقيق قبل التنفيذ'}
+            </DialogTitle>
+            <DialogDescription>
+              {previewStep === 'form' && 'اختر الموظف ونوع الإنهاء لحساب المخالصة'}
+              {previewStep === 'preview' && 'راجع شكل الورقة قبل الإنشاء'}
+              {previewStep === 'audit' && 'تفاصيل الحسابات والتحقق من البيانات'}
+            </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 py-4">
-            {/* Step 1: Select Employee & Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>اختيار الموظف *</Label>
-                <Select value={formData.employee_id} onValueChange={v => setFormData(p => ({ ...p, employee_id: v }))}>
-                  <SelectTrigger data-testid="settlement-employee-select">
-                    <SelectValue placeholder="اختر موظف" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {eligibleEmployees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        {emp.full_name_ar || emp.full_name} ({emp.employee_number})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label>نوع الإنهاء *</Label>
-                <Select value={formData.termination_type} onValueChange={v => setFormData(p => ({ ...p, termination_type: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(TERMINATION_TYPES).map(([key, val]) => (
-                      <SelectItem key={key} value={key}>{val.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label>آخر يوم عمل *</Label>
-                <Input 
-                  type="date"
-                  value={formData.last_working_day}
-                  onChange={e => setFormData(p => ({ ...p, last_working_day: e.target.value }))}
-                  data-testid="last-working-day-input"
-                />
-              </div>
-              
-              <div>
-                <Label>ملاحظات</Label>
-                <Input 
-                  value={formData.note}
-                  onChange={e => setFormData(p => ({ ...p, note: e.target.value }))}
-                  placeholder="ملاحظات اختيارية"
-                />
-              </div>
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center gap-2 py-2">
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${previewStep === 'form' ? 'bg-primary text-white' : 'bg-muted'}`}>
+              <span>1</span> البيانات
             </div>
-            
-            {/* Preview Button */}
-            <div className="flex justify-center">
-              <Button onClick={handlePreview} disabled={actionLoading || !formData.employee_id || !formData.last_working_day}>
-                {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <Calculator className="w-4 h-4 ml-2" />}
-                حساب المخالصة
-              </Button>
+            <div className="w-8 h-0.5 bg-muted" />
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${previewStep === 'preview' ? 'bg-primary text-white' : 'bg-muted'}`}>
+              <span>2</span> المعاينة
             </div>
-            
-            {/* Preview Results */}
-            {previewData && (
-              <div className="space-y-4 border-t pt-4">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <Receipt className="w-5 h-5" />
-                  معاينة المخالصة
-                </h3>
-                
-                {/* Employee & Contract Info */}
+            <div className="w-8 h-0.5 bg-muted" />
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm ${previewStep === 'audit' ? 'bg-primary text-white' : 'bg-muted'}`}>
+              <span>3</span> التدقيق
+            </div>
+          </div>
+          
+          <div className="py-4">
+            {/* Step 1: Form */}
+            {previewStep === 'form' && (
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Users className="w-4 h-4" /> بيانات الموظف
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">الاسم:</span>
-                        <span>{previewData.employee.name_ar}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">الرقم الوظيفي:</span>
-                        <span className="font-mono">{previewData.employee.employee_number}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">رقم العقد:</span>
-                        <span className="font-mono">{previewData.contract.serial}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div>
+                    <Label>اختيار الموظف *</Label>
+                    <Select value={formData.employee_id} onValueChange={v => setFormData(p => ({ ...p, employee_id: v }))}>
+                      <SelectTrigger data-testid="settlement-employee-select">
+                        <SelectValue placeholder="اختر موظف" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {eligibleEmployees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.full_name_ar || emp.full_name} ({emp.employee_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Landmark className="w-4 h-4" /> معلومات البنك
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">البنك:</span>
-                        <span>{previewData.contract.bank_name || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">IBAN:</span>
-                        <span className="font-mono text-xs">{previewData.contract.bank_iban || '-'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                {/* Service & Wage Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Calendar className="w-4 h-4" /> مدة الخدمة
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">المدة:</span>
-                        <span className="font-bold">{previewData.service.formatted_ar}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">إجمالي الأيام:</span>
-                        <span>{previewData.service.total_days} يوم</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div>
+                    <Label>نوع الإنهاء *</Label>
+                    <Select value={formData.termination_type} onValueChange={v => setFormData(p => ({ ...p, termination_type: v }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(TERMINATION_TYPES).map(([key, val]) => (
+                          <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Wallet className="w-4 h-4" /> آخر راتب شامل
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                      <div className="flex justify-between font-bold text-primary">
-                        <span>الإجمالي:</span>
-                        <span>{formatCurrency(previewData.wages.last_wage)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {previewData.wages.formula}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div>
+                    <Label>آخر يوم عمل *</Label>
+                    <Input 
+                      type="date"
+                      value={formData.last_working_day}
+                      onChange={e => setFormData(p => ({ ...p, last_working_day: e.target.value }))}
+                      data-testid="last-working-day-input"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>ملاحظات</Label>
+                    <Input 
+                      value={formData.note}
+                      onChange={e => setFormData(p => ({ ...p, note: e.target.value }))}
+                      placeholder="ملاحظات اختيارية"
+                    />
+                  </div>
                 </div>
-                
-                {/* Financial Summary */}
-                <Card className="bg-emerald-50 border-emerald-200">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
-                      <TrendingUp className="w-4 h-4" /> الاستحقاقات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm space-y-2">
-                    <div className="flex justify-between">
-                      <span>مكافأة نهاية الخدمة:</span>
-                      <span className="font-bold">{formatCurrency(previewData.eos.final_amount)}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{previewData.eos.formula}</p>
-                    <p className="text-xs text-muted-foreground">{previewData.eos.percentage_reason}</p>
-                    
-                    <div className="flex justify-between border-t pt-2">
-                      <span>بدل الإجازات ({previewData.leave.balance.toFixed(2)} يوم):</span>
-                      <span className="font-bold">{formatCurrency(previewData.leave.compensation)}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">{previewData.leave.formula}</p>
-                    
-                    {previewData.bonuses.total > 0 && (
-                      <div className="flex justify-between border-t pt-2">
-                        <span>مكافآت:</span>
-                        <span className="font-bold">{formatCurrency(previewData.bonuses.total)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between border-t pt-2 text-emerald-700 font-bold">
-                      <span>إجمالي الاستحقاقات:</span>
-                      <span>{formatCurrency(previewData.totals.entitlements.total)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-red-50 border-red-200">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 text-red-700">
-                      <TrendingDown className="w-4 h-4" /> الاستقطاعات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm space-y-2">
-                    {previewData.deductions.total > 0 && (
-                      <div className="flex justify-between">
-                        <span>خصومات ({previewData.deductions.count}):</span>
-                        <span className="font-bold text-red-600">-{formatCurrency(previewData.deductions.total)}</span>
-                      </div>
-                    )}
-                    
-                    {previewData.loans.total > 0 && (
-                      <div className="flex justify-between">
-                        <span>سلف ({previewData.loans.count}):</span>
-                        <span className="font-bold text-red-600">-{formatCurrency(previewData.loans.total)}</span>
-                      </div>
-                    )}
-                    
-                    {previewData.totals.deductions.total === 0 && (
-                      <p className="text-muted-foreground">لا توجد استقطاعات</p>
-                    )}
-                    
-                    <div className="flex justify-between border-t pt-2 text-red-700 font-bold">
-                      <span>إجمالي الاستقطاعات:</span>
-                      <span>-{formatCurrency(previewData.totals.deductions.total)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Net Amount */}
-                <Card className="bg-primary text-white">
-                  <CardContent className="py-4">
-                    <div className="flex justify-between items-center text-lg">
-                      <span className="font-bold">صافي المخالصة:</span>
-                      <span className="text-2xl font-bold">{formatCurrency(previewData.totals.net_amount)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
+            )}
+            
+            {/* Step 2: Preview */}
+            {previewStep === 'preview' && previewData && (
+              <div className="space-y-4">
+                {/* Warnings */}
+                {warnings.length > 0 && (
+                  <div className="space-y-2">
+                    {warnings.map((w, idx) => (
+                      <Alert key={idx} variant={w.type === 'error' ? 'destructive' : 'default'}>
+                        {w.type === 'error' && <AlertCircle className="w-4 h-4" />}
+                        {w.type === 'warning' && <AlertTriangle className="w-4 h-4" />}
+                        {w.type === 'info' && <Info className="w-4 h-4" />}
+                        <AlertDescription>{w.message}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+                
+                <PreviewSheet data={previewData} />
+              </div>
+            )}
+            
+            {/* Step 3: Audit */}
+            {previewStep === 'audit' && previewData && (
+              <AuditTrail data={previewData} />
             )}
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setCreateDialogOpen(false); resetForm(); }}>
-              إلغاء
-            </Button>
-            {previewData && (
-              <Button onClick={handleCreateSettlement} disabled={actionLoading} data-testid="submit-settlement-btn">
-                {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <Plus className="w-4 h-4 ml-2" />}
-                إنشاء طلب المخالصة
-              </Button>
+          <DialogFooter className="gap-2">
+            {previewStep === 'form' && (
+              <>
+                <Button variant="outline" onClick={() => { setCreateDialogOpen(false); resetForm(); }}>
+                  إلغاء
+                </Button>
+                <Button onClick={handlePreview} disabled={actionLoading || !formData.employee_id || !formData.last_working_day}>
+                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <Calculator className="w-4 h-4 ml-2" />}
+                  حساب ومعاينة
+                </Button>
+              </>
+            )}
+            
+            {previewStep === 'preview' && (
+              <>
+                <Button variant="outline" onClick={() => setPreviewStep('form')}>
+                  رجوع
+                </Button>
+                <Button variant="outline" onClick={() => setPreviewStep('audit')}>
+                  <Shield className="w-4 h-4 ml-2" />
+                  عرض التدقيق
+                </Button>
+                <Button 
+                  onClick={handleCreateSettlement} 
+                  disabled={actionLoading || warnings.some(w => w.type === 'error')}
+                  data-testid="submit-settlement-btn"
+                >
+                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <FileCheck className="w-4 h-4 ml-2" />}
+                  إنشاء المخالصة
+                </Button>
+              </>
+            )}
+            
+            {previewStep === 'audit' && (
+              <>
+                <Button variant="outline" onClick={() => setPreviewStep('preview')}>
+                  رجوع للمعاينة
+                </Button>
+                <Button 
+                  onClick={handleCreateSettlement} 
+                  disabled={actionLoading || warnings.some(w => w.type === 'error')}
+                >
+                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <CheckCircle2 className="w-4 h-4 ml-2" />}
+                  تأكيد وإنشاء
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>
@@ -630,7 +875,7 @@ export default function SettlementPage() {
 
       {/* View Settlement Dialog */}
       <Dialog open={!!viewSettlement} onOpenChange={() => setViewSettlement(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="w-5 h-5" />
@@ -639,107 +884,20 @@ export default function SettlementPage() {
           </DialogHeader>
           
           {viewSettlement && (
-            <div className="space-y-4">
-              {/* Status */}
-              <div className="flex items-center gap-2">
-                <Badge className={`${SETTLEMENT_STATUS[viewSettlement.status]?.color} text-white`}>
-                  {SETTLEMENT_STATUS[viewSettlement.status]?.label}
-                </Badge>
-                <Badge variant="outline">
-                  {TERMINATION_TYPES[viewSettlement.termination_type]?.label}
-                </Badge>
-              </div>
+            <Tabs defaultValue="preview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="preview">المعاينة</TabsTrigger>
+                <TabsTrigger value="audit">التدقيق</TabsTrigger>
+              </TabsList>
               
-              {/* Summary from Snapshot */}
-              {viewSettlement.snapshot && (
-                <>
-                  <Card>
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-sm">بيانات الموظف</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">الاسم:</span>
-                        <span>{viewSettlement.snapshot.employee.name_ar}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">رقم العقد:</span>
-                        <span className="font-mono">{viewSettlement.snapshot.contract.serial}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">آخر يوم عمل:</span>
-                        <span>{formatDate(viewSettlement.snapshot.contract.last_working_day)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">مدة الخدمة:</span>
-                        <span>{viewSettlement.snapshot.service.formatted_ar}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="py-3">
-                      <CardTitle className="text-sm">ملخص مالي</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-2">
-                      <div className="flex justify-between">
-                        <span>مكافأة نهاية الخدمة:</span>
-                        <span className="font-bold">{formatCurrency(viewSettlement.snapshot.eos.final_amount)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>بدل الإجازات:</span>
-                        <span className="font-bold">{formatCurrency(viewSettlement.snapshot.leave.compensation)}</span>
-                      </div>
-                      <div className="flex justify-between text-emerald-600">
-                        <span>إجمالي الاستحقاقات:</span>
-                        <span className="font-bold">{formatCurrency(viewSettlement.snapshot.totals.entitlements.total)}</span>
-                      </div>
-                      <div className="flex justify-between text-red-600">
-                        <span>إجمالي الاستقطاعات:</span>
-                        <span className="font-bold">-{formatCurrency(viewSettlement.snapshot.totals.deductions.total)}</span>
-                      </div>
-                      <div className="flex justify-between border-t pt-2 text-primary font-bold text-lg">
-                        <span>صافي المخالصة:</span>
-                        <span>{formatCurrency(viewSettlement.snapshot.totals.net_amount)}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Bank Info */}
-                  {(viewSettlement.snapshot.contract.bank_name || viewSettlement.snapshot.contract.bank_iban) && (
-                    <Card>
-                      <CardHeader className="py-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Landmark className="w-4 h-4" /> معلومات البنك
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">البنك:</span>
-                          <span>{viewSettlement.snapshot.contract.bank_name}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">IBAN:</span>
-                          <span className="font-mono">{viewSettlement.snapshot.contract.bank_iban}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </>
-              )}
+              <TabsContent value="preview" className="mt-4">
+                <PreviewSheet data={viewSettlement.snapshot} />
+              </TabsContent>
               
-              {/* Execution Info */}
-              {viewSettlement.status === 'executed' && (
-                <Card className="bg-emerald-50 border-emerald-200">
-                  <CardContent className="py-3 text-sm">
-                    <div className="flex items-center gap-2 text-emerald-700">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>تم التنفيذ بتاريخ: {formatDate(viewSettlement.executed_at)}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+              <TabsContent value="audit" className="mt-4">
+                <AuditTrail data={viewSettlement.snapshot} />
+              </TabsContent>
+            </Tabs>
           )}
           
           <DialogFooter>
