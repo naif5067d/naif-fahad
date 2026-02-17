@@ -391,68 +391,51 @@ __all__ = ['get_next_ref_no', 'WORKFLOW_MAP', 'STAGE_ROLES']
 
 @router.get("/test/pdf-arabic")
 async def test_arabic_pdf():
-    """Test endpoint to verify Arabic PDF generation - displays inline"""
-    from reportlab.lib.pagesizes import A4
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    from reportlab.lib import colors
-    import arabic_reshaper
-    from bidi.algorithm import get_display
+    """Test endpoint to verify Arabic PDF generation using fixed generator"""
+    from utils.pdf import generate_transaction_pdf
     
-    FONTS_DIR = '/app/backend/fonts'
-    try:
-        pdfmetrics.registerFont(TTFont('NotoNaskhArabic', f'{FONTS_DIR}/NotoNaskhArabic-Regular.ttf'))
-    except:
-        pass  # Already registered
+    # Test transaction with Arabic data
+    test_tx = {
+        "id": "test-123",
+        "ref_no": "TXN-2026-TEST",
+        "type": "leave_request",
+        "status": "executed",
+        "created_at": "2026-02-17T10:00:00Z",
+        "executed_at": "2026-02-17T12:00:00Z",
+        "data": {
+            "leave_type": "sick",
+            "leave_type_ar": "مرضية",
+            "start_date": "2026-02-18",
+            "end_date": "2026-04-05",
+            "working_days": 39,
+            "reason": "مرض خطير - DDD",
+            "employee_name": "Naif Al-Quraishi",
+            "employee_name_ar": "نايف فهد القريشي",
+            "sick_tier_info": {
+                "distribution": [
+                    {"days": 30, "salary_percent": 100},
+                    {"days": 9, "salary_percent": 50}
+                ]
+            }
+        },
+        "approval_chain": [
+            {"stage": "supervisor", "status": "approved", "approver_name": "أحمد محمد", "approver_id": "sup123", "timestamp": "2026-02-17T11:00:00Z"},
+            {"stage": "ops", "status": "approved", "approver_name": "سلطان", "approver_id": "ops456", "timestamp": "2026-02-17T11:30:00Z"},
+            {"stage": "stas", "status": "executed", "approver_name": "STAS", "approver_id": "stas789", "timestamp": "2026-02-17T12:00:00Z"}
+        ]
+    }
     
-    def reshape_ar(text):
-        if not text:
-            return ''
-        reshaped = arabic_reshaper.reshape(str(text))
-        return get_display(reshaped)
+    test_emp = {
+        "id": "emp-001",
+        "full_name": "Naif Al-Quraishi",
+        "full_name_ar": "نايف فهد القريشي",
+        "employee_number": "22919"
+    }
     
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
-    
-    ar_style = ParagraphStyle(
-        'Arabic',
-        fontName='NotoNaskhArabic',
-        fontSize=14,
-        alignment=TA_RIGHT,
-        wordWrap='RTL',
-        leading=20,
-    )
-    
-    elements = []
-    
-    # Test Arabic text
-    elements.append(Paragraph(reshape_ar("اختبار النص العربي - نايف فهد القريشي"), ar_style))
-    elements.append(Spacer(1, 20))
-    
-    # Table test
-    table_data = [
-        [Paragraph(reshape_ar("الاسم"), ar_style), Paragraph(reshape_ar("نايف فهد القريشي"), ar_style)],
-        [Paragraph(reshape_ar("نوع الإجازة"), ar_style), Paragraph(reshape_ar("مرضية"), ar_style)],
-        [Paragraph(reshape_ar("السبب"), ar_style), Paragraph(reshape_ar("تبعاً للسياسة الداخلية للشركة"), ar_style)],
-    ]
-    
-    table = Table(table_data, colWidths=[150, 300])
-    table.setStyle(TableStyle([
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('BACKGROUND', (0, 0), (0, -1), colors.Color(0.95, 0.95, 0.97)),
-    ]))
-    elements.append(table)
-    
-    doc.build(elements)
+    pdf_bytes, _, _ = generate_transaction_pdf(test_tx, test_emp, lang='ar')
     
     return StreamingResponse(
-        io.BytesIO(buffer.getvalue()),
+        io.BytesIO(pdf_bytes),
         media_type="application/pdf",
         headers={"Content-Disposition": "inline; filename=test_arabic.pdf"}
     )
