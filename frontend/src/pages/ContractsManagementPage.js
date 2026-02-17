@@ -976,8 +976,11 @@ export default function ContractsManagementPage() {
                           <FileText className="w-4 h-4" />
                         </Button>
                         
-                        {/* Edit - only draft/pending_stas */}
-                        {['draft', 'pending_stas'].includes(contract.status) && canCreate && (
+                        {/* Edit - draft/pending_stas OR active for strategic roles */}
+                        {(
+                          ['draft', 'pending_stas'].includes(contract.status) ||
+                          (contract.status === 'active' && ['sultan', 'naif', 'stas'].includes(user?.role))
+                        ) && canCreate && (
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(contract)}>
                             <Edit className="w-4 h-4" />
                           </Button>
