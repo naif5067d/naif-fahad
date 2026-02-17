@@ -100,7 +100,9 @@ def format_text_for_pdf(text, target_lang='ar'):
     return text
 
 
-def format_saudi_time(ts):
+def format_text_bilingual(text, target_lang='ar'):
+    """Alias for format_text_for_pdf for compatibility"""
+    return format_text_for_pdf(text, target_lang)
     """Format timestamp to Saudi Arabia time (UTC+3)"""
     if not ts:
         return '-'
