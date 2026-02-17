@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -279,28 +279,31 @@ export default function WorkLocationsPage() {
                       {lang === 'ar' ? 'تحديد مكاني' : 'Use My Location'}
                     </Button>
                   </div>
-                  <div className="h-64 rounded-lg overflow-hidden border border-border" key={`map-${editingLocation?.id || 'new'}`}>
-                    <MapContainer
-                      center={[formData.latitude, formData.longitude]}
-                      zoom={15}
-                      style={{ height: '100%', width: '100%' }}
-                    >
-                      <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; OpenStreetMap'
-                      />
-                      <LocationPicker 
-                        position={[formData.latitude, formData.longitude]}
-                        setPosition={([lat, lng]) => setFormData(p => ({ ...p, latitude: lat, longitude: lng }))}
-                      />
-                      <MapCenterer position={[formData.latitude, formData.longitude]} />
-                      <Marker position={[formData.latitude, formData.longitude]} />
-                      <Circle 
-                        center={[formData.latitude, formData.longitude]} 
-                        radius={formData.radius_meters}
-                        pathOptions={{ color: '#F97316', fillColor: '#F97316', fillOpacity: 0.2 }}
-                      />
-                    </MapContainer>
+                  <div className="h-64 rounded-lg overflow-hidden border border-border">
+                    {dialogOpen && (
+                      <MapContainer
+                        key={`dialog-map-${editingLocation?.id || 'new'}-${dialogOpen}`}
+                        center={[formData.latitude, formData.longitude]}
+                        zoom={15}
+                        style={{ height: '100%', width: '100%' }}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; OpenStreetMap'
+                        />
+                        <LocationPicker 
+                          position={[formData.latitude, formData.longitude]}
+                          setPosition={([lat, lng]) => setFormData(p => ({ ...p, latitude: lat, longitude: lng }))}
+                        />
+                        <MapCenterer position={[formData.latitude, formData.longitude]} />
+                        <Marker position={[formData.latitude, formData.longitude]} />
+                        <Circle 
+                          center={[formData.latitude, formData.longitude]} 
+                          radius={formData.radius_meters}
+                          pathOptions={{ color: '#F97316', fillColor: '#F97316', fillOpacity: 0.2 }}
+                        />
+                      </MapContainer>
+                    )}
                   </div>
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <span>Lat: {formData.latitude.toFixed(6)}</span>
