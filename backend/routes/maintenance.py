@@ -230,12 +230,26 @@ async def purge_all_transactions(req: PurgeRequest, user=Depends(require_roles('
         await db.counters.insert_one({"id": "transaction_ref", "seq": 0})
         results["collections_reset"]["counters"] = "تمت إعادة تهيئة عداد المعاملات"
         
-        # 3. إعادة أرصدة الإجازات الأولية للموظفين
+        # 3. إعادة أرصدة الإجازات الأولية للموظفين (حسب العقد: 21 أو 30 يوم)
         employees = await db.employees.find({}, {"_id": 0}).to_list(500)
         initial_balances_added = 0
         
         for emp in employees:
-            ent = emp.get("leave_entitlement", {"annual": 25, "sick": 30, "emergency": 5})
+            # جلب العقد النشط للموظف
+            contract = await db.contracts_v2.find_one(
+                {"employee_id": emp["id"], "status": "active"},
+                {"_id": 0, "annual_leave_days": 1}
+            )
+            
+            # استخدام أيام الإجازة من العقد أو 21 كافتراضي
+            annual_days = contract.get("annual_leave_days", 21) if contract else 21
+            
+            ent = {
+                "annual": annual_days,  # 21 أو 30 حسب العقد
+                "sick": 30,
+                "emergency": 5
+            }
+            
             for leave_type, days in ent.items():
                 await db.leave_ledger.insert_one({
                     "id": str(uuid.uuid4()),
@@ -244,13 +258,13 @@ async def purge_all_transactions(req: PurgeRequest, user=Depends(require_roles('
                     "type": "credit",
                     "leave_type": leave_type,
                     "days": days,
-                    "note": "Initial entitlement (after purge)",
+                    "note": f"Initial entitlement (after purge) - {annual_days} days annual",
                     "date": now,
                     "created_at": now
                 })
                 initial_balances_added += 1
         
-        results["collections_reset"]["leave_ledger"] = f"تمت إعادة {initial_balances_added} رصيد إجازة أولي"
+        results["collections_reset"]["leave_ledger"] = f"تمت إعادة {initial_balances_added} رصيد إجازة أولي (21/30 يوم حسب العقد)"
         
         # 4. تسجيل عملية الحذف في سجل الصيانة
         await db.maintenance_log.insert_one({
