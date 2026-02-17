@@ -323,21 +323,29 @@ def make_para(text, style, force_ltr=False):
     Args:
         text: The text to display
         style: ParagraphStyle to use
-        force_ltr: If True, wrap text in LTR mark to prevent RTL reordering
+        force_ltr: If True, use LTR style for this text
     """
     text_str = str(text)
     
-    # If text is purely numeric/english with symbols, wrap in LTR marks
-    # This prevents RTL reordering of things like "TXN-2026-0001" or "2026-02-17"
-    if force_ltr or not has_arabic(text_str):
-        # Use Unicode LTR embedding characters
-        # LRE = Left-to-Right Embedding, PDF = Pop Directional Formatting
-        text_str = f'\u202A{text_str}\u202C'
-    else:
+    if has_arabic(text_str):
         # Arabic text needs reshaping
         text_str = reshape_arabic(text_str)
     
     return Paragraph(text_str, style)
+
+
+def make_ltr_para(text, style):
+    """Create a Paragraph for LTR text (numbers, dates, English).
+    Uses Helvetica font to ensure proper LTR rendering."""
+    # Create a copy of style with Helvetica font and no RTL
+    ltr_style = ParagraphStyle(
+        f'{style.name}_ltr',
+        parent=style,
+        fontName='Helvetica',
+        wordWrap='LTR',
+        alignment=TA_LEFT,
+    )
+    return Paragraph(str(text), ltr_style)
 
 
 def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str = 'ar', branding: dict = None) -> tuple:
