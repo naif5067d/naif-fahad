@@ -119,6 +119,11 @@ export default function ContractsManagementPage() {
     is_migrated: false,
     leave_opening_balance: { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
     notes: '',
+    // معلومات البنك
+    bank_name: '',
+    bank_iban: '',
+    // بدل طبيعة العمل
+    nature_of_work_allowance: 0,
   });
   
   // Termination form
