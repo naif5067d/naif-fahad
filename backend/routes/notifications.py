@@ -131,32 +131,23 @@ async def get_header_alerts(user=Depends(get_current_user)):
     alerts = []
     today = datetime.now(timezone.utc).date()
     cutoff_date = today + timedelta(days=90)
+    today_str = today.strftime('%Y-%m-%d')
+    cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
     # العقود المنتهية خلال 3 أشهر
-    pipeline = [
-        {
-            "$match": {
-                "status": "active",
-                "end_date": {"$ne": None}
-            }
-        },
-        {
-            "$addFields": {
-                "end_date_parsed": {"$dateFromString": {"dateString": "$end_date"}}
-            }
-        },
-        {
-            "$match": {
-                "end_date_parsed": {
-                    "$lte": datetime.combine(cutoff_date, datetime.min.time()),
-                    "$gte": datetime.combine(today, datetime.min.time())
-                }
-            }
-        },
-        {"$project": {"_id": 0}}
-    ]
+    query = {
+        "status": "active",
+        "end_date": {
+            "$ne": None,
+            "$ne": "",
+            "$lte": cutoff_str,
+            "$gte": today_str
+        }
+    }
     
-    expiring_contracts = await db.contracts_v2.aggregate(pipeline).to_list(100)
+    expiring_contracts = await db.contracts_v2.find(
+        query, {"_id": 0}
+    ).to_list(100)
     
     for contract in expiring_contracts:
         end_date = datetime.strptime(contract['end_date'], '%Y-%m-%d').date()
