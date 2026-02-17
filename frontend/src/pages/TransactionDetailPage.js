@@ -199,6 +199,10 @@ export default function TransactionDetailPage() {
         annual: { ar: 'سنوية', en: 'Annual' },
         sick: { ar: 'مرضية', en: 'Sick' },
         emergency: { ar: 'طارئة', en: 'Emergency' },
+        marriage: { ar: 'زواج', en: 'Marriage' },
+        bereavement: { ar: 'وفاة', en: 'Bereavement' },
+        exam: { ar: 'اختبار', en: 'Exam' },
+        unpaid: { ar: 'بدون راتب', en: 'Unpaid' },
       };
       return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
     }
@@ -207,6 +211,13 @@ export default function TransactionDetailPage() {
     }
     if ((key === 'amount' || key === 'estimatedvalue' || key === 'estimated_value') && value) {
       return `${value} SAR`;
+    }
+    // تنسيق التواريخ - من YYYY-MM-DD إلى DD/MM/YYYY
+    if ((key === 'start_date' || key === 'end_date' || key === 'date' || key === 'adjusted_end_date') && value) {
+      const parts = String(value).split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
     }
     return String(value);
   };
