@@ -28,7 +28,8 @@ class TestAuth:
         }
         response = requests.post(f"{BASE_URL}/api/auth/login", json=login_data)
         if response.status_code == 200:
-            token = response.json().get('access_token')
+            # Token can be in 'token' or 'access_token' field
+            token = response.json().get('token') or response.json().get('access_token')
             return {"Authorization": f"Bearer {token}"}
         return {}
 
