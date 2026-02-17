@@ -176,21 +176,96 @@ async def get_approved_leaves_for_date(date: str) -> List[str]:
     Returns:
         list: قائمة employee_ids
     """
+    employee_ids = set()
+    
+    # 1. البحث في المعاملات المنفذة (طلبات إجازة) - باستخدام end_date
     leaves = await db.transactions.find({
+        "type": "leave_request",
+        "status": "executed",
+        "data.start_date": {"$lte": date},
+        "data.end_date": {"$gte": date}
+    }, {"employee_id": 1, "_id": 0}).to_list(5000)
+    
+    for leave in leaves:
+        employee_ids.add(leave['employee_id'])
+    
+    # 2. البحث أيضاً باستخدام adjusted_end_date إن وجد
+    leaves_adjusted = await db.transactions.find({
         "type": "leave_request",
         "status": "executed",
         "data.start_date": {"$lte": date},
         "data.adjusted_end_date": {"$gte": date}
     }, {"employee_id": 1, "_id": 0}).to_list(5000)
     
-    return [l['employee_id'] for l in leaves]
+    for leave in leaves_adjusted:
+        employee_ids.add(leave['employee_id'])
+    
+    # 3. البحث في leave_ledger عن الإجازات المسجلة
+    ledger_entries = await db.leave_ledger.find({
+        "type": "debit",
+        "start_date": {"$lte": date},
+        "end_date": {"$gte": date}
+    }, {"employee_id": 1, "_id": 0}).to_list(5000)
+    
+    for entry in ledger_entries:
+        employee_ids.add(entry['employee_id'])
+    
+    return list(employee_ids)
+
+
+async def get_approved_permissions_for_date(date: str) -> List[str]:
+    """
+    جلب قائمة الموظفين الذين لديهم إذن معتمد في تاريخ معين
+    
+    Args:
+        date: التاريخ (YYYY-MM-DD)
+        
+    Returns:
+        list: قائمة employee_ids
+    """
+    permission_types = [
+        "forget_checkin",      # نسيان بصمة
+        "field_work",          # مهمة خارجية
+    ]
+    
+    permissions = await db.transactions.find({
+        "type": {"$in": permission_types},
+        "status": "executed",
+        "data.date": date
+    }, {"employee_id": 1, "_id": 0}).to_list(5000)
+    
+    return [p['employee_id'] for p in permissions]
+
+
+async def is_holiday_or_weekend(date: str) -> bool:
+    """
+    التحقق إذا كان اليوم عطلة رسمية أو نهاية أسبوع
+    
+    Args:
+        date: التاريخ (YYYY-MM-DD)
+        
+    Returns:
+        bool
+    """
+    # التحقق من يوم الجمعة/السبت
+    date_obj = datetime.strptime(date, "%Y-%m-%d")
+    if date_obj.weekday() in [4, 5]:  # Friday = 4, Saturday = 5
+        return True
+    
+    # التحقق من العطلات الرسمية
+    holiday = await db.public_holidays.find_one({"date": date}, {"_id": 0})
+    if not holiday:
+        holiday = await db.holidays.find_one({"date": date}, {"_id": 0})
+    
+    return holiday is not None
 
 
 async def calculate_daily_attendance(date: str = None) -> dict:
     """
     حساب الحضور اليومي لجميع الموظفين
     - يُشغّل نهاية كل يوم
-    - من لم يسجل دخول ولا عنده إجازة = غياب
+    - من لم يسجل دخول ولا عنده إجازة/إذن = غياب
+    - لا يُسجل غياب في العطلات وأيام نهاية الأسبوع
     
     Args:
         date: التاريخ (YYYY-MM-DD) - إذا None يستخدم اليوم
@@ -203,6 +278,21 @@ async def calculate_daily_attendance(date: str = None) -> dict:
     
     now = datetime.now(timezone.utc).isoformat()
     
+    # 0. التحقق إذا كان اليوم عطلة
+    if await is_holiday_or_weekend(date):
+        return {
+            "date": date,
+            "is_holiday_or_weekend": True,
+            "present": [],
+            "absent": [],
+            "on_leave": [],
+            "has_permission": [],
+            "late": [],
+            "early_leave": [],
+            "new_absences_recorded": 0,
+            "message_ar": "يوم عطلة - لم يتم تسجيل غياب"
+        }
+    
     # 1. جلب جميع الموظفين النشطين
     employees = await db.employees.find(
         {"is_active": True}, 
@@ -212,7 +302,10 @@ async def calculate_daily_attendance(date: str = None) -> dict:
     # 2. جلب الإجازات المعتمدة لهذا اليوم
     on_leave_ids = set(await get_approved_leaves_for_date(date))
     
-    # 3. جلب سجلات الحضور لهذا اليوم
+    # 3. جلب الأذونات المعتمدة لهذا اليوم (نسيان بصمة، مهمة خارجية)
+    has_permission_ids = set(await get_approved_permissions_for_date(date))
+    
+    # 4. جلب سجلات الحضور لهذا اليوم
     attendance = await db.attendance_ledger.find(
         {"date": date}, 
         {"_id": 0}
@@ -221,7 +314,7 @@ async def calculate_daily_attendance(date: str = None) -> dict:
     checked_in_ids = {a['employee_id'] for a in attendance if a['type'] == 'check_in'}
     checked_out_ids = {a['employee_id'] for a in attendance if a['type'] == 'check_out'}
     
-    # 4. جلب سجلات الغياب الموجودة لتجنب التكرار
+    # 5. جلب سجلات الغياب الموجودة لتجنب التكرار
     existing_absences = await db.attendance_ledger.find(
         {"date": date, "type": "absence"},
         {"employee_id": 1, "_id": 0}
