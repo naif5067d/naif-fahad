@@ -47,7 +47,7 @@ async def create_finance_transaction(req: FinanceTransactionRequest, user=Depend
 
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
 
     # Lookup finance code - auto-create if not found
     code_doc = await db.finance_codes.find_one({"code": req.code, "is_active": True}, {"_id": 0})
@@ -55,7 +55,7 @@ async def create_finance_transaction(req: FinanceTransactionRequest, user=Depend
     if not code_doc:
         # Code doesn't exist - require name and create it
         if not req.code_name:
-            raise HTTPException(status_code=400, detail="Code not found. Provide code_name to define it.")
+            raise HTTPException(status_code=400, detail="الكود غير موجود. يرجى تحديد اسم الكود.")
 
         code_doc = {
             "id": str(uuid.uuid4()),
@@ -126,14 +126,14 @@ async def get_finance_statement(employee_id: str, user=Depends(get_current_user)
 async def request_add_finance_code(req: dict, user=Depends(get_current_user)):
     role = user.get('role')
     if role not in ('stas', 'sultan', 'naif', 'salah'):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     code = req.get('code')
     name = req.get('name')
     name_ar = req.get('name_ar', '')
     category = req.get('category', 'other')
 
     if not code or not name:
-        raise HTTPException(status_code=400, detail="code and name are required")
+        raise HTTPException(status_code=400, detail="الكود والاسم مطلوبان")
 
     existing = await db.finance_codes.find_one({"code": code})
     if existing:

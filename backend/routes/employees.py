@@ -47,12 +47,12 @@ async def list_employees(user=Depends(get_current_user)):
 async def get_employee(employee_id: str, user=Depends(get_current_user)):
     emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
     role = user.get('role')
     if role == 'employee':
         own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not own or own['id'] != employee_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
     return emp
 
 
@@ -60,10 +60,10 @@ async def get_employee(employee_id: str, user=Depends(get_current_user)):
 async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends(require_roles('stas'))):
     emp = await db.employees.find_one({"id": employee_id})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
     updates = {k: v for k, v in update.model_dump().items() if v is not None}
     if not updates:
-        raise HTTPException(status_code=400, detail="No updates provided")
+        raise HTTPException(status_code=400, detail="لا توجد تحديثات")
     await db.employees.update_one({"id": employee_id}, {"$set": updates})
     if 'full_name' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"full_name": updates['full_name']}})
@@ -79,12 +79,12 @@ async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends
 async def get_profile_360(employee_id: str, user=Depends(get_current_user)):
     emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
     role = user.get('role')
     if role == 'employee':
         own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not own or own['id'] != employee_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
 
     leave_entries = await db.leave_ledger.find({"employee_id": employee_id}, {"_id": 0}).to_list(1000)
     leave_balance = {}
@@ -259,11 +259,11 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     if role == 'employee':
         own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not own or own['id'] != employee_id:
-            raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
     
     emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
     # 1. العقد الحالي
     contract = await db.contracts_v2.find_one({

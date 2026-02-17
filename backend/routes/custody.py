@@ -36,7 +36,7 @@ async def create_tangible_custody(req: TangibleCustodyRequest, user=Depends(get_
 
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
 
     ref_no = await get_next_ref_no()
     workflow = WORKFLOW_MAP["tangible_custody"][:]
@@ -92,7 +92,7 @@ async def create_custody_return(req: CustodyReturnRequest, user=Depends(get_curr
     # Find the active custody record
     custody = await db.custody_ledger.find_one({"id": req.custody_id, "status": "active"}, {"_id": 0})
     if not custody:
-        raise HTTPException(status_code=404, detail="Active custody record not found")
+        raise HTTPException(status_code=404, detail="سجل العهدة غير موجود")
 
     ref_no = await get_next_ref_no()
     workflow = WORKFLOW_MAP["tangible_custody_return"][:]
