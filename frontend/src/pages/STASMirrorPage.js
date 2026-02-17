@@ -256,8 +256,10 @@ export default function STASMirrorPage() {
                               <span className="text-sm">{lang === 'ar' ? c.name_ar : c.name}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">{c.detail}</span>
-                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-emerald-600' : 'text-red-600'}`}>{t(`stas.${c.status.toLowerCase()}`)}</span>
+                              <span className="text-xs text-muted-foreground">{lang === 'ar' ? c.detail : c.detail}</span>
+                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-emerald-600' : 'text-red-600'}`}>
+                                {c.status === 'PASS' ? (lang === 'ar' ? 'نجح' : 'PASS') : (lang === 'ar' ? 'فشل' : 'FAIL')}
+                              </span>
                             </div>
                           </div>
                         ))}
