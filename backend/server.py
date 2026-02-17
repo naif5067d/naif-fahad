@@ -28,6 +28,8 @@ from routes.upload import router as upload_router
 from routes.announcements import router as announcements_router
 from routes.users import router as users_router
 from routes.admin import router as admin_router
+from routes.settlement import router as settlement_router
+from routes.deductions import router as deductions_router
 from seed import seed_database
 
 # App Version
