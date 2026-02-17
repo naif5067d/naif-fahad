@@ -139,7 +139,7 @@ async def get_my_leave_balance(user=Depends(get_current_user)):
     """Get current user's leave balance breakdown"""
     emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
     if not emp:
-        raise HTTPException(status_code=400, detail="Not an employee")
+        raise HTTPException(status_code=400, detail="لست موظفاً")
     
     # استخدام خدمة الإجازات الجديدة
     from services.leave_service import get_employee_leave_summary
@@ -201,7 +201,7 @@ async def get_holidays():
 async def add_holiday(req: dict, user=Depends(get_current_user)):
     """Add a holiday - Sultan, Naif, STAS only"""
     if user.get('role') not in ('sultan', 'naif', 'stas'):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     name = req.get('name')
     name_ar = req.get('name_ar', '')
     date = req.get('date')
@@ -224,7 +224,7 @@ async def add_holiday(req: dict, user=Depends(get_current_user)):
 async def update_holiday(holiday_id: str, req: dict, user=Depends(get_current_user)):
     """Update a holiday - Sultan, Naif, STAS only"""
     if user.get('role') not in ('sultan', 'naif', 'stas'):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     update = {}
     if 'name' in req:
         update['name'] = req['name']
@@ -246,7 +246,7 @@ async def update_holiday(holiday_id: str, req: dict, user=Depends(get_current_us
 async def delete_holiday(holiday_id: str, user=Depends(get_current_user)):
     """Delete a holiday - Sultan, Naif, STAS only"""
     if user.get('role') not in ('sultan', 'naif', 'stas'):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     r1 = await db.public_holidays.delete_one({"id": holiday_id})
     if r1.deleted_count == 0:
         await db.holidays.delete_one({"id": holiday_id})
