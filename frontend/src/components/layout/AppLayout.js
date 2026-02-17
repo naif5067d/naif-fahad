@@ -21,14 +21,14 @@ const MOBILE_NAV_ITEMS = ['dashboard', 'transactions', 'leave', 'attendance'];
 
 const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
-  attendance: Clock, finance: DollarSign, contracts: FileSignature,
+  attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench,
 };
 
 const PATHS = {
   dashboard: '/', transactions: '/transactions', leave: '/leave',
-  attendance: '/attendance', finance: '/finance', contracts: '/contracts',
+  attendance: '/attendance', contracts: '/contracts',
   contractsManagement: '/contracts-management', settlement: '/settlement', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance',
