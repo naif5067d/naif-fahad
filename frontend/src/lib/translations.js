@@ -4,7 +4,7 @@ export const translations = {
     nav: {
       dashboard: "My Board", transactions: "Transactions", leave: "Leave",
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
-      contractsManagement: "Contracts (V2)", employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
+      contractsManagement: "Contracts (V2)", settlement: "Settlement", employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
       logout: "Logout", profile: "Profile", workLocations: "Work Locations",
       custody: "Tangible Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance"
