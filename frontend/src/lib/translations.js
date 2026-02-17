@@ -208,7 +208,13 @@ export const translations = {
       fillAllFields: "يرجى ملء جميع الحقول",
       newRequest: "طلب إجازة جديدة", leaveType: "نوع الإجازة",
       publicHolidays: "العطل الرسمية",
-      sickRequiresFile: "الإجازة المرضية تتطلب رفع ملف طبي PDF"
+      sickRequiresFile: "الإجازة المرضية تتطلب رفع ملف طبي PDF",
+      noWorkingDays: "لا توجد أيام عمل في الفترة المحددة",
+      insufficientBalance: "الرصيد غير كافٍ",
+      conflictWithExisting: "تعارض مع طلب سابق",
+      weekendDay: "يوم عطلة نهاية الأسبوع",
+      holidayDay: "يوم عطلة رسمية",
+      availableDay: "يوم متاح"
     },
     attendance: {
       title: "الحضور", checkIn: "تسجيل الدخول", checkOut: "تسجيل الخروج",
