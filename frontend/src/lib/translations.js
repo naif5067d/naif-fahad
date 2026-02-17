@@ -198,9 +198,13 @@ export const translations = {
       type: "نوع الإجازة", startDate: "تاريخ البداية", endDate: "تاريخ النهاية",
       reason: "السبب", submit: "إرسال الطلب",
       annual: "سنوية", sick: "مرضية", emergency: "طارئة",
+      marriage: "زواج", bereavement: "وفاة", exam: "اختبار", unpaid: "بدون راتب",
       workingDays: "أيام العمل", remaining: "المتبقي",
       holidays: "العطل الرسمية", holidayName: "اسم العطلة",
-      fillAllFields: "يرجى ملء جميع الحقول"
+      fillAllFields: "يرجى ملء جميع الحقول",
+      newRequest: "طلب إجازة جديدة", leaveType: "نوع الإجازة",
+      publicHolidays: "العطل الرسمية",
+      sickRequiresFile: "الإجازة المرضية تتطلب رفع ملف طبي PDF"
     },
     attendance: {
       title: "الحضور", checkIn: "تسجيل الدخول", checkOut: "تسجيل الخروج",
