@@ -309,17 +309,45 @@ export default function STASMirrorPage() {
                     <CardContent>
                       <div className="space-y-2">
                         {mirror.pre_checks?.map((c, i) => (
-                          <div key={i} className="flex items-center justify-between p-2 rounded-md bg-muted/50" data-testid={`check-${i}`}>
-                            <div className="flex items-center gap-2">
-                              {c.status === 'PASS' ? <CheckCircle size={14} className="text-emerald-500" /> : <XCircle size={14} className="text-red-500" />}
-                              <span className="text-sm">{lang === 'ar' ? c.name_ar : c.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">{lang === 'ar' ? c.detail : c.detail}</span>
-                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-emerald-600' : 'text-red-600'}`}>
-                                {c.status === 'PASS' ? (lang === 'ar' ? 'نجح' : 'PASS') : (lang === 'ar' ? 'فشل' : 'FAIL')}
+                          <div key={i} className={`p-2 rounded-md ${c.status === 'WARN' ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200' : 'bg-muted/50'}`} data-testid={`check-${i}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {c.status === 'PASS' ? <CheckCircle size={14} className="text-emerald-500" /> : c.status === 'WARN' ? <AlertTriangle size={14} className="text-amber-500" /> : <XCircle size={14} className="text-red-500" />}
+                                <span className="text-sm">{lang === 'ar' ? c.name_ar : c.name}</span>
+                              </div>
+                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-emerald-600' : c.status === 'WARN' ? 'text-amber-600' : 'text-red-600'}`}>
+                                {c.status === 'PASS' ? (lang === 'ar' ? 'نجح' : 'PASS') : c.status === 'WARN' ? (lang === 'ar' ? 'تحذير' : 'WARN') : (lang === 'ar' ? 'فشل' : 'FAIL')}
                               </span>
                             </div>
+                            <p className="text-xs text-muted-foreground mt-1">{c.detail}</p>
+                            
+                            {/* عرض تفاصيل الإجازة المرضية */}
+                            {c.sick_leave_info && (
+                              <div className="mt-2 p-2 bg-amber-100 dark:bg-amber-900/30 rounded text-xs space-y-1">
+                                <div className="flex justify-between">
+                                  <span>{lang === 'ar' ? 'الاستهلاك الحالي:' : 'Current usage:'}</span>
+                                  <span className="font-bold">{c.sick_leave_info.current_used} / 120 {lang === 'ar' ? 'يوم' : 'days'}</span>
+                                </div>
+                                {c.sick_leave_info.tier_distribution?.map((tier, ti) => (
+                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-emerald-100 text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-200 text-amber-900' : 'bg-red-100 text-red-800'}`}>
+                                    {tier.days} {lang === 'ar' ? 'يوم' : 'days'} → {tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب' : 'Half pay') : (lang === 'ar' ? 'بدون راتب' : 'No pay')}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* زر عرض الملف الطبي */}
+                            {c.medical_file_url && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => window.open(c.medical_file_url, '_blank')}
+                                className="mt-2 text-xs h-7 border-red-300 text-red-600"
+                              >
+                                <FileText size={12} className="me-1" />
+                                {lang === 'ar' ? 'معاينة التقرير' : 'Preview Report'}
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>
