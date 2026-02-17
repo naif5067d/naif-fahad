@@ -562,7 +562,24 @@ Contract activation flow:
 
 ---
 
-Version: 21.1 (2026-02-17)
+Version: 21.2 (2026-02-17)
+
+---
+
+### Phase 21.2: Announcements UI & Tabs ✅ (2026-02-17)
+
+**Completed - Announcements Management UI:**
+- ✓ Added to System Maintenance page (صيانة النظام)
+- ✓ 3 tabs: الإشعارات | التخزين | الأرشيف
+- ✓ Create announcement form with Arabic & English fields
+- ✓ Pinned toggle (إشعار مثبت) for important announcements
+- ✓ List of existing announcements with delete button
+- ✓ Location: صيانة النظام → الإشعارات
+
+**Files Modified:**
+- `/app/frontend/src/pages/SystemMaintenancePage.js` - Added Tabs, announcements UI
+
+**Test Status:** Frontend UI complete, API working
 
 ---
 
