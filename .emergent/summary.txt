@@ -1,175 +1,184 @@
 <analysis>**original_problem_statement:**
 The user is building a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The primary goal is to refine the existing application based on a continuous stream of detailed feedback.
 
-The most recent and critical user requests are:
-1.  **P0 PDF & Arabic Language Bugs:** The user is extremely frustrated with multiple UI and document rendering issues when the Arabic language is selected.
-    *   Arabic text appears as squares or is garbled/reversed in generated PDFs (contracts, transaction reports).
-    *   The STAS Mirror table also shows squares instead of Arabic text.
-    *   The STAS execution seal (barcode) in PDFs is not rendering correctly.
-    *   Language switching is inconsistent, with some parts of the UI remaining in English.
-2.  **P0 Business Logic Flaw:** The attendance system does not check if an employee is on approved leave or has permission before marking them as absent or late.
-3.  **P0 User Experience (Employee):** For new employee 'Naif Al-Qurashi', the system showed a You are not registered as an employee error despite a user account existing. The root cause was a data inconsistency bug which was fixed, but the user expects the system to be seamless for new hires. All error messages must be in Arabic.
-4.  **P0 Employee Management:** Allow STAS to delete employees by terminating their contract. Fix issues where employees might exist without a contract. Allow STAS and other admins to view/edit the username and password for any employee.
-5.  **P1 HR Policy Implementation:** A major overhaul of the HR policy was requested, including:
-    *   **Annual Leave:** Pro-rata accrual (21 or 30 days based on contract), with the available balance being the only leave balance visible to employees.
-    *   **Other Leaves:** Administrative leaves (death, marriage, etc.) have balances (e.g., 5 days) that are tracked in the backend but hidden from the employee. Sick leave must follow the Saudi labor law policy (30 days full pay, 60 days half pay, 30 days no pay), with the details visible to admins.
-    *   **Request Blocking:** Prevent an employee from submitting a new leave/attendance request if one of the same type is already active.
-    *   **UI Simplification:** The employee-facing leave page should only show Annual Leave balance and Consumed Permission Hours.
-6.  **P1 Contract Management:** Allow specific admin roles (, , ) to edit **active** contracts, including a new field for leave rollover policy.
-7.  **P1 UI/UX:** Hide the Pending CEO status from regular employees, showing it as Pending with Sultan () instead.
+The most critical user requests are:
+1.  **P0 PDF & Arabic Language Bugs:** The user is extremely frustrated with multiple UI and document rendering issues. Arabic text appears as squares or is garbled/reversed in generated PDFs. The STAS execution seal (barcode) is also missing or incorrect. The English version of the PDF is now appearing blank, which is a new regression. Date formats are incorrect (e.g.,  instead of ).
+2.  **P0 Business Logic & User Consent:**
+    *   The attendance system must check if an employee is on approved leave before marking them absent. (This was fixed).
+    *   For sick leaves that incur a salary deduction (days 31-120), the employee must be shown a formal warning and must sign to approve the deduction. This signature should appear as a blue QR code in the final PDF.
+3.  **P1 HR Policy Implementation & UI:**
+    *   Implement the full Saudi labor law sick leave policy (30 days full pay, 60 half pay, 30 no pay). The system should not block requests before 120 days but must get employee consent for deductions.
+    *   The STAS Mirror UI must show an employee's sick leave consumption status (how many days used, which pay bracket they are in).
+    *   Admins (specifically 'sultan') must be notified when an employee enters a new sick leave deduction bracket.
+    *   Allow specific admins to edit **active** contracts via a comprehensive form.
+    *   The attached medical report for a leave request must be visible to the admin, ideally as an inline preview.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The agent has made significant progress on multiple fronts.
-- **Map Bug:** The critical bug with overlapping maps on the  has been resolved by removing the preview maps from the location cards and ensuring only the map in the edit/add dialog is rendered.
-- **Employee/User Management:** The backend and frontend were updated to allow admins to manage user credentials (, ) and delete employees, which terminates their contract.
-- **Critical Data Integrity Fix:** A core bug was fixed in  where a new employee's  was not correctly linked to their user account, preventing them from logging in. This has been resolved.
-- **HR Policy Foundation:** A new backend service  was created to handle the new pro-rata annual leave accrual logic. This logic has been integrated into the leave request and employee summary APIs. A request blocking mechanism was also added to prevent duplicate active requests.
-- **Localization:** A large number of hardcoded English error messages in the backend were translated into Arabic.
-- **Simplified Leave APIs:** New backend endpoints were created to provide the simplified leave data required for the employee-facing UI.
+The agent has implemented several key backend logic changes. The critical flaw where the attendance system marked employees on leave as absent has been fixed in . The backend logic for the 30/60/30 sick leave policy has been added to , along with an API () to check an employee's status. Functionality for uploading medical reports, adding cancellation comments by STAS, and fixing leave conflict checks to ignore cancelled transactions has also been completed.
+
+On the frontend, dialogs have been added to warn employees about sick leave deductions, allow medical file uploads, and enable admins to enter cancellation reasons.
+
+However, the main P0 issue of PDF generation remains critically broken. After failed attempts with , , and , the agent decided on a new strategy: rendering Arabic text to an image using  and embedding it into the PDF.
 
 **Last working item**:
--   **Last item agent was working:** The agent was investigating a critical business logic flaw in . The user asked if the system correctly handles attendance for employees on approved leave or with permission. The agent confirmed the system **lacks this logic** and was about to start implementing the fix.
+-   **Last item agent was working:** The agent was attempting to provide a guaranteed fix for the P0 Arabic text rendering issue in PDFs, which shows garbled text and squares. After failing with other libraries due to system dependencies, the agent started implementing a workaround. The plan is to use the  library to render Arabic text into an image and then embed that image into the PDF generated by .
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** backend testing agent. The test should create a leave request for a user, approve it, and then attempt a check-in on a leave day to ensure it is not marked as absent or late.
+-   **Which testing method agent to use?** Backend testing. The agent should create a test route or use an existing one to generate a PDF containing Arabic text. Then, use the  tool on the resulting PDF file to visually verify that the text renders correctly and is no longer squares.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   Issue 1: PDF and UI render Arabic text as squares (P0)
--   Issue 2: Attendance system marks employees on leave as absent/late (P0)
--   Issue 3: Contract editing for active contracts is not enabled for admins (P1)
--   Issue 4: Hide Pending CEO status from employees (P2)
--   Issue 5: Implement detailed sick leave policy (30/60/30 day rule) (P2)
--   Issue 6: Leave request calendar lacks color-coding for unavailable days (P2)
+-   Issue 1: PDF Generation is Critically Broken (P0)
+-   Issue 2: Missing Employee Consent Signature for Salary Deductions in PDF (P0)
+-   Issue 3: STAS Mirror UI doesn't show full sick leave consumption details (P1)
+-   Issue 4: Admin notifications for sick leave status changes are not implemented (P1)
+-   Issue 5: Date formatting is inconsistent across the application (P1)
 
 **Issues Detail:**
--   **Issue 1: PDF and UI render Arabic text as squares (P0)**
-    -   **Attempted fixes:** The agent confirmed the required Arabic fonts (, ) exist. Attempts were made to register the fonts correctly within  in . However, the user's latest screenshots confirm the issue persists in both PDFs and the STAS Mirror UI. The root cause is likely improper font registration or application within the  canvas and/or the frontend table component.
+-   **Issue 1: PDF Generation is Critically Broken (P0)**
+    -   **Attempted fixes:**  direct text rendering failed.  and  failed due to missing OS-level dependencies in the environment.
     -   **Next debug checklist:**
-        1.  In , verify  and  are used correctly for every piece of Arabic text. Ensure  uses the registered font name.
-        2.  Force a specific Arabic font (e.g., 'Amiri') for all Arabic text drawing operations.
-        3.  For the STAS Mirror UI (), inspect the CSS and ensure a webfont that supports Arabic is being applied correctly to the table cells.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. The application is unusable in Arabic, which is a primary requirement. Fixing it will restore core functionality and user confidence.
+        1.  Open .
+        2.  Implement the logic to take an Arabic string, use  (PIL) with an appropriate Arabic font () to draw the text onto an in-memory image.
+        3.  Save the image to a memory buffer (e.g., ).
+        4.  In the  canvas, instead of using  or , use  to place the generated text image onto the PDF.
+        5.  Test this approach on all dynamic Arabic fields: employee name, leave type, reason, and approval details.
+        6.  Also investigate and fix the regression where the English version of the PDF is now blank.
+    -   **Why fix this issue and what will be achieved with the fix?** This is the user's biggest point of frustration and makes a core feature of the application unusable. A fix is required to restore trust and basic functionality.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Both.
-    -   **Blocked on other issue:** No.
-
--   **Issue 2: Attendance system marks employees on leave as absent/late (P0)**
-    -   **Attempted fixes:** None. The issue was just identified.
-    -   **Next debug checklist:**
-        1.  Modify .
-        2.  Before processing a check-in or marking an employee as absent, query the  collection.
-        3.  Check if the employee has an  leave entry that covers the current date.
-        4.  Also, check for any  permission requests for the current date.
-        5.  If a valid leave or permission exists, bypass the logic that marks the employee as late or absent.
-    -   **Why fix this issue and what will be achieved with the fix?** This fixes a fundamental flaw in the HR logic, ensuring payroll and attendance records are accurate.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Backend.
     -   **Blocked on other issue:** No.
 
-**In progress Task List**:
--   **Task 1: Simplify Employee Leave Page UI (P1)**
-    -   **Where to resume:** .
-    -   **What will be achieved with this?** The employee dashboard will be simplified as per the user's request, showing only annual leave balance and consumed permission hours, improving user experience.
+-   **Issue 2: Missing Employee Consent Signature for Salary Deductions in PDF (P0)**
+    -   **Attempted fixes:** A frontend dialog was created to get consent, but this consent is not visually represented in the PDF as requested.
+    -   **Next debug checklist:**
+        1.  In , when a leave request has .
+        2.  Generate a unique **blue** QR code.
+        3.  Add a new section to the PDF template titled موافقة الموظف على الخصم (Employee Consent for Deduction).
+        4.  In this section, draw the blue QR code and accompanying text confirming the employee's agreement to the deduction as per Article 117.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a legal and procedural requirement from the user to formalize the deduction process.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend.
+    -   **Blocked on other issue:** Issue 1 (PDF Generation).
+
+-   **Issue 3: STAS Mirror UI doesn't show full sick leave consumption details (P1)**
+    -   **Attempted fixes:** A backend endpoint () was created. Some UI elements were added.
+    -   **Next debug checklist:**
+        1.  In , when a sick leave transaction is selected.
+        2.  Call the  endpoint with the employee ID and dates.
+        3.  Display the returned information clearly: Total sick days taken in the year, and which pay bracket the current request falls into (100%, 50%, or 0%).
+    -   **Why fix this issue and what will be achieved with the fix?** It gives administrators the necessary context to approve or deny sick leave requests accurately.
     -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** No.
+
+**In progress Task List**:
+-   **Task 1: Overhaul PDF Generation with Image-Based Rendering (P0)**
+    -   **Where to resume:** .
+    -   **What will be achieved with this?** A reliable and working PDF generation system that correctly displays Arabic text, fixing the most critical bug in the application.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Backend.
     -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1:** Implement the full sick leave policy logic (30 days full pay -> 60 days half pay -> 30 days no pay) in  and display the consumption status to admins in the STAS Mirror.
-    -   **P1:** Create a system-wide notification to alert admins (, , ) when an employee has remaining leave balance and their contract is ending within 3 months.
+    -   **P1:** Implement admin notifications (for user 'sultan') when an employee enters a new sick leave pay bracket. This requires creating a notification service in the backend.
+    -   **P1:** Implement a comprehensive fix for date formatting () everywhere it is displayed raw.
+    -   **P1:** Create a system-wide notification to alert admins (, , ) when an employee has remaining leave and their contract is ending within 3 months.
     -   **P2:** Create a UI in the System Maintenance page for the  endpoint.
 -   **Future Tasks:**
-    -   **P2:** Employee Migration to V2 contracts (with opening data snapshot).
+    -   **P2:** Employee Migration to V2 contracts.
     -   **P2:** Settlement Module.
     -   **P3:** CEO Dashboard & enhanced Employee Profile Card.
     -   **P3:** Warnings & Loans Modules.
 
 **Completed work in this session**
--   **Resolved Critical Map Bug:** Fixed the overlapping maps issue on the .
--   **Implemented Employee/User Management:** Added UI and APIs for admins to delete employees and manage their login credentials.
--   **Fixed New Employee Login Failure:** Corrected a critical data integrity bug that prevented newly created employees from logging in.
--   **Backend-wide Localization of Error Messages:** Translated numerous hardcoded English  messages to Arabic across the backend.
--   **Implemented Pro-Rata Leave Accrual:** Established the foundational  service for calculating annual leave based on days worked.
--   **Implemented Request Blocking:** Added backend logic to prevent users from creating duplicate active leave requests.
--   **Created APIs for Simplified Leave UI:** Developed new endpoints to support the redesigned employee-facing leave page.
+-   **Fixed Critical Attendance Logic:** Implemented checks in  to verify leave/permission status before marking an employee as absent.
+-   **Implemented Backend Sick Leave Policy:** Added the 30/60/30 day rule calculation to .
+-   **Enabled PDF Upload for Sick Leaves:** Added frontend UI and a backend endpoint for employees to upload medical reports.
+-   **Fixed Leave Date Conflict Logic:** Updated  to ignore 'cancelled' requests when checking for overlapping dates.
+-   **Enabled Transaction Cancellation with Comments:** Admins using the STAS mirror can now cancel a transaction and are required to provide a reason.
+-   **Made Contract Editing Form Comprehensive:** The modal for editing active contracts in  now shows the full contract details.
+-   **Fixed File Authentication Issue:** The endpoint for serving uploaded files was made public to prevent Not authenticated errors when opening in a new tab.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Lax GPS Validation:** The backend still accepts check-in/out records even if the  flag is .
--   **Issue 2: Global-Only Ramadan Hours:** The system lacks support for per-location or per-project Ramadan hours.
+-   **Issue 1: Blank English PDF:** A major regression where the English version of the PDF is generated mostly empty. This needs to be investigated alongside the Arabic fix.
+-   **Issue 2: Missing STAS QR Seal in PDF:** The user reported the QR code for the STAS execution step is not appearing in the approvals table.
+-   **Issue 3: Lax GPS Validation:** The backend still accepts check-in/out records even if the  flag is .
+-   **Issue 4: Global-Only Ramadan Hours:** The system lacks support for per-location or per-project Ramadan hours.
 
 **Known issue recurrence from previous fork**
--   **Issue:** Hardcoded English text and broken Arabic rendering in the UI/PDFs.
--   **Recurrence count:** High. The user has reported this multiple times. Despite fixing backend error messages, the issue persists in the frontend (STAS Mirror) and PDF generation.
--   **Status:** IN PROGRESS. This requires a definitive fix.
+-   **Issue:** Broken Arabic rendering in PDFs.
+-   **Recurrence count:** High. This has been the primary blocker and source of user frustration across multiple sessions.
+-   **Status:** IN PROGRESS. The new text-to-image strategy is the latest attempt at a permanent solution.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **PDF Generation:**  is used for PDF generation, but it's the source of the critical Arabic font rendering issues.
--   **Business Logic Service Layer:** New services like  and  have been introduced to encapsulate complex business rules, separating them from the API routes.
--   **Internationalization (i18n):**  for frontend translations. Backend localization is handled via custom logic in API responses.
+-   **PDF Generation Workaround:** The core technical challenge is bypassing 's poor support for right-to-left languages. The proposed solution is to render Arabic text to an image using  and then embed that image into the PDF.
+-   **Business Logic Encapsulation:** Complex HR rules (attendance, sick leave) are correctly being managed in dedicated backend services (, ).
+-   **File Handling:** Storing uploaded files in a persistent  directory and serving them via a dedicated public endpoint.
 
 **key DB schema**
--   ****:  field used to set leave entitlement (21 or 30).
--   ****: The  field is now correctly linked to the uid=0(root) gid=0(root) groups=0(root) in the  collection upon contract execution.
--   ****: Used to track all executed leave transactions. Must be queried by the attendance service.
+-   ****: The  field now stores a  for sick leaves. The main document now stores a  and has an updated status on rejection.
 
 **All files of reference**
--   **Arabic PDF Bug:** 
--   **Attendance Logic Flaw:** 
--   **Arabic UI Bug:** 
--   **Contract Editing Feature:** 
--   **Employee Leave UI:** 
--   **HR Policy Logic:** , 
+-   **New PDF Implementation:** 
+-   **Current Broken PDF:** 
+-   **Sick Leave Logic:** , 
+-   **Attendance Logic:** 
+-   **Leave Request UI:** 
+-   **Admin UI:** , 
 
 **Critical Info for New Agent**
--   **TOP PRIORITY:** The user is extremely frustrated by the broken Arabic language support. Fixing the PDF and UI rendering (squares instead of text) is the most critical task. You must solve this permanently.
--   **SECOND PRIORITY:** The flaw in the attendance logic is a major business risk. Fix  to ensure employees on approved leave are not marked absent or late.
--   **COMMUNICATION:** You **MUST** communicate exclusively in Arabic.
--   **DELIVERY:** The user is highly detail-oriented and expects bug-free features that match their exact requirements. Do not claim a task is done until it is thoroughly tested and verified to meet all specifications. The user prefers a technical report of changes over screenshots.
+-   **ABSOLUTE TOP PRIORITY:** The user is extremely angry about the broken PDFs. You must successfully implement the text-to-image rendering for Arabic text in . This is a make-or-break task. Do not move on to other tasks until a PDF with correct Arabic text is generated. Also, fix the regression causing blank English PDFs.
+-   **User Consent is Key:** The second priority is implementing the employee signature (blue QR code) in the PDF for sick leaves that involve salary deductions. This is a hard requirement from the user.
+-   **Communicate in Arabic:** All interactions, plans, and summaries for the user must be in Arabic.
+-   **Attention to Detail:** The user has a very low tolerance for bugs and expects features to match their specifications exactly. Test your changes thoroughly.
 
 **documents and test reports created in this job**
--   /app/memory/PRD.md
--   /app/test_reports/iteration_4.json (Results are likely outdated due to subsequent bug reports and feature changes).
+-   /app/backend/routes/pdf_v2.py
+-   /app/backend/routes/test_pdf.py
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (LATEST):** Clarified leave policy: employees can request all leave types, but only see their Annual Leave balance. Other balances (e.g., 5 days for marriage) are hidden but tracked in the backend. Detailed the sick leave policy (30/60/30 day rule) for admins. Asked a critical question: Does the system know if an employee is on leave/permission before marking them absent/late? (Status: Pending Fix)
-2.  **Agent:** Acknowledged the requirements and the critical question about attendance, and began investigating.
-3.  **User:** Requested simplification of the employee-facing leave page to show only consumed leave, annual leave balance, and consumed permission hours. All other leave balances should be hidden from the employee but tracked for admins. (Status: In Progress)
-4.  **Agent:** Acknowledged the request and started implementation.
-5.  **User:** Reported multiple critical bugs with screenshots: Admins can't edit active contracts; Pending CEO status is not hidden from employees; PDF has Arabic font issues (squares), broken layout, and incorrect signature; STAS mirror table also has font issues; inconsistent language switching. (Status: Pending Fix)
-6.  **Agent:** Acknowledged the bugs and started investigating the PDF generation code.
-7.  **Agent:** Submitted a technical report and checklist for the HR policy implementation, believing the task was complete. (Status: Rejected by user due to bugs).
-8.  **User:** Initiated the major HR policy update task, providing a detailed list of 9 requirements, including pro-rata leave, blocking duplicate requests, and PDF barcode improvements. (Status: Partially Implemented, but with bugs).
-9.  **User:** Reported that new employee Naif Al-Qurashi gets an error You are not registered as an employee and that all such messages must be in Arabic. Asked what data should be linked to an employee on creation. (Status: Resolved).
-10. **Agent:** Acknowledged the issue and began investigating the user and employee data.
+1.  **User (LATEST):** Demands a guaranteed solution for the PDF squares issue and suggests using a reliable library.
+2.  **User:** Reports the English PDF is now mostly blank, the STAS seal (QR code) is missing, and the employee signature for deductions (blue QR code) is not implemented. Re-iterates that sick leave shouldn't be blocked before 120 days, only require consent for deductions.
+3.  **User:** Reports that Arabic text (employee name, leave type, reason) and dates are still appearing as squares or incorrectly formatted in the PDF.
+4.  **User:** Clarifies the sick leave process: don't block requests before 120 days, but show a warning about salary deductions and require the employee to sign (agree) to proceed.
+5.  **User:** Asks why STAS isn't informed of the employee's sick leave consumption (out of 120 days) and why 'sultan' isn't notified of pay-bracket changes. Requests inline file preview instead of download.
+6.  **User:** Reports that opening the attached medical file results in a Not authenticated error.
+7.  **User:** Asks for a comment field for STAS when cancelling a transaction. Reports that cancelled leave requests are still blocking new ones. Asks for an indicator in the STAS mirror if a medical file was attached.
+8.  **User:** Reports that the attached medical file is not visible to the admin.
+9.  **User:** Requests that the message You can request all leave types... be hidden from the employee UI. Asks where the PDF upload for sick leave is. Asks for the 30/60/30 policy to be implemented. Points out bad date formatting () and requests the full contract be editable.
+10. **Agent:** Acknowledges the feedback and starts implementing fixes for PDF upload, date formatting, and contract editing.
 
 **Project Health Check:**
--   **Broken**: PDF Generation (Arabic rendering), Attendance Logic (doesn't check for leave), STAS Mirror UI (Arabic rendering), Contract Page UI (inconsistent language).
--   **Mocked**: N/A
+-   **Broken**: PDF Generation for both Arabic (squares, incorrect layout) and English (blank page) is completely non-functional and is a major regression. This is the highest priority issue.
 
 **3rd Party Integrations**
+-    (Current PDF library, problematic)
+-    (To be used for the new text-to-image PDF workaround)
+-    (For QR code generation)
 -   
 -   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, but the tests are now outdated as the user reported several critical bugs after the last test run.
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** Major regressions in Arabic language rendering across PDFs and the UI.
+-   **Known regressions:** The English language PDF is now blank. The core Arabic rendering issue persists.
 
 **Credentials to test flow:**
--   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). No passwords are required.
+-   Use the user-switcher dropdown in the app's header. Roles include , , , and . No passwords are required.
 
 **What agent forgot to execute**
--   The agent did not fix the root cause of the Arabic font rendering issue in PDFs and the UI, despite multiple user complaints.
--   The agent acknowledged the critical flaw in the attendance logic () but did not implement a fix.
--   The full UI for allowing admins to edit active contracts and set leave rollover policy was not completed.
--   The original P0 request from the initial handoff to create a color-coded leave calendar remains unimplemented.</analysis>
+-   The agent has not yet implemented the blue QR code for employee consent in the PDF.
+-   The agent has not implemented the notification system for 'sultan' regarding sick leave status changes.
+-   The agent introduced a major regression where the English version of the PDF is blank and has not fixed it.
+-   The agent did not fully resolve the root cause of inconsistent date formatting across the application.</analysis>
