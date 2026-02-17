@@ -627,7 +627,7 @@ async def get_settlement_pdf(
     user=Depends(get_current_user)
 ):
     """Generate and return settlement PDF"""
-    from utils.pdf import generate_settlement_pdf
+    from utils.settlement_pdf import generate_settlement_pdf
     
     settlement = await db.settlements.find_one({"id": settlement_id}, {"_id": 0})
     if not settlement:
