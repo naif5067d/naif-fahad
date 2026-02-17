@@ -59,6 +59,7 @@ app.include_router(users_router)
 app.include_router(admin_router)
 app.include_router(settlement_router)
 app.include_router(deductions_router)
+app.include_router(notifications_router)
 
 app.add_middleware(
     CORSMiddleware,
