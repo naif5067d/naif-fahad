@@ -164,6 +164,18 @@ async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
             "category": "leave"
         })
     
+    # فحص التقرير الطبي للإجازة المرضية
+    if leave_type == 'sick':
+        medical_file_url = data.get('medical_file_url')
+        checks.append({
+            "name": "Medical Report Attached",
+            "name_ar": "التقرير الطبي مرفق",
+            "status": "PASS" if medical_file_url else "FAIL",
+            "detail": "تم رفع التقرير الطبي" if medical_file_url else "⚠️ لم يتم رفع التقرير الطبي - مطلوب قبل التنفيذ",
+            "category": "document",
+            "medical_file_url": medical_file_url
+        })
+    
     # فحص التعارض
     start = data.get('start_date')
     existing = await db.transactions.find_one({
