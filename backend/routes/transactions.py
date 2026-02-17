@@ -387,3 +387,70 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
 
 
 __all__ = ['get_next_ref_no', 'WORKFLOW_MAP', 'STAGE_ROLES']
+
+
+@router.get("/test/pdf-arabic")
+async def test_arabic_pdf():
+    """Test endpoint to verify Arabic PDF generation"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib import colors
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    
+    FONTS_DIR = '/app/backend/fonts'
+    try:
+        pdfmetrics.registerFont(TTFont('NotoNaskhArabic', f'{FONTS_DIR}/NotoNaskhArabic-Regular.ttf'))
+    except:
+        pass  # Already registered
+    
+    def reshape_ar(text):
+        if not text:
+            return ''
+        reshaped = arabic_reshaper.reshape(str(text))
+        return get_display(reshaped)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    
+    ar_style = ParagraphStyle(
+        'Arabic',
+        fontName='NotoNaskhArabic',
+        fontSize=12,
+        alignment=TA_RIGHT,
+        wordWrap='RTL',
+    )
+    
+    elements = []
+    
+    # Test Arabic text
+    elements.append(Paragraph(reshape_ar("اختبار النص العربي - Test Arabic"), ar_style))
+    elements.append(Spacer(1, 20))
+    
+    # Table test
+    table_data = [
+        [Paragraph(reshape_ar("الاسم"), ar_style), Paragraph(reshape_ar("نايف فهد القريشي"), ar_style)],
+        [Paragraph(reshape_ar("نوع الإجازة"), ar_style), Paragraph(reshape_ar("مرضية"), ar_style)],
+        [Paragraph(reshape_ar("السبب"), ar_style), Paragraph(reshape_ar("تبعاً للسياسة الداخلية للشركة"), ar_style)],
+    ]
+    
+    table = Table(table_data, colWidths=[120, 250])
+    table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.gray),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(table)
+    
+    doc.build(elements)
+    
+    return StreamingResponse(
+        io.BytesIO(buffer.getvalue()),
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=test_arabic.pdf"}
+    )
