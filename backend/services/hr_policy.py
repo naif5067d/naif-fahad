@@ -163,6 +163,88 @@ async def calculate_pro_rata_entitlement(employee_id: str, year: int = None) -> 
     }
 
 
+async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = None, end_date: str = None, annual_policy_days: int = None, year: int = None) -> dict:
+    """
+    حساب الاستحقاق السنوي التدريجي - نسخة مرنة للمخالصة
+    
+    يمكن تمرير:
+    - employee_id فقط: يستخدم تواريخ العقد
+    - employee_id + start_date + end_date: لحساب المخالصة
+    - employee_id + annual_policy_days: لتجاوز سياسة العقد
+    
+    المعادلة للمخالصة:
+    رصيد الإجازة = (policy_days / 365) × أيام الخدمة - المستخدم
+    """
+    if year is None:
+        year = datetime.now(timezone.utc).year
+    
+    # 1. جلب العقد
+    contract = await db.contracts_v2.find_one({
+        "employee_id": employee_id,
+        "status": {"$in": ["active", "terminated"]}
+    }, {"_id": 0})
+    
+    if not contract:
+        contract = await db.contracts.find_one({
+            "employee_id": employee_id,
+            "is_active": True
+        }, {"_id": 0})
+    
+    if not contract:
+        return {
+            "error": True,
+            "message_ar": "لا يوجد عقد",
+            "annual_entitlement": 0,
+            "earned_to_date": 0,
+            "available_balance": 0
+        }
+    
+    # 2. تحديد التواريخ
+    if start_date is None:
+        start_date = contract.get('start_date', '')
+    if end_date is None:
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if annual_policy_days is None:
+        annual_policy_days = contract.get('annual_policy_days', contract.get('annual_leave_days', DEFAULT_ANNUAL_ENTITLEMENT))
+    
+    # 3. حساب أيام الخدمة
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    service_days = (end_dt - start_dt).days
+    if service_days < 0:
+        service_days = 0
+    
+    # 4. حساب الاستحقاق الكلي (Pro-Rata على كل مدة الخدمة)
+    # المعادلة: (policy_days / 365) × أيام الخدمة
+    earned_total = round((annual_policy_days / 365) * service_days, 2)
+    
+    # 5. حساب المستخدم (جميع السنوات)
+    used_entries = await db.leave_ledger.find({
+        "employee_id": employee_id,
+        "leave_type": "annual",
+        "type": "debit"
+    }, {"_id": 0}).to_list(5000)
+    
+    used_total = sum(e.get('days', 0) for e in used_entries)
+    
+    # 6. الرصيد المتاح
+    available_balance = round(earned_total - used_total, 2)
+    
+    return {
+        "error": False,
+        "annual_policy_days": annual_policy_days,
+        "start_date": start_date,
+        "end_date": end_date,
+        "service_days": service_days,
+        "earned_total": earned_total,
+        "used_total": used_total,
+        "available_balance": max(0, available_balance),
+        "formula": f"({annual_policy_days} / 365) × {service_days} - {used_total} = {available_balance}",
+        "message_ar": f"مكتسب: {earned_total:.2f} يوم، مستخدم: {used_total} يوم، متاح: {max(0, available_balance):.2f} يوم"
+    }
+
+
+
 async def get_annual_leave_balance_v2(employee_id: str) -> float:
     """
     الحصول على رصيد الإجازة السنوية المتاح (Pro-Rata)
