@@ -20,6 +20,7 @@ import FinancialCustodyPage from "@/pages/FinancialCustodyPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
 import SystemMaintenancePage from "@/pages/SystemMaintenancePage";
 import ContractsManagementPage from "@/pages/ContractsManagementPage";
+import SettlementPage from "@/pages/SettlementPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
