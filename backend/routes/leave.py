@@ -120,6 +120,7 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
             "balance_before": validation['balance_before'],
             "balance_after": validation['balance_after'],
             "sick_tier_info": validation.get('sick_tier_info'),
+            "medical_file_url": req.medical_file_url,  # ملف التقرير الطبي للإجازة المرضية
         },
         "current_stage": first_stage,
         "workflow": workflow,
