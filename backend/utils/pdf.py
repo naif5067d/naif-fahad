@@ -566,8 +566,10 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         else:
             details_table = Table(details_rows, colWidths=[40*mm, 130*mm], rowHeights=[6*mm] * len(details_rows))
         
+        # استخدام الخط العربي لجميع الخلايا
+        font_to_use = ARABIC_FONT if lang == 'ar' and ARABIC_FONT else main_font
         details_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), main_font),
+            ('FONTNAME', (0, 0), (-1, -1), font_to_use),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('TEXTCOLOR', (0, 0), (0, -1), TEXT_GRAY),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
