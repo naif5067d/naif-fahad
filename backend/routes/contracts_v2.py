@@ -73,7 +73,8 @@ class ContractCreate(BaseModel):
     wage_definition: str = "basic_only"  # basic_only | basic_plus_fixed
     
     # الإجازة السنوية: 21 أو 30 يوم فقط
-    annual_leave_days: int = 21
+    annual_leave_days: int = 21  # للواجهة الحالية
+    annual_policy_days: int = 21  # السياسة الرسمية - 21 أو 30 فقط
     # رصيد الاستئذان الشهري (0-3 ساعات)
     monthly_permission_hours: int = 2
     
