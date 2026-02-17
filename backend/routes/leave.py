@@ -63,7 +63,9 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     
     if not validation['valid']:
         error = validation['errors'][0]
-        raise HTTPException(status_code=400, detail=error['message'])
+        # تحسين رسائل الخطأ بالعربي
+        error_msg = error.get('message_ar', error.get('message', ''))
+        raise HTTPException(status_code=400, detail=error_msg)
     
     # Step 3: Determine workflow (skip supervisor if applicable)
     skip_supervisor = await should_skip_supervisor_stage(emp, user['user_id'])
