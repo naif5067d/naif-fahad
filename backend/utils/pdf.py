@@ -517,7 +517,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     elements.append(Paragraph(details_title, styles['section']))
     
     tx_data = transaction.get('data', {})
-    skip_fields = {'employee_name_ar', 'balance_before', 'balance_after', 'adjusted_end_date', 'sick_tier_info'}
+    skip_fields = {'employee_name_ar', 'balance_before', 'balance_after', 'adjusted_end_date', 'sick_tier_info', 'leave_type_ar', 'medical_file_url'}
     
     details_rows = []
     for key, value in tx_data.items():
@@ -538,8 +538,12 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         if value is None:
             formatted_val = '-'
         elif key == 'leave_type':
-            leave_label = labels.get(str(value), str(value))
-            formatted_val = format_text_bilingual(leave_label, lang)
+            # استخدام الترجمة العربية إذا متوفرة
+            if lang == 'ar' and 'leave_type_ar' in tx_data:
+                formatted_val = format_text_bilingual(tx_data['leave_type_ar'], lang)
+            else:
+                leave_label = labels.get(str(value), str(value))
+                formatted_val = format_text_bilingual(leave_label, lang)
         elif key in ('amount', 'estimatedvalue', 'estimated_value'):
             formatted_val = f"{value} SAR"
         elif key in ('start_date', 'end_date', 'date'):
