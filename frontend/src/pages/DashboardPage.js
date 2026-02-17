@@ -154,8 +154,45 @@ export default function DashboardPage() {
               </span>
             </div>
           )}
+          
+          {/* Pinned Announcements - Always visible */}
+          {announcements.pinned.length > 0 && (
+            <div className="mt-4 space-y-2">
+              {announcements.pinned.map(ann => (
+                <div key={ann.id} className="flex items-start gap-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                  <Pin size={16} className="text-amber-300 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-white/90">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Regular Announcements - Show once popup style */}
+      {announcements.regular.length > 0 && (
+        <div className="space-y-2">
+          {announcements.regular.map(ann => (
+            <div key={ann.id} className="flex items-start justify-between p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <Bell size={18} className="text-blue-600 mt-0.5" />
+                <div>
+                  <p className="text-sm text-blue-900">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
+                  <p className="text-xs text-blue-600 mt-1">{ann.created_by_name}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => dismissAnnouncement(ann.id)}
+                className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Actions Grid */}
       <div>
