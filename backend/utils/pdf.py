@@ -494,8 +494,11 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         
         emp_data = [[name_label, emp_name_display, empno_label, emp_no]]
         emp_table = Table(emp_data, colWidths=[25*mm, 80*mm, 25*mm, 40*mm], rowHeights=[6*mm])
+        
+        # استخدام الخط العربي لجدول الموظف
+        font_to_use = ARABIC_FONT if lang == 'ar' and ARABIC_FONT else main_font
         emp_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), main_font),
+            ('FONTNAME', (0, 0), (-1, -1), font_to_use),
             ('FONTSIZE', (0, 0), (-1, -1), 7),
             ('TEXTCOLOR', (0, 0), (0, 0), TEXT_GRAY),
             ('TEXTCOLOR', (2, 0), (2, 0), TEXT_GRAY),
