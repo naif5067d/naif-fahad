@@ -29,53 +29,57 @@ export default function LeavePage() {
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
   const isEmployee = user?.role === 'employee';
 
-  // أنواع الإجازات - للإدارة فقط تفاصيل كاملة
+  // أنواع الإجازات - الموظف يستطيع رفع جميع الأنواع
+  // لكن لا يرى الأرصدة إلا للاعتيادية
   const LEAVE_TYPES = {
     annual: { 
       label: lang === 'ar' ? 'الاعتيادية' : 'Annual Leave', 
       labelFull: lang === 'ar' ? 'إجازة اعتيادية' : 'Annual Leave',
       hasBalance: true,
-      showToEmployee: true
+      showBalanceToEmployee: true  // الوحيدة التي يراها الموظف
     },
     sick: { 
       label: lang === 'ar' ? 'المرضية' : 'Sick Leave', 
       labelFull: lang === 'ar' ? 'إجازة مرضية' : 'Sick Leave',
-      hasBalance: false, 
+      hasBalance: true,  // 120 يوم (30+60+30)
+      showBalanceToEmployee: false,  // مخفي عن الموظف
       requiresFile: true,
-      showToEmployee: false  // لا تظهر للموظف - مسار إداري
+      tiers: [
+        { days: 30, salary: 100, label_ar: '30 يوم براتب كامل' },
+        { days: 60, salary: 50, label_ar: '60 يوم بنصف الراتب' },
+        { days: 30, salary: 0, label_ar: '30 يوم بدون أجر' }
+      ]
     },
     marriage: { 
       label: lang === 'ar' ? 'الزواج' : 'Marriage', 
       labelFull: lang === 'ar' ? 'إجازة زواج' : 'Marriage Leave',
-      hasBalance: false, 
-      days: 5,
-      showToEmployee: false
+      hasBalance: true, 
+      fixedDays: 5,
+      showBalanceToEmployee: false
     },
     bereavement: { 
       label: lang === 'ar' ? 'الوفاة' : 'Bereavement', 
       labelFull: lang === 'ar' ? 'إجازة وفاة' : 'Bereavement Leave',
-      hasBalance: false, 
-      days: 5,
-      showToEmployee: false
+      hasBalance: true, 
+      fixedDays: 5,
+      showBalanceToEmployee: false
     },
     exam: { 
       label: lang === 'ar' ? 'الاختبار' : 'Exam', 
       labelFull: lang === 'ar' ? 'إجازة اختبار' : 'Exam Leave',
-      hasBalance: false,
-      showToEmployee: false
+      hasBalance: false,  // حسب القرار
+      showBalanceToEmployee: false
     },
     unpaid: { 
       label: lang === 'ar' ? 'بدون راتب' : 'Unpaid', 
       labelFull: lang === 'ar' ? 'إجازة بدون راتب' : 'Unpaid Leave',
-      hasBalance: false,
-      showToEmployee: false
+      hasBalance: false,  // تُسجل فقط
+      showBalanceToEmployee: false
     },
   };
 
-  // أنواع الإجازات المتاحة حسب الدور
-  const availableLeaveTypes = isEmployee 
-    ? Object.entries(LEAVE_TYPES).filter(([k, v]) => v.showToEmployee)
-    : Object.entries(LEAVE_TYPES);
+  // الموظف يستطيع رفع جميع أنواع الإجازات
+  const availableLeaveTypes = Object.entries(LEAVE_TYPES);
 
   useEffect(() => {
     if (canRequest) {
