@@ -250,11 +250,6 @@ export default function LeavePage() {
                   ))}
                 </SelectContent>
               </Select>
-              {isEmployee && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {lang === 'ar' ? 'يمكنك طلب جميع أنواع الإجازات. الرصيد يُحتسب داخلياً.' : 'You can request all leave types. Balance is tracked internally.'}
-                </p>
-              )}
             </div>
             <div>
               <Label>{lang === 'ar' ? 'السبب' : 'Reason'}</Label>
