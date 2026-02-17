@@ -358,50 +358,111 @@ export default function WorkLocationsPage() {
                   </div>
                 </div>
 
-                {/* Grace Period - مدة السماح */}
-                <div className="space-y-2 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Label className="flex items-center gap-2 text-amber-800">
-                    <Clock size={16} />
-                    {lang === 'ar' ? 'مدة السماح (دقائق)' : 'Grace Period (minutes)'}
-                  </Label>
-                  <p className="text-xs text-amber-700 mb-2">
-                    {lang === 'ar' 
-                      ? 'مدة السماح قبل وبعد وقت الحضور/الانصراف بدون احتساب تأخير' 
-                      : 'Grace period before/after check-in/out time without counting as late'}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={15}
-                      value={formData.grace_period_minutes}
-                      onChange={e => setFormData(p => ({ 
-                        ...p, 
-                        grace_period_minutes: Math.min(15, Math.max(0, parseInt(e.target.value) || 0))
-                      }))}
-                      className="w-24"
-                      data-testid="grace-period-input"
-                    />
-                    <div className="flex gap-1">
-                      {[0, 5, 10, 15].map(min => (
-                        <Button
-                          key={min}
-                          type="button"
-                          variant={formData.grace_period_minutes === min ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setFormData(p => ({ ...p, grace_period_minutes: min }))}
-                          className="h-8 px-3"
-                        >
-                          {min} {lang === 'ar' ? 'د' : 'm'}
-                        </Button>
-                      ))}
+                {/* Grace Period - مدة السماح - Modern Design */}
+                <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 overflow-hidden">
+                  <div className="px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                    <div className="flex items-center gap-2">
+                      <Clock size={18} />
+                      <span className="font-semibold">{lang === 'ar' ? 'مدة السماح' : 'Grace Period'}</span>
+                    </div>
+                    <p className="text-xs text-white/80 mt-1">
+                      {lang === 'ar' ? 'الوقت المسموح قبل/بعد الدخول والخروج بدون احتساب تأخير' : 'Allowed time before/after without counting as late'}
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 space-y-5">
+                    {/* Check-in Grace */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <span className="text-emerald-600 text-lg">↓</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{lang === 'ar' ? 'الدخول' : 'Check-in'}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {lang === 'ar' ? `الحضور حتى ${formData.work_start.split(':')[0]}:${(parseInt(formData.work_start.split(':')[1]) + formData.grace_checkin_minutes).toString().padStart(2, '0')} مقبول` : `Until ${formData.work_start.split(':')[0]}:${(parseInt(formData.work_start.split(':')[1]) + formData.grace_checkin_minutes).toString().padStart(2, '0')} is OK`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-emerald-600">{formData.grace_checkin_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
+                      </div>
+                      
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="15"
+                          value={formData.grace_checkin_minutes}
+                          onChange={e => setFormData(p => ({ ...p, grace_checkin_minutes: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                          style={{
+                            background: `linear-gradient(to right, #10b981 0%, #10b981 ${(formData.grace_checkin_minutes / 15) * 100}%, #e2e8f0 ${(formData.grace_checkin_minutes / 15) * 100}%, #e2e8f0 100%)`
+                          }}
+                          data-testid="grace-checkin-slider"
+                        />
+                        <div className="flex justify-between mt-1 px-1">
+                          {[0, 5, 10, 15].map(v => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setFormData(p => ({ ...p, grace_checkin_minutes: v }))}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkin_minutes === v ? 'bg-emerald-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-200"></div>
+
+                    {/* Check-out Grace */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                            <span className="text-orange-600 text-lg">↑</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{lang === 'ar' ? 'الخروج' : 'Check-out'}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {lang === 'ar' ? `الانصراف من ${formData.work_end.split(':')[0]}:${Math.max(0, parseInt(formData.work_end.split(':')[1]) - formData.grace_checkout_minutes).toString().padStart(2, '0')} مقبول` : `From ${formData.work_end.split(':')[0]}:${Math.max(0, parseInt(formData.work_end.split(':')[1]) - formData.grace_checkout_minutes).toString().padStart(2, '0')} is OK`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-2xl font-bold text-orange-600">{formData.grace_checkout_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
+                      </div>
+                      
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="15"
+                          value={formData.grace_checkout_minutes}
+                          onChange={e => setFormData(p => ({ ...p, grace_checkout_minutes: parseInt(e.target.value) }))}
+                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-orange-500"
+                          style={{
+                            background: `linear-gradient(to right, #f97316 0%, #f97316 ${(formData.grace_checkout_minutes / 15) * 100}%, #e2e8f0 ${(formData.grace_checkout_minutes / 15) * 100}%, #e2e8f0 100%)`
+                          }}
+                          data-testid="grace-checkout-slider"
+                        />
+                        <div className="flex justify-between mt-1 px-1">
+                          {[0, 5, 10, 15].map(v => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setFormData(p => ({ ...p, grace_checkout_minutes: v }))}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkout_minutes === v ? 'bg-orange-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-xs text-amber-600 mt-1">
-                    {lang === 'ar' 
-                      ? `مثال: إذا كان وقت الحضور 8:00 ومدة السماح ${formData.grace_period_minutes} دقيقة، يُقبل الحضور حتى 8:${formData.grace_period_minutes.toString().padStart(2, '0')} بدون تأخير`
-                      : `Example: If start time is 8:00 and grace is ${formData.grace_period_minutes} min, check-in until 8:${formData.grace_period_minutes.toString().padStart(2, '0')} won't count as late`}
-                  </p>
                 </div>
 
                 {/* Work Days */}
