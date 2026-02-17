@@ -111,7 +111,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
     }, {"_id": 0})
     
     if policy_override:
-        annual_policy_days = policy_override.get('value', annual_policy_days)
+        policy_days = policy_override.get('value', policy_days)
     
     # 3. حساب أيام السنة
     days_in_year = 366 if calendar.isleap(year) else 365
