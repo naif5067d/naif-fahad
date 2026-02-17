@@ -1527,6 +1527,14 @@ export default function ContractsManagementPage() {
                     />
                   </div>
                   <div>
+                    <Label>بدل طبيعة العمل</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.nature_of_work_allowance}
+                      onChange={e => setFormData(p => ({ ...p, nature_of_work_allowance: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
                     <Label>بدلات أخرى</Label>
                     <Input 
                       type="number" 
@@ -1537,10 +1545,43 @@ export default function ContractsManagementPage() {
                 </div>
                 <div className="mt-3 p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded text-sm">
                   <span className="font-semibold">إجمالي الراتب: </span>
-                  {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
+                  {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.nature_of_work_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
                 </div>
               </div>
             )}
+
+            {/* معلومات البنك - قابلة للتعديل دائماً */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <Building2 className="w-4 h-4" />
+                معلومات البنك (للمخالصة)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>اسم البنك *</Label>
+                  <Input 
+                    value={formData.bank_name}
+                    onChange={e => setFormData(p => ({ ...p, bank_name: e.target.value }))}
+                    placeholder="مثال: الراجحي، الأهلي"
+                    dir="rtl"
+                    data-testid="edit-bank-name-input"
+                  />
+                </div>
+                <div>
+                  <Label>رقم الآيبان (IBAN) *</Label>
+                  <Input 
+                    value={formData.bank_iban}
+                    onChange={e => setFormData(p => ({ ...p, bank_iban: e.target.value }))}
+                    placeholder="SA..."
+                    dir="ltr"
+                    data-testid="edit-bank-iban-input"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                ⚠️ معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت حتى للعقود النشطة
+              </p>
+            </div>
 
             {/* سياسات الإجازات */}
             <div className="p-4 bg-muted/40 rounded-lg">
