@@ -95,6 +95,39 @@ export default function STASMirrorPage() {
     }
   };
 
+  // إلغاء المعاملة - يتطلب تعليق
+  const handleCancelTransaction = async () => {
+    if (!selectedTx || cancelling) return;
+    
+    if (!cancelReason || cancelReason.trim().length < 5) {
+      toast.error(lang === 'ar' ? 'يجب كتابة سبب الإلغاء (5 أحرف على الأقل)' : 'Cancellation reason is required (at least 5 characters)');
+      return;
+    }
+    
+    setCancelling(true);
+    try {
+      await api.post(`/api/transactions/${selectedTx}/action`, {
+        action: 'reject',
+        note: cancelReason.trim()
+      });
+      toast.success(lang === 'ar' ? 'تم إلغاء المعاملة بنجاح' : 'Transaction cancelled successfully');
+      setCancelDialogOpen(false);
+      setCancelReason('');
+      setMirror(null);
+      setSelectedTx(null);
+      fetchPending();
+    } catch (err) {
+      const errorDetail = err.response?.data?.detail;
+      if (typeof errorDetail === 'object') {
+        toast.error(lang === 'ar' ? errorDetail.message_ar : errorDetail.message_en);
+      } else {
+        toast.error(errorDetail || (lang === 'ar' ? 'فشل إلغاء المعاملة' : 'Failed to cancel transaction'));
+      }
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const previewPdf = async () => {
     if (!selectedTx) return;
     try {
