@@ -732,7 +732,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     
     footer_text = f"DAR AL CODE HR OS | {integrity_id} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
     elements.append(Spacer(1, 1*mm))
-    elements.append(make_para(footer_text, styles['small']))
+    elements.append(make_ltr_para(footer_text, styles['small']))
     
     # Build PDF
     doc.build(elements)
