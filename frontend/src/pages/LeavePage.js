@@ -44,11 +44,36 @@ export default function LeavePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.start_date || !form.end_date) return toast.error(lang === 'ar' ? 'أدخل التواريخ' : 'Enter dates');
+    
+    // التحقق من رفع ملف للإجازة المرضية
+    if (form.leave_type === 'sick' && !form.medical_file) {
+      return toast.error(lang === 'ar' ? 'الإجازة المرضية تتطلب رفع ملف طبي PDF' : 'Sick leave requires medical PDF file');
+    }
+    
     setSubmitting(true);
     try {
-      const res = await api.post('/api/leave/request', form);
+      // إذا كان هناك ملف، نرفعه أولاً
+      let medical_file_url = null;
+      if (form.medical_file) {
+        const formData = new FormData();
+        formData.append('file', form.medical_file);
+        const uploadRes = await api.post('/api/upload/medical', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        medical_file_url = uploadRes.data.url;
+      }
+      
+      const requestData = {
+        leave_type: form.leave_type,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        reason: form.reason,
+        medical_file_url
+      };
+      
+      const res = await api.post('/api/leave/request', requestData);
       toast.success(`${lang === 'ar' ? 'تم إنشاء الطلب' : 'Request created'}: ${res.data.ref_no}`);
-      setForm({ leave_type: 'annual', start_date: '', end_date: '', reason: '' });
+      setForm({ leave_type: 'annual', start_date: '', end_date: '', reason: '', medical_file: null });
       api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
     } catch (err) { toast.error(err.response?.data?.detail || 'Error'); }
     finally { setSubmitting(false); }
