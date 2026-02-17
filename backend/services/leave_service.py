@@ -93,11 +93,10 @@ LEAVE_TYPES = {
     },
 }
 
-# قواعد الإجازة السنوية 21/30
+# قواعد الإجازة السنوية 21/30 - من HR Policy
 ANNUAL_LEAVE_RULES = {
-    "under_5_years": 21,  # أقل من 5 سنوات
-    "5_years_plus": 30,   # 5 سنوات فأكثر
-    "threshold_years": 5  # الحد الفاصل
+    "default": DEFAULT_ANNUAL_ENTITLEMENT,  # 21 يوم
+    "extended": EXTENDED_ANNUAL_ENTITLEMENT,  # 30 يوم
 }
 
 # شرائح الإجازة المرضية 30/60/30
