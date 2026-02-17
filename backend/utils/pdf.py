@@ -75,29 +75,28 @@ def reshape_arabic_text(text):
     if not text:
         return ''
     try:
-        reshaped = arabic_reshaper.reshape(str(text))
+        text_str = str(text)
+        reshaped = arabic_reshaper.reshape(text_str)
         return get_display(reshaped)
-    except:
+    except Exception:
         return str(text)
 
 
-def format_text_bilingual(text, target_lang='ar'):
+def format_text_for_pdf(text, target_lang='ar'):
     """
-    Format text based on content detection, NOT target language.
-    - Arabic text: always reshape for proper display
-    - English text: return as-is
-    - Mixed: process Arabic parts only
+    تنسيق النص للـ PDF مع دعم كامل للعربية
+    - يعالج النص العربي بشكل صحيح
+    - يحافظ على الأرقام
     """
     if not text:
         return '-'
     
     text = str(text)
     
-    # If text has Arabic characters, reshape it
+    # إذا كان النص يحتوي على عربي
     if has_arabic(text):
         return reshape_arabic_text(text)
     
-    # Pure English/numbers - return as-is
     return text
 
 
