@@ -49,11 +49,17 @@ async def upload_medical_file(file: UploadFile = File(...), user=Depends(get_cur
 
 
 @router.get("/files/{filename}")
-async def get_uploaded_file(filename: str, user=Depends(get_current_user)):
+async def get_uploaded_file(filename: str):
     """
     Retrieve an uploaded file.
+    ملاحظة: هذا الـ endpoint عام لأن الملفات تُفتح في نافذة جديدة
+    الأمان يأتي من اسم الملف العشوائي (UUID)
     """
     from fastapi.responses import FileResponse
+    
+    # تأمين: منع path traversal attacks
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="اسم ملف غير صالح")
     
     file_path = os.path.join(UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
