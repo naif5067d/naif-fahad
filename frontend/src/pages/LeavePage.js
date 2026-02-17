@@ -104,7 +104,7 @@ export default function LeavePage() {
       return toast.error(lang === 'ar' ? 'الإجازة المرضية تتطلب رفع ملف طبي PDF' : 'Sick leave requires medical PDF file');
     }
     
-    // للإجازة المرضية: جلب معلومات الشريحة وعرض التحذير
+    // للإجازة المرضية: جلب معلومات الشريحة وعرض التحذير إذا تجاوز 30 يوم
     if (form.leave_type === 'sick' && !pendingSubmit) {
       try {
         const previewRes = await api.post('/api/leave/sick-preview', {
@@ -112,10 +112,22 @@ export default function LeavePage() {
           end_date: form.end_date
         });
         
-        if (previewRes.data.warning) {
-          setSickLeaveWarning(previewRes.data);
+        // إذا كان الاستهلاك الحالي + الأيام الجديدة > 30 يوم، اعرض التحذير
+        const currentUsed = previewRes.data.current_used || 0;
+        const requestedDays = previewRes.data.requested_days || 0;
+        const totalAfterRequest = currentUsed + requestedDays;
+        
+        // تحقق إذا هناك خصم (دخول شريحة 50% أو 0%)
+        const hasDeduction = previewRes.data.tier_distribution?.some(tier => tier.salary_percent < 100);
+        
+        if (hasDeduction || totalAfterRequest > 30) {
+          setSickLeaveWarning({
+            ...previewRes.data,
+            total_after_request: totalAfterRequest,
+            has_deduction: hasDeduction
+          });
           setShowSickWarningDialog(true);
-          return; // توقف وانتظر تأكيد المستخدم
+          return; // توقف وانتظر تأكيد/توقيع المستخدم
         }
       } catch (err) {
         // تابع حتى لو فشل التحقق
@@ -146,7 +158,9 @@ export default function LeavePage() {
         start_date: form.start_date,
         end_date: form.end_date,
         reason: form.reason,
-        medical_file_url
+        medical_file_url,
+        // إضافة موافقة الموظف على الخصم إذا كانت مطلوبة
+        employee_deduction_consent: sickLeaveWarning?.has_deduction ? true : undefined
       };
       
       const res = await api.post('/api/leave/request', requestData);
