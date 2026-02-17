@@ -60,6 +60,14 @@ export default function SystemMaintenancePage() {
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
+  
+  // Announcements
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementForm, setAnnouncementForm] = useState({
+    message_ar: '',
+    message_en: '',
+    is_pinned: false
+  });
 
   useEffect(() => {
     loadData();
@@ -68,18 +76,48 @@ export default function SystemMaintenancePage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [storageRes, archivesRes, logsRes] = await Promise.all([
+      const [storageRes, archivesRes, logsRes, announcementsRes] = await Promise.all([
         api.get('/api/maintenance/storage-info'),
         api.get('/api/maintenance/archives'),
-        api.get('/api/maintenance/logs?limit=20')
+        api.get('/api/maintenance/logs?limit=20'),
+        api.get('/api/announcements/all').catch(() => ({ data: [] }))
       ]);
       setStorageInfo(storageRes.data);
       setArchives(archivesRes.data.archives || []);
       setMaintenanceLogs(logsRes.data.logs || []);
+      setAnnouncements(announcementsRes.data || []);
     } catch (error) {
       toast.error('خطأ في تحميل البيانات');
     }
     setLoading(false);
+  };
+
+  const handleCreateAnnouncement = async () => {
+    if (!announcementForm.message_ar.trim()) {
+      toast.error('يرجى كتابة الرسالة بالعربي');
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      await api.post('/api/announcements', announcementForm);
+      toast.success('تم إرسال الإشعار بنجاح');
+      setAnnouncementForm({ message_ar: '', message_en: '', is_pinned: false });
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'خطأ في الإرسال');
+    }
+    setActionLoading(false);
+  };
+
+  const handleDeleteAnnouncement = async (id) => {
+    try {
+      await api.delete(`/api/announcements/${id}`);
+      toast.success('تم حذف الإشعار');
+      loadData();
+    } catch (error) {
+      toast.error('خطأ في الحذف');
+    }
   };
 
   const handlePurgeAll = async () => {
