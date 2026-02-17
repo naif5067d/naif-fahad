@@ -5,13 +5,14 @@ Check-in allowed only if:
 - Employee assigned to location (work_location matches assignment)
 - Within working hours (based on employee's work calendar)
 - Active contract exists
+- NOT on approved leave or permission for the day
 
 No map UI required - logic only.
 """
 
 from database import db
-from datetime import datetime, timezone, time as dt_time
-from typing import Optional
+from datetime import datetime, timezone, time as dt_time, timedelta
+from typing import Optional, Tuple
 
 
 # Default working hours (can be overridden by employee's calendar)
