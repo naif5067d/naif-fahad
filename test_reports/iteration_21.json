@@ -1,0 +1,123 @@
+{
+  "summary": "Iteration 21: Tested Contracts V2 updates - all features verified working",
+  
+  "features_tested": {
+    "1_sidebar_navigation": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Old 'contracts' (العقود) nav item REMOVED from sidebar",
+        "Only 'contractsManagement' (إدارة العقود) exists in NAV_ITEMS",
+        "Verified via Playwright - nav-contracts NOT present, nav-contractsManagement IS present"
+      ],
+      "code_location": "/app/frontend/src/components/layout/AppLayout.js NAV_ITEMS"
+    },
+    "2_new_employee_contract_creation": {
+      "status": "VERIFIED",
+      "test_results": [
+        "POST /api/contracts-v2 with is_new_employee=true creates new employee",
+        "Radio buttons for 'موظف جديد' / 'موظف قديم' visible in UI",
+        "New employee fields: Arabic name*, English name, national_id, email, phone, employee_code",
+        "Backend creates employee record and contract in single API call"
+      ],
+      "code_location": "/app/backend/routes/contracts_v2.py lines 223-365"
+    },
+    "3_annual_leave_21_30_only": {
+      "status": "VERIFIED",
+      "test_results": [
+        "UI dropdown shows only 21 days (أقل من 5 سنوات) and 30 days (5 سنوات فأكثر)",
+        "Backend accepts 21 or 30 for annual_leave_days field",
+        "Both options tested and working via API"
+      ],
+      "code_location": "/app/frontend/src/pages/ContractsManagementPage.js lines 703-717"
+    },
+    "4_monthly_permission_hours_0_3": {
+      "status": "VERIFIED",
+      "test_results": [
+        "UI dropdown shows 0, 1, 2 (افتراضي), 3 (الحد الأقصى) hours",
+        "Backend caps monthly_permission_hours at 3 even if >3 sent",
+        "Default is 2 hours as shown in UI",
+        "Note: 'الحد الأقصى 3 ساعات شهرياً' displayed below dropdown"
+      ],
+      "code_location": [
+        "/app/frontend/src/pages/ContractsManagementPage.js lines 719-736",
+        "/app/backend/routes/contracts_v2.py line 330 (min cap)"
+      ]
+    },
+    "5_migrated_contract_with_opening_balances": {
+      "status": "VERIFIED",
+      "test_results": [
+        "Toggle switch 'عقد مُهاجر (موظف قديم)' visible in UI",
+        "When enabled, shows opening balance fields with decimal support",
+        "Backend accepts fractional values (e.g., annual: 15.5, permission_hours: 1.5)",
+        "Tested: Created contract with fractional balances - worked correctly"
+      ],
+      "code_location": "/app/frontend/src/pages/ContractsManagementPage.js lines 739-794"
+    },
+    "6_medical_pdf_upload": {
+      "status": "VERIFIED",
+      "test_results": [
+        "POST /api/upload/medical accepts PDF files only",
+        "Non-PDF files return 400: 'يجب أن يكون الملف بصيغة PDF'",
+        "Returns URL for storage in transactions",
+        "Max file size 5MB enforced"
+      ],
+      "code_location": "/app/backend/routes/upload.py lines 18-48"
+    },
+    "7_sick_leave_requires_pdf": {
+      "status": "VERIFIED",
+      "test_results": [
+        "LeavePage.js LEAVE_TYPES.sick has requiresFile: true",
+        "UI shows file input when sick leave selected",
+        "Validation prevents submission without PDF: 'الإجازة المرضية تتطلب رفع ملف طبي PDF'",
+        "File uploaded to /api/upload/medical then URL stored in transaction"
+      ],
+      "code_location": "/app/frontend/src/pages/LeavePage.js lines 32, 48-51, 154-171"
+    }
+  },
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "test_report_links": [
+    "/app/backend/tests/test_iteration21_contracts_v2.py",
+    "/app/test_reports/pytest/iteration21_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "Backend correctly creates employee when is_new_employee=true",
+    "Permission hours properly capped at 3 in backend (line 330)",
+    "leave_opening_balance supports float values for fractional balances",
+    "Medical PDF upload validates file type and size correctly"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_iteration21_contracts_v2.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  
+  "test_credentials": {
+    "stas_user_id": "fedffe24-ec69-5c65-809d-5d24f8a16b9d",
+    "method": "POST /api/auth/switch/{user_id}"
+  },
+  
+  "seed_data_creation": "None - test contracts created and cleaned up during tests",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "Iteration 21 verified all Contracts V2 updates:\n\n1. SIDEBAR: Old 'contracts' nav removed, only 'contractsManagement' exists (إدارة العقود)\n\n2. NEW EMPLOYEE: POST /api/contracts-v2 with is_new_employee=true creates employee AND contract. UI shows radio toggle and all new employee fields.\n\n3. ANNUAL LEAVE: Only 21 or 30 days options in dropdown. 21=أقل من 5 سنوات, 30=5 سنوات فأكثر.\n\n4. PERMISSION HOURS: 0-3 hours dropdown, default 2, max capped at 3 in backend.\n\n5. MIGRATED CONTRACT: Toggle shows opening balance fields with decimal support for existing employees moving to new system.\n\n6. MEDICAL UPLOAD: POST /api/upload/medical only accepts PDF files, returns URL.\n\n7. SICK LEAVE: LeavePage requires PDF file upload for sick leave type."
+}
