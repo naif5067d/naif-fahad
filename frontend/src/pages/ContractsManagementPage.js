@@ -309,10 +309,14 @@ export default function ContractsManagementPage() {
 
   const resetForm = () => {
     setFormData({
+      is_new_employee: true,
       employee_id: '',
       employee_code: '',
       employee_name: '',
       employee_name_ar: '',
+      email: '',
+      phone: '',
+      national_id: '',
       contract_category: 'employment',
       employment_type: 'unlimited',
       job_title: '',
@@ -326,20 +330,30 @@ export default function ContractsManagementPage() {
       basic_salary: 0,
       housing_allowance: 0,
       transport_allowance: 0,
+      nature_of_work_allowance: 0,
       other_allowances: 0,
       wage_definition: 'basic_only',
+      annual_leave_days: 21,
+      annual_policy_days: 21,
+      monthly_permission_hours: 2,
       is_migrated: false,
-      leave_opening_balance: { annual: 0, sick: 0, emergency: 0 },
+      leave_opening_balance: { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
       notes: '',
+      bank_name: '',
+      bank_iban: '',
     });
   };
 
   const openEditDialog = (contract) => {
     setFormData({
+      is_new_employee: false,
       employee_id: contract.employee_id,
       employee_code: contract.employee_code,
       employee_name: contract.employee_name,
       employee_name_ar: contract.employee_name_ar,
+      email: '',
+      phone: '',
+      national_id: '',
       contract_category: contract.contract_category,
       employment_type: contract.employment_type,
       job_title: contract.job_title,
@@ -353,11 +367,17 @@ export default function ContractsManagementPage() {
       basic_salary: contract.basic_salary,
       housing_allowance: contract.housing_allowance,
       transport_allowance: contract.transport_allowance,
+      nature_of_work_allowance: contract.nature_of_work_allowance || 0,
       other_allowances: contract.other_allowances,
       wage_definition: contract.wage_definition,
+      annual_leave_days: contract.annual_leave_days || 21,
+      annual_policy_days: contract.annual_policy_days || 21,
+      monthly_permission_hours: contract.monthly_permission_hours || 2,
       is_migrated: contract.is_migrated,
-      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0 },
+      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
       notes: contract.notes || '',
+      bank_name: contract.bank_name || '',
+      bank_iban: contract.bank_iban || '',
     });
     setEditContract(contract);
   };
