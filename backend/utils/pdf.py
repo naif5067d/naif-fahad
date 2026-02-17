@@ -703,11 +703,13 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             stamp_elements.append([barcode_img])
             stamp_heights.append(20*mm)
         
-        ref_style = ParagraphStyle('ref_bold', parent=base_ar_style, fontName=bold_font, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
-        stamp_elements.append([make_para(f"Ref No: {ref_no}", ref_style)])
+        # Use LTR for ref number
+        ref_style = ParagraphStyle('ref_bold', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER, textColor=NAVY)
+        stamp_elements.append([Paragraph(f"Ref No: {ref_no}", ref_style)])
         stamp_heights.append(6*mm)
         
-        stamp_elements.append([make_para(stamp_date, styles['small'])])
+        # Use LTR for date
+        stamp_elements.append([make_ltr_para(stamp_date, styles['small'])])
         stamp_heights.append(4*mm)
         
         stamp_table = Table(stamp_elements, colWidths=[65*mm], rowHeights=stamp_heights)
