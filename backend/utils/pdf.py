@@ -482,6 +482,9 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     tx_data = transaction.get('data', {})
     skip_fields = {'employee_name_ar', 'balance_before', 'balance_after', 'adjusted_end_date', 'sick_tier_info', 'leave_type_ar', 'medical_file_url'}
     
+    # Fields that should use LTR (dates, numbers)
+    ltr_fields = {'start_date', 'end_date', 'date', 'working_days', 'amount', 'estimatedvalue', 'estimated_value'}
+    
     details_rows = []
     for key, value in tx_data.items():
         if key in skip_fields:
@@ -495,19 +498,33 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         
         if value is None:
             formatted_val = '-'
+            use_ltr = True
         elif key == 'leave_type':
             if lang == 'ar' and 'leave_type_ar' in tx_data:
                 formatted_val = tx_data['leave_type_ar']
             else:
                 formatted_val = labels.get(str(value), str(value))
+            use_ltr = False
         elif key in ('amount', 'estimatedvalue', 'estimated_value'):
             formatted_val = f"{value} SAR"
+            use_ltr = True
         elif key in ('start_date', 'end_date', 'date'):
             formatted_val = format_date_only(str(value))
+            use_ltr = True
+        elif key == 'working_days':
+            formatted_val = str(value)
+            use_ltr = True
         else:
             formatted_val = str(value)
+            use_ltr = not has_arabic(formatted_val)
         
-        details_rows.append([make_para(field_label, styles['cell_label']), make_para(formatted_val, styles['cell'])])
+        # Use appropriate paragraph type
+        if use_ltr:
+            val_para = make_ltr_para(formatted_val, styles['cell'])
+        else:
+            val_para = make_para(formatted_val, styles['cell'])
+        
+        details_rows.append([make_para(field_label, styles['cell_label']), val_para])
     
     if details_rows:
         if len(details_rows) > 3:
