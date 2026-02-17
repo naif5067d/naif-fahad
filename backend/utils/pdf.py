@@ -689,6 +689,85 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ]))
         elements.append(approval_table)
     
+    # ============ EMPLOYEE DEDUCTION CONSENT (موافقة الموظف على الخصم) ============
+    # يظهر فقط للإجازة المرضية إذا تجاوزت 30 يوم
+    tx_data = transaction.get('data', {})
+    if transaction.get('type') == 'leave_request' and tx_data.get('leave_type') == 'sick':
+        sick_tier_info = tx_data.get('sick_tier_info', {})
+        tier_distribution = sick_tier_info.get('distribution', []) if isinstance(sick_tier_info, dict) else []
+        
+        # تحقق إذا هناك خصم (شريحة 50% أو 0%)
+        has_deduction = False
+        deduction_details = []
+        for tier in tier_distribution:
+            if isinstance(tier, dict) and tier.get('salary_percent', 100) < 100:
+                has_deduction = True
+                days = tier.get('days', 0)
+                percent = tier.get('salary_percent', 0)
+                deduction_percent = 100 - percent
+                deduction_details.append(f"{days} {'يوم' if lang == 'ar' else 'days'} @ {deduction_percent}% {'خصم' if lang == 'ar' else 'deduction'}")
+        
+        if has_deduction:
+            elements.append(Spacer(1, 5*mm))
+            
+            # عنوان القسم
+            consent_title = "موافقة الموظف على الخصم - المادة 117" if lang == 'ar' else "Employee Deduction Consent - Article 117"
+            elements.append(Paragraph(format_text_bilingual(consent_title, lang), styles['section']))
+            
+            # نص الموافقة
+            emp_first_name = ""
+            if employee:
+                full_name = employee.get('full_name_ar' if lang == 'ar' else 'full_name', '')
+                emp_first_name = full_name.split()[0] if full_name else ""
+            
+            deduction_text_ar = f"""
+            عزيزي {emp_first_name}،
+            
+            بناءً على المادة 117 من نظام العمل السعودي، سيتم تطبيق الخصم التالي:
+            • {' | '.join(deduction_details)}
+            
+            بتوقيعي أدناه، أوافق على تطبيق الخصم المذكور أعلاه.
+            """
+            
+            deduction_text_en = f"""
+            Dear {emp_first_name},
+            
+            According to Article 117 of Saudi Labor Law, the following deduction will apply:
+            • {' | '.join(deduction_details)}
+            
+            By signing below, I agree to the above deduction.
+            """
+            
+            consent_text = deduction_text_ar if lang == 'ar' else deduction_text_en
+            consent_style = ParagraphStyle('consent', fontName=main_font, fontSize=8, leading=12, alignment=TA_RIGHT if lang == 'ar' else TA_LEFT)
+            elements.append(Paragraph(consent_text, consent_style))
+            
+            # QR أزرق لتوقيع الموظف
+            emp_id = employee.get('id', 'unknown')[:8] if employee else 'unknown'
+            consent_code = f"CONSENT-{emp_id}-{ref_no[-6:]}"
+            consent_qr = create_qr_image(consent_code, size=15)
+            
+            if consent_qr:
+                # جدول التوقيع مع خلفية زرقاء فاتحة
+                sig_label = "توقيع الموظف" if lang == 'ar' else "Employee Signature"
+                consent_table_data = [
+                    [Paragraph(format_text_bilingual(sig_label, lang), styles['small_bold'])],
+                    [consent_qr],
+                    [Paragraph(consent_code, ParagraphStyle('code', fontSize=6, alignment=TA_CENTER))]
+                ]
+                consent_table = Table(consent_table_data, colWidths=[45*mm], rowHeights=[5*mm, 18*mm, 4*mm])
+                consent_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#2196F3')),  # أزرق
+                    ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E3F2FD')),  # أزرق فاتح
+                ]))
+                
+                # وضع جدول التوقيع في الوسط
+                outer_consent = Table([[consent_table]], colWidths=[CONTENT_WIDTH])
+                outer_consent.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+                elements.append(outer_consent)
+    
     # ============ EXECUTION STAMP (STAS BARCODE with Ref No) ============
     if transaction.get('status') == 'executed':
         elements.append(Spacer(1, 4*mm))
