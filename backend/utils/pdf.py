@@ -105,6 +105,9 @@ def format_text_bilingual(text, target_lang='ar'):
     return format_text_for_pdf(text, target_lang)
     """Format timestamp to Saudi Arabia time (UTC+3)"""
     if not ts:
+
+
+def format_saudi_time(ts):
         return '-'
     try:
         if isinstance(ts, str):
