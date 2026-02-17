@@ -699,22 +699,29 @@ export default function ContractsManagementPage() {
                   />
                 </div>
                 
-                {/* الإجازة السنوية - 21 أو 30 يوم فقط */}
+                {/* الإجازة السنوية - سياسة 21 أو 30 يوم */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>الإجازة السنوية *</Label>
+                    <Label>سياسة الإجازة السنوية *</Label>
                     <Select 
-                      value={String(formData.annual_leave_days)} 
-                      onValueChange={v => setFormData(p => ({ ...p, annual_leave_days: parseInt(v) }))}
+                      value={String(formData.annual_policy_days || formData.annual_leave_days || 21)} 
+                      onValueChange={v => setFormData(p => ({ 
+                        ...p, 
+                        annual_policy_days: parseInt(v),
+                        annual_leave_days: parseInt(v)  // للتوافق مع الكود القديم
+                      }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="annual-policy-select">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="21">21 يوم (أقل من 5 سنوات)</SelectItem>
-                        <SelectItem value="30">30 يوم (5 سنوات فأكثر)</SelectItem>
+                        <SelectItem value="21">21 يوم (الافتراضي)</SelectItem>
+                        <SelectItem value="30">30 يوم (بقرار إداري)</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      يُحسب الرصيد بنظام Pro-Rata (تدريجي يومي)
+                    </p>
                   </div>
                   <div>
                     <Label>رصيد الاستئذان الشهري (ساعات)</Label>
