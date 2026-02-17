@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
@@ -25,7 +29,11 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
-  FileJson
+  FileJson,
+  Bell,
+  Pin,
+  Send,
+  Megaphone
 } from 'lucide-react';
 
 export default function SystemMaintenancePage() {
