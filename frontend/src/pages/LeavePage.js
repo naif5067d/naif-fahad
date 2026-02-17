@@ -129,15 +129,12 @@ export default function LeavePage() {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>{t('leave.leaveType')}</Label>
-              <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v }))}>
+              <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v, medical_file: null }))}>
                 <SelectTrigger data-testid="leave-type-select"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="annual">الإجازة السنوية</SelectItem>
-                  <SelectItem value="sick">الإجازة المرضية</SelectItem>
-                  <SelectItem value="marriage">إجازة الزواج</SelectItem>
-                  <SelectItem value="bereavement">إجازة الوفاة</SelectItem>
-                  <SelectItem value="exam">إجازة الاختبار</SelectItem>
-                  <SelectItem value="unpaid">إجازة بدون راتب</SelectItem>
+                  {Object.entries(LEAVE_TYPES).map(([key, val]) => (
+                    <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -153,6 +150,26 @@ export default function LeavePage() {
               <Label>{t('leave.endDate')}</Label>
               <Input data-testid="leave-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
             </div>
+            
+            {/* رفع ملف للإجازة المرضية */}
+            {form.leave_type === 'sick' && (
+              <div className="sm:col-span-2">
+                <Label className="text-red-600">
+                  {lang === 'ar' ? '* ملف التقرير الطبي (PDF)' : '* Medical Report (PDF)'}
+                </Label>
+                <Input 
+                  type="file" 
+                  accept=".pdf"
+                  onChange={e => setForm(f => ({ ...f, medical_file: e.target.files[0] }))}
+                  className="mt-1"
+                  data-testid="medical-file-input"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {lang === 'ar' ? 'يجب رفع ملف PDF للتقرير الطبي للتحقق' : 'PDF medical report required for verification'}
+                </p>
+              </div>
+            )}
+            
             <div className="sm:col-span-2">
               <Button type="submit" disabled={submitting} data-testid="submit-leave" className="w-full sm:w-auto">
                 {submitting ? <Loader2 size={14} className="me-1 animate-spin" /> : null}
