@@ -62,12 +62,16 @@ export default function AppLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [alerts, setAlerts] = useState({ alerts: [], count: 0 });
   const switcherRef = useRef(null);
+  const alertsRef = useRef(null);
 
   const role = user?.role || 'employee';
   const items = NAV_ITEMS[role] || NAV_ITEMS.employee;
   const mobileItems = items.filter(item => MOBILE_NAV_ITEMS.includes(item) || item === 'stasMirror');
   const colors = ROLE_COLORS[role] || ROLE_COLORS.employee;
+  const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
 
   const displayName = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name);
   const roleLabel = role === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[role] : ROLE_LABELS[role]);
@@ -76,10 +80,22 @@ export default function AppLayout({ children }) {
     if (allUsers.length === 0) fetchAllUsers();
   }, [allUsers.length, fetchAllUsers]);
 
+  // Fetch alerts for admin users
+  useEffect(() => {
+    if (isAdmin) {
+      api.get('/api/notifications/header-alerts')
+        .then(r => setAlerts(r.data))
+        .catch(() => {});
+    }
+  }, [isAdmin]);
+
   useEffect(() => {
     const handler = (e) => {
       if (switcherRef.current && !switcherRef.current.contains(e.target)) {
         setSwitcherOpen(false);
+      }
+      if (alertsRef.current && !alertsRef.current.contains(e.target)) {
+        setAlertsOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
