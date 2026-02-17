@@ -13,21 +13,37 @@ from utils.leave_rules import (
 )
 from routes.transactions import get_next_ref_no
 from datetime import datetime, timezone
+from typing import Optional
 import uuid
 
 router = APIRouter(prefix="/api/leave", tags=["leave"])
 
 
 class LeaveRequest(BaseModel):
-    leave_type: str  # annual, sick, emergency
+    leave_type: str  # annual, sick, emergency, marriage, bereavement, exam, unpaid
     start_date: str  # YYYY-MM-DD
     end_date: str    # YYYY-MM-DD
     reason: str
+    medical_file_url: Optional[str] = None  # مطلوب للإجازة المرضية
 
 
 @router.post("/request")
 async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)):
     """
+    Create a leave request with full pre-validation.
+    Validates:
+    - Employee is active with contract
+    - Sufficient leave balance
+    - No overlapping dates
+    - Holiday adjustments
+    - Medical file for sick leave
+    """
+    # التحقق من رفع ملف للإجازة المرضية
+    if req.leave_type == 'sick' and not req.medical_file_url:
+        raise HTTPException(
+            status_code=400, 
+            detail="الإجازة المرضية تتطلب رفع ملف تقرير طبي PDF"
+        )
     Create a leave request with full pre-validation.
     Validates:
     - Employee is active with contract
