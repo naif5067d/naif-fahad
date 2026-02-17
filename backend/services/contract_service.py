@@ -215,8 +215,9 @@ async def activate_contract(
         if username_exists:
             username = f"{username}_{str(uuid.uuid4())[:4]}"
         
+        new_user_id = str(uuid.uuid4())
         new_user = {
-            "id": str(uuid.uuid4()),
+            "id": new_user_id,
             "username": username,
             "password_hash": hash_password("DarAlCode2026!"),  # Default password
             "full_name": contract.get("employee_name", ""),
@@ -229,6 +230,12 @@ async def activate_contract(
             "created_by_contract": contract_id
         }
         await db.users.insert_one(new_user)
+        
+        # تحديث user_id في جدول الموظفين لربط الموظف بالمستخدم
+        await db.employees.update_one(
+            {"id": employee_id},
+            {"$set": {"user_id": new_user_id}}
+        )
     else:
         # Activate existing user
         await db.users.update_one(
