@@ -65,9 +65,9 @@ class TestHealthEndpoint:
 class TestAnnouncementsAPI:
     """Test announcements CRUD operations"""
     
-    def test_get_announcements_structure(self, sultan_session):
+    def test_get_announcements_structure(self, stas_session):
         """GET /api/announcements should return pinned and regular arrays"""
-        response = sultan_session.get(f"{BASE_URL}/api/announcements")
+        response = stas_session.get(f"{BASE_URL}/api/announcements")
         assert response.status_code == 200
         data = response.json()
         
@@ -214,9 +214,9 @@ class TestProtectedCollections:
 class TestWorkLocationsAPI:
     """Test work locations endpoints"""
     
-    def test_get_work_locations(self, sultan_session):
+    def test_get_work_locations(self, stas_session):
         """GET /api/work-locations should return list"""
-        response = sultan_session.get(f"{BASE_URL}/api/work-locations")
+        response = stas_session.get(f"{BASE_URL}/api/work-locations")
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list), "Should return list of work locations"
