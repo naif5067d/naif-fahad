@@ -160,7 +160,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
     return {
         "error": False,
         "year": year,
-        "annual_policy_days": annual_policy_days,
+        "annual_policy_days": policy_days,
         "days_in_year": days_in_year,
         "daily_accrual": daily_accrual,
         "contract_start": contract_start,
@@ -169,26 +169,17 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
         "earned_to_date": earned_to_date,
         "used_executed": used_executed,
         "available_balance": max(0, available_balance),
-        "formula": f"{annual_policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
+        "formula": f"{policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
         "message_ar": f"مكتسب: {earned_to_date:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم"
     }
 
 
-async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = None, end_date: str = None, annual_policy_days: int = None, year: int = None) -> dict:
+async def _calculate_settlement_leave(employee_id: str, start_date: str, end_date: str, annual_policy_days: int = None) -> dict:
     """
-    حساب الاستحقاق السنوي التدريجي - نسخة مرنة للمخالصة
+    حساب رصيد الإجازات للمخالصة (Pro-Rata على كامل مدة الخدمة)
     
-    يمكن تمرير:
-    - employee_id فقط: يستخدم تواريخ العقد
-    - employee_id + start_date + end_date: لحساب المخالصة
-    - employee_id + annual_policy_days: لتجاوز سياسة العقد
-    
-    المعادلة للمخالصة:
-    رصيد الإجازة = (policy_days / 365) × أيام الخدمة - المستخدم
+    المعادلة: (policy_days / 365) × أيام الخدمة - المستخدم
     """
-    if year is None:
-        year = datetime.now(timezone.utc).year
-    
     # 1. جلب العقد
     contract = await db.contracts_v2.find_one({
         "employee_id": employee_id,
@@ -210,11 +201,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
             "available_balance": 0
         }
     
-    # 2. تحديد التواريخ
-    if start_date is None:
-        start_date = contract.get('start_date', '')
-    if end_date is None:
-        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # 2. تحديد سياسة الإجازة
     if annual_policy_days is None:
         annual_policy_days = contract.get('annual_policy_days', contract.get('annual_leave_days', DEFAULT_ANNUAL_ENTITLEMENT))
     
@@ -247,7 +234,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
         "start_date": start_date,
         "end_date": end_date,
         "service_days": service_days,
-        "earned_total": earned_total,
+        "earned_to_date": earned_total,
         "used_total": used_total,
         "available_balance": max(0, available_balance),
         "formula": f"({annual_policy_days} / 365) × {service_days} - {used_total} = {available_balance}",
