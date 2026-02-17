@@ -202,6 +202,45 @@ async def remove_supervisor(employee_id: str, user=Depends(require_roles('stas',
     return {"message": "تم إزالة المشرف بنجاح"}
 
 
+# ==================== DELETE EMPLOYEE ====================
+
+@router.delete("/{employee_id}")
+async def delete_employee(employee_id: str, user=Depends(require_roles('stas'))):
+    """
+    حذف موظف - STAS فقط
+    الشروط:
+    1. يجب عدم وجود عقد نشط
+    2. يجب عدم وجود عقد (يعني حذف الموظف الذي أُضيف بالخطأ)
+    أو إنهاء العقد أولاً ثم يمكن الحذف
+    """
+    emp = await db.employees.find_one({"id": employee_id})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من العقود
+    active_contract = await db.contracts_v2.find_one({
+        "employee_id": employee_id,
+        "status": "active"
+    })
+    
+    if active_contract:
+        raise HTTPException(
+            status_code=400, 
+            detail="لا يمكن حذف موظف لديه عقد نشط. يجب إنهاء العقد أولاً من صفحة إدارة العقود"
+        )
+    
+    # حذف المستخدم إن وجد
+    await db.users.delete_many({"employee_id": employee_id})
+    
+    # حذف الموظف
+    await db.employees.delete_one({"id": employee_id})
+    
+    return {
+        "message": "تم حذف الموظف بنجاح",
+        "employee_id": employee_id
+    }
+
+
 # ==================== EMPLOYEE COMPREHENSIVE SUMMARY ====================
 
 @router.get("/{employee_id}/summary")
