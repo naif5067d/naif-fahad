@@ -440,10 +440,10 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     status_label = labels.get(status_raw, status_raw.replace('_', ' ').title())
     
     info_data = [
-        [make_para(labels['ref_no'], styles['cell_label']), make_para(ref_no, styles['cell']), 
+        [make_para(labels['ref_no'], styles['cell_label']), make_ltr_para(ref_no, styles['cell']), 
          make_para(labels['status'], styles['cell_label']), make_para(status_label, styles['cell'])],
-        [make_para(labels['date'], styles['cell_label']), make_para(format_saudi_time(transaction.get('created_at')), styles['cell']), 
-         make_para(labels['integrity_id'], styles['cell_label']), make_para(integrity_id, styles['cell'])],
+        [make_para(labels['date'], styles['cell_label']), make_ltr_para(format_saudi_time(transaction.get('created_at')), styles['cell']), 
+         make_para(labels['integrity_id'], styles['cell_label']), make_ltr_para(integrity_id, styles['cell'])],
     ]
     
     info_table = Table(info_data, colWidths=[28*mm, 60*mm, 28*mm, 54*mm], rowHeights=[8*mm, 8*mm])
