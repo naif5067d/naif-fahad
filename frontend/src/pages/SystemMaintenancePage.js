@@ -724,7 +724,10 @@ export default function SystemMaintenancePage() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
 
+        {/* ARCHIVES TAB */}
+        <TabsContent value="archives" className="space-y-6">
       {/* Archives List */}
       <Card data-testid="archives-list-card">
         <CardHeader className="pb-3">
