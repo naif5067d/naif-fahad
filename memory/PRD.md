@@ -562,7 +562,41 @@ Contract activation flow:
 
 ---
 
-Version: 22.1 (2026-02-17)
+Version: 23.0 (2026-02-17)
+
+---
+
+### Phase 23.0: HR Policy Engine - Pro-Rata & Blocking ✅ (2026-02-17)
+
+**تحديث سياسة الموارد البشرية الشاملة**
+
+**المعادلات المُنفذة:**
+```
+annual_entitlement_year = 21 أو 30 (من العقد أو قرار إداري)
+daily_accrual = annual_entitlement_year / days_in_year
+earned_to_date = daily_accrual * days_worked_in_year
+available_balance = earned_to_date - used_executed
+```
+
+**ملفات جديدة:**
+- `/app/backend/services/hr_policy.py` - محرك السياسة (580 سطر)
+- `/app/backend/routes/admin.py` - إدارة السياسات
+
+**ملفات مُحدّثة:**
+- `leave_service.py` - استخدام Pro-Rata
+- `stas_mirror_service.py` - عرض السياسة والمعادلة
+- `routes/leave.py` - قاعدة Blocking
+- `routes/employees.py` - ملخص مُحسّن
+- `routes/contracts_v2.py` - حقل annual_policy_days
+
+**APIs جديدة:**
+- `POST /api/admin/annual-policy` - تغيير سياسة 21/30
+- `POST /api/admin/leave-carryover` - ترحيل بقرار إداري
+- `GET /api/admin/balance-alerts` - تنبيهات الأرصدة
+
+**نتائج الاختبار:** 9/9 PASS
+
+**التقرير الكامل:** `/app/backend/HR_POLICY_REPORT.md`
 
 ---
 
