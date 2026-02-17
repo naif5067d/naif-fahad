@@ -44,9 +44,13 @@ export const translations = {
       type: "Leave Type", startDate: "Start Date", endDate: "End Date",
       reason: "Reason", submit: "Submit Request",
       annual: "Annual", sick: "Sick", emergency: "Emergency",
+      marriage: "Marriage", bereavement: "Bereavement", exam: "Exam", unpaid: "Unpaid",
       workingDays: "Working Days", remaining: "Remaining",
       holidays: "Public Holidays", holidayName: "Holiday Name",
-      fillAllFields: "Please fill all fields"
+      fillAllFields: "Please fill all fields",
+      newRequest: "New Leave Request", leaveType: "Leave Type",
+      publicHolidays: "Public Holidays",
+      sickRequiresFile: "Sick leave requires uploading a medical PDF file"
     },
     attendance: {
       title: "Attendance", checkIn: "Check In", checkOut: "Check Out",
