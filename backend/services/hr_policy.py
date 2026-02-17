@@ -522,7 +522,7 @@ def get_status_arabic(status: str) -> str:
     translations = {
         "pending_supervisor": "بانتظار المشرف",
         "pending_ops": "بانتظار العمليات",
-        "pending_ceo": "بانتظار المدير التنفيذي",
+        "pending_ceo": "لدى سلطان",  # تم التعديل
         "pending_stas": "بانتظار التنفيذ",
         "pending_finance": "بانتظار المالية",
         "executed": "تم التنفيذ",
