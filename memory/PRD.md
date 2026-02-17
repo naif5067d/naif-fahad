@@ -562,7 +562,62 @@ Contract activation flow:
 
 ---
 
-Version: 20.0 (2026-02-16)
+Version: 21.0 (2026-02-17)
+
+---
+
+### Phase 21: Contracts V2 Enhancements & Leave System ✅ (2026-02-17)
+
+**Completed - Remove Legacy Contracts:**
+- ✓ Removed old "العقود" (contracts) from sidebar navigation
+- ✓ Only "إدارة العقود" (Contracts Management V2) remains
+- ✓ Removed ContractsPage import from App.js
+
+**Completed - New Employee Creation with Contract:**
+- ✓ Radio toggle: "موظف جديد" / "موظف قديم (اختيار من القائمة)"
+- ✓ New employee fields: Name (AR/EN), National ID, Email, Phone, Employee Code
+- ✓ Backend creates employee AND contract in single POST /api/contracts-v2
+- ✓ Supports both is_new_employee=true (new) and is_new_employee=false (existing)
+
+**Completed - Leave System Updates:**
+- ✓ Annual leave: Only 21 or 30 days options (no 25)
+  - 21 يوم (أقل من 5 سنوات)
+  - 30 يوم (5 سنوات فأكثر)
+- ✓ Monthly permission hours: 0-3 hours (default 2, max capped at 3)
+- ✓ Permission hours tracked separately from leave balance
+- ✓ Sick leave requires PDF medical file upload
+
+**Completed - Migrated Contract Support:**
+- ✓ Toggle "عقد مُهاجر (موظف قديم)" for existing employees
+- ✓ Opening balances support fractional values (e.g., 15.5 days)
+- ✓ Includes permission_hours opening balance
+
+**Completed - Medical File Upload:**
+- ✓ POST /api/upload/medical endpoint for PDF files
+- ✓ Validates file type (PDF only) and size (max 5MB)
+- ✓ Returns URL for storage in leave transactions
+- ✓ LeavePage shows file input when sick leave selected
+
+**Completed - Arabic Leave Types:**
+- ✓ All leave types with Arabic labels:
+  - الإجازة السنوية (Annual)
+  - الإجازة المرضية (Sick) - requires PDF
+  - إجازة الزواج (Marriage)
+  - إجازة الوفاة (Bereavement)
+  - إجازة الاختبار (Exam)
+  - إجازة بدون راتب (Unpaid)
+
+**Files Modified:**
+- `/app/frontend/src/App.js` - Removed ContractsPage
+- `/app/frontend/src/components/layout/AppLayout.js` - Removed 'contracts' from NAV_ITEMS
+- `/app/frontend/src/pages/ContractsManagementPage.js` - New employee creation form
+- `/app/frontend/src/pages/LeavePage.js` - LEAVE_TYPES with Arabic labels, medical file upload
+- `/app/backend/routes/contracts_v2.py` - is_new_employee, annual_leave_days, monthly_permission_hours
+- `/app/backend/routes/leave.py` - medical_file_url validation
+- `/app/backend/routes/upload.py` - NEW: Medical PDF upload endpoint
+
+**Test Report:**
+- `/app/test_reports/iteration_21.json` - 100% pass rate
 
 ---
 
