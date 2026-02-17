@@ -142,7 +142,7 @@ def format_text_bilingual(text, target_lang='ar'):
 
 
 def format_saudi_time(ts):
-    """Format timestamp to Saudi Arabia time (UTC+3)"""
+    """Format timestamp to Saudi Arabia time (UTC+3) with proper date format"""
     if not ts:
         return '-'
     try:
@@ -153,9 +153,27 @@ def format_saudi_time(ts):
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         saudi_time = dt + timedelta(hours=3)
+        # تنسيق التاريخ مع فواصل: YYYY-MM-DD HH:MM
         return saudi_time.strftime('%Y-%m-%d %H:%M')
     except Exception:
         return str(ts)[:16] if ts else '-'
+
+
+def format_date_only(date_str):
+    """Format date string with proper separators: YYYY-MM-DD"""
+    if not date_str:
+        return '-'
+    try:
+        # If already in YYYY-MM-DD format, return as is
+        if '-' in str(date_str):
+            return str(date_str)
+        # If in YYYYMMDD format, add separators
+        date_str = str(date_str)
+        if len(date_str) == 8 and date_str.isdigit():
+            return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+        return date_str
+    except Exception:
+        return str(date_str)
 
 
 def create_qr_image(data: str, size: int = 18):
