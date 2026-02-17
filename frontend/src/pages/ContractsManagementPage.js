@@ -684,14 +684,54 @@ export default function ContractsManagementPage() {
                           onChange={e => setFormData(p => ({ ...p, other_allowances: parseFloat(e.target.value) || 0 }))}
                         />
                       </div>
+                      <div>
+                        <Label>بدل طبيعة العمل</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.nature_of_work_allowance}
+                          onChange={e => setFormData(p => ({ ...p, nature_of_work_allowance: parseFloat(e.target.value) || 0 }))}
+                        />
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
                       إجمالي الراتب: <span className="font-bold">{formatCurrency(
-                        formData.basic_salary + formData.housing_allowance + formData.transport_allowance + formData.other_allowances
+                        formData.basic_salary + formData.housing_allowance + formData.transport_allowance + formData.nature_of_work_allowance + formData.other_allowances
                       )}</span>
                     </div>
                   </>
                 )}
+                
+                {/* معلومات البنك - إلزامية */}
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Building2 className="w-4 h-4" /> معلومات البنك
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>اسم البنك *</Label>
+                      <Input 
+                        value={formData.bank_name}
+                        onChange={e => setFormData(p => ({ ...p, bank_name: e.target.value }))}
+                        placeholder="مثال: الراجحي، الأهلي"
+                        dir="rtl"
+                        data-testid="bank-name-input"
+                      />
+                    </div>
+                    <div>
+                      <Label>رقم الآيبان (IBAN) *</Label>
+                      <Input 
+                        value={formData.bank_iban}
+                        onChange={e => setFormData(p => ({ ...p, bank_iban: e.target.value }))}
+                        placeholder="SA..."
+                        dir="ltr"
+                        data-testid="bank-iban-input"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت
+                  </p>
+                </div>
                 
                 {/* Migration Toggle */}
                 <div className="flex items-center justify-between border-t pt-4">
