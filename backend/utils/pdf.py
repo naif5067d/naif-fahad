@@ -317,11 +317,27 @@ def get_labels(lang: str):
         }
 
 
-def make_para(text, style):
-    """Create a Paragraph from text, reshaping Arabic if needed"""
-    if has_arabic(str(text)):
-        text = reshape_arabic(str(text))
-    return Paragraph(str(text), style)
+def make_para(text, style, force_ltr=False):
+    """Create a Paragraph from text, reshaping Arabic if needed.
+    
+    Args:
+        text: The text to display
+        style: ParagraphStyle to use
+        force_ltr: If True, wrap text in LTR mark to prevent RTL reordering
+    """
+    text_str = str(text)
+    
+    # If text is purely numeric/english with symbols, wrap in LTR marks
+    # This prevents RTL reordering of things like "TXN-2026-0001" or "2026-02-17"
+    if force_ltr or not has_arabic(text_str):
+        # Use Unicode LTR embedding characters
+        # LRE = Left-to-Right Embedding, PDF = Pop Directional Formatting
+        text_str = f'\u202A{text_str}\u202C'
+    else:
+        # Arabic text needs reshaping
+        text_str = reshape_arabic(text_str)
+    
+    return Paragraph(text_str, style)
 
 
 def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str = 'ar', branding: dict = None) -> tuple:
