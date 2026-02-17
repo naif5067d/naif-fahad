@@ -164,7 +164,7 @@ async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
             "category": "leave"
         })
     
-    # فحص التقرير الطبي للإجازة المرضية
+    # فحص التقرير الطبي للإجازة المرضية + استهلاك الـ 120 يوم
     if leave_type == 'sick':
         medical_file_url = data.get('medical_file_url')
         checks.append({
@@ -174,6 +174,45 @@ async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
             "detail": "تم رفع التقرير الطبي" if medical_file_url else "⚠️ لم يتم رفع التقرير الطبي - مطلوب قبل التنفيذ",
             "category": "document",
             "medical_file_url": medical_file_url
+        })
+        
+        # فحص استهلاك الإجازة المرضية (المادة 117)
+        from services.hr_policy import calculate_sick_leave_consumption, get_sick_leave_tier_for_request
+        
+        consumption = await calculate_sick_leave_consumption(emp_id)
+        current_used = consumption.get('total_sick_days_used', 0)
+        current_tier = consumption.get('current_tier_info', {})
+        
+        tier_info = await get_sick_leave_tier_for_request(emp_id, working_days)
+        
+        # تحديد مستوى التحذير
+        warning_level = "PASS"
+        detail_msg = f"استهلاك: {current_used}/120 يوم"
+        
+        if tier_info.get('distribution'):
+            for tier in tier_info['distribution']:
+                if tier['salary_percent'] == 0:
+                    warning_level = "FAIL"
+                    detail_msg += f" | ⚠️ سيُخصم 100% من الراتب لـ {tier['days']} يوم"
+                    break
+                elif tier['salary_percent'] == 50:
+                    warning_level = "WARN"
+                    detail_msg += f" | ⚠️ سيُخصم 50% من الراتب لـ {tier['days']} يوم"
+        
+        checks.append({
+            "name": "Sick Leave Article 117",
+            "name_ar": "الإجازة المرضية - المادة 117",
+            "status": warning_level,
+            "detail": detail_msg,
+            "category": "leave",
+            "sick_leave_info": {
+                "current_used": current_used,
+                "max_per_year": 120,
+                "remaining": 120 - current_used,
+                "current_tier": current_tier,
+                "tier_distribution": tier_info.get('distribution', []),
+                "tier_breakdown": consumption.get('tier_breakdown', [])
+            }
         })
     
     # فحص التعارض
