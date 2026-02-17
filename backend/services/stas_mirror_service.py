@@ -396,37 +396,63 @@ async def build_mirror_data(tx: dict) -> dict:
 
 
 async def build_before_after(tx: dict, emp_id: str, tx_type: str, data: dict) -> dict:
-    """بناء بيانات قبل وبعد التنفيذ"""
+    """بناء بيانات قبل وبعد التنفيذ - محدث Pro-Rata"""
     
     if tx_type == 'leave_request':
         lt = data.get('leave_type', 'annual')
-        balance = await get_leave_balance(emp_id, lt)
         wd = data.get('working_days', 0)
         
-        # حساب الاستحقاق الكلي
-        entries = await db.leave_ledger.find(
-            {"employee_id": emp_id, "leave_type": lt, "type": "credit"}, {"_id": 0}
-        ).to_list(1000)
-        entitlement = sum(e.get('days', 0) for e in entries)
-        used = entitlement - balance
-        
-        return {
-            "type": "leave",
-            "before": {
-                "total_entitlement": entitlement,
-                "used": used,
-                "remaining": balance
-            },
-            "after": {
-                "total_entitlement": entitlement,
-                "used": used + wd,
-                "remaining": balance - wd
-            },
-            "change": {
-                "days": -wd,
-                "leave_type": lt
+        if lt == 'annual':
+            # استخدام Pro-Rata
+            pro_rata = await calculate_pro_rata_entitlement(emp_id)
+            policy = await get_employee_annual_policy(emp_id)
+            
+            balance = pro_rata.get('available_balance', 0)
+            earned = pro_rata.get('earned_to_date', 0)
+            used = pro_rata.get('used_executed', 0)
+            
+            return {
+                "type": "leave",
+                "policy": {
+                    "days": policy['days'],
+                    "source": policy['source'],
+                    "source_ar": policy['source_ar']
+                },
+                "formula": pro_rata.get('formula', ''),
+                "before": {
+                    "annual_policy": policy['days'],
+                    "daily_accrual": pro_rata.get('daily_accrual', 0),
+                    "days_worked": pro_rata.get('days_worked', 0),
+                    "earned_to_date": round(earned, 2),
+                    "used": used,
+                    "remaining": round(balance, 2)
+                },
+                "after": {
+                    "annual_policy": policy['days'],
+                    "daily_accrual": pro_rata.get('daily_accrual', 0),
+                    "days_worked": pro_rata.get('days_worked', 0),
+                    "earned_to_date": round(earned, 2),
+                    "used": used + wd,
+                    "remaining": round(balance - wd, 2)
+                },
+                "change": {
+                    "days": -wd,
+                    "leave_type": lt,
+                    "leave_type_ar": "الإجازة السنوية"
+                },
+                "note_ar": "الخصم يتم فقط عند تنفيذ STAS"
             }
-        }
+        else:
+            # الإجازات الإدارية - لا خصم من الرصيد
+            return {
+                "type": "leave_admin",
+                "leave_type": lt,
+                "leave_type_ar": data.get('leave_type_ar', lt),
+                "days": wd,
+                "note_ar": "إجازة إدارية - لا تُخصم من الرصيد السنوي",
+                "before": {},
+                "after": {}
+            }
     
     elif tx_type == 'settlement':
         # للمخالصة - استخدام الـ Snapshot إذا موجود
