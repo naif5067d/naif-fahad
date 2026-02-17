@@ -892,6 +892,8 @@ export default function SystemMaintenancePage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
