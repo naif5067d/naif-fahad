@@ -2,17 +2,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'finance', 'financialCustody'],
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'finance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
