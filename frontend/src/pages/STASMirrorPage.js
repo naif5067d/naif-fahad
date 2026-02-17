@@ -619,19 +619,84 @@ export default function STASMirrorPage() {
                 <CheckCircle size={14} /> {lang === 'ar' ? 'تم التنفيذ' : 'Executed'}
               </div>
             ) : (
-              <Button
-                data-testid="stas-execute-btn-mobile"
-                onClick={handleExecute}
-                disabled={!mirror.all_checks_pass || executing}
-                className={`flex-1 ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground'}`}
-              >
-                {executing ? <Loader2 size={16} className="me-1 animate-spin" /> : <Shield size={16} className="me-1" />}
-                {t('stas.execute')}
-              </Button>
+              <div className="flex gap-2 flex-1">
+                <Button
+                  data-testid="stas-execute-btn-mobile"
+                  onClick={handleExecute}
+                  disabled={!mirror.all_checks_pass || executing}
+                  className={`flex-1 ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground'}`}
+                >
+                  {executing ? <Loader2 size={16} className="me-1 animate-spin" /> : <Shield size={16} className="me-1" />}
+                  {t('stas.execute')}
+                </Button>
+                <Button
+                  data-testid="stas-cancel-btn-mobile"
+                  variant="outline"
+                  onClick={() => setCancelDialogOpen(true)}
+                  disabled={executing || cancelling}
+                  className="border-red-300 text-red-600"
+                >
+                  <XCircle size={16} />
+                </Button>
+              </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Cancel Transaction Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              {lang === 'ar' ? 'إلغاء المعاملة' : 'Cancel Transaction'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                {lang === 'ar' 
+                  ? 'سيتم إلغاء هذه المعاملة نهائياً. يمكن للموظف تقديم طلب جديد بعد الإلغاء.'
+                  : 'This transaction will be permanently cancelled. The employee can submit a new request after cancellation.'
+                }
+              </p>
+            </div>
+            
+            <div>
+              <Label className="text-red-600">
+                {lang === 'ar' ? '* سبب الإلغاء (مطلوب)' : '* Cancellation Reason (Required)'}
+              </Label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder={lang === 'ar' ? 'اكتب سبب إلغاء المعاملة...' : 'Write the reason for cancellation...'}
+                className="w-full mt-2 p-3 border border-red-200 rounded-lg min-h-[100px] focus:outline-none focus:ring-2 focus:ring-red-500"
+                data-testid="cancel-reason-input"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {lang === 'ar' ? `${cancelReason.length}/5 أحرف على الأقل` : `${cancelReason.length}/5 characters minimum`}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => { setCancelDialogOpen(false); setCancelReason(''); }}>
+              {lang === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancelTransaction}
+              disabled={cancelling || cancelReason.trim().length < 5}
+              data-testid="confirm-cancel-btn"
+            >
+              {cancelling ? <Loader2 size={16} className="me-2 animate-spin" /> : <XCircle size={16} className="me-2" />}
+              {lang === 'ar' ? 'تأكيد الإلغاء' : 'Confirm Cancel'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
