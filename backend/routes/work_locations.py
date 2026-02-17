@@ -124,9 +124,10 @@ async def update_work_location(location_id: str, req: WorkLocationUpdate, user=D
         update_data["work_start"] = req.work_start
     if req.work_end is not None:
         update_data["work_end"] = req.work_end
-    if req.grace_period_minutes is not None:
-        # Validate grace period (0-15 minutes)
-        update_data["grace_period_minutes"] = max(0, min(15, req.grace_period_minutes))
+    if req.grace_checkin_minutes is not None:
+        update_data["grace_checkin_minutes"] = max(0, min(15, req.grace_checkin_minutes))
+    if req.grace_checkout_minutes is not None:
+        update_data["grace_checkout_minutes"] = max(0, min(15, req.grace_checkout_minutes))
     if req.work_days is not None:
         update_data["work_days"] = req.work_days.model_dump()
     if req.assigned_employees is not None:
