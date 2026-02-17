@@ -527,6 +527,102 @@ export default function EmployeesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Employee Preview Card Dialog */}
+      <Dialog open={!!previewCard} onOpenChange={() => setPreviewCard(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User size={20} />
+              {lang === 'ar' ? 'بطاقة الموظف' : 'Employee Card'}
+            </DialogTitle>
+          </DialogHeader>
+          {loadingCard ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : previewCard && (
+            <div className="space-y-4">
+              {/* Employee Header */}
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl font-bold text-primary">
+                  {(lang === 'ar' ? previewCard.full_name_ar : previewCard.full_name)?.[0] || 'U'}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">
+                    {lang === 'ar' ? (previewCard.full_name_ar || previewCard.full_name) : previewCard.full_name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{previewCard.employee_number}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${previewCard.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {previewCard.is_active ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير نشط' : 'Inactive')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              {cardSummary && (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <Calendar size={18} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-lg font-bold text-primary">{cardSummary.leave_details?.balance || 0}</p>
+                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'رصيد الإجازة' : 'Leave'}</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <Briefcase size={18} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-lg font-bold text-primary">{cardSummary.service_info?.years_display || '0'}</p>
+                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'سنوات الخدمة' : 'Service Yrs'}</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <Calendar size={18} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-lg font-bold text-primary">
+                      {cardSummary.attendance?.today_status === 'present' ? '✓' : '—'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'حضور اليوم' : 'Today'}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Contract Info */}
+              {cardSummary?.contract && (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">{lang === 'ar' ? 'المسمى' : 'Title'}</span>
+                    <span className="font-medium">{lang === 'ar' ? cardSummary.contract.job_title_ar : cardSummary.contract.job_title}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">{lang === 'ar' ? 'القسم' : 'Dept'}</span>
+                    <span className="font-medium">{lang === 'ar' ? cardSummary.contract.department_ar : cardSummary.contract.department}</span>
+                  </div>
+                  {cardSummary.contract.end_date && (
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-muted-foreground">{lang === 'ar' ? 'انتهاء العقد' : 'Contract End'}</span>
+                      <span className="font-medium">{cardSummary.contract.end_date}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setPreviewCard(null)}
+                >
+                  {lang === 'ar' ? 'إغلاق' : 'Close'}
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => { setPreviewCard(null); navigate(`/employees/${previewCard.id}`); }}
+                  data-testid="view-full-profile-btn"
+                >
+                  {lang === 'ar' ? 'الملف الكامل' : 'Full Profile'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
