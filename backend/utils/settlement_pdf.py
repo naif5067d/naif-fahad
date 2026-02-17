@@ -56,19 +56,33 @@ CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 LOGO_PATH = "/app/backend/assets/logo.png"
 
 
-def create_company_logo(width=25, height=25):
+def create_company_logo(branding=None, width=25, height=25):
     """
     إنشاء شعار الشركة
-    يحاول تحميل الصورة أولاً، وإذا لم تكن موجودة ينشئ شعار نصي
+    يحاول تحميل اللوجو من branding (base64) أو من ملف، وإذا لم يكن موجوداً ينشئ شعار نصي
     """
-    # محاولة تحميل صورة اللوجو
+    # 1. محاولة تحميل من branding (base64)
+    if branding and branding.get('logo_data'):
+        try:
+            import base64
+            logo_data = branding['logo_data']
+            # إزالة prefix مثل "data:image/jpeg;base64,"
+            if ',' in logo_data:
+                logo_data = logo_data.split(',')[1]
+            logo_bytes = base64.b64decode(logo_data)
+            logo_buffer = io.BytesIO(logo_bytes)
+            return Image(logo_buffer, width=width*mm, height=height*mm)
+        except Exception as e:
+            print(f"Error loading logo from branding: {e}")
+    
+    # 2. محاولة تحميل من ملف
     if os.path.exists(LOGO_PATH):
         try:
             return Image(LOGO_PATH, width=width*mm, height=height*mm)
         except:
             pass
     
-    # إنشاء شعار نصي بديل - DAC
+    # 3. إنشاء شعار نصي بديل - DAC
     d = Drawing(width*mm, height*mm)
     
     # مربع خلفية
