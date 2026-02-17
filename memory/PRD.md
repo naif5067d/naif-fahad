@@ -562,7 +562,26 @@ Contract activation flow:
 
 ---
 
-Version: 23.0 (2026-02-17)
+Version: 23.1 (2026-02-17)
+
+---
+
+### Phase 23.1: Contract Edit & STAS Mirror Fixes ✅ (2026-02-17)
+
+**التعديلات:**
+
+1. **تعديل العقود النشطة** - sultan, naif, stas يمكنهم الآن تعديل العقود النشطة
+2. **سياسة الإجازة السنوية** - إضافة حقل `annual_policy_days` (21 أو 30) في نموذج العقد
+3. **STAS Mirror** - تحسين عرض Before/After مع ترجمة المفاتيح
+4. **الحالات** - `pending_ceo` يظهر "لدى سلطان" للموظف
+
+**ملفات Frontend:**
+- `ContractsManagementPage.js` - تعديل العقود النشطة + سياسة الإجازة
+- `STASMirrorPage.js` - ترجمة المفاتيح + عرض المعادلة والسياسة
+
+**ملفات Backend:**
+- `services/hr_policy.py` - `pending_ceo` → "لدى سلطان"
+- `utils/pdf.py` - تحسين تسجيل الخطوط العربية
 
 ---
 
