@@ -355,6 +355,52 @@ export default function WorkLocationsPage() {
                   </div>
                 </div>
 
+                {/* Grace Period - مدة السماح */}
+                <div className="space-y-2 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Label className="flex items-center gap-2 text-amber-800">
+                    <Clock size={16} />
+                    {lang === 'ar' ? 'مدة السماح (دقائق)' : 'Grace Period (minutes)'}
+                  </Label>
+                  <p className="text-xs text-amber-700 mb-2">
+                    {lang === 'ar' 
+                      ? 'مدة السماح قبل وبعد وقت الحضور/الانصراف بدون احتساب تأخير' 
+                      : 'Grace period before/after check-in/out time without counting as late'}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={15}
+                      value={formData.grace_period_minutes}
+                      onChange={e => setFormData(p => ({ 
+                        ...p, 
+                        grace_period_minutes: Math.min(15, Math.max(0, parseInt(e.target.value) || 0))
+                      }))}
+                      className="w-24"
+                      data-testid="grace-period-input"
+                    />
+                    <div className="flex gap-1">
+                      {[0, 5, 10, 15].map(min => (
+                        <Button
+                          key={min}
+                          type="button"
+                          variant={formData.grace_period_minutes === min ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setFormData(p => ({ ...p, grace_period_minutes: min }))}
+                          className="h-8 px-3"
+                        >
+                          {min} {lang === 'ar' ? 'د' : 'm'}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-amber-600 mt-1">
+                    {lang === 'ar' 
+                      ? `مثال: إذا كان وقت الحضور 8:00 ومدة السماح ${formData.grace_period_minutes} دقيقة، يُقبل الحضور حتى 8:${formData.grace_period_minutes.toString().padStart(2, '0')} بدون تأخير`
+                      : `Example: If start time is 8:00 and grace is ${formData.grace_period_minutes} min, check-in until 8:${formData.grace_period_minutes.toString().padStart(2, '0')} won't count as late`}
+                  </p>
+                </div>
+
                 {/* Work Days */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
