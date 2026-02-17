@@ -167,19 +167,48 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     col_ar = CONTENT_WIDTH * 0.5
     col_en = CONTENT_WIDTH * 0.5
     
-    # ============ 1. HEADER / الترويسة ============
-    header_data = [
-        [en("Kingdom of Saudi Arabia – Riyadh"), ar("المملكة العربية السعودية – الرياض")],
-        [en_bold("Dar Al Code Engineering Consultancy"), ar_bold("شركة دار الكود للاستشارات الهندسية")],
-        [en("License No: 5110004935 – CR: 1010463476"), ar("ترخيص رقم: 5110004935 – سجل تجاري: 1010463476")],
+    # ============ 1. HEADER WITH LOGO / الترويسة مع الشعار ============
+    # إنشاء اللوجو
+    logo = create_company_logo(width=20, height=20)
+    
+    # Header with logo in center
+    header_left = [
+        [en("Kingdom of Saudi Arabia – Riyadh")],
+        [en_bold("Dar Al Code Engineering Consultancy")],
+        [en("License No: 5110004935 – CR: 1010463476")],
     ]
-    header_table = Table(header_data, colWidths=[col_en, col_ar])
-    header_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+    header_right = [
+        [ar("المملكة العربية السعودية – الرياض")],
+        [ar_bold("شركة دار الكود للاستشارات الهندسية")],
+        [ar("ترخيص رقم: 5110004935 – سجل تجاري: 1010463476")],
+    ]
+    
+    header_left_table = Table(header_left, colWidths=[col_en - 12*mm])
+    header_left_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LINEBELOW', (0, -1), (-1, -1), 1, NAVY),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    
+    header_right_table = Table(header_right, colWidths=[col_ar - 12*mm])
+    header_right_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    
+    # Main header with logo in center
+    header_data = [[header_left_table, logo, header_right_table]]
+    header_table = Table(header_data, colWidths=[col_en - 12*mm, 24*mm, col_ar - 12*mm])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LINEBELOW', (0, 0), (-1, 0), 1.5, NAVY),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
         ('TOPPADDING', (0, 0), (-1, -1), 1),
     ]))
     elements.append(header_table)
