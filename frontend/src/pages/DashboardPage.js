@@ -324,6 +324,13 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* App Version */}
+      {appVersion && (
+        <div className="text-center text-xs text-muted-foreground pt-4 border-t">
+          DAR AL CODE HR OS v{appVersion}
+        </div>
+      )}
     </div>
   );
 }
