@@ -207,6 +207,56 @@ async def get_my_used_leaves(user=Depends(get_current_user)):
     return used
 
 
+class SickPreviewRequest(BaseModel):
+    start_date: str
+    end_date: str
+
+
+@router.post("/sick-preview")
+async def preview_sick_leave_deduction(req: SickPreviewRequest, user=Depends(get_current_user)):
+    """
+    معاينة خصم الإجازة المرضية حسب المادة 117
+    يُعرض للموظف قبل تقديم الطلب
+    """
+    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=400, detail="لست موظفاً")
+    
+    from services.hr_policy import calculate_sick_leave_consumption, get_sick_leave_tier_for_request
+    from utils.leave_rules import calculate_working_days
+    
+    # حساب عدد أيام العمل
+    holidays = await db.public_holidays.find({}, {"date": 1, "_id": 0}).to_list(500)
+    holiday_dates = [h['date'] for h in holidays]
+    working_days = calculate_working_days(req.start_date, req.end_date, holiday_dates)
+    
+    # جلب الاستهلاك الحالي
+    consumption = await calculate_sick_leave_consumption(emp['id'])
+    current_used = consumption.get('total_sick_days_used', 0)
+    
+    # جلب توزيع الأيام الجديدة على الشرائح
+    tier_info = await get_sick_leave_tier_for_request(emp['id'], working_days)
+    
+    # تحديد إذا كان هناك تحذير (دخول شريحة خصم)
+    has_warning = False
+    if tier_info.get('distribution'):
+        for tier in tier_info['distribution']:
+            if tier['salary_percent'] < 100:
+                has_warning = True
+                break
+    
+    return {
+        "warning": has_warning,
+        "current_used": current_used,
+        "max_per_year": 120,
+        "remaining": 120 - current_used,
+        "requested_days": working_days,
+        "tier_distribution": tier_info.get('distribution', []),
+        "message_ar": tier_info.get('message_ar', ''),
+        "current_tier_info": consumption.get('current_tier_info', {})
+    }
+
+
 @router.get("/permission-hours")
 async def get_my_permission_hours(user=Depends(get_current_user)):
     """Get current user's permission hours usage for this month"""
