@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://leave-management-6.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-settlement.preview.emergentagent.com').rstrip('/')
 
 # User IDs for testing
 STAS_USER_ID = "fedffe24-ec69-5c65-809d-5d24f8a16b9d"
