@@ -180,7 +180,7 @@ async def get_my_leave_balance(user=Depends(get_current_user)):
         }
         
         return balance
-    except Exception as e:
+    except Exception:
         # Fallback
         balance = {"annual": {"available": 0, "balance": 0}}
         return balance
