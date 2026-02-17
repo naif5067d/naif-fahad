@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw, FileText } from 'lucide-react';
 import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
 import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
