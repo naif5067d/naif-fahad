@@ -1,183 +1,209 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The project has moved past an initial bug-fixing and audit phase. The current focus is on a series of high-priority refinements based on the audit's findings, which are a prerequisite for the main upcoming task: a complete overhaul of the Contract Management System (Contracts V2).
+The user is building a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The primary goal is to refine the existing application based on a continuous stream of detailed feedback and then move on to larger features.
 
-The user has provided a strict, prioritized list of tasks:
-1.  **STAS Seal:** Replace the QR code in PDF transaction seals with a  generated barcode, including the  underneath.
-2.  **STAS Execution:** Enforce one-time execution for all STAS transactions, blocking repeated clicks on the Execute button.
-3.  **Language & PDF Integrity:** Ensure 100% language purity (either full Arabic or full English, no mixing) in both the UI preview and the final PDF output. Text must render correctly without broken characters or RTL/LTR issues.
-4.  **Standardized Letterhead:** Implement a fixed, official header/footer for all transaction previews and generated PDFs.
-5.  **UI Display Limit:** Limit the display of transactions to a maximum of 4 items in specified views.
-6.  **Transaction Blocking Rule:** Implement a backend rule to prevent a user from creating a new transaction of a certain type (e.g., leave request) if another one of the same type is already pending.
-7.  **Map Logic Finalization:** Clarify and implement the map visibility rules: employees see only work locations, while managers see the employee's live location pin.
-
-Only after these seven points are completed can the agent proceed with the larger tasks of implementing Contracts V2, migrating old employees, and building the new settlement flow.
+The user's immediate and high-priority requests include:
+1.  **Bug Fix (P0):** Fix a critical UI bug where multiple maps are overlapping on the Add/Edit Work Location page, making it unusable.
+2.  **UI/UX Enhancement (P0):** Overhaul the leave request calendar UI. It must be color-coded to disable and visually distinguish weekends (black), official holidays (brown), and days with existing conflicting leave requests (red).
+3.  **STAS Mirror Enhancement (P1):** The STAS Mirror page should act as a detector, explicitly stating the reasons for potential conflicts (e.g., Request conflicts with official holiday, User has a pending request of the same type).
+4.  **PDF Generation Refinements:** The STAS execution seal in PDFs needs to be a proper, scannable barcode with a perforated cut-out section at the bottom of the page. The name of the approver must appear in Arabic.
+5.  **Data & Logic Integrity:**
+    *   Remove all hardcoded English strings; the application must be 100% Arabic when the Arabic language is selected.
+    *   Reset all leave balances to the standard 21/30 days.
+    *   Delete all existing test transactions.
+    *   Ensure deleting transactions does not affect employee work location data.
+6.  **New Features:**
+    *   Implement a system-wide notification/announcement system manageable by the admin (STAS), with support for pinned messages.
+    *   Add an app version number to the UI.
+    *   Allow creating a new employee directly from the Create Contract V2 form.
+    *   Require a PDF file upload for sick leave requests.
+    *   Implement a permission system for granting personal leave hours (2 hours by default, with admin override up to 3).
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The previous agent successfully completed a comprehensive, text-only, code-based audit of the entire application as requested by the user. The agent delivered a detailed report covering the application's routes, data connections, STAS Mirror logic, language/date implementation, and a GAP analysis. The user has acknowledged this report and provided a new set of prioritized instructions based on its findings. The application is in a stable, running state.
+The agent has implemented several features and fixes based on user requests. A system-wide notification system has been created with both backend APIs and a frontend management UI in the System Maintenance page. The STAS PDF seal was updated to use a barcode (though further refinement is needed), and the approver's name is now shown in Arabic. The contract creation form was enhanced to support creating a new employee directly. Logic for requiring a file upload for sick leave has been added. The STAS status labels and colors in the UI were updated to be more descriptive and less personalized. The legacy Contracts V1 pages have been removed from the UI.
 
 **Last working item**:
--   **Last item agent was working:** Starting the implementation of the user's new 7-point priority list. The first task is to replace the QR code in generated PDFs with a barcode. The agent was in the process of reading the relevant files to begin this work.
+-   **Last item agent was working:** The agent was tasked with fixing a critical UI bug where multiple, overlapping maps were rendering on the work location creation/editing page. The user provided a screenshot confirming the issue. The agent acknowledged the problem and was about to start debugging it.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** A combination of methods will be needed:
-    -   For PDF generation changes (barcode, letterhead): Backend testing.  the PDF endpoint and manually inspect the downloaded file.
-    -   For UI changes (language, display limits, map): Use the screenshot tool.
-    -   For complex backend logic (one-time execution, transaction blocking): Backend testing via  with validation and/or calling the  to create automated tests for these critical rules.
+-   **Which testing method agent to use?** Frontend testing agent or screenshot tool to verify the map UI fix.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-This list is derived directly from the user's latest request (message #23).
-
--   **Issue 1: Implement Barcode for STAS Seal in PDFs (P0)**
--   **Issue 2: Enforce One-Time STAS Execution (P0)**
--   **Issue 3: Ensure 100% Language Integrity in UI & PDFs (P0)**
--   **Issue 4: Implement Standardized Official Letterhead (P1)**
--   **Issue 5: Limit Transaction View to 4 Items (P1)**
--   **Issue 6: Block Duplicate Pending Transactions (P1)**
--   **Issue 7: Finalize and Implement Map Visibility Logic (P1)**
+-   Issue 1: Multiple overlapping maps render on the work location page (P0)
+-   Issue 2: Leave request calendar lacks color-coding for unavailable days (P0)
+-   Issue 3: PDF barcode seal needs a perforated cut-out section (P1)
+-   Issue 4: UI still contains some hardcoded English text (P2)
+-   Issue 5: Incomplete Admin Attendance Data (on_leave, is_late are always '0') (P2)
 
 **Issues Detail:**
--   **Issue 1: Implement Barcode for STAS Seal in PDFs (P0)**
-    -   **Attempted fixes:** None. This is a new task.
+-   **Issue 1: Multiple overlapping maps render on the work location page (P0)**
+    -   **Attempted fixes:** None yet. Agent just acknowledged the issue.
     -   **Next debug checklist:**
-        1.  Install the  library (Looking in indexes: https://pypi.org/simple, https://d33sy5i8bnduwe.cloudfront.net/simple/
-Collecting python-barcode
-  Downloading python_barcode-0.16.1-py3-none-any.whl.metadata (2.7 kB)
-Downloading python_barcode-0.16.1-py3-none-any.whl (228 kB)
-Installing collected packages: python-barcode
-Successfully installed python-barcode-0.16.1).
-        2.  Locate the PDF generation logic (likely in a file like  or within ).
-        3.  Replace the existing  generation logic with . The barcode should encode the transaction ID or a unique hash.
-        4.  Render the transaction's  as text directly below the generated barcode image in the PDF.
-        5.  Test by calling the PDF endpoint and visually inspecting the output.
-    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's specific requirement for a barcode seal, which they perceive as more official than a QR code for STAS-executed transactions.
+        1.  Examine .
+        2.  Investigate the component rendering logic. The issue is likely caused by a  being rendered multiple times within a loop or due to state updates causing re-renders without proper cleanup.
+        3.  Ensure that only one  is active at any time, especially within the Add New or Edit modals/dialogs.
+        4.  Check for CSS conflicts that might be causing visibility issues.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical, blocking bug that makes the work location management feature unusable. Fixing it will restore core functionality.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** No.
+
+-   **Issue 2: Leave request calendar lacks color-coding for unavailable days (P0)**
+    -   **Next debug checklist:**
+        1.  Modify .
+        2.  Use the  and  props of the  component (used by Shadcn's Calendar).
+        3.  Fetch official holidays and the user's existing leave requests.
+        4.  Implement a function that returns  for disabled days (weekends, holidays, existing leave).
+        5.  Implement a function that returns a style object for different day types: weekend (black background), holiday (brown background), conflict (red background).
+    -   **Why fix this issue and what will be achieved with the fix?** It provides a much better user experience, preventing users from making invalid leave requests and giving them immediate visual feedback.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Backend (manual PDF inspection).
-    -   **Blocked on other issue:** None.
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** No.
 
--   **Issue 2: Enforce One-Time STAS Execution (P0)**
+-   **Issue 3: PDF barcode seal needs a perforated cut-out section (P1)**
+    -   **Attempted fixes:** The agent created a barcode but did not add the requested cut-out section.
     -   **Next debug checklist:**
-        1.  **Backend:** In , modify the  endpoint. Before executing, check the  collection for the given transaction's status. If it's already  or , return a 400 error with a clear message.
-        2.  **STAS Mirror:** In , add a  that returns  if the transaction has already been executed.
-        3.  **Frontend:** In the  component, disable the Execute button immediately after a successful API call or if the loaded mirror data indicates the transaction was already executed.
-    -   **Why fix this issue and what will be achieved with the fix?** Prevents accidental duplicate processing of transactions, which could have serious financial or operational consequences. Ensures data integrity.
-    -   **Status:** NOT STARTED
+        1.  Edit .
+        2.  In the function that draws the PDF footer ( or similar), add logic to draw a second, identical barcode at the very bottom of the page.
+        3.  Draw a dashed or dotted line () above this second barcode to signify a cut here line.
+    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a specific user requirement for physical record-keeping.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both.
-
--   **Issue 3: Ensure 100% Language Integrity in UI & PDFs (P0)**
-    -   **Next debug checklist:**
-        1.  Reference the GAP analysis from the audit (message #22) to find all hardcoded text in files like  and .
-        2.  Replace all hardcoded strings with  and add the corresponding entries to  and .
-        3.  Fix the missing  key.
-        4.  Review the PDF generation logic to ensure it accepts a  parameter and uses the correct translations and RTL/LTR direction when rendering text.
-    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a non-negotiable user requirement for a fully bilingual application with no mixed-language interfaces.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y (Hardcoded text is a recurring theme).
-    -   **Should Test frontend/backend/both after fix?** Both (UI screenshots and PDF inspection).
+    -   **Should Test frontend/backend/both after fix?** Backend (by downloading and inspecting the PDF).
+    -   **Blocked on other issue:** No.
 
 **In progress Task List**:
--   **Task 1: Complete 7-Point Priority List**
-    -   **Where to resume:** Begin with Issue 1: Implementing the barcode seal. The first step is to read the relevant PDF generation and transaction route files.
-    -   **What will be achieved with this?** This will complete all user-mandated prerequisites, unblocking the development of the Contracts V2 system.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
+-   **Task 1: Build advanced leave calendar UI (P0)**
+    -   **Where to resume:** .
+    -   **What will be achieved with this?** A user-friendly, intuitive calendar for requesting leave that prevents errors.
+    -   **Status:** NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on something:** No.
+
+-   **Task 2: Implement STAS Mirror Detector (P1)**
+    -   **Where to resume:**  and relevant backend endpoints.
+    -   **What will be achieved with this?** Admins (STAS) will see clear, actionable reasons for transaction conflicts, improving their decision-making process.
+    -   **Status:** NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P0:** Implement Contract V2 System (Create new contract flow).
-    -   **P1:** Implement Employee Migration to V2 (with opening data snapshot).
-    -   **P2:** Implement Settlement Module (linked to V2 contracts and final STAS execution).
+    -   **P1:** Create a UI for the  endpoint in the System Maintenance page to allow admins to reset all leave data.
+    -   **P1:** Employee Migration to V2 contracts (with opening data snapshot).
+    -   **P2:** Implement the full Settlement Module.
 -   **Future Tasks:**
-    -   **P1:** Settlement Module (This was also listed as future, but is now part of the upcoming V2 work).
-    -   **P2:** CEO Dashboard & Employee Profile Card.
+    -   **P2:** CEO Dashboard & enhanced Employee Profile Card.
     -   **P3:** Warnings & Loans Modules.
 
 **Completed work in this session**
--   Delivered a comprehensive, text-only, code-based system audit as per the user's detailed specifications. This included a full GAP Analysis identifying current system flaws and areas for improvement.
+-   **Notification System:** Created backend () and frontend UI for admins to send and manage system-wide announcements.
+-   **Contract Management V2:** Enhanced the creation form to allow creating a new employee profile simultaneously with the contract.
+-   **Leave Management:**
+    -   Added a file upload requirement for sick leave requests.
+    -   Removed hardcoded 25 days leave option.
+-   **STAS & PDF:**
+    -   Replaced QR code with a barcode in the PDF seal.
+    -   Ensured the approver's name appears in Arabic in the PDF.
+    -   Removed personalized Waiting for STAS labels in favor of Waiting for Execution.
+-   **UI/UX:**
+    -   Added a Get My Location button to the work location map.
+    -   Added the app version number to the footer.
+    -   Removed the legacy Contracts V1 link from the sidebar.
+    -   Fixed numerous hardcoded English strings in the UI and error messages.
+-   **Backend Admin:** Created an endpoint to reset leave balances and delete all transactions.
 
 **Earlier issues found/mentioned but not fixed**
-The audit (message #22) revealed several GAPs. The user's new priority list addresses some, but the following are still outstanding:
--   **Issue 1: Incomplete Admin Attendance Data:** The  endpoint does not calculate or return the  and  fields, causing the frontend summary to always show '0' for these stats.
--   **Issue 2: Global-Only Ramadan Hours:** The Ramadan schedule is applied globally to all work locations. There is no support for per-location or per-project Ramadan hours.
+-   **Issue 1: Incomplete Admin Attendance Data:** The  endpoint does not calculate  and  fields.
+-   **Issue 2: Global-Only Ramadan Hours:** The system lacks support for per-location or per-project Ramadan hours.
 -   **Issue 3: Lax GPS Validation:** The backend accepts check-in/out records even if the  flag is .
--   **Issue 4: Missing Frontend Date Validation:** The frontend allows users to submit leave requests for dates in the past.
--   **Issue 5: Unsynced Leave Balance:** The leave entitlement from contracts is not automatically synchronized as a credit into the , requiring manual intervention.
+-   **Issue 4: Unsynced Leave Balance:** The leave entitlement from contracts may not automatically synchronize as a credit into the , requiring manual intervention.
 
 **Known issue recurrence from previous fork**
--   None.
+-   **Issue:** Hardcoded English text appearing in the UI despite efforts to achieve full translation.
+-   **Recurrence count:** High. The user frequently points out untranslated labels and messages.
+-   **Status:** IN PROGRESS. This requires ongoing vigilance.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Barcode Generation:** Using  for generating transaction seals.
--   **PDF Generation:** Server-side PDF creation from HTML/CSS templates.
--   **Stateful Backend Rules:** Implementing logic that checks the current state of other documents before allowing an action (e.g., blocking duplicate transactions).
--   **i18n (Internationalization):** Full language toggling (Arabic/English) with no mixed content.
+-   **PDF Generation:**  for drawing PDFs, including barcodes and text.
+-   **Interactive Maps:**  for displaying work locations.
+-   **File Uploads:** FastAPI's  for handling file submissions.
+-   **Internationalization (i18n):**  for English/Arabic translations.
+-   **State Management:** React hooks (, ) for managing component state.
 
 **key DB schema**
--   ****: The  field will be critical for the one-time execution and duplicate transaction blocking rules.
--   ****: New source of truth for all contracts (To be created).
--   ****: Core employee data.
--   ****: Stores system-wide configurations like map visibility.
+-   ****: 
+-   ****: The  field was added to leave requests.
 
 **changes in tech stack**
--   **** will be introduced to replace  for generating STAS seals in PDFs.
-
-**All files of reference**
--   **Primary User Request:** User Message #23. This is the source of truth for the current set of tasks.
--   **Audit Report:** Agent Message #22. Contains the GAP analysis useful for fixing smaller issues.
--   **PDF Generation:**  (specifically ) and any related service/utility files.
--   **STAS Logic:**  (specifically ).
--   **Language Files:** , .
--   **Hardcoded Text:** , .
-
-**Areas that need refactoring**:
--   **Contract Management:** The entire legacy  V1 system (routes, models, UI) must be deprecated and removed once V2 is established.
--   **Hardcoded Text:** A systematic removal of all hardcoded UI text in favor of the i18n translation files is required.
--   **PDF Generation:** Logic should be centralized to easily apply the new standard letterhead across all transaction types.
-
-**key api endpoints**
--   : To be modified for barcode seal and standard letterhead.
--   : To be modified to prevent re-execution.
--    (and similar creation endpoints): To be modified with a pre-check to block creation if a pending transaction of the same type exists for the user.
-
-**Critical Info for New Agent**
--   You MUST complete the 7 high-priority tasks from the user's latest message before starting any work on the Contracts V2 system. The user is tracking this sequence closely.
--   The very first task is to replace the QR code with a barcode in PDFs.
--   The user wants to see proof of changes to conserve cards, so be clear and concise about what you have modified in your responses.
--   Adherence to the 100% Arabic or 100% English rule is critical and applies to all UI and PDF outputs.
-
-**documents and test reports created in this job**
 -   None.
 
+**All files of reference**
+-   **Overlapping Map Bug:** 
+-   **Leave Calendar UI:** 
+-   **PDF Barcode:** 
+-   **Notification System:** , 
+-   **Contract Creation:** , 
+-   **Translations:** , 
+
+**Areas that need refactoring**:
+-   **:** The component's rendering logic needs to be fixed to prevent the overlapping maps bug.
+-   **:** Will require significant changes to implement the new color-coded calendar logic.
+
+**key api endpoints**
+-   : Create a new announcement.
+-   : Get all announcements.
+-   : Upload a medical report for a leave request.
+-   : Admin endpoint to clean up data.
+
+**Critical Info for New Agent**
+-   **TOP PRIORITY:** You must immediately fix the overlapping maps bug on the . The user is blocked by this.
+-   **USER INTERACTION:** The user is highly detail-oriented and will provide frequent, specific feedback. Always confirm your understanding of their requests before implementing. All communication must be in Arabic.
+-   **PROOF OF WORK:** The user expects to see evidence of your changes. Use screenshots and clear descriptions of what was done.
+-   **LANGUAGE:** Be extremely diligent about translations. Check all new UI elements and messages to ensure they are added to both  and  files.
+
+**documents and test reports created in this job**
+-   /app/memory/PRD.md (updated multiple times)
+-   /app/test_reports/iteration_1.json
+-   /app/test_reports/iteration_2.json
+-   /app/test_reports/iteration_3.json
+
 **Last 10 User Messages and any pending HUMAN messages**
--   **User (Message #23 - LATEST & PENDING):** After reviewing the agent's audit, the user provided a new, definitive 10-point plan. The first 7 points are high-priority fixes and enhancements (barcode seal, one-time execution, language purity, etc.) that MUST be completed before starting the last 3 points (Contracts V2, migration, settlement).
--   **Agent (Message #22):** Delivered the complete, text-only system audit report as requested by the user, including a detailed GAP analysis.
--   **User (Message #6 / from history):** The original detailed request for the programmatic, text-only system audit which has now been fulfilled.
+1.  **User (LATEST/PENDING):** Provided a screenshot showing 3 overlapping maps on the Add Work Location page and stated this is an annoying bug that needs to be fixed immediately.
+2.  **Agent:** Acknowledged the creation of the notification UI.
+3.  **User:** Asked where to write notifications and requested work on specific Next Action Items, including the STAS mirror and the balance reset endpoint.
+4.  **Agent:** Explained the notification UI wasn't built yet and that they would add it.
+5.  **User:** Asked for the location to write notifications.
+6.  **Agent:** Summarized the successful test run and prepared to update PRD.md.
+7.  **User:** Outlined a long list of new requirements: fix overlapping maps, add a my location button, improve the leave calendar with color-coding, improve error messages (make them bilingual), reset all leave balances, add a version number, and implement a pinnable announcement system.
+8.  **Agent:** Finished the previous task and updated PRD.md.
+9.  **User:** Requested the removal of old contract management pages and outlined major enhancements for the V2 contract creation form (support new employees), leave management (require PDF for sick leave), and permissions for personal leave hours. Demanded full Arabic translations.
+10. **Agent:** Presented a summary of completed work and the plan for the next steps.
 
 **Project Health Check:**
--   **Broken**: N/A
+-   **Broken**: The Work Location creation/editing feature is broken due to the overlapping maps bug.
 -   **Mocked**: N/A
--   The application is stable, but the current implementation requires significant refactoring and feature development to align with the user's explicit new requirements.
 
 **3rd Party Integrations**
--    (To be added)
--    (To be deprecated/removed)
+-   
 
 **Testing status**
--   **Testing agent used after significant changes:** NO (current session was audit and planning).
+-   **Testing agent used after significant changes:** YES, the agent used the testing agent multiple times to verify functionality after major changes.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** None.
+-   **Known regressions:** The implementation of the map feature on the work locations page introduced a major UI bug (overlapping maps).
 
 **Credentials to test flow:**
 -   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). No passwords are required.
 
 **What agent forgot to execute**
--   The agent has not forgotten anything. It successfully completed the user's audit request and correctly pivoted to the new set of instructions for implementation.</analysis>
+-   The agent did not implement the color-coded leave calendar as requested.
+-   The agent did not implement the detector logic for the STAS mirror to explain conflicts.
+-   The agent introduced a critical bug (overlapping maps) while implementing another feature.</analysis>
