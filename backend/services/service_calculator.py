@@ -77,6 +77,9 @@ def calculate_monthly_wage(contract: dict) -> dict:
     """
     حساب الأجر الشهري المعتمد حسب تعريف العقد
     
+    آخر راتب (Last Wage) = الراتب الشامل:
+    الأساسي + السكن + النقل + طبيعة العمل + أي بدل ثابت بالعقد
+    
     Args:
         contract: بيانات العقد
         
@@ -85,22 +88,30 @@ def calculate_monthly_wage(contract: dict) -> dict:
             basic: الراتب الأساسي,
             housing: بدل السكن,
             transport: بدل النقل,
+            nature_of_work: بدل طبيعة العمل,
             other: بدلات أخرى,
             total_allowances: مجموع البدلات,
             wage_definition: تعريف الأجر,
+            last_wage: الراتب الشامل (لحسابات المخالصة),
             monthly_wage: الأجر الشهري المعتمد للحسابات
         }
     """
     basic = contract.get('basic_salary', 0) or 0
     housing = contract.get('housing_allowance', 0) or 0
     transport = contract.get('transport_allowance', 0) or 0
+    nature_of_work = contract.get('nature_of_work_allowance', 0) or 0
     other = contract.get('other_allowances', 0) or 0
     
-    total_allowances = housing + transport + other
+    total_allowances = housing + transport + nature_of_work + other
     wage_definition = contract.get('wage_definition', 'basic_only')
     
+    # الراتب الشامل (Last Wage) = جميع البدلات الثابتة
+    # هذا هو الراتب المستخدم في المخالصة ومكافأة نهاية الخدمة
+    last_wage = basic + housing + transport + nature_of_work + other
+    
+    # الأجر الشهري حسب تعريف العقد (للحسابات العادية)
     if wage_definition == 'basic_plus_fixed':
-        monthly_wage = basic + housing + transport
+        monthly_wage = basic + housing + transport + nature_of_work
     else:  # basic_only
         monthly_wage = basic
     
@@ -108,11 +119,13 @@ def calculate_monthly_wage(contract: dict) -> dict:
         "basic": basic,
         "housing": housing,
         "transport": transport,
+        "nature_of_work": nature_of_work,
         "other": other,
         "total_allowances": total_allowances,
         "wage_definition": wage_definition,
-        "monthly_wage": monthly_wage,
-        "daily_wage": round(monthly_wage / 30, 2) if monthly_wage > 0 else 0
+        "last_wage": last_wage,  # الراتب الشامل للمخالصة
+        "monthly_wage": monthly_wage,  # الأجر المعتمد
+        "daily_wage": round(last_wage / 30, 2) if last_wage > 0 else 0
     }
 
 
