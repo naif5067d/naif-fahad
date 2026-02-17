@@ -46,30 +46,41 @@ FIXED_LEAVE_DAYS = {
 # 1. معادلة الاستحقاق السنوي (Pro-Rata)
 # ============================================================
 
-async def calculate_pro_rata_entitlement(employee_id: str, year: int = None) -> dict:
+async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = None, end_date: str = None, annual_policy_days: int = None, year: int = None) -> dict:
     """
     حساب الاستحقاق السنوي التدريجي (Pro-Rata)
     
+    يدعم وضعين:
+    1. حساب سنوي عادي: employee_id فقط أو employee_id + year
+    2. حساب المخالصة: employee_id + start_date + end_date
+    
     المعادلات:
     - annual_entitlement_year = 21 أو 30 (من العقد أو قرار إداري)
-    - daily_accrual = annual_entitlement_year / days_in_year
-    - earned_to_date = daily_accrual * days_worked_in_year
-    - available_balance = earned_to_date - used_approved_executed
+    - للسنوي: daily_accrual = annual / days_in_year × days_worked
+    - للمخالصة: (policy_days / 365) × أيام الخدمة - المستخدم
     
     Args:
         employee_id: معرف الموظف
+        start_date: تاريخ البداية (للمخالصة)
+        end_date: تاريخ النهاية (للمخالصة)  
+        annual_policy_days: سياسة الإجازة (تجاوز)
         year: السنة (افتراضي: السنة الحالية)
     
     Returns:
         dict: تفاصيل الاستحقاق
     """
+    # إذا تم تمرير start_date و end_date، استخدم حساب المخالصة
+    if start_date and end_date:
+        return await _calculate_settlement_leave(employee_id, start_date, end_date, annual_policy_days)
+    
+    # الحساب السنوي العادي
     if year is None:
         year = datetime.now(timezone.utc).year
     
     # 1. جلب العقد النشط
     contract = await db.contracts_v2.find_one({
         "employee_id": employee_id,
-        "status": "active"
+        "status": {"$in": ["active", "terminated"]}
     }, {"_id": 0})
     
     if not contract:
@@ -89,7 +100,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, year: int = None) -> 
         }
     
     # 2. تحديد الاستحقاق السنوي (21 أو 30)
-    annual_policy_days = contract.get('annual_policy_days', DEFAULT_ANNUAL_ENTITLEMENT)
+    policy_days = annual_policy_days or contract.get('annual_policy_days', DEFAULT_ANNUAL_ENTITLEMENT)
     
     # التحقق من قرار إداري يغير السياسة
     policy_override = await db.admin_overrides.find_one({
