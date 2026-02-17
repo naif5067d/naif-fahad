@@ -152,52 +152,121 @@ export default function LeavePage() {
 
   return (
     <div className="space-y-6" data-testid="leave-page">
-      <h1 className="text-2xl font-bold tracking-tight">{t('leave.title')}</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{lang === 'ar' ? 'إدارة الإجازات' : 'Leave Management'}</h1>
 
-      {/* Balance cards - for employees */}
+      {/* عرض مختلف للموظف والإدارة */}
       {canRequest && (
-        <div className="grid grid-cols-3 gap-3">
-          {Object.entries(balance).map(([type, bal]) => (
-            <div key={type} className="bg-muted/40 border border-border rounded-lg px-4 py-3">
-              <p className="text-xs text-muted-foreground capitalize">{t(`leave.${type}`) || type}</p>
-              <p className="text-xl font-bold font-mono">{bal?.available ?? bal?.balance ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground">{t('dashboard.days')}</p>
+        <>
+          {isEmployee ? (
+            /* ====== عرض الموظف: مختصر ====== */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* رصيد الاعتيادية */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-emerald-500 rounded-lg">
+                    <CalendarCheck size={20} className="text-white" />
+                  </div>
+                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                    {lang === 'ar' ? 'رصيد الاعتيادية' : 'Annual Balance'}
+                  </p>
+                </div>
+                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                  {balance.annual?.available ?? balance.annual?.balance ?? 0}
+                  <span className="text-base font-normal ms-1">{lang === 'ar' ? 'يوم' : 'days'}</span>
+                </p>
+                {balance.annual?.earned_to_date && (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                    {lang === 'ar' ? `المكتسب: ${balance.annual.earned_to_date} يوم` : `Earned: ${balance.annual.earned_to_date} days`}
+                  </p>
+                )}
+              </div>
+
+              {/* ساعات الاستئذان المستهلكة */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-blue-500 rounded-lg">
+                    <Clock size={20} className="text-white" />
+                  </div>
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                    {lang === 'ar' ? 'ساعات الاستئذان المستهلكة' : 'Permission Hours Used'}
+                  </p>
+                </div>
+                <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                  {permissionHours.used || 0}
+                  <span className="text-base font-normal ms-1">/ {permissionHours.total || 2}</span>
+                  <span className="text-base font-normal ms-1">{lang === 'ar' ? 'ساعات' : 'hrs'}</span>
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  {lang === 'ar' ? 'هذا الشهر' : 'This month'}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
+          ) : (
+            /* ====== عرض الإدارة: كامل ====== */
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* رصيد الاعتيادية */}
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">{lang === 'ar' ? 'الاعتيادية' : 'Annual'}</p>
+                <p className="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-200">{balance.annual?.available ?? 0}</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">{lang === 'ar' ? 'يوم' : 'days'}</p>
+              </div>
+              
+              {/* الإجازات المستهلكة للإدارة */}
+              {Object.entries(usedLeaves).filter(([k]) => k !== 'annual').map(([type, days]) => (
+                <div key={type} className="bg-muted/40 border border-border rounded-lg px-4 py-3">
+                  <p className="text-xs text-muted-foreground">{LEAVE_TYPES[type]?.label || type}</p>
+                  <p className="text-xl font-bold font-mono">{days}</p>
+                  <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'يوم مستهلك' : 'days used'}</p>
+                </div>
+              ))}
+              
+              {/* ساعات الاستئذان */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
+                <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">{lang === 'ar' ? 'الاستئذان' : 'Permission'}</p>
+                <p className="text-xl font-bold font-mono text-blue-800 dark:text-blue-200">{permissionHours.used}/{permissionHours.total}</p>
+                <p className="text-[10px] text-blue-600 dark:text-blue-400">{lang === 'ar' ? 'ساعات' : 'hours'}</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Leave Request Form */}
+      {/* Leave Request Form - للموظف: فقط الاعتيادية */}
       {canRequest && (
         <div className="border border-border rounded-lg p-4">
-          <h2 className="text-base font-semibold mb-3">{t('leave.newRequest')}</h2>
+          <h2 className="text-base font-semibold mb-3">{lang === 'ar' ? 'طلب إجازة جديد' : 'New Leave Request'}</h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label>{t('leave.leaveType')}</Label>
+              <Label>{lang === 'ar' ? 'نوع الإجازة' : 'Leave Type'}</Label>
               <Select value={form.leave_type} onValueChange={v => setForm(f => ({ ...f, leave_type: v, medical_file: null }))}>
                 <SelectTrigger data-testid="leave-type-select"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(LEAVE_TYPES).map(([key, val]) => (
-                    <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                  {availableLeaveTypes.map(([key, val]) => (
+                    <SelectItem key={key} value={key}>{val.labelFull}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {isEmployee && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {lang === 'ar' ? 'للإجازات الأخرى (مرضية، زواج، وفاة...) تواصل مع الإدارة' : 'For other leaves, contact management'}
+                </p>
+              )}
             </div>
             <div>
-              <Label>{t('leave.reason')}</Label>
+              <Label>{lang === 'ar' ? 'السبب' : 'Reason'}</Label>
               <Input data-testid="leave-reason" value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} />
             </div>
             <div>
-              <Label>{t('leave.startDate')}</Label>
+              <Label>{lang === 'ar' ? 'تاريخ البداية' : 'Start Date'}</Label>
               <Input data-testid="leave-start" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} />
             </div>
             <div>
-              <Label>{t('leave.endDate')}</Label>
+              <Label>{lang === 'ar' ? 'تاريخ النهاية' : 'End Date'}</Label>
               <Input data-testid="leave-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
             </div>
             
-            {/* رفع ملف للإجازة المرضية */}
-            {form.leave_type === 'sick' && (
+            {/* رفع ملف للإجازة المرضية - للإدارة فقط */}
+            {form.leave_type === 'sick' && !isEmployee && (
               <div className="sm:col-span-2">
                 <Label className="text-red-600">
                   {lang === 'ar' ? '* ملف التقرير الطبي (PDF)' : '* Medical Report (PDF)'}
@@ -218,7 +287,7 @@ export default function LeavePage() {
             <div className="sm:col-span-2">
               <Button type="submit" disabled={submitting} data-testid="submit-leave" className="w-full sm:w-auto">
                 {submitting ? <Loader2 size={14} className="me-1 animate-spin" /> : null}
-                {submitting ? t('common.loading') : t('leave.submit')}
+                {submitting ? (lang === 'ar' ? 'جاري الإرسال...' : 'Submitting...') : (lang === 'ar' ? 'تقديم الطلب' : 'Submit Request')}
               </Button>
             </div>
           </form>
