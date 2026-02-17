@@ -115,26 +115,54 @@ async def build_pre_checks(tx: dict) -> List[dict]:
 
 
 async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
-    """فحوصات طلب الإجازة"""
+    """فحوصات طلب الإجازة - محدث Pro-Rata"""
     checks = []
     leave_type = data.get('leave_type', 'annual')
     working_days = data.get('working_days', 0)
     
-    # فحص الرصيد
-    balance = await get_leave_balance(emp_id, leave_type)
-    
-    checks.append({
-        "name": "Leave Balance Sufficient",
-        "name_ar": "رصيد الإجازات كافٍ",
-        "status": "PASS" if balance >= working_days else "FAIL",
-        "detail": f"الرصيد: {balance}, المطلوب: {working_days}",
-        "category": "leave",
-        "before_after": {
-            "before": balance,
-            "after": balance - working_days,
-            "change": -working_days
-        }
-    })
+    # فحص الرصيد باستخدام Pro-Rata
+    if leave_type == 'annual':
+        pro_rata = await calculate_pro_rata_entitlement(emp_id)
+        balance = pro_rata.get('available_balance', 0)
+        policy = await get_employee_annual_policy(emp_id)
+        
+        checks.append({
+            "name": "Annual Leave Policy",
+            "name_ar": "سياسة الإجازة السنوية",
+            "status": "PASS",
+            "detail": f"السياسة: {policy['days']} يوم ({policy['source_ar']})",
+            "category": "policy"
+        })
+        
+        checks.append({
+            "name": "Pro-Rata Calculation",
+            "name_ar": "حساب الاستحقاق التدريجي",
+            "status": "PASS",
+            "detail": pro_rata.get('formula', ''),
+            "category": "leave"
+        })
+        
+        checks.append({
+            "name": "Leave Balance Sufficient",
+            "name_ar": "رصيد الإجازات كافٍ",
+            "status": "PASS" if balance >= working_days else "FAIL",
+            "detail": f"المكتسب: {pro_rata.get('earned_to_date', 0):.2f}, المستخدم: {pro_rata.get('used_executed', 0)}, المتاح: {balance:.2f}, المطلوب: {working_days}",
+            "category": "leave",
+            "before_after": {
+                "before": round(balance, 2),
+                "after": round(balance - working_days, 2),
+                "change": -working_days
+            }
+        })
+    else:
+        # الإجازات الإدارية - لا رصيد، مسار إداري فقط
+        checks.append({
+            "name": "Administrative Leave",
+            "name_ar": "إجازة إدارية",
+            "status": "PASS",
+            "detail": f"نوع الإجازة: {data.get('leave_type_ar', leave_type)} - مسار إداري",
+            "category": "leave"
+        })
     
     # فحص التعارض
     start = data.get('start_date')
