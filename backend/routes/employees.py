@@ -253,16 +253,18 @@ async def delete_employee(employee_id: str, user=Depends(require_roles('stas')))
 @router.get("/{employee_id}/summary")
 async def get_employee_summary(employee_id: str, user=Depends(get_current_user)):
     """
-    ملخص شامل للموظف - يعرض في صفحة الموظفين
-    - العقد الحالي
-    - المشرف
-    - رصيد الإجازات
-    - نسبة الاستهلاك
-    - حالة الحضور
-    - الغياب
-    - الخصومات
+    ملخص شامل للموظف - محدث HR Policy
+    
+    للموظف:
+    - الحضور/الانصراف
+    - رصيد الإجازة السنوية فقط (Pro-Rata)
+    
+    للإدارة:
+    - كل البيانات + الحقول الجاهزة للربط
     """
     role = user.get('role')
+    viewer_is_admin = role in ['sultan', 'naif', 'stas', 'mohammed', 'ceo', 'admin']
+    
     if role == 'employee':
         own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not own or own['id'] != employee_id:
@@ -278,40 +280,19 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "status": {"$in": ["active", "terminated"]}
     }, {"_id": 0})
     
-    # 2. معلومات الخدمة (من Service Layer)
+    # 2. معلومات الخدمة
     service_info = await get_employee_service_info(employee_id)
     
-    # 3. ملخص الإجازات (من Service Layer)
-    leave_summary = await get_employee_leave_summary(employee_id)
+    # 3. سياسة الإجازة السنوية (21/30)
+    policy = await get_employee_annual_policy(employee_id)
     
-    # 4. ملخص الحضور (آخر 30 يوم)
+    # 4. رصيد الإجازة Pro-Rata
+    pro_rata = await calculate_pro_rata_entitlement(employee_id)
+    
+    # 5. ملخص الحضور
     attendance_summary = await get_employee_attendance_summary(employee_id)
     
-    # 5. الغياب غير المسوى
-    unsettled_absences = await get_unsettled_absences(employee_id)
-    
-    # 6. المشرف
-    supervisor = None
-    if emp.get('supervisor_id'):
-        supervisor = await db.employees.find_one(
-            {"id": emp['supervisor_id']}, 
-            {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1}
-        )
-    
-    # 7. الخصومات (من finance_ledger)
-    deductions = await db.finance_ledger.find({
-        "employee_id": employee_id,
-        "type": "debit",
-        "settled": {"$ne": True}
-    }, {"_id": 0}).to_list(100)
-    total_deductions = sum(d.get('amount', 0) for d in deductions)
-    
-    # 8. آخر حركة مالية
-    last_finance = await db.finance_ledger.find(
-        {"employee_id": employee_id}, {"_id": 0}
-    ).sort("date", -1).limit(1).to_list(1)
-    
-    # 9. حالة حضور اليوم
+    # 6. حالة حضور اليوم
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     today_attendance = await db.attendance_ledger.find_one({
         "employee_id": employee_id,
@@ -319,25 +300,94 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "type": "check_in"
     })
     
-    return {
+    # بيانات الموظف المختصرة (للجميع)
+    employee_summary = {
         "employee": emp,
-        "contract": contract,
-        "service_info": service_info,
-        "supervisor": supervisor,
-        "leave": {
-            "balances": leave_summary.get('balances', {}),
-            "annual": leave_summary.get('annual_leave', {}),
-            "sick": leave_summary.get('sick_leave', {})
-        },
         "attendance": {
-            "summary_30_days": attendance_summary,
-            "unsettled_absences": len(unsettled_absences),
-            "today_status": "present" if today_attendance else "not_checked_in"
+            "today_status": "present" if today_attendance else "not_checked_in",
+            "today_status_ar": "حاضر" if today_attendance else "لم يسجل الحضور"
         },
-        "finance": {
-            "pending_deductions": total_deductions,
-            "deductions_count": len(deductions),
-            "last_activity": last_finance[0] if last_finance else None
+        "annual_leave": {
+            "balance": round(pro_rata.get('available_balance', 0), 2),
+            "policy_days": policy['days'],
+            "policy_source_ar": policy['source_ar']
         },
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": format_datetime_riyadh(datetime.now(timezone.utc).isoformat())
     }
+    
+    # بيانات إضافية للإدارة فقط
+    if viewer_is_admin:
+        # المشرف
+        supervisor = None
+        if emp.get('supervisor_id'):
+            supervisor = await db.employees.find_one(
+                {"id": emp['supervisor_id']}, 
+                {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1}
+            )
+        
+        # الغياب غير المسوى
+        unsettled_absences = await get_unsettled_absences(employee_id)
+        
+        # الخصومات
+        deductions = await db.finance_ledger.find({
+            "employee_id": employee_id,
+            "type": "debit",
+            "settled": {"$ne": True}
+        }, {"_id": 0}).to_list(100)
+        total_deductions = sum(d.get('amount', 0) for d in deductions)
+        
+        # السلف النشطة
+        loans = await db.finance_ledger.find({
+            "employee_id": employee_id,
+            "code": "LOAN",
+            "settled": {"$ne": True}
+        }, {"_id": 0}).to_list(100)
+        total_loans = sum(l.get('amount', 0) for l in loans)
+        
+        # العهد النشطة
+        custody = await db.custody_ledger.find({
+            "employee_id": employee_id,
+            "status": "active"
+        }, {"_id": 0}).to_list(100)
+        
+        # المعاملات النشطة
+        active_transactions = await get_employee_active_transactions(employee_id)
+        
+        employee_summary.update({
+            "contract": contract,
+            "service_info": service_info,
+            "supervisor": supervisor,
+            "leave_details": {
+                "balance": round(pro_rata.get('available_balance', 0), 2),
+                "entitlement": policy['days'],
+                "earned_to_date": round(pro_rata.get('earned_to_date', 0), 2),
+                "used": pro_rata.get('used_executed', 0),
+                "daily_accrual": pro_rata.get('daily_accrual', 0),
+                "days_worked": pro_rata.get('days_worked', 0),
+                "formula": pro_rata.get('formula', ''),
+                "policy_source": policy['source'],
+                "policy_source_ar": policy['source_ar']
+            },
+            "attendance_details": {
+                "summary_30_days": attendance_summary,
+                "unsettled_absences": len(unsettled_absences),
+                "unsettled_details": unsettled_absences[:5] if viewer_is_admin else []
+            },
+            "finance": {
+                "pending_deductions": total_deductions,
+                "deductions_count": len(deductions),
+                "pending_loans": total_loans,
+                "loans_count": len(loans)
+            },
+            "custody": {
+                "active_count": len(custody),
+                "items": [c.get('item_name', '') for c in custody]
+            },
+            "active_transactions": {
+                "count": len(active_transactions),
+                "types": list(set(t.get('type', '') for t in active_transactions)),
+                "ref_nos": [t.get('ref_no', '') for t in active_transactions]
+            }
+        })
+    
+    return employee_summary
