@@ -65,9 +65,11 @@ class ContractCreate(BaseModel):
     probation_months: int = 3
     notice_period_days: int = 30
     
+    # الراتب والبدلات
     basic_salary: float = 0
     housing_allowance: float = 0
     transport_allowance: float = 0
+    nature_of_work_allowance: float = 0  # بدل طبيعة العمل
     other_allowances: float = 0
     
     wage_definition: str = "basic_only"  # basic_only | basic_plus_fixed
@@ -83,6 +85,10 @@ class ContractCreate(BaseModel):
     
     supervisor_id: Optional[str] = None
     notes: str = ""
+    
+    # معلومات البنك (إلزامية)
+    bank_name: str = ""
+    bank_iban: str = ""
 
 
 class ContractUpdate(BaseModel):
