@@ -99,12 +99,26 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({});
   const [recentTxs, setRecentTxs] = useState([]);
   const [nextHoliday, setNextHoliday] = useState(null);
+  const [announcements, setAnnouncements] = useState({ pinned: [], regular: [] });
+  const [appVersion, setAppVersion] = useState('');
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => {});
     api.get('/api/transactions').then(r => setRecentTxs(r.data.slice(0, 5))).catch(() => {});
     api.get('/api/dashboard/next-holiday').then(r => setNextHoliday(r.data)).catch(() => {});
+    api.get('/api/announcements').then(r => setAnnouncements(r.data)).catch(() => {});
+    api.get('/api/health').then(r => setAppVersion(r.data.version)).catch(() => {});
   }, []);
+
+  const dismissAnnouncement = async (id) => {
+    try {
+      await api.post(`/api/announcements/${id}/dismiss`);
+      setAnnouncements(prev => ({
+        ...prev,
+        regular: prev.regular.filter(a => a.id !== id)
+      }));
+    } catch (err) {}
+  };
 
   const role = user?.role || 'employee';
   const statCards = STAT_CONFIG[role] || STAT_CONFIG.employee;
