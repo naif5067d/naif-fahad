@@ -202,17 +202,39 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
 
     # Execute based on type
     if tx_type == 'leave_request':
+        leave_type = data.get('leave_type', 'annual')
+        working_days = data.get('working_days', 0)
+        
+        # تسجيل الإجازة في leave_ledger
         await db.leave_ledger.insert_one({
             "id": str(uuid.uuid4()),
             "employee_id": emp_id,
             "transaction_id": tx['id'],
             "type": "debit",
-            "leave_type": data.get('leave_type', 'annual'),
-            "days": data.get('working_days', 0),
+            "leave_type": leave_type,
+            "days": working_days,
             "note": f"Leave: {data.get('start_date')} to {data.get('adjusted_end_date')}",
             "date": now,
             "created_at": now
         })
+        
+        # للإجازات الإدارية (وفاة، زواج): تسجيل الرصيد الثابت (5 أيام) كـ credit ثم debit
+        # هذا يُظهر للإدارة أن الموظف استخدم 5 أيام من رصيد 5 أيام
+        if leave_type in ['bereavement', 'marriage']:
+            fixed_days = 5
+            # إضافة رصيد (للعرض فقط)
+            await db.leave_ledger.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": emp_id,
+                "transaction_id": tx['id'],
+                "type": "credit",
+                "leave_type": leave_type,
+                "days": fixed_days,
+                "note": f"رصيد {leave_type} الثابت",
+                "date": now,
+                "created_at": now,
+                "source": "fixed_entitlement"
+            })
 
     elif tx_type == 'finance_60':
         await db.finance_ledger.insert_one({
