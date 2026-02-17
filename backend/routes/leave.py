@@ -49,9 +49,9 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     emp, contract, errors = await get_employee_with_contract(user['user_id'])
     
     if errors:
-        # Return first error
+        # Return first error - بالعربية دائماً
         error = errors[0]
-        raise HTTPException(status_code=400, detail=error['message'])
+        raise HTTPException(status_code=400, detail=error.get('message_ar', error['message']))
     
     # Step 2: Validate leave request (balance, overlap, dates)
     validation = await validate_leave_request(
