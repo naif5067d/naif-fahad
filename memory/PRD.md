@@ -332,7 +332,6 @@ system_archives, maintenance_log
 
 ### P2 (Priority 2)
 - نظام الحضور والانصراف المحسّن (Present/Absent/On Leave/Permission)
-- إشعارات انتهاء العقود مع رصيد إجازات
 - New Transaction Types (leave/attendance subtypes)
 - STAS Financial Custody Mirror
 - Geofencing enforcement
