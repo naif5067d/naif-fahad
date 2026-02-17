@@ -24,13 +24,14 @@ def session():
 
 
 @pytest.fixture(scope="module")
-def stas_session(session):
+def stas_session():
     """Get session authenticated as STAS"""
-    response = session.post(f"{BASE_URL}/api/auth/switch/{STAS_USER_ID}")
+    s = requests.Session()
+    response = s.post(f"{BASE_URL}/api/auth/switch/{STAS_USER_ID}")
     if response.status_code == 200:
-        token = response.json().get("access_token")
-        session.headers.update({"Authorization": f"Bearer {token}"})
-    return session
+        token = response.json().get("token")  # API returns 'token' not 'access_token'
+        s.headers.update({"Authorization": f"Bearer {token}"})
+    return s
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +40,7 @@ def sultan_session():
     s = requests.Session()
     response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
     if response.status_code == 200:
-        token = response.json().get("access_token")
+        token = response.json().get("token")  # API returns 'token' not 'access_token'
         s.headers.update({"Authorization": f"Bearer {token}"})
     return s
 
