@@ -147,7 +147,8 @@ export default function WorkLocationsPage() {
       radius_meters: location.radius_meters,
       work_start: location.work_start,
       work_end: location.work_end,
-      grace_period_minutes: location.grace_period_minutes || 0,
+      grace_checkin_minutes: location.grace_checkin_minutes || 0,
+      grace_checkout_minutes: location.grace_checkout_minutes || 0,
       work_days: location.work_days,
       assigned_employees: location.assigned_employees || [],
     });
