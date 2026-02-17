@@ -394,6 +394,7 @@ export default function ContractsManagementPage() {
     return (contract.basic_salary || 0) + 
            (contract.housing_allowance || 0) + 
            (contract.transport_allowance || 0) + 
+           (contract.nature_of_work_allowance || 0) +
            (contract.other_allowances || 0);
   };
 
