@@ -204,6 +204,66 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Expiring Contracts Alert (Admin only) */}
+      {isAdmin && expiringContracts.employees?.length > 0 && (
+        <div className="space-y-3" data-testid="expiring-contracts-section">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell size={18} className="text-amber-500" />
+              <h2 className="text-lg font-semibold">
+                {lang === 'ar' ? 'تنبيه: عقود قاربت على الانتهاء' : 'Alert: Expiring Contracts'}
+              </h2>
+              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                {expiringContracts.summary.total} {lang === 'ar' ? 'موظف' : 'employees'}
+              </span>
+            </div>
+            <button 
+              onClick={() => navigate('/contracts-management')} 
+              className="text-sm text-primary font-medium flex items-center gap-1"
+            >
+              {lang === 'ar' ? 'عرض الكل' : 'View all'}
+              <ChevronRight size={16} className="rtl:rotate-180" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {expiringContracts.employees.slice(0, 6).map(emp => (
+              <div 
+                key={emp.employee_id}
+                className={`p-4 rounded-xl border ${
+                  emp.urgency === 'critical' ? 'border-red-200 bg-red-50 animate-pulse' : 
+                  emp.urgency === 'high' ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50'
+                }`}
+                data-testid={`expiring-contract-${emp.employee_code}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className={`font-medium ${emp.urgency === 'critical' ? 'text-red-700' : ''}`}>
+                      {lang === 'ar' ? emp.employee_name_ar || emp.employee_name : emp.employee_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{emp.employee_code}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                    emp.urgency === 'critical' ? 'bg-red-100 text-red-700' : 
+                    emp.urgency === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {emp.days_remaining} {lang === 'ar' ? 'يوم' : 'days'}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    {lang === 'ar' ? 'انتهاء:' : 'Expires:'} {emp.end_date}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {lang === 'ar' ? 'رصيد الإجازة:' : 'Leave:'} {emp.leave_balance} {lang === 'ar' ? 'يوم' : 'd'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
