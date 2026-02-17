@@ -584,3 +584,227 @@ def format_date_arabic(date_str: str) -> str:
         return f"{dt.day} {get_arabic_month(dt.month)} {dt.year}"
     except Exception:
         return date_str
+
+
+
+# ============================================================
+# 7. سياسة الإجازة المرضية - نظام العمل السعودي (المادة 117)
+# ============================================================
+
+# شرائح الإجازة المرضية
+SICK_LEAVE_TIERS = [
+    {"days": 30, "salary_percent": 100, "label_ar": "30 يوم براتب كامل", "label_en": "30 days full pay"},
+    {"days": 60, "salary_percent": 50, "label_ar": "60 يوم بنصف الراتب", "label_en": "60 days half pay"},
+    {"days": 30, "salary_percent": 0, "label_ar": "30 يوم بدون أجر", "label_en": "30 days no pay"},
+]
+
+# إجمالي أيام الإجازة المرضية في السنة
+MAX_SICK_DAYS_PER_YEAR = 120  # 30 + 60 + 30
+
+
+async def calculate_sick_leave_consumption(employee_id: str, year: int = None) -> dict:
+    """
+    حساب استهلاك الإجازة المرضية حسب المادة 117 من نظام العمل السعودي
+    
+    الشرائح:
+    - أول 30 يوم: براتب كامل (100%)
+    - الـ 60 يوم التالية: بنصف الراتب (50%)
+    - الـ 30 يوم الأخيرة: بدون أجر (0%)
+    - الحد الأقصى: 120 يوم في السنة
+    
+    Args:
+        employee_id: معرف الموظف
+        year: السنة (افتراضي: السنة الحالية)
+    
+    Returns:
+        dict: تفاصيل الاستهلاك مع الشرائح
+    """
+    if year is None:
+        year = datetime.now(timezone.utc).year
+    
+    year_start = f"{year}-01-01"
+    year_end = f"{year}-12-31"
+    
+    # 1. جلب جميع طلبات الإجازة المرضية المنفذة في هذه السنة
+    sick_entries = await db.leave_ledger.find({
+        "employee_id": employee_id,
+        "leave_type": "sick",
+        "type": "debit",
+        "$or": [
+            {"start_date": {"$gte": year_start, "$lte": year_end}},
+            {"date": {"$gte": year_start, "$lte": year_end}}
+        ]
+    }, {"_id": 0}).sort("start_date", 1).to_list(100)
+    
+    # إذا لم توجد في leave_ledger، جرب transactions
+    if not sick_entries:
+        sick_txns = await db.transactions.find({
+            "employee_id": employee_id,
+            "type": "leave_request",
+            "status": "executed",
+            "data.leave_type": "sick",
+            "data.start_date": {"$gte": year_start, "$lte": year_end}
+        }, {"_id": 0}).sort("data.start_date", 1).to_list(100)
+        
+        for tx in sick_txns:
+            sick_entries.append({
+                "days": tx.get("data", {}).get("working_days", 0),
+                "start_date": tx.get("data", {}).get("start_date"),
+                "end_date": tx.get("data", {}).get("end_date"),
+                "ref_no": tx.get("ref_no")
+            })
+    
+    # 2. حساب إجمالي الأيام المستهلكة
+    total_sick_days = sum(e.get('days', 0) for e in sick_entries)
+    
+    # 3. توزيع الأيام على الشرائح
+    tier_breakdown = []
+    remaining_days = total_sick_days
+    
+    for tier in SICK_LEAVE_TIERS:
+        tier_max = tier["days"]
+        tier_used = min(remaining_days, tier_max)
+        remaining_days -= tier_used
+        
+        tier_breakdown.append({
+            "tier_name_ar": tier["label_ar"],
+            "tier_name_en": tier["label_en"],
+            "tier_max_days": tier_max,
+            "tier_used_days": tier_used,
+            "tier_remaining_days": tier_max - tier_used,
+            "salary_percent": tier["salary_percent"],
+            "is_active": tier_used > 0 and tier_used < tier_max,
+            "is_exhausted": tier_used >= tier_max
+        })
+    
+    # 4. تحديد الشريحة الحالية
+    current_tier = None
+    current_tier_index = 0
+    accumulated = 0
+    
+    for i, tier in enumerate(SICK_LEAVE_TIERS):
+        accumulated += tier["days"]
+        if total_sick_days < accumulated:
+            current_tier = tier
+            current_tier_index = i + 1
+            break
+    
+    if not current_tier and total_sick_days >= MAX_SICK_DAYS_PER_YEAR:
+        current_tier = {"label_ar": "تم استنفاد الرصيد", "salary_percent": 0}
+        current_tier_index = 4
+    
+    # 5. حساب الخصم المالي (للإدارة)
+    salary_deduction_info = []
+    remaining_calc = total_sick_days
+    
+    for tier in SICK_LEAVE_TIERS:
+        tier_days = min(remaining_calc, tier["days"])
+        if tier_days > 0:
+            deduction_percent = 100 - tier["salary_percent"]
+            salary_deduction_info.append({
+                "days": tier_days,
+                "salary_percent": tier["salary_percent"],
+                "deduction_percent": deduction_percent,
+                "label_ar": f"{tier_days} يوم بنسبة {deduction_percent}% خصم"
+            })
+        remaining_calc -= tier_days
+    
+    return {
+        "year": year,
+        "total_sick_days_used": total_sick_days,
+        "max_sick_days_year": MAX_SICK_DAYS_PER_YEAR,
+        "remaining_sick_days": max(0, MAX_SICK_DAYS_PER_YEAR - total_sick_days),
+        "current_tier": current_tier_index,
+        "current_tier_info": {
+            "name_ar": current_tier["label_ar"] if current_tier else "لم يستخدم",
+            "salary_percent": current_tier["salary_percent"] if current_tier else 100
+        },
+        "tier_breakdown": tier_breakdown,
+        "salary_deduction_info": salary_deduction_info,
+        "sick_entries": sick_entries,
+        "message_ar": f"استهلاك الإجازة المرضية: {total_sick_days} من {MAX_SICK_DAYS_PER_YEAR} يوم - الشريحة الحالية: {current_tier['label_ar'] if current_tier else 'لم يستخدم'}"
+    }
+
+
+async def get_sick_leave_tier_for_request(employee_id: str, requested_days: int) -> dict:
+    """
+    تحديد شريحة الراتب لطلب إجازة مرضية جديد
+    
+    يُستخدم عند قبول طلب الإجازة المرضية لتحديد:
+    - كم يوم سيكون براتب كامل
+    - كم يوم بنصف راتب
+    - كم يوم بدون راتب
+    
+    Args:
+        employee_id: معرف الموظف
+        requested_days: عدد الأيام المطلوبة
+    
+    Returns:
+        dict: تفصيل الشرائح للطلب الجديد
+    """
+    # جلب الاستهلاك الحالي
+    current = await calculate_sick_leave_consumption(employee_id)
+    used_days = current.get('total_sick_days_used', 0)
+    
+    # حساب توزيع الأيام الجديدة على الشرائح
+    new_total = used_days + requested_days
+    
+    if new_total > MAX_SICK_DAYS_PER_YEAR:
+        # تجاوز الحد الأقصى
+        return {
+            "allowed": False,
+            "max_allowed_days": MAX_SICK_DAYS_PER_YEAR - used_days,
+            "message_ar": f"تجاوز الحد الأقصى للإجازة المرضية. المتبقي: {MAX_SICK_DAYS_PER_YEAR - used_days} يوم"
+        }
+    
+    # توزيع الأيام الجديدة
+    distribution = []
+    remaining_new = requested_days
+    accumulated = 0
+    
+    for tier in SICK_LEAVE_TIERS:
+        accumulated += tier["days"]
+        
+        # كم يوم مستخدم من هذه الشريحة؟
+        tier_start = accumulated - tier["days"]
+        tier_end = accumulated
+        
+        # كم يوم كان مستخدماً قبل هذا الطلب؟
+        used_in_tier = max(0, min(used_days, tier_end) - tier_start)
+        
+        # كم يوم متبقي في هذه الشريحة؟
+        remaining_in_tier = tier["days"] - used_in_tier
+        
+        if remaining_in_tier > 0 and remaining_new > 0:
+            days_from_this_tier = min(remaining_new, remaining_in_tier)
+            distribution.append({
+                "tier_name_ar": tier["label_ar"],
+                "days": days_from_this_tier,
+                "salary_percent": tier["salary_percent"]
+            })
+            remaining_new -= days_from_this_tier
+    
+    return {
+        "allowed": True,
+        "requested_days": requested_days,
+        "distribution": distribution,
+        "message_ar": f"توزيع {requested_days} يوم على الشرائح"
+    }
+
+
+async def get_sick_leave_summary_for_admin(employee_id: str) -> dict:
+    """
+    ملخص الإجازة المرضية للإدارة (STAS/Sultan)
+    يُعرض في مرآة STAS وصفحة الموظف
+    """
+    consumption = await calculate_sick_leave_consumption(employee_id)
+    
+    return {
+        "total_used": consumption.get('total_sick_days_used', 0),
+        "max_per_year": MAX_SICK_DAYS_PER_YEAR,
+        "remaining": consumption.get('remaining_sick_days', MAX_SICK_DAYS_PER_YEAR),
+        "current_tier": consumption.get('current_tier_info', {}),
+        "tier_breakdown": consumption.get('tier_breakdown', []),
+        "salary_impact": consumption.get('salary_deduction_info', []),
+        "entries": consumption.get('sick_entries', [])
+    }
