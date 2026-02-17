@@ -478,10 +478,11 @@ def get_status_for_viewer(transaction: dict, viewer_role: str) -> dict:
     الحصول على الحالة المناسبة للمشاهد
     
     الموظف يرى: "قيد المراجعة" بدلاً من تفاصيل التصعيد
+    pending_ceo يظهر "لدى سلطان" للموظف
     """
     status = transaction.get('status', '')
     
-    # الأدوار المحدودة
+    # الأدوار المحدودة (لا يرون تفاصيل التصعيد)
     limited_roles = ['employee', 'supervisor']
     
     if viewer_role in limited_roles:
@@ -497,8 +498,9 @@ def get_status_for_viewer(transaction: dict, viewer_role: str) -> dict:
         status_map = {
             "pending_supervisor": {"status_ar": "بانتظار المشرف", "show_details": True},
             "pending_ops": {"status_ar": "قيد المراجعة", "show_details": False},
-            "pending_ceo": {"status_ar": "قيد المراجعة", "show_details": False},
+            "pending_ceo": {"status_ar": "لدى سلطان", "show_details": False},  # يظهر "لدى سلطان"
             "pending_stas": {"status_ar": "قيد المراجعة", "show_details": False},
+            "pending_finance": {"status_ar": "قيد المراجعة", "show_details": False},
             "executed": {"status_ar": "تم التنفيذ", "show_details": True},
             "rejected": {"status_ar": "مرفوض", "show_details": True},
             "cancelled": {"status_ar": "ملغى", "show_details": True}
