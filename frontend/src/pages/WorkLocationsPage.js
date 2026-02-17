@@ -575,12 +575,21 @@ export default function WorkLocationsPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock size={14} />
                     <span>{loc.work_start} - {loc.work_end}</span>
-                    {loc.grace_period_minutes > 0 && (
-                      <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
-                        ±{loc.grace_period_minutes}{lang === 'ar' ? 'د' : 'm'}
-                      </span>
-                    )}
                   </div>
+                  {(loc.grace_checkin_minutes > 0 || loc.grace_checkout_minutes > 0) && (
+                    <div className="flex items-center gap-2 text-xs">
+                      {loc.grace_checkin_minutes > 0 && (
+                        <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded flex items-center gap-1">
+                          <span>↓</span>{loc.grace_checkin_minutes}{lang === 'ar' ? 'د' : 'm'}
+                        </span>
+                      )}
+                      {loc.grace_checkout_minutes > 0 && (
+                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded flex items-center gap-1">
+                          <span>↑</span>{loc.grace_checkout_minutes}{lang === 'ar' ? 'د' : 'm'}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar size={14} />
                     <span className="text-xs">
