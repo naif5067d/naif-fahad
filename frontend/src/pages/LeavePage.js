@@ -384,6 +384,75 @@ export default function LeavePage() {
           </div>
         </div>
       )}
+
+      {/* تحذير المادة 117 للإجازة المرضية */}
+      <Dialog open={showSickWarningDialog} onOpenChange={setShowSickWarningDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="w-5 h-5" />
+              {lang === 'ar' ? 'تنبيه - المادة 117 من نظام العمل' : 'Notice - Labor Law Article 117'}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === 'ar' ? 'معلومات مهمة عن الخصم المتوقع' : 'Important information about expected deduction'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {sickLeaveWarning && (
+            <div className="space-y-4 py-2">
+              {/* الاستهلاك الحالي */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                  <Info className="w-4 h-4 inline me-1" />
+                  {lang === 'ar' ? 'استهلاكك الحالي هذا العام:' : 'Your current usage this year:'}
+                </p>
+                <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                  {sickLeaveWarning.current_used || 0} / 120 {lang === 'ar' ? 'يوم' : 'days'}
+                </p>
+              </div>
+              
+              {/* الشريحة الحالية */}
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                  {lang === 'ar' ? 'الشريحة المتوقعة:' : 'Expected tier:'}
+                </p>
+                <div className="space-y-1 text-sm">
+                  {sickLeaveWarning.tier_distribution?.map((tier, i) => (
+                    <div key={i} className={`p-2 rounded ${tier.salary_percent === 100 ? 'bg-emerald-100 text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                      <span className="font-bold">{tier.days} {lang === 'ar' ? 'يوم' : 'days'}</span>
+                      <span className="mx-2">←</span>
+                      <span>{tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب (خصم 50%)' : 'Half pay (50% deduction)') : (lang === 'ar' ? 'بدون راتب (خصم 100%)' : 'No pay (100% deduction)')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* نص اللائحة */}
+              <div className="p-3 bg-muted/50 rounded-lg border text-xs">
+                <p className="font-medium mb-1">{lang === 'ar' ? 'حسب المادة 117 من نظام العمل السعودي:' : 'According to Saudi Labor Law Article 117:'}</p>
+                <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                  <li>{lang === 'ar' ? 'أول 30 يوم: براتب كامل (100%)' : 'First 30 days: Full pay (100%)'}</li>
+                  <li>{lang === 'ar' ? 'الـ 60 يوم التالية: بنصف الراتب (50%)' : 'Next 60 days: Half pay (50%)'}</li>
+                  <li>{lang === 'ar' ? 'الـ 30 يوم الأخيرة: بدون أجر (0%)' : 'Last 30 days: No pay (0%)'}</li>
+                </ul>
+              </div>
+              
+              <p className="text-sm text-center text-muted-foreground">
+                {lang === 'ar' ? 'هل تريد الاستمرار في تقديم الطلب؟' : 'Do you want to continue with the request?'}
+              </p>
+            </div>
+          )}
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowSickWarningDialog(false)}>
+              {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button onClick={handleConfirmSickLeave} className="bg-amber-600 hover:bg-amber-700">
+              {lang === 'ar' ? 'نعم، تقديم الطلب' : 'Yes, Submit Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
