@@ -15,7 +15,6 @@ from routes.employees import router as employees_router
 from routes.transactions import router as transactions_router
 from routes.leave import router as leave_router
 from routes.attendance import router as attendance_router
-from routes.finance import router as finance_router
 from routes.contracts import router as contracts_router
 from routes.stas import router as stas_router
 from routes.work_locations import router as work_locations_router
