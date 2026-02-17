@@ -655,7 +655,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             elements.append(Spacer(1, 5*mm))
             
             consent_title = "موافقة الموظف على الخصم - المادة 117" if lang == 'ar' else "Employee Deduction Consent - Article 117"
-            consent_style = ParagraphStyle('consent_title', parent=base_ar_style, fontSize=9, fontName=bold_font, textColor=colors.HexColor('#2196F3'))
+            consent_style = ParagraphStyle('consent_title', parent=base_style, fontSize=9, fontName=bold_font, textColor=colors.HexColor('#2196F3'))
             elements.append(make_para(consent_title, consent_style))
             
             emp_first_name = ""
