@@ -292,20 +292,43 @@ export default function STASMirrorPage() {
                   <Card className="border border-border shadow-none" data-testid="before-after-card">
                     <CardHeader className="pb-2"><CardTitle className="text-sm">{t('stas.beforeAfter')}</CardTitle></CardHeader>
                     <CardContent>
+                      {/* عرض المعادلة والسياسة إذا كانت موجودة */}
+                      {mirror.before_after?.formula && (
+                        <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                          <p className="text-xs font-semibold text-blue-700 mb-1">{lang === 'ar' ? 'المعادلة' : 'Formula'}</p>
+                          <p className="font-mono text-sm text-blue-900">{mirror.before_after.formula}</p>
+                        </div>
+                      )}
+                      {mirror.before_after?.policy && (
+                        <div className="mb-4 p-2 rounded bg-muted/50 text-sm">
+                          <span className="text-muted-foreground">{lang === 'ar' ? 'السياسة:' : 'Policy:'}</span> 
+                          <span className="font-bold ms-2">{mirror.before_after.policy.days} {lang === 'ar' ? 'يوم' : 'days'}</span>
+                          <span className="text-xs text-muted-foreground ms-2">({mirror.before_after.policy.source_ar || mirror.before_after.policy.source})</span>
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="p-3 rounded-lg bg-muted/50">
                           <p className="text-xs font-semibold text-muted-foreground mb-2">{lang === 'ar' ? 'قبل' : 'BEFORE'}</p>
                           {Object.entries(mirror.before_after?.before || {}).map(([k, v]) => (
-                            <div key={k} className="flex justify-between text-sm"><span className="text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span><span className="font-medium">{String(v)}</span></div>
+                            <div key={k} className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{translateKey(k)}</span>
+                              <span className="font-medium">{typeof v === 'number' ? v.toFixed(2) : String(v)}</span>
+                            </div>
                           ))}
                         </div>
                         <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
                           <p className="text-xs font-semibold text-primary mb-2">{lang === 'ar' ? 'بعد' : 'AFTER'}</p>
                           {Object.entries(mirror.before_after?.after || {}).map(([k, v]) => (
-                            <div key={k} className="flex justify-between text-sm"><span className="text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span><span className="font-bold">{String(v)}</span></div>
+                            <div key={k} className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{translateKey(k)}</span>
+                              <span className="font-bold">{typeof v === 'number' ? v.toFixed(2) : String(v)}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
+                      {mirror.before_after?.note_ar && (
+                        <p className="text-xs text-muted-foreground mt-3 text-center">{mirror.before_after.note_ar}</p>
+                      )}
                     </CardContent>
                   </Card>
 
