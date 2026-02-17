@@ -61,17 +61,35 @@ def create_company_logo(branding=None, width=25, height=25):
     إنشاء شعار الشركة
     يحاول تحميل اللوجو من branding (base64) أو من ملف، وإذا لم يكن موجوداً ينشئ شعار نصي
     """
+    import base64
+    from PIL import Image as PILImage
+    
     # 1. محاولة تحميل من branding (base64)
     if branding and branding.get('logo_data'):
         try:
-            import base64
             logo_data = branding['logo_data']
             # إزالة prefix مثل "data:image/jpeg;base64,"
             if ',' in logo_data:
                 logo_data = logo_data.split(',')[1]
             logo_bytes = base64.b64decode(logo_data)
             logo_buffer = io.BytesIO(logo_bytes)
-            return Image(logo_buffer, width=width*mm, height=height*mm)
+            
+            # فتح الصورة باستخدام PIL للتحقق منها وتحويلها إذا لزم الأمر
+            pil_img = PILImage.open(logo_buffer)
+            # تحويل إلى RGB إذا كانت RGBA
+            if pil_img.mode == 'RGBA':
+                background = PILImage.new('RGB', pil_img.size, (255, 255, 255))
+                background.paste(pil_img, mask=pil_img.split()[3])
+                pil_img = background
+            elif pil_img.mode != 'RGB':
+                pil_img = pil_img.convert('RGB')
+            
+            # حفظ الصورة المعالجة في buffer جديد
+            output_buffer = io.BytesIO()
+            pil_img.save(output_buffer, format='PNG')
+            output_buffer.seek(0)
+            
+            return Image(output_buffer, width=width*mm, height=height*mm)
         except Exception as e:
             print(f"Error loading logo from branding: {e}")
     
@@ -182,8 +200,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     col_en = CONTENT_WIDTH * 0.5
     
     # ============ 1. HEADER WITH LOGO / الترويسة مع الشعار ============
-    # إنشاء اللوجو
-    logo = create_company_logo(width=20, height=20)
+    # إنشاء اللوجو من branding
+    logo = create_company_logo(branding=branding, width=20, height=20)
     
     # Header with logo in center
     header_left = [
@@ -482,30 +500,56 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     elements.append(Spacer(1, 2*mm))
     
     # ============ 8. DECLARATION / نص الإقرار ============
+    # النص الكامل الثنائي اللغة
     decl_ar = "أقر أنا الموقع أدناه بأنني استلمت كافة مستحقاتي من شركة دار الكود للاستشارات الهندسية حسب البيانات المذكورة أعلاه، وهذا المبلغ شامل كافة مستحقاتي المالية حتى تاريخه، وتُعتبر هذه بمثابة براءة ذمة للشركة ولا يحق لي المطالبة بأية مستحقات لاحقة."
     decl_en = "I, the undersigned, confirm that I have received all my entitlements from Dar Al Code Engineering Consultancy according to the above details. This amount includes all my financial dues up to this date and represents a full release of liability for the company."
     
-    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, wordWrap='RTL', leading=9)
-    decl_style_en = ParagraphStyle('decl_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_LEFT, leading=9)
+    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, wordWrap='RTL', leading=10)
+    decl_style_en = ParagraphStyle('decl_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_LEFT, leading=10)
     
-    decl_data = [[
-        Paragraph(decl_en, decl_style_en),
-        Paragraph(reshape_arabic(decl_ar), decl_style_ar)
-    ]]
-    
-    decl_table = Table(decl_data, colWidths=[col_en, col_ar])
-    decl_table.setStyle(TableStyle([
+    # عنوان التعهد / Declaration
+    decl_header = Table([
+        [title_en("Declaration / Acknowledgment"), title_ar("الإقرار والتعهد")]
+    ], colWidths=[col_en, col_ar])
+    decl_header.setStyle(TableStyle([
         ('ALIGN', (0, 0), (0, 0), 'LEFT'),
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('BACKGROUND', (0, 0), (-1, -1), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+    ]))
+    elements.append(decl_header)
+    
+    # النص الإنجليزي
+    decl_data_en = [[Paragraph(decl_en, decl_style_en)]]
+    decl_table_en = Table(decl_data_en, colWidths=[CONTENT_WIDTH])
+    decl_table_en.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
         ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-        ('LEFTPADDING', (0, 0), (-1, -1), 3),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
-    elements.append(decl_table)
+    elements.append(decl_table_en)
+    
+    # النص العربي
+    decl_data_ar = [[Paragraph(reshape_arabic(decl_ar), decl_style_ar)]]
+    decl_table_ar = Table(decl_data_ar, colWidths=[CONTENT_WIDTH])
+    decl_table_ar.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(decl_table_ar)
     elements.append(Spacer(1, 3*mm))
     
     # ============ 9. SIGNATURES / التوقيعات ============
