@@ -86,10 +86,15 @@ export default function ContractsManagementPage() {
   
   // Form state
   const [formData, setFormData] = useState({
+    // هل موظف جديد أو اختيار من القائمة
+    is_new_employee: true,
     employee_id: '',
     employee_code: '',
     employee_name: '',
     employee_name_ar: '',
+    email: '',
+    phone: '',
+    national_id: '',
     contract_category: 'employment',
     employment_type: 'unlimited',
     job_title: '',
@@ -105,8 +110,13 @@ export default function ContractsManagementPage() {
     transport_allowance: 0,
     other_allowances: 0,
     wage_definition: 'basic_only',
+    // الإجازة السنوية: 21 أو 30 يوم فقط
+    annual_leave_days: 21,
+    // رصيد الاستئذان الشهري (3 ساعات كحد أقصى، 2 تلقائي + 1 مرن)
+    monthly_permission_hours: 2,
+    // خيار عقد مُهاجر للموظفين القدامى
     is_migrated: false,
-    leave_opening_balance: { annual: 0, sick: 0, emergency: 0 },
+    leave_opening_balance: { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
     notes: '',
   });
   
