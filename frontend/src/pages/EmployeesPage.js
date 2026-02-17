@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Users, Search, Edit2, UserCheck, Trash2, Key, Eye, EyeOff } from 'lucide-react';
+import { Users, Search, Edit2, UserCheck, Trash2, Key, Eye, EyeOff, User, AlertTriangle, Calendar, Briefcase, RefreshCw } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
