@@ -1,0 +1,73 @@
+{
+  "summary": "Iteration 27 Testing - New HR Features: Employee Card, Contract Expiry Notifications, Leave Carryover. All 12 backend API tests passed. Frontend UI verified: Employee Card Preview, Full Profile Page, Notifications Bell (admin-only), Leave Carryover dialog all working correctly.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "features_tested": {
+    "employee_card_preview": {
+      "status": "working",
+      "description": "Preview card opens from Employees page, shows employee name, number, leave balance, service years, attendance, job title, department, with 'Full Profile' navigation button"
+    },
+    "employee_profile_page": {
+      "status": "working",
+      "description": "Full profile page at /employees/{id} shows: Hero section with employee info, Personal Info, Contract Info, Service Info, Leave Balance with Carryover button, Attendance, Salary & Allowances, Bank Info"
+    },
+    "notifications_bell": {
+      "status": "working",
+      "description": "Bell icon visible only for admin roles (sultan, naif, stas). Shows dropdown with contract expiry alerts. Correctly hidden for non-admin users"
+    },
+    "expiring_contracts_dashboard": {
+      "status": "working",
+      "description": "API returns correct data structure. Dashboard section displays if expiring contracts exist (no test data currently in DB)"
+    },
+    "leave_carryover": {
+      "status": "working",
+      "description": "Dialog accessible from Employee Profile page, shows current balance, days input, optional note, confirm button. API validates input correctly"
+    }
+  },
+  
+  "test_report_links": [
+    "/app/backend/tests/test_iteration27_notifications.py",
+    "/app/test_reports/pytest/iteration27_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "All new APIs in notifications.py correctly implement role-based access control (sultan, naif, stas only)",
+    "Employee summary endpoint returns comprehensive data for card preview including leave_details, service_info, contract",
+    "Bell icon visibility correctly conditioned on isAdmin role check",
+    "Leave carryover validation properly checks for positive days and not exceeding current balance"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_iteration27_notifications.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (All UI features working correctly)"
+  },
+  
+  "test_credentials": {
+    "username": "stas",
+    "password": "DarAlCode2026!",
+    "role": "stas"
+  },
+  
+  "seed_data_creation": "None - used existing employee data",
+  
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  
+  "context_for_next_testing_agent": "Iteration 27 features fully tested: Employee Card Preview (dialog from Employees page), Employee Profile Page (/employees/{id}), Notifications Bell (admin-only, shows contract expiry alerts), Leave Carryover (from profile page). No expiring contracts currently in test DB so dashboard section shows empty. All APIs working with proper authentication and role checks."
+}
