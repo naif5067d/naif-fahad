@@ -430,3 +430,77 @@ async def admin_edit_attendance(
             })
     
     return {"message": "تم تعديل الحضور بنجاح", "employee_id": employee_id, "date": req.date}
+
+
+
+# ==================== التحقق من حالة الحضور ====================
+
+@router.get("/employee-status/{employee_id}")
+async def get_employee_attendance_status(
+    employee_id: str,
+    date: str = None,
+    user=Depends(get_current_user)
+):
+    """
+    التحقق من حالة حضور موظف لتاريخ معين
+    
+    يُرجع:
+    - هل الموظف في إجازة معتمدة؟
+    - هل لديه إذن معتمد؟
+    - هل اليوم عطلة رسمية؟
+    - هل يجب تسجيل غياب؟
+    
+    مفيد قبل:
+    - حساب الغياب التلقائي
+    - فرض خصومات التأخير
+    """
+    from utils.attendance_rules import check_employee_attendance_status
+    
+    # التحقق من الصلاحيات
+    role = user.get('role')
+    if role not in ('sultan', 'naif', 'salah', 'mohammed', 'stas', 'supervisor'):
+        # الموظف يمكنه التحقق من حالته فقط
+        emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+        if not emp or emp['id'] != employee_id:
+            raise HTTPException(status_code=403, detail="غير مصرح")
+    
+    # التأكد من وجود الموظف
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # جلب الحالة
+    if not date:
+        date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    status = await check_employee_attendance_status(employee_id, date)
+    
+    # إضافة معلومات الموظف
+    status["employee_name"] = emp.get("full_name", "")
+    status["employee_name_ar"] = emp.get("full_name_ar", "")
+    
+    return status
+
+
+@router.post("/calculate-daily")
+async def trigger_daily_attendance_calculation(
+    date: str = None,
+    user=Depends(get_current_user)
+):
+    """
+    تشغيل حساب الحضور اليومي يدوياً
+    
+    STAS فقط
+    يُشغّل عادةً تلقائياً نهاية كل يوم عمل
+    """
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    
+    from services.attendance_service import calculate_daily_attendance
+    
+    result = await calculate_daily_attendance(date)
+    
+    return {
+        "message_ar": "تم حساب الحضور اليومي",
+        "result": result
+    }
