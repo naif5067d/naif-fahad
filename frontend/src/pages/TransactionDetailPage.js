@@ -363,6 +363,8 @@ export default function TransactionDetailPage() {
               if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) return false;
               // Skip internal/complex fields
               if (key === 'sick_tier_info') return false;
+              // Skip medical file - handled separately
+              if (key === 'medical_file_url') return false;
               // Skip objects (complex nested data)
               if (typeof value === 'object' && value !== null) return false;
               return true;
@@ -374,6 +376,38 @@ export default function TransactionDetailPage() {
               </div>
             ))
           }
+        </div>
+        
+        {/* Medical File Attachment - ملف التقرير الطبي */}
+        {tx.data?.medical_file_url && (
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg">
+                  <FileText className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-red-800 dark:text-red-200">
+                    {lang === 'ar' ? 'التقرير الطبي المرفق' : 'Attached Medical Report'}
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {lang === 'ar' ? 'ملف PDF - انقر للعرض' : 'PDF File - Click to view'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(tx.data.medical_file_url, '_blank')}
+                className="border-red-300 text-red-600 hover:bg-red-100"
+                data-testid="view-medical-file"
+              >
+                <Eye size={14} className="me-2" />
+                {lang === 'ar' ? 'عرض الملف' : 'View File'}
+              </Button>
+            </div>
+          </div>
+        )}
         </div>
         
         {/* PDF Hash Info */}
