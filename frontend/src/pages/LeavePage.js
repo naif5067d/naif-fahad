@@ -264,8 +264,8 @@ export default function LeavePage() {
               <Input data-testid="leave-end" type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} />
             </div>
             
-            {/* رفع ملف للإجازة المرضية - للإدارة فقط */}
-            {form.leave_type === 'sick' && !isEmployee && (
+            {/* رفع ملف للإجازة المرضية - إلزامي */}
+            {form.leave_type === 'sick' && (
               <div className="sm:col-span-2">
                 <Label className="text-red-600">
                   {lang === 'ar' ? '* ملف التقرير الطبي (PDF)' : '* Medical Report (PDF)'}
@@ -278,7 +278,7 @@ export default function LeavePage() {
                   data-testid="medical-file-input"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {lang === 'ar' ? 'يجب رفع ملف PDF للتقرير الطبي للتحقق' : 'PDF medical report required for verification'}
+                  {lang === 'ar' ? 'يجب رفع ملف PDF للتقرير الطبي المعتمد' : 'Approved medical PDF report is required'}
                 </p>
               </div>
             )}
