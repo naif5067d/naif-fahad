@@ -408,7 +408,6 @@ export default function TransactionDetailPage() {
             </div>
           </div>
         )}
-        </div>
         
         {/* PDF Hash Info */}
         {tx.pdf_hash && (
