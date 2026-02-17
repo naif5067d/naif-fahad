@@ -141,6 +141,45 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 
 ---
 
+### Phase 17: Employee Card, Notifications & Leave Carryover ✅ (2026-02-17)
+
+**الميزات المُنفذة:**
+
+1. **بطاقة الموظف (Employee Card):**
+   - **Preview Dialog**: يظهر من صفحة الموظفين بالضغط على أيقونة المستخدم
+   - **صفحة Profile الكاملة**: `/employees/{employeeId}` مع:
+     - Hero section بمعلومات الموظف
+     - المعلومات الشخصية (البريد، الهاتف، الرقم الوطني)
+     - معلومات العقد (رقم العقد، تاريخ البدء/الانتهاء، الحالة)
+     - معلومات الخدمة (مدة الخدمة بالسنوات والأيام)
+     - رصيد الإجازات مع زر الترحيل
+     - حالة الحضور اليومي
+     - الراتب والبدلات (للمدراء فقط)
+     - معلومات البنك (للمدراء فقط)
+   - **Files**: `frontend/src/pages/EmployeeProfilePage.js`
+
+2. **إشعارات العقود المنتهية (Contract Expiry Notifications):**
+   - **Dashboard**: قسم خاص للعقود المنتهية خلال 3 أشهر
+   - **Bell Icon**: في Header للمدراء فقط (Sultan/Naif/STAS)
+   - **Employee Row**: الموظف الذي ينتهي عقده أحمر ومضيء
+   - **مستويات الإلحاح**: Critical (≤30 يوم) / High (≤60) / Medium (≤90)
+   - **APIs**:
+     - `GET /api/notifications/expiring-contracts`
+     - `GET /api/notifications/header-alerts`
+   - **Files**: `backend/routes/notifications.py`, `frontend/src/components/layout/AppLayout.js`
+
+3. **ترحيل الإجازات (Leave Carryover):**
+   - متاح لـ: Sultan, Naif, STAS (جميعهم مباشرة بدون موافقات)
+   - من صفحة Profile الموظف → زر "ترحيل"
+   - التحقق من عدم تجاوز الرصيد الحالي
+   - تسجيل في audit log
+   - **API**: `POST /api/notifications/leave-carryover`
+
+**Testing:** 100% pass rate (12/12 backend tests, all frontend features working)
+- `/app/backend/tests/test_iteration27_notifications.py`
+
+---
+
 ### Phase 15: PDF Arabic Text - Guaranteed Fix ✅ (2026-02-17)
 
 **P0 Critical Fix - Arabic Text & Date Formatting in PDF:**
