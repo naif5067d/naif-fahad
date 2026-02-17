@@ -77,7 +77,7 @@ async def create_custody(req: CreateCustodyRequest, user=Depends(get_current_use
     if role not in ("sultan", "naif", "mohammed", "stas"):
         raise HTTPException(status_code=403, detail="فقط سلطان/نايف/محمد يمكنهم الإنشاء")
     if req.total_amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
+        raise HTTPException(status_code=400, detail="المبلغ يجب أن يكون موجباً")
 
     num = await _get_next_custody_number()
     now = datetime.now(timezone.utc).isoformat()
@@ -167,7 +167,7 @@ async def add_expense(custody_id: str, exp: ExpenseEntry, user=Depends(get_curre
     if c["status"] != "active":
         raise HTTPException(status_code=400, detail="Custody must be active to add expenses")
     if exp.amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
+        raise HTTPException(status_code=400, detail="المبلغ يجب أن يكون موجباً")
     if exp.amount > c["remaining"]:
         raise HTTPException(status_code=400, detail=f"Amount exceeds remaining balance ({c['remaining']} SAR)")
 
