@@ -104,7 +104,31 @@ export default function LeavePage() {
       return toast.error(lang === 'ar' ? 'الإجازة المرضية تتطلب رفع ملف طبي PDF' : 'Sick leave requires medical PDF file');
     }
     
+    // للإجازة المرضية: جلب معلومات الشريحة وعرض التحذير
+    if (form.leave_type === 'sick' && !pendingSubmit) {
+      try {
+        const previewRes = await api.post('/api/leave/sick-preview', {
+          start_date: form.start_date,
+          end_date: form.end_date
+        });
+        
+        if (previewRes.data.warning) {
+          setSickLeaveWarning(previewRes.data);
+          setShowSickWarningDialog(true);
+          return; // توقف وانتظر تأكيد المستخدم
+        }
+      } catch (err) {
+        // تابع حتى لو فشل التحقق
+        console.log('Sick leave preview failed, continuing...');
+      }
+    }
+    
+    await submitLeaveRequest();
+  };
+  
+  const submitLeaveRequest = async () => {
     setSubmitting(true);
+    setPendingSubmit(false);
     try {
       // إذا كان هناك ملف، نرفعه أولاً
       let medical_file_url = null;
@@ -128,9 +152,16 @@ export default function LeavePage() {
       const res = await api.post('/api/leave/request', requestData);
       toast.success(`${lang === 'ar' ? 'تم إنشاء الطلب' : 'Request created'}: ${res.data.ref_no}`);
       setForm({ leave_type: 'annual', start_date: '', end_date: '', reason: '', medical_file: null });
+      setSickLeaveWarning(null);
       api.get('/api/leave/balance').then(r => setBalance(r.data)).catch(() => {});
     } catch (err) { toast.error(err.response?.data?.detail || 'Error'); }
     finally { setSubmitting(false); }
+  };
+  
+  const handleConfirmSickLeave = () => {
+    setShowSickWarningDialog(false);
+    setPendingSubmit(true);
+    submitLeaveRequest();
   };
 
   const handleAddHoliday = async () => {
