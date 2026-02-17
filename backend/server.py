@@ -26,6 +26,7 @@ from routes.maintenance import router as maintenance_router
 from routes.contracts_v2 import router as contracts_v2_router
 from routes.upload import router as upload_router
 from routes.announcements import router as announcements_router
+from routes.users import router as users_router
 from seed import seed_database
 
 # App Version
@@ -50,6 +51,7 @@ app.include_router(maintenance_router)
 app.include_router(contracts_v2_router)
 app.include_router(upload_router)
 app.include_router(announcements_router)
+app.include_router(users_router)
 
 app.add_middleware(
     CORSMiddleware,
