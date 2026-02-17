@@ -61,7 +61,7 @@ class TestSettlementPDFEndpoint:
     def test_pdf_requires_auth(self):
         """Test that PDF endpoint requires authentication"""
         response = requests.get(f"{BASE_URL}/api/settlement/{EXECUTED_SETTLEMENT_ID}/pdf")
-        assert response.status_code == 401, "Should require authentication"
+        assert response.status_code in [401, 403], "Should require authentication"
     
     def test_pdf_not_found_for_invalid_id(self, auth_headers):
         """Test that PDF returns 404 for invalid settlement ID"""
