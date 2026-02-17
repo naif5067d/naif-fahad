@@ -159,6 +159,27 @@ export default function STASMirrorPage() {
     return 'status-pending';
   };
 
+  // ترجمة مفاتيح الـ Before/After
+  const translateKey = (key) => {
+    const keyTranslations = {
+      'total_entitlement': lang === 'ar' ? 'الاستحقاق الكلي' : 'Total Entitlement',
+      'used': lang === 'ar' ? 'المستخدم' : 'Used',
+      'remaining': lang === 'ar' ? 'المتبقي' : 'Remaining',
+      'earned_to_date': lang === 'ar' ? 'المكتسب' : 'Earned to Date',
+      'daily_accrual': lang === 'ar' ? 'الاستحقاق اليومي' : 'Daily Accrual',
+      'days_worked': lang === 'ar' ? 'أيام العمل' : 'Days Worked',
+      'annual_policy': lang === 'ar' ? 'سياسة الإجازة' : 'Annual Policy',
+      'balance': lang === 'ar' ? 'الرصيد' : 'Balance',
+      'amount': lang === 'ar' ? 'المبلغ' : 'Amount',
+      'code': lang === 'ar' ? 'الكود' : 'Code',
+      'type': lang === 'ar' ? 'النوع' : 'Type',
+      'days': lang === 'ar' ? 'الأيام' : 'Days',
+      'leave_type': lang === 'ar' ? 'نوع الإجازة' : 'Leave Type',
+      'description': lang === 'ar' ? 'الوصف' : 'Description',
+    };
+    return keyTranslations[key] || key.replace(/_/g, ' ');
+  };
+
   return (
     <div className="space-y-6 pb-24 md:pb-6" data-testid="stas-mirror-page">
       <div className="flex items-center gap-3">
