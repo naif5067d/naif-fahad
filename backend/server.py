@@ -44,6 +44,7 @@ app.include_router(financial_custody_router)
 app.include_router(settings_router)
 app.include_router(maintenance_router)
 app.include_router(contracts_v2_router)
+app.include_router(upload_router)
 
 app.add_middleware(
     CORSMiddleware,
