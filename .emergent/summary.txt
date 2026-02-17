@@ -1,209 +1,175 @@
 <analysis>**original_problem_statement:**
-The user is building a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The primary goal is to refine the existing application based on a continuous stream of detailed feedback and then move on to larger features.
+The user is building a comprehensive, mobile-first HR operating system named DAR AL CODE HR OS. The primary goal is to refine the existing application based on a continuous stream of detailed feedback.
 
-The user's immediate and high-priority requests include:
-1.  **Bug Fix (P0):** Fix a critical UI bug where multiple maps are overlapping on the Add/Edit Work Location page, making it unusable.
-2.  **UI/UX Enhancement (P0):** Overhaul the leave request calendar UI. It must be color-coded to disable and visually distinguish weekends (black), official holidays (brown), and days with existing conflicting leave requests (red).
-3.  **STAS Mirror Enhancement (P1):** The STAS Mirror page should act as a detector, explicitly stating the reasons for potential conflicts (e.g., Request conflicts with official holiday, User has a pending request of the same type).
-4.  **PDF Generation Refinements:** The STAS execution seal in PDFs needs to be a proper, scannable barcode with a perforated cut-out section at the bottom of the page. The name of the approver must appear in Arabic.
-5.  **Data & Logic Integrity:**
-    *   Remove all hardcoded English strings; the application must be 100% Arabic when the Arabic language is selected.
-    *   Reset all leave balances to the standard 21/30 days.
-    *   Delete all existing test transactions.
-    *   Ensure deleting transactions does not affect employee work location data.
-6.  **New Features:**
-    *   Implement a system-wide notification/announcement system manageable by the admin (STAS), with support for pinned messages.
-    *   Add an app version number to the UI.
-    *   Allow creating a new employee directly from the Create Contract V2 form.
-    *   Require a PDF file upload for sick leave requests.
-    *   Implement a permission system for granting personal leave hours (2 hours by default, with admin override up to 3).
+The most recent and critical user requests are:
+1.  **P0 PDF & Arabic Language Bugs:** The user is extremely frustrated with multiple UI and document rendering issues when the Arabic language is selected.
+    *   Arabic text appears as squares or is garbled/reversed in generated PDFs (contracts, transaction reports).
+    *   The STAS Mirror table also shows squares instead of Arabic text.
+    *   The STAS execution seal (barcode) in PDFs is not rendering correctly.
+    *   Language switching is inconsistent, with some parts of the UI remaining in English.
+2.  **P0 Business Logic Flaw:** The attendance system does not check if an employee is on approved leave or has permission before marking them as absent or late.
+3.  **P0 User Experience (Employee):** For new employee 'Naif Al-Qurashi', the system showed a You are not registered as an employee error despite a user account existing. The root cause was a data inconsistency bug which was fixed, but the user expects the system to be seamless for new hires. All error messages must be in Arabic.
+4.  **P0 Employee Management:** Allow STAS to delete employees by terminating their contract. Fix issues where employees might exist without a contract. Allow STAS and other admins to view/edit the username and password for any employee.
+5.  **P1 HR Policy Implementation:** A major overhaul of the HR policy was requested, including:
+    *   **Annual Leave:** Pro-rata accrual (21 or 30 days based on contract), with the available balance being the only leave balance visible to employees.
+    *   **Other Leaves:** Administrative leaves (death, marriage, etc.) have balances (e.g., 5 days) that are tracked in the backend but hidden from the employee. Sick leave must follow the Saudi labor law policy (30 days full pay, 60 days half pay, 30 days no pay), with the details visible to admins.
+    *   **Request Blocking:** Prevent an employee from submitting a new leave/attendance request if one of the same type is already active.
+    *   **UI Simplification:** The employee-facing leave page should only show Annual Leave balance and Consumed Permission Hours.
+6.  **P1 Contract Management:** Allow specific admin roles (, , ) to edit **active** contracts, including a new field for leave rollover policy.
+7.  **P1 UI/UX:** Hide the Pending CEO status from regular employees, showing it as Pending with Sultan () instead.
 
 **User's preferred language**: Arabic. The next agent **MUST** respond and interact in Arabic.
 
 **what currently exists?**
-The agent has implemented several features and fixes based on user requests. A system-wide notification system has been created with both backend APIs and a frontend management UI in the System Maintenance page. The STAS PDF seal was updated to use a barcode (though further refinement is needed), and the approver's name is now shown in Arabic. The contract creation form was enhanced to support creating a new employee directly. Logic for requiring a file upload for sick leave has been added. The STAS status labels and colors in the UI were updated to be more descriptive and less personalized. The legacy Contracts V1 pages have been removed from the UI.
+The agent has made significant progress on multiple fronts.
+- **Map Bug:** The critical bug with overlapping maps on the  has been resolved by removing the preview maps from the location cards and ensuring only the map in the edit/add dialog is rendered.
+- **Employee/User Management:** The backend and frontend were updated to allow admins to manage user credentials (, ) and delete employees, which terminates their contract.
+- **Critical Data Integrity Fix:** A core bug was fixed in  where a new employee's  was not correctly linked to their user account, preventing them from logging in. This has been resolved.
+- **HR Policy Foundation:** A new backend service  was created to handle the new pro-rata annual leave accrual logic. This logic has been integrated into the leave request and employee summary APIs. A request blocking mechanism was also added to prevent duplicate active requests.
+- **Localization:** A large number of hardcoded English error messages in the backend were translated into Arabic.
+- **Simplified Leave APIs:** New backend endpoints were created to provide the simplified leave data required for the employee-facing UI.
 
 **Last working item**:
--   **Last item agent was working:** The agent was tasked with fixing a critical UI bug where multiple, overlapping maps were rendering on the work location creation/editing page. The user provided a screenshot confirming the issue. The agent acknowledged the problem and was about to start debugging it.
+-   **Last item agent was working:** The agent was investigating a critical business logic flaw in . The user asked if the system correctly handles attendance for employees on approved leave or with permission. The agent confirmed the system **lacks this logic** and was about to start implementing the fix.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Frontend testing agent or screenshot tool to verify the map UI fix.
+-   **Which testing method agent to use?** backend testing agent. The test should create a leave request for a user, approve it, and then attempt a check-in on a leave day to ensure it is not marked as absent or late.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   Issue 1: Multiple overlapping maps render on the work location page (P0)
--   Issue 2: Leave request calendar lacks color-coding for unavailable days (P0)
--   Issue 3: PDF barcode seal needs a perforated cut-out section (P1)
--   Issue 4: UI still contains some hardcoded English text (P2)
--   Issue 5: Incomplete Admin Attendance Data (on_leave, is_late are always '0') (P2)
+-   Issue 1: PDF and UI render Arabic text as squares (P0)
+-   Issue 2: Attendance system marks employees on leave as absent/late (P0)
+-   Issue 3: Contract editing for active contracts is not enabled for admins (P1)
+-   Issue 4: Hide Pending CEO status from employees (P2)
+-   Issue 5: Implement detailed sick leave policy (30/60/30 day rule) (P2)
+-   Issue 6: Leave request calendar lacks color-coding for unavailable days (P2)
 
 **Issues Detail:**
--   **Issue 1: Multiple overlapping maps render on the work location page (P0)**
-    -   **Attempted fixes:** None yet. Agent just acknowledged the issue.
+-   **Issue 1: PDF and UI render Arabic text as squares (P0)**
+    -   **Attempted fixes:** The agent confirmed the required Arabic fonts (, ) exist. Attempts were made to register the fonts correctly within  in . However, the user's latest screenshots confirm the issue persists in both PDFs and the STAS Mirror UI. The root cause is likely improper font registration or application within the  canvas and/or the frontend table component.
     -   **Next debug checklist:**
-        1.  Examine .
-        2.  Investigate the component rendering logic. The issue is likely caused by a  being rendered multiple times within a loop or due to state updates causing re-renders without proper cleanup.
-        3.  Ensure that only one  is active at any time, especially within the Add New or Edit modals/dialogs.
-        4.  Check for CSS conflicts that might be causing visibility issues.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical, blocking bug that makes the work location management feature unusable. Fixing it will restore core functionality.
+        1.  In , verify  and  are used correctly for every piece of Arabic text. Ensure  uses the registered font name.
+        2.  Force a specific Arabic font (e.g., 'Amiri') for all Arabic text drawing operations.
+        3.  For the STAS Mirror UI (), inspect the CSS and ensure a webfont that supports Arabic is being applied correctly to the table cells.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. The application is unusable in Arabic, which is a primary requirement. Fixing it will restore core functionality and user confidence.
     -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on other issue:** No.
 
--   **Issue 2: Leave request calendar lacks color-coding for unavailable days (P0)**
+-   **Issue 2: Attendance system marks employees on leave as absent/late (P0)**
+    -   **Attempted fixes:** None. The issue was just identified.
     -   **Next debug checklist:**
         1.  Modify .
-        2.  Use the  and  props of the  component (used by Shadcn's Calendar).
-        3.  Fetch official holidays and the user's existing leave requests.
-        4.  Implement a function that returns  for disabled days (weekends, holidays, existing leave).
-        5.  Implement a function that returns a style object for different day types: weekend (black background), holiday (brown background), conflict (red background).
-    -   **Why fix this issue and what will be achieved with the fix?** It provides a much better user experience, preventing users from making invalid leave requests and giving them immediate visual feedback.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on other issue:** No.
-
--   **Issue 3: PDF barcode seal needs a perforated cut-out section (P1)**
-    -   **Attempted fixes:** The agent created a barcode but did not add the requested cut-out section.
-    -   **Next debug checklist:**
-        1.  Edit .
-        2.  In the function that draws the PDF footer ( or similar), add logic to draw a second, identical barcode at the very bottom of the page.
-        3.  Draw a dashed or dotted line () above this second barcode to signify a cut here line.
-    -   **Why fix this issue and what will be achieved with the fix?** Fulfills a specific user requirement for physical record-keeping.
+        2.  Before processing a check-in or marking an employee as absent, query the  collection.
+        3.  Check if the employee has an  leave entry that covers the current date.
+        4.  Also, check for any  permission requests for the current date.
+        5.  If a valid leave or permission exists, bypass the logic that marks the employee as late or absent.
+    -   **Why fix this issue and what will be achieved with the fix?** This fixes a fundamental flaw in the HR logic, ensuring payroll and attendance records are accurate.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Backend (by downloading and inspecting the PDF).
+    -   **Should Test frontend/backend/both after fix?** Backend.
     -   **Blocked on other issue:** No.
 
 **In progress Task List**:
--   **Task 1: Build advanced leave calendar UI (P0)**
+-   **Task 1: Simplify Employee Leave Page UI (P1)**
     -   **Where to resume:** .
-    -   **What will be achieved with this?** A user-friendly, intuitive calendar for requesting leave that prevents errors.
-    -   **Status:** NOT STARTED
+    -   **What will be achieved with this?** The employee dashboard will be simplified as per the user's request, showing only annual leave balance and consumed permission hours, improving user experience.
+    -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Frontend.
-    -   **Blocked on something:** No.
-
--   **Task 2: Implement STAS Mirror Detector (P1)**
-    -   **Where to resume:**  and relevant backend endpoints.
-    -   **What will be achieved with this?** Admins (STAS) will see clear, actionable reasons for transaction conflicts, improving their decision-making process.
-    -   **Status:** NOT STARTED
-    -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1:** Create a UI for the  endpoint in the System Maintenance page to allow admins to reset all leave data.
-    -   **P1:** Employee Migration to V2 contracts (with opening data snapshot).
-    -   **P2:** Implement the full Settlement Module.
+    -   **P1:** Implement the full sick leave policy logic (30 days full pay -> 60 days half pay -> 30 days no pay) in  and display the consumption status to admins in the STAS Mirror.
+    -   **P1:** Create a system-wide notification to alert admins (, , ) when an employee has remaining leave balance and their contract is ending within 3 months.
+    -   **P2:** Create a UI in the System Maintenance page for the  endpoint.
 -   **Future Tasks:**
-    -   **P2:** CEO Dashboard & enhanced Employee Profile Card.
+    -   **P2:** Employee Migration to V2 contracts (with opening data snapshot).
+    -   **P2:** Settlement Module.
+    -   **P3:** CEO Dashboard & enhanced Employee Profile Card.
     -   **P3:** Warnings & Loans Modules.
 
 **Completed work in this session**
--   **Notification System:** Created backend () and frontend UI for admins to send and manage system-wide announcements.
--   **Contract Management V2:** Enhanced the creation form to allow creating a new employee profile simultaneously with the contract.
--   **Leave Management:**
-    -   Added a file upload requirement for sick leave requests.
-    -   Removed hardcoded 25 days leave option.
--   **STAS & PDF:**
-    -   Replaced QR code with a barcode in the PDF seal.
-    -   Ensured the approver's name appears in Arabic in the PDF.
-    -   Removed personalized Waiting for STAS labels in favor of Waiting for Execution.
--   **UI/UX:**
-    -   Added a Get My Location button to the work location map.
-    -   Added the app version number to the footer.
-    -   Removed the legacy Contracts V1 link from the sidebar.
-    -   Fixed numerous hardcoded English strings in the UI and error messages.
--   **Backend Admin:** Created an endpoint to reset leave balances and delete all transactions.
+-   **Resolved Critical Map Bug:** Fixed the overlapping maps issue on the .
+-   **Implemented Employee/User Management:** Added UI and APIs for admins to delete employees and manage their login credentials.
+-   **Fixed New Employee Login Failure:** Corrected a critical data integrity bug that prevented newly created employees from logging in.
+-   **Backend-wide Localization of Error Messages:** Translated numerous hardcoded English  messages to Arabic across the backend.
+-   **Implemented Pro-Rata Leave Accrual:** Established the foundational  service for calculating annual leave based on days worked.
+-   **Implemented Request Blocking:** Added backend logic to prevent users from creating duplicate active leave requests.
+-   **Created APIs for Simplified Leave UI:** Developed new endpoints to support the redesigned employee-facing leave page.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Incomplete Admin Attendance Data:** The  endpoint does not calculate  and  fields.
+-   **Issue 1: Lax GPS Validation:** The backend still accepts check-in/out records even if the  flag is .
 -   **Issue 2: Global-Only Ramadan Hours:** The system lacks support for per-location or per-project Ramadan hours.
--   **Issue 3: Lax GPS Validation:** The backend accepts check-in/out records even if the  flag is .
--   **Issue 4: Unsynced Leave Balance:** The leave entitlement from contracts may not automatically synchronize as a credit into the , requiring manual intervention.
 
 **Known issue recurrence from previous fork**
--   **Issue:** Hardcoded English text appearing in the UI despite efforts to achieve full translation.
--   **Recurrence count:** High. The user frequently points out untranslated labels and messages.
--   **Status:** IN PROGRESS. This requires ongoing vigilance.
+-   **Issue:** Hardcoded English text and broken Arabic rendering in the UI/PDFs.
+-   **Recurrence count:** High. The user has reported this multiple times. Despite fixing backend error messages, the issue persists in the frontend (STAS Mirror) and PDF generation.
+-   **Status:** IN PROGRESS. This requires a definitive fix.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **PDF Generation:**  for drawing PDFs, including barcodes and text.
--   **Interactive Maps:**  for displaying work locations.
--   **File Uploads:** FastAPI's  for handling file submissions.
--   **Internationalization (i18n):**  for English/Arabic translations.
--   **State Management:** React hooks (, ) for managing component state.
+-   **PDF Generation:**  is used for PDF generation, but it's the source of the critical Arabic font rendering issues.
+-   **Business Logic Service Layer:** New services like  and  have been introduced to encapsulate complex business rules, separating them from the API routes.
+-   **Internationalization (i18n):**  for frontend translations. Backend localization is handled via custom logic in API responses.
 
 **key DB schema**
--   ****: 
--   ****: The  field was added to leave requests.
-
-**changes in tech stack**
--   None.
+-   ****:  field used to set leave entitlement (21 or 30).
+-   ****: The  field is now correctly linked to the uid=0(root) gid=0(root) groups=0(root) in the  collection upon contract execution.
+-   ****: Used to track all executed leave transactions. Must be queried by the attendance service.
 
 **All files of reference**
--   **Overlapping Map Bug:** 
--   **Leave Calendar UI:** 
--   **PDF Barcode:** 
--   **Notification System:** , 
--   **Contract Creation:** , 
--   **Translations:** , 
-
-**Areas that need refactoring**:
--   **:** The component's rendering logic needs to be fixed to prevent the overlapping maps bug.
--   **:** Will require significant changes to implement the new color-coded calendar logic.
-
-**key api endpoints**
--   : Create a new announcement.
--   : Get all announcements.
--   : Upload a medical report for a leave request.
--   : Admin endpoint to clean up data.
+-   **Arabic PDF Bug:** 
+-   **Attendance Logic Flaw:** 
+-   **Arabic UI Bug:** 
+-   **Contract Editing Feature:** 
+-   **Employee Leave UI:** 
+-   **HR Policy Logic:** , 
 
 **Critical Info for New Agent**
--   **TOP PRIORITY:** You must immediately fix the overlapping maps bug on the . The user is blocked by this.
--   **USER INTERACTION:** The user is highly detail-oriented and will provide frequent, specific feedback. Always confirm your understanding of their requests before implementing. All communication must be in Arabic.
--   **PROOF OF WORK:** The user expects to see evidence of your changes. Use screenshots and clear descriptions of what was done.
--   **LANGUAGE:** Be extremely diligent about translations. Check all new UI elements and messages to ensure they are added to both  and  files.
+-   **TOP PRIORITY:** The user is extremely frustrated by the broken Arabic language support. Fixing the PDF and UI rendering (squares instead of text) is the most critical task. You must solve this permanently.
+-   **SECOND PRIORITY:** The flaw in the attendance logic is a major business risk. Fix  to ensure employees on approved leave are not marked absent or late.
+-   **COMMUNICATION:** You **MUST** communicate exclusively in Arabic.
+-   **DELIVERY:** The user is highly detail-oriented and expects bug-free features that match their exact requirements. Do not claim a task is done until it is thoroughly tested and verified to meet all specifications. The user prefers a technical report of changes over screenshots.
 
 **documents and test reports created in this job**
--   /app/memory/PRD.md (updated multiple times)
--   /app/test_reports/iteration_1.json
--   /app/test_reports/iteration_2.json
--   /app/test_reports/iteration_3.json
+-   /app/memory/PRD.md
+-   /app/test_reports/iteration_4.json (Results are likely outdated due to subsequent bug reports and feature changes).
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (LATEST/PENDING):** Provided a screenshot showing 3 overlapping maps on the Add Work Location page and stated this is an annoying bug that needs to be fixed immediately.
-2.  **Agent:** Acknowledged the creation of the notification UI.
-3.  **User:** Asked where to write notifications and requested work on specific Next Action Items, including the STAS mirror and the balance reset endpoint.
-4.  **Agent:** Explained the notification UI wasn't built yet and that they would add it.
-5.  **User:** Asked for the location to write notifications.
-6.  **Agent:** Summarized the successful test run and prepared to update PRD.md.
-7.  **User:** Outlined a long list of new requirements: fix overlapping maps, add a my location button, improve the leave calendar with color-coding, improve error messages (make them bilingual), reset all leave balances, add a version number, and implement a pinnable announcement system.
-8.  **Agent:** Finished the previous task and updated PRD.md.
-9.  **User:** Requested the removal of old contract management pages and outlined major enhancements for the V2 contract creation form (support new employees), leave management (require PDF for sick leave), and permissions for personal leave hours. Demanded full Arabic translations.
-10. **Agent:** Presented a summary of completed work and the plan for the next steps.
+1.  **User (LATEST):** Clarified leave policy: employees can request all leave types, but only see their Annual Leave balance. Other balances (e.g., 5 days for marriage) are hidden but tracked in the backend. Detailed the sick leave policy (30/60/30 day rule) for admins. Asked a critical question: Does the system know if an employee is on leave/permission before marking them absent/late? (Status: Pending Fix)
+2.  **Agent:** Acknowledged the requirements and the critical question about attendance, and began investigating.
+3.  **User:** Requested simplification of the employee-facing leave page to show only consumed leave, annual leave balance, and consumed permission hours. All other leave balances should be hidden from the employee but tracked for admins. (Status: In Progress)
+4.  **Agent:** Acknowledged the request and started implementation.
+5.  **User:** Reported multiple critical bugs with screenshots: Admins can't edit active contracts; Pending CEO status is not hidden from employees; PDF has Arabic font issues (squares), broken layout, and incorrect signature; STAS mirror table also has font issues; inconsistent language switching. (Status: Pending Fix)
+6.  **Agent:** Acknowledged the bugs and started investigating the PDF generation code.
+7.  **Agent:** Submitted a technical report and checklist for the HR policy implementation, believing the task was complete. (Status: Rejected by user due to bugs).
+8.  **User:** Initiated the major HR policy update task, providing a detailed list of 9 requirements, including pro-rata leave, blocking duplicate requests, and PDF barcode improvements. (Status: Partially Implemented, but with bugs).
+9.  **User:** Reported that new employee Naif Al-Qurashi gets an error You are not registered as an employee and that all such messages must be in Arabic. Asked what data should be linked to an employee on creation. (Status: Resolved).
+10. **Agent:** Acknowledged the issue and began investigating the user and employee data.
 
 **Project Health Check:**
--   **Broken**: The Work Location creation/editing feature is broken due to the overlapping maps bug.
+-   **Broken**: PDF Generation (Arabic rendering), Attendance Logic (doesn't check for leave), STAS Mirror UI (Arabic rendering), Contract Page UI (inconsistent language).
 -   **Mocked**: N/A
 
 **3rd Party Integrations**
 -   
+-   
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, the agent used the testing agent multiple times to verify functionality after major changes.
+-   **Testing agent used after significant changes:** YES, but the tests are now outdated as the user reported several critical bugs after the last test run.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** The implementation of the map feature on the work locations page introduced a major UI bug (overlapping maps).
+-   **Known regressions:** Major regressions in Arabic language rendering across PDFs and the UI.
 
 **Credentials to test flow:**
 -   Use the user-switcher dropdown in the app's header. Roles include , , , and  (CEO). No passwords are required.
 
 **What agent forgot to execute**
--   The agent did not implement the color-coded leave calendar as requested.
--   The agent did not implement the detector logic for the STAS mirror to explain conflicts.
--   The agent introduced a critical bug (overlapping maps) while implementing another feature.</analysis>
+-   The agent did not fix the root cause of the Arabic font rendering issue in PDFs and the UI, despite multiple user complaints.
+-   The agent acknowledged the critical flaw in the attendance logic () but did not implement a fix.
+-   The full UI for allowing admins to edit active contracts and set leave rollover policy was not completed.
+-   The original P0 request from the initial handoff to create a color-coded leave calendar remains unimplemented.</analysis>
