@@ -72,6 +72,7 @@ export default function WorkLocationsPage() {
     radius_meters: 500,
     work_start: '08:00',
     work_end: '17:00',
+    grace_period_minutes: 0, // مدة السماح بالدقائق (0-15)
     work_days: {
       saturday: true,
       sunday: true,
