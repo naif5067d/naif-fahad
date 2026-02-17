@@ -45,7 +45,7 @@ async def get_company_branding(user=Depends(get_current_user)):
 async def update_company_branding(body: CompanyBrandingUpdate, user=Depends(get_current_user)):
     """Update company branding - STAS only"""
     if user.get('role') != 'stas':
-        raise HTTPException(status_code=403, detail="Only STAS can update company branding")
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه تحديث هوية الشركة")
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -96,7 +96,7 @@ async def update_company_branding(body: CompanyBrandingUpdate, user=Depends(get_
 async def upload_company_logo(file: UploadFile = File(...), user=Depends(get_current_user)):
     """Upload company logo - STAS only, no size restrictions"""
     if user.get('role') != 'stas':
-        raise HTTPException(status_code=403, detail="Only STAS can upload company logo")
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه رفع شعار الشركة")
     
     # Read file content
     content = await file.read()
@@ -141,7 +141,7 @@ async def upload_company_logo(file: UploadFile = File(...), user=Depends(get_cur
 async def delete_company_logo(user=Depends(get_current_user)):
     """Delete company logo - STAS only"""
     if user.get('role') != 'stas':
-        raise HTTPException(status_code=403, detail="Only STAS can delete company logo")
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه حذف شعار الشركة")
     
     now = datetime.now(timezone.utc).isoformat()
     
