@@ -410,20 +410,34 @@ export default function STASMirrorPage() {
                   )}
 
                   {/* Desktop Execute Button - منع التنفيذ المكرر */}
-                  <div className="hidden md:block">
+                  <div className="hidden md:block space-y-2">
                     {mirror.transaction?.status === 'executed' ? (
                       <div className="w-full h-12 text-base font-semibold bg-emerald-100 text-emerald-700 rounded-md flex items-center justify-center gap-2">
                         <CheckCircle size={18} /> {lang === 'ar' ? 'تم التنفيذ مسبقاً' : 'Already Executed'}
                       </div>
                     ) : (
-                      <Button
-                        data-testid="stas-execute-btn-desktop"
-                        onClick={handleExecute}
-                        disabled={!mirror.all_checks_pass || executing}
-                        className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
-                      >
-                        {executing ? <><Loader2 size={18} className="me-2 animate-spin" /> {t('stas.executing')}</> : <><Shield size={18} className="me-2" /> {t('stas.execute')}</>}
-                      </Button>
+                      <>
+                        <Button
+                          data-testid="stas-execute-btn-desktop"
+                          onClick={handleExecute}
+                          disabled={!mirror.all_checks_pass || executing}
+                          className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
+                        >
+                          {executing ? <><Loader2 size={18} className="me-2 animate-spin" /> {t('stas.executing')}</> : <><Shield size={18} className="me-2" /> {t('stas.execute')}</>}
+                        </Button>
+                        
+                        {/* زر الإلغاء */}
+                        <Button
+                          data-testid="stas-cancel-btn-desktop"
+                          variant="outline"
+                          onClick={() => setCancelDialogOpen(true)}
+                          disabled={executing || cancelling}
+                          className="w-full h-10 border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <XCircle size={16} className="me-2" />
+                          {lang === 'ar' ? 'إلغاء المعاملة' : 'Cancel Transaction'}
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
