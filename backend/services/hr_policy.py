@@ -558,7 +558,7 @@ def format_datetime_riyadh(iso_string: str, include_time: bool = True) -> str:
             return dt_riyadh.strftime("%Y-%m-%d %H:%M")
         else:
             return dt_riyadh.strftime("%Y-%m-%d")
-    except:
+    except Exception:
         return iso_string
 
 
@@ -580,5 +580,5 @@ def format_date_arabic(date_str: str) -> str:
     try:
         dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
         return f"{dt.day} {get_arabic_month(dt.month)} {dt.year}"
-    except:
+    except Exception:
         return date_str
