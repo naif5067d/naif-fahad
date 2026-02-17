@@ -11,7 +11,6 @@ import TransactionDetailPage from "@/pages/TransactionDetailPage";
 import LeavePage from "@/pages/LeavePage";
 import AttendancePage from "@/pages/AttendancePage";
 import FinancePage from "@/pages/FinancePage";
-import ContractsPage from "@/pages/ContractsPage";
 import STASMirrorPage from "@/pages/STASMirrorPage";
 import EmployeesPage from "@/pages/EmployeesPage";
 import SettingsPage from "@/pages/SettingsPage";
