@@ -1306,82 +1306,240 @@ export default function ContractsManagementPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Contract Dialog */}
+      {/* Edit Contract Dialog - تعديل شامل للعقد */}
       <Dialog open={!!editContract} onOpenChange={() => setEditContract(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تعديل العقد: {editContract?.contract_serial}</DialogTitle>
+            <DialogDescription>
+              {editContract?.status === 'active' ? 'تعديل عقد نشط - سيتم حفظ التغييرات فوراً' : 'تعديل مسودة العقد'}
+            </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            {/* Same form fields as create, but for editing */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>تاريخ النهاية</Label>
-                <Input 
-                  type="date" 
-                  value={formData.end_date}
-                  onChange={e => setFormData(p => ({ ...p, end_date: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label>فترة التجربة (شهر)</Label>
-                <Input 
-                  type="number" 
-                  value={formData.probation_months}
-                  onChange={e => setFormData(p => ({ ...p, probation_months: parseInt(e.target.value) || 0 }))}
-                />
+          <div className="space-y-6 py-4">
+            {/* معلومات الموظف - للقراءة فقط إذا كان نشط */}
+            <div className="p-4 bg-muted/40 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                بيانات الموظف
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>كود الموظف</Label>
+                  <Input value={formData.employee_code} disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label>الاسم بالعربي</Label>
+                  <Input 
+                    value={formData.employee_name_ar} 
+                    onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
+                    disabled={editContract?.status === 'active'}
+                  />
+                </div>
+                <div>
+                  <Label>الاسم بالإنجليزي</Label>
+                  <Input 
+                    value={formData.employee_name} 
+                    onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
+                    disabled={editContract?.status === 'active'}
+                  />
+                </div>
               </div>
             </div>
-            
+
+            {/* معلومات الوظيفة */}
+            <div className="p-4 bg-muted/40 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                معلومات الوظيفة
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>المسمى الوظيفي (عربي)</Label>
+                  <Input 
+                    value={formData.job_title_ar} 
+                    onChange={e => setFormData(p => ({ ...p, job_title_ar: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>المسمى الوظيفي (إنجليزي)</Label>
+                  <Input 
+                    value={formData.job_title} 
+                    onChange={e => setFormData(p => ({ ...p, job_title: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>القسم (عربي)</Label>
+                  <Input 
+                    value={formData.department_ar} 
+                    onChange={e => setFormData(p => ({ ...p, department_ar: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>القسم (إنجليزي)</Label>
+                  <Input 
+                    value={formData.department} 
+                    onChange={e => setFormData(p => ({ ...p, department: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* تواريخ العقد */}
+            <div className="p-4 bg-muted/40 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                فترة العقد
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>تاريخ البداية</Label>
+                  <Input 
+                    type="date" 
+                    value={formData.start_date}
+                    onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
+                    disabled={editContract?.status === 'active'}
+                  />
+                </div>
+                <div>
+                  <Label>تاريخ النهاية</Label>
+                  <Input 
+                    type="date" 
+                    value={formData.end_date}
+                    onChange={e => setFormData(p => ({ ...p, end_date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>فترة التجربة (شهر)</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.probation_months}
+                    onChange={e => setFormData(p => ({ ...p, probation_months: parseInt(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label>فترة الإشعار (يوم)</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.notice_period_days}
+                    onChange={e => setFormData(p => ({ ...p, notice_period_days: parseInt(e.target.value) || 30 }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* المالية */}
             {formData.contract_category !== 'internship_unpaid' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>الراتب الأساسي</Label>
-                  <Input 
-                    type="number" 
-                    value={formData.basic_salary}
-                    onChange={e => setFormData(p => ({ ...p, basic_salary: parseFloat(e.target.value) || 0 }))}
-                  />
+              <div className="p-4 bg-muted/40 rounded-lg">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  البيانات المالية
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <Label>الراتب الأساسي</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.basic_salary}
+                      onChange={e => setFormData(p => ({ ...p, basic_salary: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>بدل السكن</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.housing_allowance}
+                      onChange={e => setFormData(p => ({ ...p, housing_allowance: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>بدل النقل</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.transport_allowance}
+                      onChange={e => setFormData(p => ({ ...p, transport_allowance: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>بدلات أخرى</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.other_allowances}
+                      onChange={e => setFormData(p => ({ ...p, other_allowances: parseFloat(e.target.value) || 0 }))}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>بدل السكن</Label>
-                  <Input 
-                    type="number" 
-                    value={formData.housing_allowance}
-                    onChange={e => setFormData(p => ({ ...p, housing_allowance: parseFloat(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div>
-                  <Label>بدل النقل</Label>
-                  <Input 
-                    type="number" 
-                    value={formData.transport_allowance}
-                    onChange={e => setFormData(p => ({ ...p, transport_allowance: parseFloat(e.target.value) || 0 }))}
-                  />
-                </div>
-                <div>
-                  <Label>بدلات أخرى</Label>
-                  <Input 
-                    type="number" 
-                    value={formData.other_allowances}
-                    onChange={e => setFormData(p => ({ ...p, other_allowances: parseFloat(e.target.value) || 0 }))}
-                  />
+                <div className="mt-3 p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded text-sm">
+                  <span className="font-semibold">إجمالي الراتب: </span>
+                  {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
                 </div>
               </div>
             )}
-            
+
+            {/* سياسات الإجازات */}
+            <div className="p-4 bg-muted/40 rounded-lg">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                سياسات الإجازات
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>أيام الإجازة السنوية</Label>
+                  <Select 
+                    value={String(formData.annual_policy_days || 21)}
+                    onValueChange={v => setFormData(p => ({ ...p, annual_policy_days: parseInt(v), annual_leave_days: parseInt(v) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="21">21 يوم (أقل من 5 سنوات)</SelectItem>
+                      <SelectItem value="30">30 يوم (5 سنوات فأكثر)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>ساعات الاستئذان الشهرية</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.monthly_permission_hours || 2}
+                    onChange={e => setFormData(p => ({ ...p, monthly_permission_hours: parseInt(e.target.value) || 2 }))}
+                    max={3}
+                    min={0}
+                  />
+                </div>
+                <div>
+                  <Label>نوع احتساب الأجر</Label>
+                  <Select 
+                    value={formData.wage_definition || 'basic_only'}
+                    onValueChange={v => setFormData(p => ({ ...p, wage_definition: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic_only">الراتب الأساسي فقط</SelectItem>
+                      <SelectItem value="basic_housing">الأساسي + السكن</SelectItem>
+                      <SelectItem value="total">إجمالي الراتب</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* ملاحظات */}
             <div>
               <Label>ملاحظات</Label>
               <Textarea 
                 value={formData.notes}
                 onChange={e => setFormData(p => ({ ...p, notes: e.target.value }))}
-                rows={2}
+                rows={3}
+                placeholder="أي ملاحظات إضافية على العقد..."
               />
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditContract(null)}>إلغاء</Button>
             <Button onClick={handleUpdateContract} disabled={actionLoading}>
               {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-2" /> : <Edit className="w-4 h-4 ml-2" />}
