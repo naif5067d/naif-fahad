@@ -51,7 +51,7 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     
     if not validation['valid']:
         error = validation['error']
-        raise HTTPException(status_code=400, detail=error['message'])
+        raise HTTPException(status_code=400, detail=error.get('message_ar', error['message']))
     
     emp = validation['employee']
     now = datetime.now(timezone.utc)
@@ -97,7 +97,7 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     
     if not validation['valid']:
         error = validation['error']
-        raise HTTPException(status_code=400, detail=error['message'])
+        raise HTTPException(status_code=400, detail=error.get('message_ar', error['message']))
     
     emp = validation['employee']
     checkin = validation['checkin']
@@ -167,7 +167,7 @@ async def get_admin_attendance(
     """Admin view of all employee attendance. period: daily/weekly/monthly/yearly"""
     role = user.get('role')
     if role not in ('sultan', 'naif', 'salah', 'mohammed', 'stas'):
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="غير مصرح")
     
     from datetime import timedelta
     now = datetime.now(timezone.utc)

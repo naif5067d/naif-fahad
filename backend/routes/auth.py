@@ -35,9 +35,9 @@ async def switch_user(user_id: str):
     """Switch to a user by ID (no password required - user switcher mode)."""
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     if not user.get('is_active', True):
-        raise HTTPException(status_code=403, detail="Account disabled")
+        raise HTTPException(status_code=403, detail="الحساب معطل")
 
     token = create_access_token({
         "user_id": user['id'],
@@ -64,9 +64,9 @@ async def switch_user(user_id: str):
 async def login(req: LoginRequest):
     user = await db.users.find_one({"username": req.username}, {"_id": 0})
     if not user or not verify_password(req.password, user['password_hash']):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     if not user.get('is_active', True):
-        raise HTTPException(status_code=403, detail="Account disabled")
+        raise HTTPException(status_code=403, detail="الحساب معطل")
 
     token = create_access_token({
         "user_id": user['id'],
@@ -93,7 +93,7 @@ async def login(req: LoginRequest):
 async def get_me(user=Depends(get_current_user)):
     db_user = await db.users.find_one({"id": user['user_id']}, {"_id": 0, "password_hash": 0})
     if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     return db_user
 
 
@@ -101,7 +101,7 @@ async def get_me(user=Depends(get_current_user)):
 async def change_password(req: ChangePasswordRequest, user=Depends(get_current_user)):
     db_user = await db.users.find_one({"id": user['user_id']}, {"_id": 0})
     if not verify_password(req.current_password, db_user['password_hash']):
-        raise HTTPException(status_code=400, detail="Current password incorrect")
+        raise HTTPException(status_code=400, detail="كلمة المرور الحالية غير صحيحة")
     await db.users.update_one(
         {"id": user['user_id']},
         {"$set": {"password_hash": hash_password(req.new_password)}}
