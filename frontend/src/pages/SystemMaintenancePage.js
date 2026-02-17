@@ -280,7 +280,7 @@ export default function SystemMaintenancePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">صيانة النظام</h1>
-            <p className="text-muted-foreground text-sm">إدارة الأرشفة والحذف ومعلومات التخزين</p>
+            <p className="text-muted-foreground text-sm">إدارة الأرشفة والحذف والإشعارات</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={loadData} data-testid="refresh-btn">
@@ -289,35 +289,177 @@ export default function SystemMaintenancePage() {
         </Button>
       </div>
 
-      {/* Total Storage Summary */}
-      {storageInfo && (
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0" data-testid="total-storage-card">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {/* Total Size */}
-              <div className="col-span-2 md:col-span-1 bg-white/10 rounded-xl p-4 text-center">
-                <Server className="w-8 h-8 mx-auto mb-2 text-blue-300" />
-                <div className="text-3xl font-bold">{formatBytes(storageInfo.totals.total_size_kb)}</div>
-                <div className="text-sm text-slate-300">الحجم الكلي</div>
+      {/* Tabs for different sections */}
+      <Tabs defaultValue="announcements" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="announcements" className="flex items-center gap-2">
+            <Megaphone size={16} /> الإشعارات
+          </TabsTrigger>
+          <TabsTrigger value="storage" className="flex items-center gap-2">
+            <Database size={16} /> التخزين
+          </TabsTrigger>
+          <TabsTrigger value="archives" className="flex items-center gap-2">
+            <Archive size={16} /> الأرشيف
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ANNOUNCEMENTS TAB */}
+        <TabsContent value="announcements" className="space-y-6">
+          {/* Create Announcement */}
+          <Card data-testid="create-announcement-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="w-5 h-5 text-primary" />
+                إرسال إشعار جديد
+              </CardTitle>
+              <CardDescription>
+                أرسل إشعار لجميع المستخدمين. الإشعار المثبت يظهر دائماً، العادي يظهر مرة واحدة.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>الرسالة بالعربي *</Label>
+                  <Textarea
+                    value={announcementForm.message_ar}
+                    onChange={(e) => setAnnouncementForm(p => ({ ...p, message_ar: e.target.value }))}
+                    placeholder="اكتب الإشعار هنا..."
+                    className="h-24 resize-none"
+                    dir="rtl"
+                    data-testid="announcement-message-ar"
+                  />
+                </div>
+                <div>
+                  <Label>الرسالة بالإنجليزي (اختياري)</Label>
+                  <Textarea
+                    value={announcementForm.message_en}
+                    onChange={(e) => setAnnouncementForm(p => ({ ...p, message_en: e.target.value }))}
+                    placeholder="English message (optional)..."
+                    className="h-24 resize-none"
+                    dir="ltr"
+                    data-testid="announcement-message-en"
+                  />
+                </div>
               </div>
               
-              {/* Total Documents */}
-              <div className="bg-white/10 rounded-xl p-4 text-center">
-                <Database className="w-6 h-6 mx-auto mb-2 text-green-300" />
-                <div className="text-2xl font-bold">{storageInfo.totals.total_documents}</div>
-                <div className="text-xs text-slate-300">إجمالي السجلات</div>
+              <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <div className="flex items-center gap-3">
+                  <Pin className="w-5 h-5 text-amber-600" />
+                  <div>
+                    <Label className="text-amber-800 font-medium">إشعار مثبت (هام)</Label>
+                    <p className="text-xs text-amber-600">يظهر دائماً تحت الترحيب ولا يمكن إخفاؤه</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={announcementForm.is_pinned}
+                  onCheckedChange={(v) => setAnnouncementForm(p => ({ ...p, is_pinned: v }))}
+                  data-testid="announcement-pinned-switch"
+                />
               </div>
-              
-              {/* Transaction Docs */}
-              <div className="bg-orange-500/20 rounded-xl p-4 text-center">
-                <FileJson className="w-6 h-6 mx-auto mb-2 text-orange-300" />
-                <div className="text-2xl font-bold">{storageInfo.totals.transaction_documents}</div>
-                <div className="text-xs text-orange-200">سجلات معاملات</div>
-                <div className="text-xs text-orange-300">{formatBytes(storageInfo.totals.transaction_size_kb)}</div>
-              </div>
-              
-              {/* Protected Docs */}
-              <div className="bg-green-500/20 rounded-xl p-4 text-center">
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleCreateAnnouncement} 
+                disabled={actionLoading || !announcementForm.message_ar.trim()}
+                className="w-full"
+                data-testid="send-announcement-btn"
+              >
+                <Send className="w-4 h-4 ml-2" />
+                إرسال الإشعار
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Existing Announcements */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                الإشعارات الحالية ({announcements.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {announcements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  لا توجد إشعارات حالياً
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {announcements.map((ann) => (
+                    <div 
+                      key={ann.id} 
+                      className={`p-4 rounded-lg border flex items-start justify-between ${
+                        ann.is_pinned ? 'bg-amber-50 border-amber-200' : 'bg-muted/30'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {ann.is_pinned ? (
+                          <Pin className="w-5 h-5 text-amber-600 mt-0.5" />
+                        ) : (
+                          <Bell className="w-5 h-5 text-muted-foreground mt-0.5" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{ann.message_ar}</p>
+                          {ann.message_en && ann.message_en !== ann.message_ar && (
+                            <p className="text-xs text-muted-foreground mt-1" dir="ltr">{ann.message_en}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                            <span>{ann.created_by_name}</span>
+                            <span>•</span>
+                            <span>{formatDate(ann.created_at)}</span>
+                            {ann.is_pinned && (
+                              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-100">مثبت</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAnnouncement(ann.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* STORAGE TAB */}
+        <TabsContent value="storage" className="space-y-6">
+          {/* Total Storage Summary */}
+          {storageInfo && (
+            <Card className="bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0" data-testid="total-storage-card">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {/* Total Size */}
+                  <div className="col-span-2 md:col-span-1 bg-white/10 rounded-xl p-4 text-center">
+                    <Server className="w-8 h-8 mx-auto mb-2 text-blue-300" />
+                    <div className="text-3xl font-bold">{formatBytes(storageInfo.totals.total_size_kb)}</div>
+                    <div className="text-sm text-slate-300">الحجم الكلي</div>
+                  </div>
+                  
+                  {/* Total Documents */}
+                  <div className="bg-white/10 rounded-xl p-4 text-center">
+                    <Database className="w-6 h-6 mx-auto mb-2 text-green-300" />
+                    <div className="text-2xl font-bold">{storageInfo.totals.total_documents}</div>
+                    <div className="text-xs text-slate-300">إجمالي السجلات</div>
+                  </div>
+                  
+                  {/* Transaction Docs */}
+                  <div className="bg-orange-500/20 rounded-xl p-4 text-center">
+                    <FileJson className="w-6 h-6 mx-auto mb-2 text-orange-300" />
+                    <div className="text-2xl font-bold">{storageInfo.totals.transaction_documents}</div>
+                    <div className="text-xs text-orange-200">سجلات معاملات</div>
+                    <div className="text-xs text-orange-300">{formatBytes(storageInfo.totals.transaction_size_kb)}</div>
+                  </div>
+                  
+                  {/* Protected Docs */}
+                  <div className="bg-green-500/20 rounded-xl p-4 text-center">
                 <Shield className="w-6 h-6 mx-auto mb-2 text-green-300" />
                 <div className="text-2xl font-bold">{storageInfo.totals.protected_documents}</div>
                 <div className="text-xs text-green-200">سجلات محمية</div>
