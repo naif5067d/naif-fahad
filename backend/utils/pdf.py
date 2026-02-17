@@ -193,7 +193,7 @@ def get_labels(lang: str):
             'pending_supervisor': 'بانتظار المشرف',
             'pending_ops': 'بانتظار العمليات',
             'pending_finance': 'بانتظار المالية',
-            'pending_ceo': 'بانتظار CEO',
+            'pending_ceo': 'لدى سلطان',  # بدلاً من pending_ceo للموظف
             'pending_employee_accept': 'بانتظار الموظف',
             'returned': 'معادة',
             # Stages
