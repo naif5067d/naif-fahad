@@ -10,7 +10,6 @@ import TransactionsPage from "@/pages/TransactionsPage";
 import TransactionDetailPage from "@/pages/TransactionDetailPage";
 import LeavePage from "@/pages/LeavePage";
 import AttendancePage from "@/pages/AttendancePage";
-import FinancePage from "@/pages/FinancePage";
 import STASMirrorPage from "@/pages/STASMirrorPage";
 import EmployeesPage from "@/pages/EmployeesPage";
 import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
