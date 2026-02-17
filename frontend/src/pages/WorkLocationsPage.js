@@ -249,11 +249,37 @@ export default function WorkLocationsPage() {
 
                 {/* Map */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <MapPin size={16} />
-                    {lang === 'ar' ? 'حدد الموقع على الخريطة (انقر للتحديد)' : 'Select Location on Map (Click to set)'}
-                  </Label>
-                  <div className="h-64 rounded-lg overflow-hidden border border-border">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      {lang === 'ar' ? 'حدد الموقع على الخريطة' : 'Select Location on Map'}
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (navigator.geolocation) {
+                          navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                              setFormData(p => ({
+                                ...p,
+                                latitude: pos.coords.latitude,
+                                longitude: pos.coords.longitude
+                              }));
+                              toast.success(lang === 'ar' ? 'تم تحديد موقعك' : 'Location set');
+                            },
+                            () => toast.error(lang === 'ar' ? 'فشل تحديد الموقع' : 'Failed to get location')
+                          );
+                        }
+                      }}
+                      data-testid="use-my-location-btn"
+                    >
+                      <MapPin size={14} className="me-1" />
+                      {lang === 'ar' ? 'تحديد مكاني' : 'Use My Location'}
+                    </Button>
+                  </div>
+                  <div className="h-64 rounded-lg overflow-hidden border border-border" key={`map-${editingLocation?.id || 'new'}`}>
                     <MapContainer
                       center={[formData.latitude, formData.longitude]}
                       zoom={15}
@@ -261,7 +287,7 @@ export default function WorkLocationsPage() {
                     >
                       <TileLayer
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; OpenStreetMap contributors'
+                        attribution='&copy; OpenStreetMap'
                       />
                       <LocationPicker 
                         position={[formData.latitude, formData.longitude]}
