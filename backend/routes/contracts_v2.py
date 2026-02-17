@@ -109,6 +109,7 @@ class ContractUpdate(BaseModel):
     basic_salary: Optional[float] = None
     housing_allowance: Optional[float] = None
     transport_allowance: Optional[float] = None
+    nature_of_work_allowance: Optional[float] = None  # بدل طبيعة العمل
     other_allowances: Optional[float] = None
     
     wage_definition: Optional[str] = None
@@ -116,6 +117,10 @@ class ContractUpdate(BaseModel):
     
     supervisor_id: Optional[str] = None
     notes: Optional[str] = None
+    
+    # معلومات البنك (قابلة للتعديل دائماً)
+    bank_name: Optional[str] = None
+    bank_iban: Optional[str] = None
 
 
 class SubmitToSTAS(BaseModel):
