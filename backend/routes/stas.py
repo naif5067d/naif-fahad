@@ -213,10 +213,40 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             "type": "debit",
             "leave_type": leave_type,
             "days": working_days,
+            "start_date": data.get('start_date'),
+            "end_date": data.get('adjusted_end_date') or data.get('end_date'),
             "note": f"Leave: {data.get('start_date')} to {data.get('adjusted_end_date')}",
+            "ref_no": tx.get('ref_no'),
             "date": now,
             "created_at": now
         })
+        
+        # للإجازة المرضية: إشعار سلطان إذا دخل شريحة خصم
+        if leave_type == 'sick':
+            from services.hr_policy import calculate_sick_leave_consumption
+            consumption = await calculate_sick_leave_consumption(emp_id)
+            current_used = consumption.get('total_sick_days_used', 0)
+            
+            # إشعار إذا تجاوز 30 يوم (دخول شريحة 50%) أو 90 يوم (دخول شريحة 0%)
+            notification_message = None
+            if current_used > 90:
+                notification_message = f"⚠️ الموظف {tx.get('employee_name_ar', emp_id)} دخل شريحة الخصم 100% (المادة 117) - استهلك {current_used} يوم من 120 يوم"
+            elif current_used > 30:
+                notification_message = f"تنبيه: الموظف {tx.get('employee_name_ar', emp_id)} دخل شريحة الخصم 50% (المادة 117) - استهلك {current_used} يوم من 120 يوم"
+            
+            if notification_message:
+                # إنشاء إشعار لسلطان
+                await db.notifications.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "type": "sick_leave_tier_alert",
+                    "recipient_role": "sultan",
+                    "employee_id": emp_id,
+                    "transaction_id": tx['id'],
+                    "message_ar": notification_message,
+                    "message_en": f"Employee entered sick leave deduction tier - {current_used}/120 days used",
+                    "read": False,
+                    "created_at": now
+                })
         
         # للإجازات الإدارية (وفاة، زواج): تسجيل الرصيد الثابت (5 أيام) كـ credit ثم debit
         # هذا يُظهر للإدارة أن الموظف استخدم 5 أيام من رصيد 5 أيام
