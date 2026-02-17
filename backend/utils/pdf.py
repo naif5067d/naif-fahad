@@ -525,7 +525,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         field_label = labels.get(key, key.replace('_', ' ').title())
         field_label_display = format_text_bilingual(field_label, lang)
         
-        # Format value
+        # Format value - تأكد من تنسيق جميع القيم العربية
         if value is None:
             formatted_val = '-'
         elif key == 'leave_type':
@@ -533,6 +533,12 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             formatted_val = format_text_bilingual(leave_label, lang)
         elif key in ('amount', 'estimatedvalue', 'estimated_value'):
             formatted_val = f"{value} SAR"
+        elif key in ('start_date', 'end_date', 'date'):
+            # تنسيق التواريخ مع فواصل
+            formatted_val = format_date_only(str(value))
+        elif key == 'reason':
+            # السبب - تأكد من تنسيق العربي
+            formatted_val = format_text_bilingual(str(value), lang)
         else:
             formatted_val = format_text_bilingual(str(value), lang)
         
