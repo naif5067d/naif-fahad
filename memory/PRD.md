@@ -116,6 +116,29 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 
 **Testing:** 100% pass rate (17/17 backend tests, all frontend features verified)
 
+### Phase 16.1: Settlement PDF Enhancements ✅ (2026-02-17)
+
+**إصلاحات PDF المخالصة:**
+
+1. **شعار الشركة (Company Logo):**
+   - يُجلب من `branding['logo_data']` (base64 stored in settings)
+   - يُحول من RGBA إلى RGB للتوافق مع PDF
+   - يظهر في الترويسة بحجم 20×20mm
+   - **ملف:** `backend/utils/settlement_pdf.py` - دالة `create_company_logo()`
+
+2. **نص التعهد الكامل (Full Declaration Text):**
+   - عنوان: "الإقرار والتعهد / Declaration / Acknowledgment"
+   - النص العربي: "أقر أنا الموقع أدناه بأنني استلمت كافة مستحقاتي من شركة دار الكود للاستشارات الهندسية حسب البيانات المذكورة أعلاه، وهذا المبلغ شامل كافة مستحقاتي المالية حتى تاريخه، وتُعتبر هذه بمثابة براءة ذمة للشركة ولا يحق لي المطالبة بأية مستحقات لاحقة."
+   - النص الإنجليزي: "I, the undersigned, confirm that I have received all my entitlements from Dar Al Code Engineering Consultancy according to the above details. This amount includes all my financial dues up to this date and represents a full release of liability for the company."
+
+3. **رموز التوقيعات (Signatures Section):**
+   - 3 QR codes: STAS, CEO, HR
+   - 1 Barcode: لرقم المعاملة
+   - فراغ توقيع الموظف اليدوي
+
+**Testing:** 100% pass rate (10/10 PDF tests)
+- `/app/backend/tests/test_settlement_pdf.py` - ملف الاختبارات
+
 ---
 
 ### Phase 15: PDF Arabic Text - Guaranteed Fix ✅ (2026-02-17)
