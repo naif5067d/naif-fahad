@@ -38,6 +38,7 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     Create a leave request with full pre-validation.
     Validates:
     - Employee is active with contract
+    - No blocking transaction of same type (قاعدة Blocking)
     - Sufficient leave balance
     - No overlapping dates
     - Holiday adjustments
@@ -57,6 +58,15 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
         # Return first error - بالعربية دائماً
         error = errors[0]
         raise HTTPException(status_code=400, detail=error.get('message_ar', error['message']))
+    
+    # Step 1.5: قاعدة Blocking - التحقق من عدم وجود معاملة نشطة من نفس النوع
+    is_blocked, blocking_tx = await check_blocking_transaction(emp['id'], 'leave_request')
+    
+    if is_blocked:
+        raise HTTPException(
+            status_code=400,
+            detail=f"لديك طلب إجازة قيد المراجعة ({blocking_tx['ref_no']}). يجب انتظار تنفيذه أو إلغائه قبل تقديم طلب جديد."
+        )
     
     # Step 2: Validate leave request (balance, overlap, dates)
     validation = await validate_leave_request(
