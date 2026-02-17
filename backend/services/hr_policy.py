@@ -141,7 +141,7 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
         days_worked = 0
     
     # 6. حساب الاستحقاق اليومي والمكتسب
-    daily_accrual = round(annual_policy_days / days_in_year, 4)
+    daily_accrual = round(policy_days / days_in_year, 4)
     earned_to_date = round(daily_accrual * days_worked, 2)
     
     # 7. حساب المستخدم (المنفذ فقط)
