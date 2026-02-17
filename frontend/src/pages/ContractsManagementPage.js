@@ -691,40 +691,96 @@ export default function ContractsManagementPage() {
                   />
                 </div>
                 
+                {/* الإجازة السنوية - 21 أو 30 يوم فقط */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>الإجازة السنوية *</Label>
+                    <Select 
+                      value={String(formData.annual_leave_days)} 
+                      onValueChange={v => setFormData(p => ({ ...p, annual_leave_days: parseInt(v) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="21">21 يوم (أقل من 5 سنوات)</SelectItem>
+                        <SelectItem value="30">30 يوم (5 سنوات فأكثر)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>رصيد الاستئذان الشهري (ساعات)</Label>
+                    <Select 
+                      value={String(formData.monthly_permission_hours)} 
+                      onValueChange={v => setFormData(p => ({ ...p, monthly_permission_hours: parseInt(v) }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">0 ساعات</SelectItem>
+                        <SelectItem value="1">1 ساعة</SelectItem>
+                        <SelectItem value="2">2 ساعات (افتراضي)</SelectItem>
+                        <SelectItem value="3">3 ساعات (الحد الأقصى)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">الحد الأقصى 3 ساعات شهرياً</p>
+                  </div>
+                </div>
+                
                 {formData.is_migrated && (
-                  <div className="grid grid-cols-3 gap-4 bg-amber-50 p-3 rounded-lg">
-                    <div>
-                      <Label className="text-xs">رصيد سنوي افتتاحي</Label>
-                      <Input 
-                        type="number" 
-                        value={formData.leave_opening_balance.annual}
-                        onChange={e => setFormData(p => ({ 
-                          ...p, 
-                          leave_opening_balance: { ...p.leave_opening_balance, annual: parseInt(e.target.value) || 0 }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">رصيد مرضي افتتاحي</Label>
-                      <Input 
-                        type="number" 
-                        value={formData.leave_opening_balance.sick}
-                        onChange={e => setFormData(p => ({ 
-                          ...p, 
-                          leave_opening_balance: { ...p.leave_opening_balance, sick: parseInt(e.target.value) || 0 }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">رصيد طوارئ افتتاحي</Label>
-                      <Input 
-                        type="number" 
-                        value={formData.leave_opening_balance.emergency}
-                        onChange={e => setFormData(p => ({ 
-                          ...p, 
-                          leave_opening_balance: { ...p.leave_opening_balance, emergency: parseInt(e.target.value) || 0 }
-                        }))}
-                      />
+                  <div className="space-y-3 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <h4 className="font-medium text-sm text-amber-800">أرصدة افتتاحية (للموظف المُهاجر)</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs">رصيد الإجازة السنوية (بالكسور)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.5"
+                          value={formData.leave_opening_balance.annual}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_opening_balance: { ...p.leave_opening_balance, annual: parseFloat(e.target.value) || 0 }
+                          }))}
+                          placeholder="مثال: 15.5"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">رصيد الاستئذان المتبقي (ساعات)</Label>
+                        <Input 
+                          type="number" 
+                          step="0.5"
+                          max="3"
+                          value={formData.leave_opening_balance.permission_hours || 0}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_opening_balance: { ...p.leave_opening_balance, permission_hours: parseFloat(e.target.value) || 0 }
+                          }))}
+                          placeholder="0-3"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">رصيد الإجازة المرضية</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.leave_opening_balance.sick}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_opening_balance: { ...p.leave_opening_balance, sick: parseInt(e.target.value) || 0 }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">رصيد الطوارئ</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.leave_opening_balance.emergency}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_opening_balance: { ...p.leave_opening_balance, emergency: parseInt(e.target.value) || 0 }
+                          }))}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
