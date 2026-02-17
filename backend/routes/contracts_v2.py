@@ -333,9 +333,14 @@ async def create_contract(
         "basic_salary": req.basic_salary,
         "housing_allowance": req.housing_allowance,
         "transport_allowance": req.transport_allowance,
+        "nature_of_work_allowance": req.nature_of_work_allowance if hasattr(req, 'nature_of_work_allowance') else 0,
         "other_allowances": req.other_allowances,
         
         "wage_definition": req.wage_definition,
+        
+        # معلومات البنك
+        "bank_name": req.bank_name,
+        "bank_iban": req.bank_iban,
         
         # الإجازة السنوية والاستئذان
         "annual_leave_days": req.annual_leave_days,
