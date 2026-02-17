@@ -71,4 +71,4 @@ async def startup():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "DAR AL CODE HR OS"}
+    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": APP_VERSION}
