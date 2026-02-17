@@ -562,7 +562,47 @@ Contract activation flow:
 
 ---
 
-Version: 21.0 (2026-02-17)
+Version: 21.1 (2026-02-17)
+
+---
+
+### Phase 21.1: GPS Button, Announcements & Version Display ✅ (2026-02-17)
+
+**Completed - GPS "تحديد مكاني" Button:**
+- ✓ Button added to Add/Edit Work Location dialog
+- ✓ Uses navigator.geolocation.getCurrentPosition
+- ✓ Sets latitude/longitude from device GPS
+- ✓ data-testid="use-my-location-btn"
+
+**Completed - Announcements System:**
+- ✓ Pinned announcements (is_pinned=true): Always visible under welcome hero with amber pin icon
+- ✓ Regular announcements: Shown once, dismissable with X button
+- ✓ STAS/Sultan/Mohammed can create announcements
+- ✓ API endpoints: GET/POST /api/announcements, POST /api/announcements/{id}/dismiss
+
+**Completed - Version Display:**
+- ✓ APP_VERSION = "21.1" in server.py
+- ✓ GET /api/health returns version
+- ✓ Dashboard shows "DAR AL CODE HR OS v21.1" at bottom
+
+**Completed - Arabic Error Messages:**
+- ✓ translations.js updated with Arabic leave messages
+- ✓ Backend leave error returns message_ar when available
+
+**Completed - Protected Collections:**
+- ✓ work_locations protected from purge operations
+- ✓ Leave balance reset uses contract's annual_leave_days (21/30)
+
+**Files Modified:**
+- `/app/frontend/src/pages/WorkLocationsPage.js` - GPS button
+- `/app/frontend/src/pages/DashboardPage.js` - Announcements + version
+- `/app/frontend/src/lib/translations.js` - Arabic error messages
+- `/app/backend/routes/announcements.py` - NEW: Announcements API
+- `/app/backend/routes/maintenance.py` - Leave reset uses contract days
+- `/app/backend/server.py` - APP_VERSION
+
+**Test Report:**
+- `/app/test_reports/iteration_22.json` - 100% pass rate
 
 ---
 
