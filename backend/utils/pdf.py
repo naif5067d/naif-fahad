@@ -376,27 +376,38 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     main_font = ARABIC_FONT if ARABIC_FONT else ENGLISH_FONT
     bold_font = ARABIC_FONT_BOLD if ARABIC_FONT_BOLD else ENGLISH_FONT_BOLD
     
-    # ===== STYLES WITH RTL SUPPORT =====
-    # CRITICAL: wordWrap='RTL' is essential for Arabic text!
-    base_ar_style = ParagraphStyle(
-        'base_ar',
-        fontName=main_font,
-        fontSize=8,
-        alignment=TA_RIGHT if lang == 'ar' else TA_LEFT,
-        wordWrap='RTL',
-        leading=12,
-    )
+    # ===== STYLES =====
+    # Use different base styles for Arabic vs English
+    if lang == 'ar':
+        base_style = ParagraphStyle(
+            'base',
+            fontName=main_font,
+            fontSize=8,
+            alignment=TA_RIGHT,
+            wordWrap='RTL',
+            leading=12,
+        )
+    else:
+        # English uses Helvetica with LTR
+        base_style = ParagraphStyle(
+            'base',
+            fontName='Helvetica',
+            fontSize=8,
+            alignment=TA_LEFT,
+            wordWrap='LTR',
+            leading=12,
+        )
     
     styles = {
-        'title': ParagraphStyle('title', parent=base_ar_style, fontSize=14, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER),
-        'subtitle': ParagraphStyle('subtitle', parent=base_ar_style, fontSize=11, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=4*mm),
-        'section': ParagraphStyle('section', parent=base_ar_style, fontSize=9, fontName=bold_font, textColor=NAVY, spaceBefore=4*mm, spaceAfter=2*mm),
-        'small': ParagraphStyle('small', parent=base_ar_style, fontSize=6, textColor=TEXT_GRAY, alignment=TA_CENTER),
-        'small_bold': ParagraphStyle('small_bold', parent=base_ar_style, fontSize=7, fontName=bold_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
-        'cell': ParagraphStyle('cell', parent=base_ar_style, fontSize=7),
-        'cell_label': ParagraphStyle('cell_label', parent=base_ar_style, fontSize=7, textColor=TEXT_GRAY),
-        'cell_center': ParagraphStyle('cell_center', parent=base_ar_style, fontSize=6, alignment=TA_CENTER),
-        'header_cell': ParagraphStyle('header_cell', parent=base_ar_style, fontSize=6, fontName=bold_font, textColor=colors.white, alignment=TA_CENTER),
+        'title': ParagraphStyle('title', parent=base_style, fontSize=14, fontName='Helvetica-Bold' if lang == 'en' else bold_font, textColor=NAVY, alignment=TA_CENTER),
+        'subtitle': ParagraphStyle('subtitle', parent=base_style, fontSize=11, fontName='Helvetica-Bold' if lang == 'en' else bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=4*mm),
+        'section': ParagraphStyle('section', parent=base_style, fontSize=9, fontName='Helvetica-Bold' if lang == 'en' else bold_font, textColor=NAVY, spaceBefore=4*mm, spaceAfter=2*mm),
+        'small': ParagraphStyle('small', parent=base_style, fontSize=6, textColor=TEXT_GRAY, alignment=TA_CENTER),
+        'small_bold': ParagraphStyle('small_bold', parent=base_style, fontSize=7, fontName='Helvetica-Bold' if lang == 'en' else bold_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
+        'cell': ParagraphStyle('cell', parent=base_style, fontSize=7),
+        'cell_label': ParagraphStyle('cell_label', parent=base_style, fontSize=7, textColor=TEXT_GRAY),
+        'cell_center': ParagraphStyle('cell_center', parent=base_style, fontSize=6, alignment=TA_CENTER),
+        'header_cell': ParagraphStyle('header_cell', parent=base_style, fontSize=6, fontName='Helvetica-Bold' if lang == 'en' else bold_font, textColor=colors.white, alignment=TA_CENTER),
     }
     
     elements = []
