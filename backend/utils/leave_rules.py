@@ -106,11 +106,13 @@ async def check_date_overlap(employee_id: str, start_date: str, end_date: str, e
     """
     Check if the requested leave dates overlap with any existing leave.
     Checks both pending and executed transactions.
+    
+    ملاحظة: لا نتحقق من الطلبات الملغاة (cancelled) أو المرفوضة (rejected)
     """
     query = {
         "employee_id": employee_id,
         "type": "leave_request",
-        "status": {"$nin": ["rejected"]},  # Check pending AND executed
+        "status": {"$nin": ["rejected", "cancelled"]},  # استثناء الملغاة والمرفوضة
         "$or": [
             # Case 1: Existing leave starts during requested period
             {"data.start_date": {"$gte": start_date, "$lte": end_date}},
