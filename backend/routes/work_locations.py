@@ -67,6 +67,9 @@ async def create_work_location(req: WorkLocationCreate, user=Depends(get_current
     if user.get('role') not in ['sultan', 'naif', 'stas']:
         raise HTTPException(status_code=403, detail="Only Operations or STAS can create work locations")
     
+    # Validate grace period (0-15 minutes)
+    grace_period = max(0, min(15, req.grace_period_minutes))
+    
     now = datetime.now(timezone.utc).isoformat()
     location = {
         "id": str(uuid.uuid4()),
@@ -77,6 +80,7 @@ async def create_work_location(req: WorkLocationCreate, user=Depends(get_current
         "radius_meters": req.radius_meters,
         "work_start": req.work_start,
         "work_end": req.work_end,
+        "grace_period_minutes": grace_period,
         "work_days": req.work_days.model_dump(),
         "assigned_employees": req.assigned_employees,
         "created_by": user['user_id'],
