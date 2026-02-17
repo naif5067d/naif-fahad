@@ -275,16 +275,41 @@ async def validate_leave_request(
         })
         return {"valid": False, "errors": errors}
     
-    # Check balance
+    # Check balance - لكل نوع إجازة قواعد مختلفة
     balance = await get_leave_balance(employee_id, leave_type)
     
-    if working_days > balance:
-        errors.append({
-            "code": "error.insufficient_balance",
-            "message": f"Insufficient {leave_type} leave balance. Available: {balance}, Requested: {working_days}",
-            "message_ar": f"رصيد إجازات {leave_type} غير كافٍ. المتاح: {balance}، المطلوب: {working_days}"
-        })
-        return {"valid": False, "errors": errors}
+    # الإجازة المرضية: لا يُمنع إلا عند تجاوز 120 يوم
+    # من 0-120 يُسمح له بالطلب مع عرض تحذير بالخصم
+    if leave_type == 'sick':
+        from services.hr_policy import calculate_sick_leave_consumption
+        consumption = await calculate_sick_leave_consumption(employee_id)
+        current_used = consumption.get('total_sick_days_used', 0)
+        remaining_sick = 120 - current_used
+        
+        if working_days > remaining_sick:
+            errors.append({
+                "code": "error.sick_leave_exceeded",
+                "message": f"Sick leave limit exceeded. Maximum 120 days/year. Remaining: {remaining_sick}, Requested: {working_days}",
+                "message_ar": f"تجاوز الحد الأقصى للإجازة المرضية (120 يوم/سنة). المتبقي: {remaining_sick}، المطلوب: {working_days}"
+            })
+            return {"valid": False, "errors": errors}
+        # لا نتحقق من الرصيد - المرضية مسموحة دائماً حتى 120 يوم
+    elif leave_type in ['bereavement', 'marriage', 'exam']:
+        # الإجازات الإدارية: لها رصيد ثابت (مثلاً 5 أيام) لكن مخفي عن الموظف
+        # يُسمح بالطلب والإدارة تقرر
+        pass  # لا نتحقق من الرصيد
+    elif leave_type == 'unpaid':
+        # إجازة بدون راتب: لا رصيد، مسموحة دائماً
+        pass
+    else:
+        # الإجازة السنوية: يجب التحقق من الرصيد
+        if working_days > balance:
+            errors.append({
+                "code": "error.insufficient_balance",
+                "message": f"Insufficient {leave_type} leave balance. Available: {balance}, Requested: {working_days}",
+                "message_ar": f"رصيد إجازات {leave_type} غير كافٍ. المتاح: {balance}، المطلوب: {working_days}"
+            })
+            return {"valid": False, "errors": errors}
     
     # Check date overlap
     overlapping = await check_date_overlap(employee_id, start_date, end_date, exclude_tx_id)
