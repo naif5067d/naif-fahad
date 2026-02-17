@@ -448,24 +448,14 @@ export default function WorkLocationsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Mini Map Preview */}
-                <div className="h-32 rounded-md overflow-hidden border border-border">
-                  <MapContainer
-                    center={[loc.latitude, loc.longitude]}
-                    zoom={15}
-                    style={{ height: '100%', width: '100%' }}
-                    zoomControl={false}
-                    dragging={false}
-                    scrollWheelZoom={false}
-                  >
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[loc.latitude, loc.longitude]} />
-                    <Circle 
-                      center={[loc.latitude, loc.longitude]} 
-                      radius={loc.radius_meters}
-                      pathOptions={{ color: '#F97316', fillColor: '#F97316', fillOpacity: 0.2 }}
-                    />
-                  </MapContainer>
+                {/* Static Map Preview - using iframe to avoid multiple MapContainer instances */}
+                <div className="h-32 rounded-md overflow-hidden border border-border bg-muted">
+                  <img 
+                    src={`https://staticmap.openstreetmap.de/staticmap.php?center=${loc.latitude},${loc.longitude}&zoom=15&size=400x200&markers=${loc.latitude},${loc.longitude},ol-marker`}
+                    alt={lang === 'ar' ? loc.name_ar : loc.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
 
                 {/* Info */}
