@@ -5,6 +5,7 @@ Settlement PDF Generator - وثيقة المخالصة
 - Hybrid bilingual: يمين عربي، يسار إنجليزي (نفس السطر)
 - QR للتوقيعات + Barcode لـ STAS
 - فراغ توقيع الموظف اليدوي
+- شعار الشركة في الترويسة
 """
 
 from reportlab.lib.pagesizes import A4
@@ -15,6 +16,8 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT, TA_CENTER
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.graphics.shapes import Drawing, Rect, String
+from reportlab.graphics import renderPDF
 import arabic_reshaper
 from bidi.algorithm import get_display
 import io
@@ -42,11 +45,43 @@ ENGLISH_FONT_BOLD = 'Helvetica-Bold'
 NAVY = colors.Color(0.118, 0.227, 0.373)  # #1E3A5F
 LIGHT_GRAY = colors.Color(0.95, 0.95, 0.95)
 BORDER_GRAY = colors.Color(0.8, 0.8, 0.8)
+GOLD = colors.Color(0.8, 0.6, 0.2)  # لون ذهبي للشعار
 
 # أبعاد الصفحة
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 12 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+
+# مسار اللوجو
+LOGO_PATH = "/app/backend/assets/logo.png"
+
+
+def create_company_logo(width=25, height=25):
+    """
+    إنشاء شعار الشركة
+    يحاول تحميل الصورة أولاً، وإذا لم تكن موجودة ينشئ شعار نصي
+    """
+    # محاولة تحميل صورة اللوجو
+    if os.path.exists(LOGO_PATH):
+        try:
+            return Image(LOGO_PATH, width=width*mm, height=height*mm)
+        except:
+            pass
+    
+    # إنشاء شعار نصي بديل - DAC
+    d = Drawing(width*mm, height*mm)
+    
+    # مربع خلفية
+    d.add(Rect(0, 0, width*mm, height*mm, fillColor=NAVY, strokeColor=None, rx=3, ry=3))
+    
+    # حرف D
+    d.add(String(3*mm, 8*mm, "D", fontName=ENGLISH_FONT_BOLD, fontSize=14, fillColor=colors.white))
+    # حرف A
+    d.add(String(9*mm, 8*mm, "A", fontName=ENGLISH_FONT_BOLD, fontSize=14, fillColor=GOLD))
+    # حرف C
+    d.add(String(15*mm, 8*mm, "C", fontName=ENGLISH_FONT_BOLD, fontSize=14, fillColor=colors.white))
+    
+    return d
 
 
 def reshape_arabic(text):
