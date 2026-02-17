@@ -388,20 +388,26 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         }
     
     # Choose fonts based on language
-    if lang == 'ar' and ARABIC_FONT:
+    # استخدام الخط العربي دائماً للنصوص العربية
+    if ARABIC_FONT:
         main_font = ARABIC_FONT
-        bold_font = ARABIC_FONT_BOLD
+        bold_font = ARABIC_FONT_BOLD or ARABIC_FONT
     else:
         main_font = ENGLISH_FONT
         bold_font = ENGLISH_FONT_BOLD
     
-    # Styles
+    # الخط الإنجليزي للعناوين والأرقام
+    english_font = ENGLISH_FONT
+    english_bold = ENGLISH_FONT_BOLD
+    
+    # Styles - استخدام الخط العربي لجميع الأنماط
     styles = {
         'title': ParagraphStyle('title', fontSize=14, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=2*mm),
         'subtitle': ParagraphStyle('subtitle', fontSize=11, fontName=bold_font, textColor=NAVY, alignment=TA_CENTER, spaceAfter=4*mm),
         'section': ParagraphStyle('section', fontSize=9, fontName=bold_font, textColor=NAVY, spaceBefore=4*mm, spaceAfter=2*mm),
         'small': ParagraphStyle('small', fontSize=6, fontName=main_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
         'small_bold': ParagraphStyle('small_bold', fontSize=7, fontName=bold_font, textColor=TEXT_GRAY, alignment=TA_CENTER),
+        'arabic_text': ParagraphStyle('arabic_text', fontSize=8, fontName=main_font, textColor=colors.black, alignment=TA_RIGHT if lang == 'ar' else TA_LEFT),
     }
     
     elements = []
