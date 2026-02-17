@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CalendarDays, Plus, Pencil, Trash2, Loader2, Clock, CalendarCheck } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { CalendarDays, Plus, Pencil, Trash2, Loader2, Clock, CalendarCheck, AlertTriangle, FileText, Info } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -23,6 +23,11 @@ export default function LeavePage() {
   const [holidayForm, setHolidayForm] = useState({ name: '', name_ar: '', date: '' });
   const [editHoliday, setEditHoliday] = useState(null);
   const [addHolidayOpen, setAddHolidayOpen] = useState(false);
+  
+  // تحذير المادة 117 للإجازة المرضية
+  const [sickLeaveWarning, setSickLeaveWarning] = useState(null);
+  const [showSickWarningDialog, setShowSickWarningDialog] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
 
   const canRequest = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
   const canEditHolidays = ['sultan', 'naif', 'stas'].includes(user?.role);
