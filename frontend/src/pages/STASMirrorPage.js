@@ -347,6 +347,30 @@ export default function STASMirrorPage() {
                     </CardContent>
                   </Card>
 
+                  {/* Medical File - التقرير الطبي */}
+                  {mirror.transaction?.data?.medical_file_url && (
+                    <Card className="border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 shadow-none" data-testid="medical-file-card">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
+                          <FileText size={16} />
+                          {lang === 'ar' ? 'التقرير الطبي المرفق' : 'Attached Medical Report'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(mirror.transaction.data.medical_file_url, '_blank')}
+                          className="w-full border-red-300 text-red-600 hover:bg-red-100"
+                          data-testid="view-medical-file-mirror"
+                        >
+                          <Eye size={14} className="me-2" />
+                          {lang === 'ar' ? 'عرض ملف PDF' : 'View PDF File'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Desktop Execute Button - منع التنفيذ المكرر */}
                   <div className="hidden md:block">
                     {mirror.transaction?.status === 'executed' ? (
