@@ -33,37 +33,23 @@ async def get_expiring_contracts(
     """
     today = datetime.now(timezone.utc).date()
     cutoff_date = today + timedelta(days=days_ahead)
+    today_str = today.strftime('%Y-%m-%d')
+    cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
-    # البحث عن العقود النشطة التي لها تاريخ انتهاء
-    pipeline = [
-        {
-            "$match": {
-                "status": "active",
-                "end_date": {"$ne": None}
-            }
-        },
-        {
-            "$addFields": {
-                "end_date_parsed": {"$dateFromString": {"dateString": "$end_date"}}
-            }
-        },
-        {
-            "$match": {
-                "end_date_parsed": {
-                    "$lte": datetime.combine(cutoff_date, datetime.min.time()),
-                    "$gte": datetime.combine(today, datetime.min.time())
-                }
-            }
-        },
-        {
-            "$sort": {"end_date_parsed": 1}
-        },
-        {
-            "$project": {"_id": 0}
+    # البحث عن العقود النشطة التي لها تاريخ انتهاء (غير فارغ)
+    query = {
+        "status": "active",
+        "end_date": {
+            "$ne": None,
+            "$ne": "",
+            "$lte": cutoff_str,
+            "$gte": today_str
         }
-    ]
+    }
     
-    expiring_contracts = await db.contracts_v2.aggregate(pipeline).to_list(100)
+    expiring_contracts = await db.contracts_v2.find(
+        query, {"_id": 0}
+    ).sort("end_date", 1).to_list(100)
     
     # إضافة بيانات رصيد الإجازات لكل موظف
     result = []
