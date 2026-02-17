@@ -328,6 +328,7 @@ async def create_contract(
         
         # الإجازة السنوية والاستئذان
         "annual_leave_days": req.annual_leave_days,
+        "annual_policy_days": req.annual_policy_days if req.annual_policy_days in [21, 30] else 21,  # السياسة الرسمية
         "monthly_permission_hours": min(req.monthly_permission_hours, 3),  # الحد الأقصى 3
         
         "is_migrated": req.is_migrated,
