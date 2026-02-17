@@ -668,7 +668,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             else:
                 consent_text = f"By signing below, I agree to the deduction: {' | '.join(deduction_details)}"
             
-            consent_text_style = ParagraphStyle('consent_text', parent=base_ar_style, fontSize=7)
+            consent_text_style = ParagraphStyle('consent_text', parent=base_style, fontSize=7)
             elements.append(make_para(consent_text, consent_text_style))
             
             # Blue QR code for employee signature
