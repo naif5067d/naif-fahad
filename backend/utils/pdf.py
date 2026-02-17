@@ -468,7 +468,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             make_para(labels['name'], styles['cell_label']), 
             make_para(emp_name, styles['cell']), 
             make_para(labels['emp_no'], styles['cell_label']), 
-            make_para(emp_no, styles['cell'])
+            make_ltr_para(emp_no, styles['cell'])
         ]]
         emp_table = Table(emp_data, colWidths=[25*mm, 80*mm, 25*mm, 40*mm], rowHeights=[8*mm])
         emp_table.setStyle(TableStyle([
