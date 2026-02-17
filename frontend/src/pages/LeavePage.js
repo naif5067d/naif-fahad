@@ -252,7 +252,7 @@ export default function LeavePage() {
               </Select>
               {isEmployee && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  {lang === 'ar' ? 'للإجازات الأخرى (مرضية، زواج، وفاة...) تواصل مع الإدارة' : 'For other leaves, contact management'}
+                  {lang === 'ar' ? 'يمكنك طلب جميع أنواع الإجازات. الرصيد يُحتسب داخلياً.' : 'You can request all leave types. Balance is tracked internally.'}
                 </p>
               )}
             </div>
