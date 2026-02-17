@@ -13,6 +13,7 @@ import AttendancePage from "@/pages/AttendancePage";
 import FinancePage from "@/pages/FinancePage";
 import STASMirrorPage from "@/pages/STASMirrorPage";
 import EmployeesPage from "@/pages/EmployeesPage";
+import EmployeeProfilePage from "@/pages/EmployeeProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
 import WorkLocationsPage from "@/pages/WorkLocationsPage";
 import CustodyPage from "@/pages/CustodyPage";
