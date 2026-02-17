@@ -27,6 +27,7 @@ from routes.contracts_v2 import router as contracts_v2_router
 from routes.upload import router as upload_router
 from routes.announcements import router as announcements_router
 from routes.users import router as users_router
+from routes.admin import router as admin_router
 from seed import seed_database
 
 # App Version
