@@ -568,8 +568,10 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
             
             if stage in ('stas', 'ceo'):
                 stage_display = stage.upper()
+                stage_para = make_ltr_para(stage_display, styles['cell_center'])
             else:
                 stage_display = labels.get(stage, stage.title())
+                stage_para = make_para(stage_display, styles['cell_center'])
             
             approver_name = approval.get('approver_name', approval.get('actor_name', '-'))
             action_raw = approval.get('status', approval.get('action', ''))
@@ -582,7 +584,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                 sig_code = f"STAS-{ref_no[-8:]}"
                 barcode_drawing = create_barcode_image(sig_code, width=35, height=8)
                 if barcode_drawing:
-                    ref_text = make_para(ref_no, styles['cell_center'])
+                    ref_text = make_ltr_para(ref_no, styles['cell_center'])
                     sig_table = Table([[barcode_drawing], [ref_text]], colWidths=[40*mm], rowHeights=[10*mm, 4*mm])
                     sig_table.setStyle(TableStyle([
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -590,18 +592,18 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                     ]))
                     sig_img = sig_table
                 else:
-                    sig_img = make_para(f"[STAS-{ref_no[-8:]}]", styles['cell_center'])
+                    sig_img = make_ltr_para(f"[STAS-{ref_no[-8:]}]", styles['cell_center'])
             else:
                 sig_data = f"{stage}-{approver_id}"
                 sig_img = create_qr_image(sig_data, size=12)
                 if sig_img is None:
-                    sig_img = make_para(f"[{approver_id[:6]}]", styles['cell_center'])
+                    sig_img = make_ltr_para(f"[{approver_id[:6]}]", styles['cell_center'])
             
             approval_data.append([
-                make_para(stage_display, styles['cell_center']),
+                stage_para,
                 make_para(approver_name, styles['cell_center']),
                 make_para(action_label, styles['cell_center']),
-                make_para(timestamp, styles['cell_center']),
+                make_ltr_para(timestamp, styles['cell_center']),
                 sig_img
             ])
         
