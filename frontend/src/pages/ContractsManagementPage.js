@@ -184,9 +184,17 @@ export default function ContractsManagementPage() {
   };
 
   const handleCreateContract = async () => {
-    if (!formData.employee_id || !formData.start_date) {
-      toast.error('يرجى ملء الحقول المطلوبة');
-      return;
+    // التحقق من البيانات المطلوبة
+    if (formData.is_new_employee) {
+      if (!formData.employee_name_ar || !formData.start_date) {
+        toast.error('يرجى إدخال اسم الموظف وتاريخ البداية');
+        return;
+      }
+    } else {
+      if (!formData.employee_id || !formData.start_date) {
+        toast.error('يرجى اختيار موظف وتاريخ البداية');
+        return;
+      }
     }
     
     setActionLoading(true);
