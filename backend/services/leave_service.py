@@ -150,41 +150,42 @@ async def get_all_leave_balances(employee_id: str) -> Dict[str, float]:
 
 
 # ============================================================
-# استحقاق الإجازة السنوية (21/30)
+# استحقاق الإجازة السنوية (Pro-Rata)
 # ============================================================
 
 async def calculate_annual_entitlement(employee_id: str) -> dict:
     """
-    حساب استحقاق الإجازة السنوية بناءً على سنوات الخدمة
-    - أقل من 5 سنوات = 21 يوم
-    - 5 سنوات فأكثر = 30 يوم
-    """
-    service_info = await get_employee_service_info(employee_id)
+    حساب استحقاق الإجازة السنوية باستخدام Pro-Rata
     
-    if not service_info:
+    المعادلات:
+    - annual_entitlement_year = 21 أو 30 (من العقد أو قرار إداري)
+    - daily_accrual = annual_entitlement_year / days_in_year
+    - earned_to_date = daily_accrual * days_worked_in_year
+    """
+    pro_rata = await calculate_pro_rata_entitlement(employee_id)
+    
+    if pro_rata.get('error'):
         return {
             "entitlement": 0,
             "service_years": 0,
             "rule_applied": "no_active_contract",
-            "message_ar": "لا يوجد عقد نشط"
+            "message_ar": pro_rata.get('message_ar', 'لا يوجد عقد نشط')
         }
     
-    years = service_info['service']['years']
-    
-    if years >= ANNUAL_LEAVE_RULES['threshold_years']:
-        entitlement = ANNUAL_LEAVE_RULES['5_years_plus']
-        rule_applied = "5_years_plus"
-        message_ar = f"5 سنوات فأكثر = {entitlement} يوم"
-    else:
-        entitlement = ANNUAL_LEAVE_RULES['under_5_years']
-        rule_applied = "under_5_years"
-        message_ar = f"أقل من 5 سنوات = {entitlement} يوم"
+    policy = await get_employee_annual_policy(employee_id)
     
     return {
-        "entitlement": entitlement,
-        "service_years": years,
-        "rule_applied": rule_applied,
-        "message_ar": message_ar
+        "entitlement": pro_rata.get('annual_policy_days', DEFAULT_ANNUAL_ENTITLEMENT),
+        "earned_to_date": pro_rata.get('earned_to_date', 0),
+        "available_balance": pro_rata.get('available_balance', 0),
+        "used": pro_rata.get('used_executed', 0),
+        "daily_accrual": pro_rata.get('daily_accrual', 0),
+        "days_worked": pro_rata.get('days_worked', 0),
+        "rule_applied": f"{policy['source']}_{policy['days']}",
+        "policy_source": policy['source'],
+        "policy_source_ar": policy['source_ar'],
+        "formula": pro_rata.get('formula', ''),
+        "message_ar": pro_rata.get('message_ar', '')
     }
 
 
