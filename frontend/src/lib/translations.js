@@ -162,7 +162,7 @@ export const translations = {
     nav: {
       dashboard: "لوحتي", transactions: "المعاملات", leave: "الإجازات",
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
-      contractsManagement: "إدارة العقود", employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
+      contractsManagement: "إدارة العقود", settlement: "المخالصات", employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام"
