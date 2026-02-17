@@ -20,6 +20,11 @@ export default function STASMirrorPage() {
   const [executing, setExecuting] = useState(false);
   const [loadingMirror, setLoadingMirror] = useState(false);
   
+  // Cancel/Reject state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  
   // Holiday management
   const [holidays, setHolidays] = useState([]);
   const [newHoliday, setNewHoliday] = useState({ name: '', name_ar: '', date: '' });
