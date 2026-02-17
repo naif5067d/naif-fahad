@@ -227,13 +227,51 @@ async def create_contract(
 ):
     """
     Create a new contract.
+    If is_new_employee=True, creates the employee first.
     Status will be 'draft'.
     Sultan/Naif can create, only STAS can execute.
     """
-    # Validate employee exists
-    employee = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
-    if not employee:
-        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    now = datetime.now(timezone.utc).isoformat()
+    employee = None
+    
+    # إذا موظف جديد، أنشئه أولاً
+    if req.is_new_employee:
+        if not req.employee_name_ar:
+            raise HTTPException(status_code=400, detail="اسم الموظف بالعربي مطلوب")
+        
+        # إنشاء موظف جديد
+        new_employee_id = str(uuid.uuid4())
+        employee_number = req.employee_code or f"EMP-{new_employee_id[:8].upper()}"
+        
+        employee = {
+            "id": new_employee_id,
+            "user_id": new_employee_id,  # سيتم ربطه لاحقاً
+            "employee_number": employee_number,
+            "full_name": req.employee_name or req.employee_name_ar,
+            "full_name_ar": req.employee_name_ar,
+            "email": req.email,
+            "phone": req.phone,
+            "national_id": req.national_id,
+            "position": req.job_title,
+            "position_ar": req.job_title_ar,
+            "department": req.department,
+            "department_ar": req.department_ar,
+            "join_date": req.start_date,
+            "supervisor_id": req.supervisor_id,
+            "is_active": True,
+            "role": "employee",
+            "created_at": now,
+            "updated_at": now
+        }
+        
+        await db.employees.insert_one(employee)
+        req.employee_id = new_employee_id
+        req.employee_code = employee_number
+    else:
+        # تحقق من وجود الموظف
+        employee = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
+        if not employee:
+            raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
     # Validate no other active contract if this will be activated
     is_valid, error = await validate_no_active_contract(req.employee_id)
@@ -250,8 +288,6 @@ async def create_contract(
         req.transport_allowance = 0
         req.other_allowances = 0
     
-    now = datetime.now(timezone.utc).isoformat()
-    
     # Generate serial
     contract_serial = await generate_contract_serial()
     
@@ -265,7 +301,7 @@ async def create_contract(
         
         "employee_id": req.employee_id,
         "employee_code": req.employee_code,
-        "employee_name": req.employee_name,
+        "employee_name": req.employee_name or req.employee_name_ar,
         "employee_name_ar": req.employee_name_ar or req.employee_name,
         
         "contract_category": req.contract_category,
@@ -288,6 +324,10 @@ async def create_contract(
         "other_allowances": req.other_allowances,
         
         "wage_definition": req.wage_definition,
+        
+        # الإجازة السنوية والاستئذان
+        "annual_leave_days": req.annual_leave_days,
+        "monthly_permission_hours": min(req.monthly_permission_hours, 3),  # الحد الأقصى 3
         
         "is_migrated": req.is_migrated,
         "leave_opening_balance": req.leave_opening_balance,
