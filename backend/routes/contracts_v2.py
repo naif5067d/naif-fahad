@@ -41,10 +41,15 @@ router = APIRouter(prefix="/api/contracts-v2", tags=["contracts-v2"])
 # ============================================================
 
 class ContractCreate(BaseModel):
-    employee_id: str
-    employee_code: str
-    employee_name: str
+    # موظف جديد أو قديم
+    is_new_employee: bool = False
+    employee_id: Optional[str] = ""
+    employee_code: str = ""
+    employee_name: str = ""
     employee_name_ar: str = ""
+    email: str = ""
+    phone: str = ""
+    national_id: str = ""
     
     contract_category: str = "employment"  # employment | internship_unpaid
     employment_type: str = "unlimited"  # unlimited | fixed_term | trial_paid
@@ -67,8 +72,13 @@ class ContractCreate(BaseModel):
     
     wage_definition: str = "basic_only"  # basic_only | basic_plus_fixed
     
+    # الإجازة السنوية: 21 أو 30 يوم فقط
+    annual_leave_days: int = 21
+    # رصيد الاستئذان الشهري (0-3 ساعات)
+    monthly_permission_hours: int = 2
+    
     is_migrated: bool = False
-    leave_opening_balance: Optional[Dict[str, int]] = None  # {"annual": 10, "sick": 5, ...}
+    leave_opening_balance: Optional[Dict[str, float]] = None  # {"annual": 10.5, "sick": 5, "permission_hours": 2}
     
     supervisor_id: Optional[str] = None
     notes: str = ""
