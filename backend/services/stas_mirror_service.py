@@ -1,5 +1,7 @@
 """
-STAS Mirror Service - مرآة STAS الشاملة
+STAS Mirror Service - مرآة STAS الشاملة (محدث)
+============================================================
+Version: 2.0.0 - HR Policy Integration
 ============================================================
 مرآة STAS = ضمان الحوكمة
 - هو لا يثق في قرارات اللي قبله
@@ -7,10 +9,10 @@ STAS Mirror Service - مرآة STAS الشاملة
 - ثم ينفذ وهو مطمئن
 
 تعرض المرآة:
-- العقد
+- العقد + سياسة الإجازة (21/30)
 - مدة الخدمة
 - تعريف الأجر
-- رصيد الإجازات قبل وبعد
+- رصيد الإجازات قبل وبعد (Pro-Rata)
 - وضع الحضور
 - الغياب غير المسوى
 - العهد
@@ -30,6 +32,13 @@ from services.service_calculator import get_employee_service_info, calculate_mon
 from services.leave_service import get_leave_balance, get_all_leave_balances, get_employee_leave_summary
 from services.attendance_service import get_unsettled_absences, get_employee_attendance_summary
 from services.settlement_service import validate_settlement_request, aggregate_settlement_data
+from services.hr_policy import (
+    calculate_pro_rata_entitlement,
+    get_employee_annual_policy,
+    get_status_for_viewer,
+    format_datetime_riyadh,
+    format_date_arabic
+)
 
 
 # ============================================================
