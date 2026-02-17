@@ -112,6 +112,7 @@ export default function ContractsManagementPage() {
     wage_definition: 'basic_only',
     // الإجازة السنوية: 21 أو 30 يوم فقط
     annual_leave_days: 21,
+    annual_policy_days: 21,  // السياسة الرسمية - 21 أو 30
     // رصيد الاستئذان الشهري (3 ساعات كحد أقصى، 2 تلقائي + 1 مرن)
     monthly_permission_hours: 2,
     // خيار عقد مُهاجر للموظفين القدامى
