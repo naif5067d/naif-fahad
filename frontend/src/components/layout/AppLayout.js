@@ -2,8 +2,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, DollarSign, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt, Bell, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import api from '@/lib/api';
 
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance'],
