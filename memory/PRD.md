@@ -39,6 +39,85 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 ### Phase 13: System Maintenance Module ✅ (2026-02-14)
 ### Phase 14: System Maintenance V2 + Date Format Audit ✅ (2026-02-14)
 
+### Phase 16: Settlement System Complete (نظام المخالصة) ✅ (2026-02-17)
+
+**المتطلبات المُنفذة:**
+
+1. **حقول البنك والآيبان (Bank & IBAN Fields):**
+   - `bank_name`: اسم البنك (إلزامي للمخالصة)
+   - `bank_iban`: رقم الآيبان (IBAN)
+   - قابلة للتعديل في أي وقت
+   - تظهر في نموذج العقد ومعاينة المخالصة
+
+2. **حساب آخر راتب (Last Wage):**
+   ```
+   آخر راتب = الأساسي + السكن + النقل + طبيعة العمل + بدلات أخرى
+   ```
+   - **لا** يعتمد على الأساسي فقط
+   - يُستخدم في جميع حسابات المخالصة
+
+3. **حساب مكافأة نهاية الخدمة (EOS) - نظام العمل السعودي:**
+   - أقل من 5 سنوات: `0.5 × الراتب × السنوات`
+   - 5+ سنوات: `(0.5 × 5) + (1 × الباقي)`
+   - **نسب الاستقالة:**
+     - < 2 سنوات: 0%
+     - 2-5 سنوات: 33%
+     - 5-10 سنوات: 66%
+     - 10+ سنوات: 100%
+   - **إنهاء العقد/اتفاق طرفين/وفاة:** 100%
+   - **إنهاء خلال التجربة:** 0%
+
+4. **حساب بدل الإجازات (Leave Compensation):**
+   ```
+   بدل الإجازات = رصيد الإجازة × (آخر راتب ÷ 30)
+   ```
+   - الرصيد محسوب Pro-Rata يومي:
+     ```
+     (سياسة الإجازة / 365) × أيام الخدمة - المستخدم
+     ```
+
+5. **أنواع إنهاء الخدمة:**
+   - `contract_expiry`: انتهاء العقد
+   - `resignation`: استقالة
+   - `probation_termination`: إنهاء خلال التجربة
+   - `mutual_agreement`: اتفاق طرفين
+   - `termination`: إنهاء من الشركة
+
+6. **دورة حياة المخالصة:**
+   ```
+   إنشاء (Sultan/Naif) → معاينة Preview → pending_stas → تنفيذ (STAS) → executed
+   ```
+   - التنفيذ مرة واحدة فقط
+   - بعد التنفيذ: قفل الحساب + إغلاق العقد
+
+7. **بعد تنفيذ المخالصة:**
+   - إغلاق العقد (status: closed)
+   - قفل حساب الموظف (is_active: false)
+   - تسجيل جميع العمليات في finance_ledger
+   - حفظ Snapshot كامل
+
+**الملفات الجديدة:**
+- `/app/backend/routes/settlement.py` - Settlement API
+- `/app/backend/routes/deductions.py` - Deductions/Bonuses API
+- `/app/backend/services/service_calculator.py` - EOS, Leave, Wage calculations
+- `/app/frontend/src/pages/SettlementPage.js` - واجهة المخالصات
+
+**APIs الجديدة:**
+- `GET /api/settlement` - قائمة المخالصات
+- `GET /api/settlement/termination-types` - أنواع الإنهاء
+- `POST /api/settlement/preview` - معاينة حسابات المخالصة
+- `POST /api/settlement` - إنشاء طلب مخالصة
+- `POST /api/settlement/{id}/execute` - تنفيذ المخالصة (STAS)
+- `POST /api/settlement/{id}/cancel` - إلغاء المخالصة
+- `GET /api/settlement/{id}/pdf` - PDF المخالصة
+- `GET /api/deductions` - قائمة الخصومات/المكافآت
+- `POST /api/deductions` - إنشاء خصم/مكافأة
+- `POST /api/deductions/{id}/action` - تنفيذ/رفض (STAS)
+
+**Testing:** 100% pass rate (17/17 backend tests, all frontend features verified)
+
+---
+
 ### Phase 15: PDF Arabic Text - Guaranteed Fix ✅ (2026-02-17)
 
 **P0 Critical Fix - Arabic Text & Date Formatting in PDF:**
