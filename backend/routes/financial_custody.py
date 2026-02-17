@@ -131,9 +131,9 @@ async def receive_custody(custody_id: str, user=Depends(get_current_user)):
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="غير موجود")
     if c["status"] != "created":
-        raise HTTPException(status_code=400, detail="Custody already received")
+        raise HTTPException(status_code=400, detail="تم استلام العهدة مسبقاً")
 
     now = datetime.now(timezone.utc).isoformat()
     await db.custody_financial.update_one(
@@ -159,17 +159,17 @@ async def add_expense(custody_id: str, exp: ExpenseEntry, user=Depends(get_curre
     """Sultan adds an expense to the custody."""
     role = user.get("role")
     if role not in ("sultan", "stas"):
-        raise HTTPException(status_code=403, detail="Only Sultan can add expenses")
+        raise HTTPException(status_code=403, detail="فقط سلطان يمكنه إضافة المصروفات")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="غير موجود")
     if c["status"] != "active":
-        raise HTTPException(status_code=400, detail="Custody must be active to add expenses")
+        raise HTTPException(status_code=400, detail="يجب أن تكون العهدة نشطة لإضافة مصروفات")
     if exp.amount <= 0:
         raise HTTPException(status_code=400, detail="المبلغ يجب أن يكون موجباً")
     if exp.amount > c["remaining"]:
-        raise HTTPException(status_code=400, detail=f"Amount exceeds remaining balance ({c['remaining']} SAR)")
+        raise HTTPException(status_code=400, detail=f"المبلغ يتجاوز الرصيد المتبقي ({c['remaining']} ريال)")
 
     # Lookup code name
     code_doc = await db.finance_codes.find_one({"code": exp.code, "is_active": True}, {"_id": 0})
@@ -219,15 +219,15 @@ async def remove_expense(custody_id: str, expense_id: str, user=Depends(get_curr
     """Remove an expense (Sultan only, while active)."""
     role = user.get("role")
     if role not in ("sultan", "stas"):
-        raise HTTPException(status_code=403, detail="Only Sultan can remove expenses")
+        raise HTTPException(status_code=403, detail="فقط سلطان يمكنه حذف المصروفات")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c or c["status"] != "active":
-        raise HTTPException(status_code=400, detail="Cannot modify")
+        raise HTTPException(status_code=400, detail="لا يمكن التعديل")
 
     expense = next((e for e in c["expenses"] if e["id"] == expense_id), None)
     if not expense:
-        raise HTTPException(status_code=404, detail="Expense not found")
+        raise HTTPException(status_code=404, detail="المصروف غير موجود")
 
     new_spent = c["total_spent"] - expense["amount"]
     new_remaining = c["total_amount"] + c.get("carried_amount", 0) - new_spent
@@ -255,13 +255,13 @@ async def submit_for_audit(custody_id: str, user=Depends(get_current_user)):
     """Sultan sends custody for audit (تدقيق) to Salah."""
     role = user.get("role")
     if role not in ("sultan", "stas"):
-        raise HTTPException(status_code=403, detail="Only Sultan can submit for audit")
+        raise HTTPException(status_code=403, detail="فقط سلطان يمكنه الإرسال للتدقيق")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c or c["status"] != "active":
-        raise HTTPException(status_code=400, detail="Custody must be active")
+        raise HTTPException(status_code=400, detail="العهدة يجب أن تكون نشطة")
     if not c["expenses"]:
-        raise HTTPException(status_code=400, detail="Add expenses before submitting for audit")
+        raise HTTPException(status_code=400, detail="أضف مصروفات قبل الإرسال للتدقيق")
 
     now = datetime.now(timezone.utc).isoformat()
     await db.custody_financial.update_one(
@@ -283,11 +283,11 @@ async def audit_custody(custody_id: str, body: AuditAction, user=Depends(get_cur
     """Salah audits: can edit expenses, then approve or reject."""
     role = user.get("role")
     if role not in ("salah", "stas"):
-        raise HTTPException(status_code=403, detail="Only Salah (Finance) can audit")
+        raise HTTPException(status_code=403, detail="فقط صالح (المالية) يمكنه التدقيق")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c or c["status"] != "pending_audit":
-        raise HTTPException(status_code=400, detail="Custody not pending audit")
+        raise HTTPException(status_code=400, detail="العهدة ليست بانتظار التدقيق")
 
     now = datetime.now(timezone.utc).isoformat()
     expenses = c["expenses"]
@@ -352,11 +352,11 @@ async def approve_custody(custody_id: str, body: AuditAction, user=Depends(get_c
     """Mohammed approves the custody."""
     role = user.get("role")
     if role not in ("mohammed", "stas"):
-        raise HTTPException(status_code=403, detail="Only CEO can approve")
+        raise HTTPException(status_code=403, detail="فقط المدير التنفيذي يمكنه الموافقة")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c or c["status"] != "pending_approval":
-        raise HTTPException(status_code=400, detail="Not pending approval")
+        raise HTTPException(status_code=400, detail="ليست بانتظار الموافقة")
 
     now = datetime.now(timezone.utc).isoformat()
 
@@ -397,11 +397,11 @@ async def execute_custody(custody_id: str, user=Depends(get_current_user)):
     """STAS executes the custody. If remaining > 0, carries to next custody."""
     role = user.get("role")
     if role != "stas":
-        raise HTTPException(status_code=403, detail="Only STAS can execute")
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه التنفيذ")
 
     c = await db.custody_financial.find_one({"id": custody_id}, {"_id": 0})
     if not c or c["status"] != "pending_stas":
-        raise HTTPException(status_code=400, detail="Not pending execution")
+        raise HTTPException(status_code=400, detail="ليست بانتظار التنفيذ")
 
     now = datetime.now(timezone.utc).isoformat()
     remaining = c["remaining"]
