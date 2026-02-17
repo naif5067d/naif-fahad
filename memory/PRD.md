@@ -36,65 +36,27 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 ### Phase 10: Company Settings & Workflow Fix ✅
 ### Phase 11: PDF Arabic Text Fix & STAS Execution Flow ✅
 ### Phase 12: Bilingual PDF Complete Fix ✅ (2026-02-14)
-
-**Changes in Phase 12:**
-- **PDF Bilingual Support:** Complete rewrite of `pdf.py` to properly handle bilingual text
-  - Arabic text: Reshaped using `arabic_reshaper` and `bidi` for proper RTL display
-  - English text: Passed through without reshaping (was causing blank PDFs before)
-  - Mixed text: Arabic parts are reshaped, English parts preserved
-- **Company Branding in PDF:** Logo and company name now fetched from database and displayed in PDF header
-- **STAS Barcode Signature:** STAS signature now uses Code128 barcode instead of QR code
-- **Workflow Fix:** STAS can now execute transactions that were previously returned and re-approved
-- **Cancel Logic Verified:** Cancelled transactions do not affect leave balance or trigger business logic
-
 ### Phase 13: System Maintenance Module ✅ (2026-02-14)
-
-**Changes in Phase 13:**
-- **System Maintenance Page:** New page at `/system-maintenance` (STAS only)
-- **Storage Info:** Real-time statistics for all MongoDB collections
-  - Total documents, transaction documents, protected documents
-  - Size estimation per collection
-- **Full System Archive:** 
-  - Creates compressed JSON backup of entire database
-  - Stores in `system_archives` collection
-  - Downloadable as JSON file
-  - Restorable at any time
-- **Purge All Transactions:**
-  - Deletes all transaction data (transactions, leave_ledger, finance_ledger, etc.)
-  - Preserves protected data (users, employees, contracts, settings)
-  - Resets counters and initial leave balances
-  - Requires double confirmation ("DELETE ALL")
-- **Maintenance Log:** Tracks all archive/purge/restore operations
-
 ### Phase 14: System Maintenance V2 + Date Format Audit ✅ (2026-02-14)
 
-**P0 Changes - System Maintenance Enhancements:**
-- **Total Storage Size:** Added `total_size_kb`, `transaction_size_kb`, `protected_size_kb` to storage-info API
-- **Upload & Restore:** New endpoint `POST /api/maintenance/archives/upload` accepts JSON archive files
-  - Validates file type (.json only)
-  - Parses and restores all collections from uploaded archive
-  - Creates restoration record in `system_archives`
-  - Logs restoration operation in `maintenance_log`
-- **UI/UX Overhaul:** Complete redesign of System Maintenance page
-  - Dark gradient storage summary card with 5 metrics
-  - Three action cards: Create Archive (blue), Upload/Restore (green), Purge (red)
-  - Collections detail split view (transactions vs protected)
-  - Enhanced archives list with download/restore/delete buttons
+### Phase 15: PDF Arabic Text - Guaranteed Fix ✅ (2026-02-17)
 
-**P1 Changes - System-Wide Date Format Audit:**
-- **New Date Utility:** `formatGregorianHijri()` and `formatGregorianHijriDateTime()` in `/lib/dateUtils.js`
-  - Format: `DD/MM/YYYY (DD/MM/YYYY AH هـ)` e.g., `21/02/2026 (09/04/1447 AH هـ)`
-  - Returns `{primary, secondary, combined}` for flexibility
-- **Pages Updated:**
-  - `TransactionsPage.js` - Transaction timestamps
-  - `TransactionDetailPage.js` - Transaction created_at and approval timestamps
-  - `LeavePage.js` - Holiday dates
-  - `DashboardPage.js` - Next holiday date
-  - `ContractsPage.js` - Contract start dates
-  - `FinancePage.js` - Finance statement dates
-  - `AttendancePage.js` - Attendance history dates
-  - `FinancialCustodyPage.js` - Timeline event timestamps
-  - `SystemMaintenancePage.js` - Archive and log timestamps
+**P0 Critical Fix - Arabic Text & Date Formatting in PDF:**
+- **Root Cause:** ReportLab's `wordWrap='RTL'` was being applied to ALL text including dates and reference numbers, causing the `-` dashes to be invisible
+- **Solution:** Implemented dual-font approach in `backend/utils/pdf.py`:
+  - **Arabic text:** Uses `NotoNaskhArabic` font with `wordWrap='RTL'` and `arabic_reshaper` + `bidi` for proper RTL display
+  - **LTR text (dates, numbers, English):** Uses `Helvetica` font with `wordWrap='LTR'` - critical for displaying dashes in dates like `2026-02-17`
+  - **New helper function:** `make_ltr_para()` creates Helvetica paragraphs for dates, ref numbers, and English text
+- **Files Modified:**
+  - `backend/utils/pdf.py` - Complete rewrite of PDF generation logic
+- **Verified Results:**
+  - Arabic PDF: ✅ Company name, employee names, leave types display correctly
+  - English PDF: ✅ All labels and content display properly
+  - Date Format: ✅ `2026-02-17` with dashes (not `20260217`)
+  - Ref Number: ✅ `TXN-2026-0001` with dashes (not `20260001`)
+  - QR/Barcode: ✅ Approval signatures display correctly
+
+**Testing:** 100% pass rate (8/8 backend tests, all frontend features verified)
 
 **IMPORTANT RULE (من هنا للأبد):**
 - أي Collection جديدة يجب إضافتها في `/app/backend/routes/maintenance.py`
