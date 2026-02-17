@@ -321,55 +321,72 @@ async def calculate_daily_attendance(date: str = None) -> dict:
     ).to_list(5000)
     existing_absence_ids = {a['employee_id'] for a in existing_absences}
     
-    # 5. تحديد الحالات
+    # 6. تحديد الحالات
     results = {
         "date": date,
+        "is_holiday_or_weekend": False,
         "present": [],
         "absent": [],
         "on_leave": [],
+        "has_permission": [],
         "late": [],
         "early_leave": [],
-        "new_absences_recorded": 0
+        "new_absences_recorded": 0,
+        "skipped_due_to_leave": 0,
+        "skipped_due_to_permission": 0
     }
     
     for emp in employees:
         emp_id = emp['id']
         
+        # الأولوية 1: في إجازة معتمدة
         if emp_id in on_leave_ids:
             results['on_leave'].append(emp_id)
-        elif emp_id in checked_in_ids:
+            results['skipped_due_to_leave'] += 1
+            continue
+        
+        # الأولوية 2: لديه إذن (نسيان بصمة/مهمة خارجية)
+        if emp_id in has_permission_ids:
+            results['has_permission'].append(emp_id)
+            results['skipped_due_to_permission'] += 1
+            continue
+        
+        # الأولوية 3: سجل دخول
+        if emp_id in checked_in_ids:
             results['present'].append(emp_id)
-        else:
-            # غياب
-            results['absent'].append(emp_id)
-            
-            # تسجيل الغياب إذا لم يكن مسجلاً
-            if emp_id not in existing_absence_ids:
-                await db.attendance_ledger.insert_one({
-                    "id": str(uuid.uuid4()),
-                    "employee_id": emp_id,
-                    "type": "absence",
-                    "date": date,
-                    "timestamp": now,
-                    "auto_generated": True,
-                    "reason": "لم يتم تسجيل الدخول",
-                    "reason_en": "No check-in recorded",
-                    "settled": False,
-                    "audit_log": [{
-                        "action": "auto_created",
-                        "by": "system",
-                        "at": now,
-                        "note": "غياب تلقائي - لا يوجد تسجيل دخول"
-                    }],
-                    "created_at": now
-                })
-                results['new_absences_recorded'] += 1
+            continue
+        
+        # غياب
+        results['absent'].append(emp_id)
+        
+        # تسجيل الغياب إذا لم يكن مسجلاً
+        if emp_id not in existing_absence_ids:
+            await db.attendance_ledger.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": emp_id,
+                "type": "absence",
+                "date": date,
+                "timestamp": now,
+                "auto_generated": True,
+                "reason": "لم يتم تسجيل الدخول ولا يوجد إجازة أو إذن معتمد",
+                "reason_en": "No check-in, no approved leave or permission",
+                "settled": False,
+                "audit_log": [{
+                    "action": "auto_created",
+                    "by": "system",
+                    "at": now,
+                    "note": "غياب تلقائي - لا يوجد تسجيل دخول ولا إجازة ولا إذن"
+                }],
+                "created_at": now
+            })
+            results['new_absences_recorded'] += 1
     
     results['summary'] = {
         "total_employees": len(employees),
         "present_count": len(results['present']),
         "absent_count": len(results['absent']),
-        "on_leave_count": len(results['on_leave'])
+        "on_leave_count": len(results['on_leave']),
+        "has_permission_count": len(results['has_permission'])
     }
     
     return results
