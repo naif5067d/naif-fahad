@@ -422,17 +422,41 @@ export default function STASMirrorPage() {
                           {lang === 'ar' ? 'التقرير الطبي المرفق' : 'Attached Medical Report'}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(mirror.transaction.data.medical_file_url, '_blank')}
-                          className="w-full border-red-300 text-red-600 hover:bg-red-100"
-                          data-testid="view-medical-file-mirror"
-                        >
-                          <Eye size={14} className="me-2" />
-                          {lang === 'ar' ? 'عرض ملف PDF' : 'View PDF File'}
-                        </Button>
+                      <CardContent className="space-y-2">
+                        {/* معاينة PDF inline */}
+                        <div className="border border-red-200 rounded overflow-hidden bg-white">
+                          <iframe
+                            src={`${mirror.transaction.data.medical_file_url}#toolbar=0&navpanes=0`}
+                            className="w-full h-64"
+                            title="Medical Report Preview"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(mirror.transaction.data.medical_file_url, '_blank')}
+                            className="flex-1 border-red-300 text-red-600 hover:bg-red-100"
+                            data-testid="view-medical-file-fullscreen"
+                          >
+                            <Eye size={14} className="me-2" />
+                            {lang === 'ar' ? 'فتح في نافذة جديدة' : 'Open in New Tab'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = mirror.transaction.data.medical_file_url;
+                              link.download = 'medical_report.pdf';
+                              link.click();
+                            }}
+                            className="border-red-300 text-red-600 hover:bg-red-100"
+                            data-testid="download-medical-file"
+                          >
+                            {lang === 'ar' ? 'تحميل' : 'Download'}
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
