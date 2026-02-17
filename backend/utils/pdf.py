@@ -37,8 +37,9 @@ TEXT_GRAY = colors.Color(0.4, 0.4, 0.45)
 # Font Registration - تسجيل الخطوط العربية
 FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
 
-ARABIC_FONT = None
-ARABIC_FONT_BOLD = None
+# استخدام NotoNaskh كخط افتراضي للعربية - الأكثر اكتمالاً
+ARABIC_FONT = 'NotoNaskhArabic'
+ARABIC_FONT_BOLD = 'NotoNaskhArabicBold'
 ENGLISH_FONT = 'Helvetica'
 ENGLISH_FONT_BOLD = 'Helvetica-Bold'
 
@@ -47,45 +48,55 @@ def register_arabic_fonts():
     """تسجيل جميع الخطوط العربية المتاحة"""
     global ARABIC_FONT, ARABIC_FONT_BOLD
     
-    # محاولة تسجيل NotoNaskh أولاً (الأفضل للعربية)
+    # محاولة تسجيل NotoNaskh أولاً (الأفضل والأكثر اكتمالاً للعربية)
     font_pairs = [
-        ('NotoNaskh', 'NotoNaskhArabic-Regular.ttf', 'NotoNaskhArabic-Bold.ttf'),
-        ('NotoSans', 'NotoSansArabic-Regular.ttf', 'NotoSansArabic-Bold.ttf'),
-        ('Amiri', 'Amiri-Regular.ttf', 'Amiri-Regular.ttf'),
+        ('NotoNaskhArabic', 'NotoNaskhArabic-Regular.ttf', 'NotoNaskhArabic-Bold.ttf'),
+        ('NotoSansArabic', 'NotoSansArabic-Regular.ttf', 'NotoSansArabic-Bold.ttf'),
     ]
     
+    registered_any = False
     for font_name, regular_file, bold_file in font_pairs:
         try:
             regular_path = os.path.join(FONTS_DIR, regular_file)
             bold_path = os.path.join(FONTS_DIR, bold_file)
             
             if os.path.exists(regular_path) and os.path.getsize(regular_path) > 1000:
-                pdfmetrics.registerFont(TTFont(f'{font_name}Arabic', regular_path))
+                pdfmetrics.registerFont(TTFont(font_name, regular_path))
+                print(f"✓ Registered font: {font_name}")
                 
                 if os.path.exists(bold_path) and os.path.getsize(bold_path) > 1000:
-                    pdfmetrics.registerFont(TTFont(f'{font_name}ArabicBold', bold_path))
+                    pdfmetrics.registerFont(TTFont(f'{font_name}Bold', bold_path))
+                    print(f"✓ Registered font: {font_name}Bold")
                 else:
-                    pdfmetrics.registerFont(TTFont(f'{font_name}ArabicBold', regular_path))
-                
-                ARABIC_FONT = f'{font_name}Arabic'
-                ARABIC_FONT_BOLD = f'{font_name}ArabicBold'
+                    # Fallback: use regular as bold
+                    pdfmetrics.registerFont(TTFont(f'{font_name}Bold', regular_path))
                 
                 # تسجيل Font Family للدعم الكامل
                 pdfmetrics.registerFontFamily(
-                    f'{font_name}Arabic',
-                    normal=f'{font_name}Arabic',
-                    bold=f'{font_name}ArabicBold',
+                    font_name,
+                    normal=font_name,
+                    bold=f'{font_name}Bold',
                 )
-                return True
+                
+                # تعيين الخط الأول الناجح كافتراضي
+                if not registered_any:
+                    ARABIC_FONT = font_name
+                    ARABIC_FONT_BOLD = f'{font_name}Bold'
+                    registered_any = True
+                    print(f"★ Default Arabic font set to: {font_name}")
+                    
         except Exception as e:
+            print(f"✗ Failed to register {font_name}: {e}")
             continue
     
-    return False
+    return registered_any
 
 # تنفيذ التسجيل عند تحميل الموديول
 _fonts_registered = register_arabic_fonts()
 if not _fonts_registered:
-    print("WARNING: Arabic fonts not registered. PDF Arabic text may not display correctly.")
+    print("⚠️ WARNING: Arabic fonts not registered. PDF Arabic text may not display correctly.")
+else:
+    print(f"✓ Arabic fonts ready: {ARABIC_FONT}, {ARABIC_FONT_BOLD}")
 
 
 def has_arabic(text):
