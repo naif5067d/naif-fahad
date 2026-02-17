@@ -1,25 +1,37 @@
 """
-Leave Service - نظام الإجازات الجديد
+Leave Service - نظام الإجازات المحدث
+============================================================
+Version: 2.0.0 - Pro-Rata + HR Policy Integration
 ============================================================
 نوع الإجازة | الأيام | الأجر | الرصيد
 ============================================================
-السنوية    | 21/30  | 100%  | يُحسب ويُخصم
-المرضية    | 30/60/30 | 100%/75%/0% | عداد تراكمي - لا يُخصم من السنوية
+السنوية    | 21/30  | 100%  | Pro-Rata يومي
+المرضية    | 30/60/30 | 100%/75%/0% | عداد تراكمي
 الزواج     | 5      | 100%  | لا يُخصم من السنوية
 الوفاة     | 5      | 100%  | لا يُخصم من السنوية
 الاختبار   | حسب الإثبات | 100% | لا يُخصم من السنوية
 بدون راتب  | حسب الحاجة | 0% | لا يُخصم من السنوية
 
 ملاحظات مهمة:
-- الرصيد الوحيد المتتبع هو الإجازة السنوية
-- الإجازة المرضية: عداد تراكمي خلال 12 شهر متحركة
-- الإجازة المرضية تتطلب مرفق من "صحتي"
+- الرصيد الوحيد المتتبع هو الإجازة السنوية (Pro-Rata)
+- الخصم يتم فقط عند STAS Execute
+- لا ترحيل تلقائي للإجازات
 """
 
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, List
 from database import db
 from services.service_calculator import calculate_service_years, get_employee_service_info
+from services.hr_policy import (
+    calculate_pro_rata_entitlement,
+    get_annual_leave_balance_v2,
+    get_employee_annual_policy,
+    check_blocking_transaction,
+    DEFAULT_ANNUAL_ENTITLEMENT,
+    EXTENDED_ANNUAL_ENTITLEMENT,
+    FIXED_LEAVE_DAYS,
+    ADMIN_LEAVE_TYPES
+)
 
 
 # ============================================================
