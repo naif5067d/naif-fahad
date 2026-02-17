@@ -72,6 +72,21 @@ export default function EmployeesPage() {
     setEditDialog(emp);
   };
 
+  // فتح بطاقة الموظف Preview
+  const openPreviewCard = async (emp) => {
+    setPreviewCard(emp);
+    setLoadingCard(true);
+    setCardSummary(null);
+    try {
+      const res = await api.get(`/api/employees/${emp.id}/summary`);
+      setCardSummary(res.data);
+    } catch (err) {
+      console.error('Failed to load employee summary');
+    } finally {
+      setLoadingCard(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!editDialog) return;
     setSaving(true);
