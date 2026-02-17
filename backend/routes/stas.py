@@ -121,7 +121,7 @@ async def get_mirror(transaction_id: str, user=Depends(require_roles('stas'))):
     """
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
 
     # استخدام Service Layer لبناء بيانات المرآة
     mirror_data = await build_mirror_data(tx)
@@ -146,7 +146,7 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
     """
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
 
     # منع التنفيذ المكرر - CRITICAL: one-time execution only
     if tx['status'] == 'executed':
@@ -344,7 +344,7 @@ async def return_transaction(transaction_id: str, body: ReturnRequest, user=Depe
     """
     tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
     if not tx:
-        raise HTTPException(status_code=404, detail="Transaction not found")
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
     
     # التحقق من عدم الإرجاع سابقاً
     if tx.get('returned_by_stas'):
@@ -358,7 +358,7 @@ async def return_transaction(transaction_id: str, body: ReturnRequest, user=Depe
         )
     
     if tx['status'] == 'executed':
-        raise HTTPException(status_code=400, detail="Cannot return executed transaction")
+        raise HTTPException(status_code=400, detail="لا يمكن إرجاع معاملة منفذة")
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -432,7 +432,7 @@ async def add_holiday(req: HolidayCreate, user=Depends(require_roles('stas'))):
     """Add a manual holiday"""
     existing = await db.holidays.find_one({"date": req.date})
     if existing:
-        raise HTTPException(status_code=400, detail="Holiday already exists for this date")
+        raise HTTPException(status_code=400, detail="العطلة موجودة مسبقاً لهذا التاريخ")
     
     holiday = {
         "id": str(uuid.uuid4()),
