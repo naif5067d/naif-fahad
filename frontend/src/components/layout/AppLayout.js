@@ -205,6 +205,94 @@ export default function AppLayout({ children }) {
 
             {/* Right side controls */}
             <div className="flex items-center gap-2">
+              {/* Notifications Bell (Admin only) */}
+              {isAdmin && (
+                <div className="relative" ref={alertsRef}>
+                  <button
+                    data-testid="notifications-bell"
+                    onClick={() => setAlertsOpen(!alertsOpen)}
+                    className="relative p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                    title={lang === 'ar' ? 'الإشعارات' : 'Notifications'}
+                  >
+                    <Bell size={18} />
+                    {alerts.count > 0 && (
+                      <span className={`absolute -top-1 -end-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white rounded-full ${
+                        alerts.critical_count > 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'
+                      }`}>
+                        {alerts.count}
+                      </span>
+                    )}
+                  </button>
+
+                  {alertsOpen && (
+                    <div className="absolute top-full mt-2 end-0 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="alerts-dropdown">
+                      <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {lang === 'ar' ? 'تنبيهات العقود' : 'Contract Alerts'}
+                        </p>
+                        <span className="text-xs text-muted-foreground">{alerts.count} {lang === 'ar' ? 'تنبيه' : 'alerts'}</span>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {alerts.alerts.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            {lang === 'ar' ? 'لا توجد تنبيهات' : 'No alerts'}
+                          </div>
+                        ) : (
+                          alerts.alerts.slice(0, 10).map(alert => (
+                            <div
+                              key={alert.id}
+                              className={`px-4 py-3 border-b border-border/50 hover:bg-muted/30 cursor-pointer ${
+                                alert.type === 'critical' ? 'bg-red-50/50' : alert.type === 'warning' ? 'bg-amber-50/50' : ''
+                              }`}
+                              onClick={() => {
+                                setAlertsOpen(false);
+                                navigate('/contracts-management');
+                              }}
+                            >
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle size={16} className={`mt-0.5 flex-shrink-0 ${
+                                  alert.type === 'critical' ? 'text-red-500' : alert.type === 'warning' ? 'text-amber-500' : 'text-blue-500'
+                                }`} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {lang === 'ar' ? alert.employee_name_ar || alert.employee_name : alert.employee_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {lang === 'ar' ? alert.message_ar : alert.message_en}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">
+                                    {alert.contract_serial} • {alert.end_date}
+                                  </p>
+                                </div>
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                  alert.type === 'critical' ? 'bg-red-100 text-red-700' : 
+                                  alert.type === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {alert.days_remaining}{lang === 'ar' ? 'ي' : 'd'}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      {alerts.count > 10 && (
+                        <div className="p-2 border-t border-border bg-muted/30">
+                          <button
+                            className="w-full text-xs text-primary hover:underline"
+                            onClick={() => {
+                              setAlertsOpen(false);
+                              navigate('/contracts-management');
+                            }}
+                          >
+                            {lang === 'ar' ? `عرض جميع التنبيهات (${alerts.count})` : `View all alerts (${alerts.count})`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* User Switcher */}
               <div className="relative" ref={switcherRef}>
                 <button
