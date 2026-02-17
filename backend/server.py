@@ -25,9 +25,13 @@ from routes.settings import router as settings_router
 from routes.maintenance import router as maintenance_router
 from routes.contracts_v2 import router as contracts_v2_router
 from routes.upload import router as upload_router
+from routes.announcements import router as announcements_router
 from seed import seed_database
 
-app = FastAPI(title="DAR AL CODE HR OS", redirect_slashes=False)
+# App Version
+APP_VERSION = "21.1"
+
+app = FastAPI(title="DAR AL CODE HR OS", version=APP_VERSION, redirect_slashes=False)
 
 app.include_router(auth_router)
 app.include_router(dashboard_router)
@@ -45,6 +49,7 @@ app.include_router(settings_router)
 app.include_router(maintenance_router)
 app.include_router(contracts_v2_router)
 app.include_router(upload_router)
+app.include_router(announcements_router)
 
 app.add_middleware(
     CORSMiddleware,
