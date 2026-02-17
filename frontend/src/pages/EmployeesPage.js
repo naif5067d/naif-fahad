@@ -343,7 +343,7 @@ export default function EmployeesPage() {
                     </td>
                   )}
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
