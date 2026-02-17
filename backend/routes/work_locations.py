@@ -27,6 +27,7 @@ class WorkLocationCreate(BaseModel):
     radius_meters: int = 500  # Default 500m circle
     work_start: str  # "08:00"
     work_end: str    # "17:00"
+    grace_period_minutes: int = 0  # مدة السماح (0-15 دقيقة)
     work_days: WorkDays
     assigned_employees: List[str] = []  # List of employee IDs
 
@@ -39,6 +40,7 @@ class WorkLocationUpdate(BaseModel):
     radius_meters: Optional[int] = None
     work_start: Optional[str] = None
     work_end: Optional[str] = None
+    grace_period_minutes: Optional[int] = None
     work_days: Optional[WorkDays] = None
     assigned_employees: Optional[List[str]] = None
 
