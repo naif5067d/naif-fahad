@@ -103,11 +103,11 @@ def format_text_for_pdf(text, target_lang='ar'):
 def format_text_bilingual(text, target_lang='ar'):
     """Alias for format_text_for_pdf for compatibility"""
     return format_text_for_pdf(text, target_lang)
-    """Format timestamp to Saudi Arabia time (UTC+3)"""
-    if not ts:
 
 
 def format_saudi_time(ts):
+    """Format timestamp to Saudi Arabia time (UTC+3)"""
+    if not ts:
         return '-'
     try:
         if isinstance(ts, str):
@@ -118,7 +118,7 @@ def format_saudi_time(ts):
             dt = dt.replace(tzinfo=timezone.utc)
         saudi_time = dt + timedelta(hours=3)
         return saudi_time.strftime('%Y-%m-%d %H:%M')
-    except:
+    except Exception:
         return str(ts)[:16] if ts else '-'
 
 
