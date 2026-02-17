@@ -244,10 +244,36 @@ export default function EmployeesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(e => (
-                <tr key={e.id} data-testid={`emp-row-${e.employee_number}`}>
+              {filtered.map(e => {
+                const expiryStatus = getExpiryStatus(e.id);
+                const isExpiring = expiryStatus && expiryStatus.days_remaining <= 90;
+                const isCritical = expiryStatus && expiryStatus.days_remaining <= 30;
+                
+                return (
+                <tr 
+                  key={e.id} 
+                  data-testid={`emp-row-${e.employee_number}`}
+                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-amber-50') : ''}`}
+                >
                   <td className="font-mono text-xs">{e.employee_number}</td>
-                  <td className="text-sm font-medium">{lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}</td>
+                  <td className="text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className={isCritical ? 'text-red-600 font-bold' : ''}>
+                        {lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}
+                      </span>
+                      {isExpiring && (
+                        <span 
+                          className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            isCritical ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                          }`}
+                          title={lang === 'ar' ? `ينتهي العقد خلال ${expiryStatus.days_remaining} يوم` : `Contract expires in ${expiryStatus.days_remaining} days`}
+                        >
+                          <AlertTriangle size={10} className="inline me-0.5" />
+                          {expiryStatus.days_remaining} {lang === 'ar' ? 'يوم' : 'd'}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="hidden sm:table-cell text-sm">{lang === 'ar' ? (e.department_ar || e.department) : e.department}</td>
                   <td className="hidden md:table-cell text-sm">{getSupervisorName(e)}</td>
                   <td>
@@ -258,6 +284,17 @@ export default function EmployeesPage() {
                   {isOps && (
                     <td>
                       <div className="flex gap-1">
+                        {/* زر عرض البطاقة */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0" 
+                          onClick={() => openPreviewCard(e)} 
+                          data-testid={`preview-card-${e.employee_number}`}
+                          title={lang === 'ar' ? 'عرض البطاقة' : 'View Card'}
+                        >
+                          <User size={14} />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="sm" 
