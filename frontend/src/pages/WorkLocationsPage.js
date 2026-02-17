@@ -448,14 +448,13 @@ export default function WorkLocationsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Static Map Preview - using iframe to avoid multiple MapContainer instances */}
-                <div className="h-32 rounded-md overflow-hidden border border-border bg-muted">
-                  <img 
-                    src={`https://staticmap.openstreetmap.de/staticmap.php?center=${loc.latitude},${loc.longitude}&zoom=15&size=400x200&markers=${loc.latitude},${loc.longitude},ol-marker`}
-                    alt={lang === 'ar' ? loc.name_ar : loc.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                {/* Location Preview - Simple display without MapContainer to avoid conflicts */}
+                <div className="h-24 rounded-md overflow-hidden border border-border bg-gradient-to-br from-slate-100 to-slate-200 flex flex-col items-center justify-center">
+                  <MapPin size={24} className="text-primary mb-1" />
+                  <div className="text-xs text-muted-foreground text-center">
+                    <div>{loc.latitude.toFixed(4)}°, {loc.longitude.toFixed(4)}°</div>
+                    <div className="text-primary font-medium">{loc.radius_meters}m</div>
+                  </div>
                 </div>
 
                 {/* Info */}
