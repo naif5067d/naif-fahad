@@ -399,70 +399,94 @@ export default function LeavePage() {
         </div>
       )}
 
-      {/* تحذير المادة 117 للإجازة المرضية */}
+      {/* تحذير المادة 117 للإجازة المرضية - رسالة رسمية مع طلب التوقيع */}
       <Dialog open={showSickWarningDialog} onOpenChange={setShowSickWarningDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="w-5 h-5" />
-              {lang === 'ar' ? 'تنبيه - المادة 117 من نظام العمل' : 'Notice - Labor Law Article 117'}
+              {lang === 'ar' ? 'تنبيه رسمي - المادة 117' : 'Official Notice - Article 117'}
             </DialogTitle>
-            <DialogDescription>
-              {lang === 'ar' ? 'معلومات مهمة عن الخصم المتوقع' : 'Important information about expected deduction'}
-            </DialogDescription>
           </DialogHeader>
           
           {sickLeaveWarning && (
             <div className="space-y-4 py-2">
-              {/* الاستهلاك الحالي */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
-                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-                  <Info className="w-4 h-4 inline me-1" />
-                  {lang === 'ar' ? 'استهلاكك الحالي هذا العام:' : 'Your current usage this year:'}
+              {/* رسالة رسمية للموظف */}
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-2 border-amber-300">
+                <p className="text-base font-medium text-amber-900 dark:text-amber-100 mb-3">
+                  {lang === 'ar' 
+                    ? `عزيزي ${user?.full_name?.split(' ')[0] || 'الموظف'}،` 
+                    : `Dear ${user?.full_name?.split(' ')[0] || 'Employee'},`
+                  }
                 </p>
-                <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                  {sickLeaveWarning.current_used || 0} / 120 {lang === 'ar' ? 'يوم' : 'days'}
+                
+                <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                  {lang === 'ar'
+                    ? `بناءً على طلبك للإجازة المرضية (${sickLeaveWarning.requested_days || 0} يوم)، واستهلاكك الحالي (${sickLeaveWarning.current_used || 0} يوم من 120 يوم)، سيتم تطبيق الخصم التالي حسب المادة 117 من نظام العمل السعودي:`
+                    : `Based on your sick leave request (${sickLeaveWarning.requested_days || 0} days), and your current usage (${sickLeaveWarning.current_used || 0} of 120 days), the following deduction will apply according to Article 117 of Saudi Labor Law:`
+                  }
                 </p>
-              </div>
-              
-              {/* الشريحة الحالية */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
-                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-                  {lang === 'ar' ? 'الشريحة المتوقعة:' : 'Expected tier:'}
-                </p>
-                <div className="space-y-1 text-sm">
+                
+                {/* تفاصيل الخصم */}
+                <div className="space-y-2 mb-3">
                   {sickLeaveWarning.tier_distribution?.map((tier, i) => (
-                    <div key={i} className={`p-2 rounded ${tier.salary_percent === 100 ? 'bg-emerald-100 text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                    <div key={i} className={`p-2 rounded-lg font-medium ${
+                      tier.salary_percent === 100 
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                        : tier.salary_percent === 50 
+                          ? 'bg-amber-100 text-amber-900 border border-amber-400' 
+                          : 'bg-red-100 text-red-800 border border-red-300'
+                    }`}>
                       <span className="font-bold">{tier.days} {lang === 'ar' ? 'يوم' : 'days'}</span>
-                      <span className="mx-2">←</span>
-                      <span>{tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب (خصم 50%)' : 'Half pay (50% deduction)') : (lang === 'ar' ? 'بدون راتب (خصم 100%)' : 'No pay (100% deduction)')}</span>
+                      <span className="mx-2">→</span>
+                      <span>
+                        {tier.salary_percent === 100 
+                          ? (lang === 'ar' ? 'براتب كامل (بدون خصم)' : 'Full pay (no deduction)') 
+                          : tier.salary_percent === 50 
+                            ? (lang === 'ar' ? 'خصم 50% من الراتب' : '50% salary deduction') 
+                            : (lang === 'ar' ? 'خصم 100% من الراتب (بدون راتب)' : '100% salary deduction (no pay)')
+                        }
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
               
               {/* نص اللائحة */}
-              <div className="p-3 bg-muted/50 rounded-lg border text-xs">
-                <p className="font-medium mb-1">{lang === 'ar' ? 'حسب المادة 117 من نظام العمل السعودي:' : 'According to Saudi Labor Law Article 117:'}</p>
-                <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+              <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border text-xs">
+                <p className="font-bold mb-2 text-slate-700 dark:text-slate-300">
+                  {lang === 'ar' ? '📜 المادة 117 - نظام العمل السعودي:' : '📜 Article 117 - Saudi Labor Law:'}
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
                   <li>{lang === 'ar' ? 'أول 30 يوم: براتب كامل (100%)' : 'First 30 days: Full pay (100%)'}</li>
                   <li>{lang === 'ar' ? 'الـ 60 يوم التالية: بنصف الراتب (50%)' : 'Next 60 days: Half pay (50%)'}</li>
                   <li>{lang === 'ar' ? 'الـ 30 يوم الأخيرة: بدون أجر (0%)' : 'Last 30 days: No pay (0%)'}</li>
+                  <li className="font-medium">{lang === 'ar' ? 'الحد الأقصى: 120 يوم في السنة' : 'Maximum: 120 days per year'}</li>
                 </ul>
               </div>
               
-              <p className="text-sm text-center text-muted-foreground">
-                {lang === 'ar' ? 'هل تريد الاستمرار في تقديم الطلب؟' : 'Do you want to continue with the request?'}
-              </p>
+              {/* طلب التوقيع */}
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-300 text-center">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  {lang === 'ar' 
+                    ? '✍️ بالضغط على "توقيع وتقديم"، أوافق على تطبيق الخصم المذكور أعلاه.'
+                    : '✍️ By clicking "Sign & Submit", I agree to the above deduction.'
+                  }
+                </p>
+              </div>
             </div>
           )}
           
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowSickWarningDialog(false)}>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setShowSickWarningDialog(false)} className="w-full sm:w-auto">
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleConfirmSickLeave} className="bg-amber-600 hover:bg-amber-700">
-              {lang === 'ar' ? 'نعم، تقديم الطلب' : 'Yes, Submit Request'}
+            <Button 
+              onClick={handleConfirmSickLeave} 
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+              data-testid="sign-submit-sick-leave"
+            >
+              {lang === 'ar' ? '✍️ توقيع وتقديم الطلب' : '✍️ Sign & Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
