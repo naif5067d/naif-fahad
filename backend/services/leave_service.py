@@ -108,49 +108,39 @@ SICK_LEAVE_TIERS = [
 
 
 # ============================================================
-# حساب رصيد الإجازة السنوية (الوحيد المتتبع)
+# حساب رصيد الإجازة السنوية (Pro-Rata الجديد)
 # ============================================================
 
-async def get_annual_leave_balance(employee_id: str) -> int:
+async def get_annual_leave_balance(employee_id: str) -> float:
     """
-    حساب رصيد الإجازة السنوية فقط من leave_ledger
-    الرصيد = sum(credits) - sum(debits)
+    حساب رصيد الإجازة السنوية باستخدام Pro-Rata
+    المعادلة: earned_to_date - used_executed
+    
+    Returns:
+        float: الرصيد المتاح (2 decimals)
     """
-    entries = await db.leave_ledger.find(
-        {"employee_id": employee_id, "leave_type": "annual"}, 
-        {"_id": 0}
-    ).to_list(5000)
-    
-    balance = 0
-    for entry in entries:
-        if entry.get('type') == 'credit':
-            balance += entry.get('days', 0)
-        else:  # debit
-            balance -= entry.get('days', 0)
-    
-    return max(0, balance)
+    return await get_annual_leave_balance_v2(employee_id)
 
 
-async def get_leave_balance(employee_id: str, leave_type: str) -> int:
+async def get_leave_balance(employee_id: str, leave_type: str) -> float:
     """
     حساب رصيد الإجازة - فقط للسنوية
-    باقي الأنواع ليس لها رصيد
+    باقي الأنواع ليس لها رصيد (مسار إداري)
     """
     if leave_type != 'annual':
-        return 0  # لا رصيد لغير السنوية
+        return 0.0  # لا رصيد لغير السنوية
     
     return await get_annual_leave_balance(employee_id)
 
 
-async def get_all_leave_balances(employee_id: str) -> Dict[str, int]:
+async def get_all_leave_balances(employee_id: str) -> Dict[str, float]:
     """
     جلب الأرصدة - فقط السنوية لها رصيد
     """
     annual_balance = await get_annual_leave_balance(employee_id)
     
-    # إرجاع الرصيد السنوي فقط، الباقي صفر
     return {
-        "annual": annual_balance,
+        "annual": round(annual_balance, 2),
         "sick": 0,
         "marriage": 0,
         "bereavement": 0,
