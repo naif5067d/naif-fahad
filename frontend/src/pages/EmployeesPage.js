@@ -15,11 +15,16 @@ import { toast } from 'sonner';
 export default function EmployeesPage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
+  const [expiringContracts, setExpiringContracts] = useState([]);
   const [search, setSearch] = useState('');
   const [editDialog, setEditDialog] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
+  const [previewCard, setPreviewCard] = useState(null);
+  const [cardSummary, setCardSummary] = useState(null);
+  const [loadingCard, setLoadingCard] = useState(false);
   
   // حالات تعيين المشرف
   const [supervisorDialog, setSupervisorDialog] = useState(null);
@@ -42,7 +47,19 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
-  }, []);
+    // جلب العقود المنتهية قريباً
+    if (isOps) {
+      api.get('/api/notifications/expiring-contracts?days_ahead=90')
+        .then(r => setExpiringContracts(r.data.employees || []))
+        .catch(() => {});
+    }
+  }, [isOps]);
+
+  // التحقق إذا كان الموظف لديه عقد ينتهي قريباً
+  const getExpiryStatus = (employeeId) => {
+    const expiring = expiringContracts.find(e => e.employee_id === employeeId);
+    return expiring;
+  };
 
   const filtered = employees.filter(e => {
     if (!search) return true;
