@@ -151,47 +151,97 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
 
 @router.get("/balance")
 async def get_my_leave_balance(user=Depends(get_current_user)):
-    """Get current user's leave balance breakdown"""
+    """Get current user's leave balance breakdown - Pro-Rata"""
     emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
     if not emp:
         raise HTTPException(status_code=400, detail="لست موظفاً")
     
-    # استخدام خدمة الإجازات الجديدة
-    from services.leave_service import get_employee_leave_summary
+    # استخدام خدمة الإجازات الجديدة Pro-Rata
+    from services.hr_policy import calculate_pro_rata_entitlement, get_employee_annual_policy
     
     try:
-        summary = await get_employee_leave_summary(emp['id'])
+        pro_rata = await calculate_pro_rata_entitlement(emp['id'])
+        policy = await get_employee_annual_policy(emp['id'])
         
         # تنسيق النتيجة للفرونتند
         balance = {
             "annual": {
-                "balance": summary['annual_leave']['balance'],
-                "entitlement": summary['annual_leave']['entitlement'],
-                "used": summary['annual_leave']['used'],
-                "available": summary['annual_leave']['balance'],
-                "rule": summary['annual_leave']['rule'],
-                "message_ar": summary['annual_leave']['message_ar']
-            },
-            "sick": {
-                "used_12_months": summary['sick_leave']['used_12_months'],
-                "remaining": summary['sick_leave']['remaining'],
-                "total_limit": summary['sick_leave']['total_limit'],
-                "current_tier": summary['sick_leave']['current_tier'],
-                "note_ar": summary['sick_leave']['note_ar']
-            },
-            "marriage": summary['other_leaves'].get('marriage', {'total_days': 0}),
-            "bereavement": summary['other_leaves'].get('bereavement', {'total_days': 0}),
-            "exam": summary['other_leaves'].get('exam', {'total_days': 0}),
-            "unpaid": summary['other_leaves'].get('unpaid', {'total_days': 0}),
+                "balance": round(pro_rata.get('available_balance', 0), 2),
+                "available": round(pro_rata.get('available_balance', 0), 2),
+                "earned_to_date": round(pro_rata.get('earned_to_date', 0), 2),
+                "used": pro_rata.get('used_executed', 0),
+                "entitlement": policy['days'],
+                "policy_source": policy['source'],
+                "policy_source_ar": policy['source_ar'],
+                "formula": pro_rata.get('formula', ''),
+                "message_ar": pro_rata.get('message_ar', '')
+            }
         }
         
         return balance
     except Exception as e:
-        # Fallback للنظام القديم
-        balance = {}
-        for leave_type in ['annual', 'sick', 'marriage', 'bereavement', 'exam', 'unpaid']:
-            balance[leave_type] = await get_leave_balance(emp['id'], leave_type)
+        # Fallback
+        balance = {"annual": {"available": 0, "balance": 0}}
         return balance
+
+
+@router.get("/used")
+async def get_my_used_leaves(user=Depends(get_current_user)):
+    """Get current user's consumed leaves by type"""
+    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=400, detail="لست موظفاً")
+    
+    # جلب الإجازات المستهلكة من leave_ledger
+    used = {}
+    for leave_type in ['annual', 'sick', 'marriage', 'bereavement', 'exam', 'unpaid']:
+        entries = await db.leave_ledger.find({
+            "employee_id": emp['id'],
+            "leave_type": leave_type,
+            "type": "debit"
+        }, {"_id": 0}).to_list(500)
+        
+        used[leave_type] = sum(e.get('days', 0) for e in entries)
+    
+    return used
+
+
+@router.get("/permission-hours")
+async def get_my_permission_hours(user=Depends(get_current_user)):
+    """Get current user's permission hours usage for this month"""
+    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=400, detail="لست موظفاً")
+    
+    # جلب ساعات الاستئذان من العقد
+    contract = await db.contracts_v2.find_one({
+        "employee_id": emp['id'],
+        "status": "active"
+    }, {"_id": 0})
+    
+    total_hours = 2  # الافتراضي
+    if contract:
+        total_hours = contract.get('monthly_permission_hours', 2)
+    
+    # جلب الاستخدام هذا الشهر
+    today = datetime.now(timezone.utc)
+    month_start = today.strftime("%Y-%m-01")
+    month_end = today.strftime("%Y-%m-31")
+    
+    permissions = await db.permission_ledger.find({
+        "employee_id": emp['id'],
+        "date": {"$gte": month_start, "$lte": month_end},
+        "type": "debit"
+    }, {"_id": 0}).to_list(100)
+    
+    used_hours = sum(p.get('hours', 0) for p in permissions)
+    
+    return {
+        "used": used_hours,
+        "total": total_hours,
+        "remaining": max(0, total_hours - used_hours),
+        "month": today.strftime("%Y-%m")
+    }
 
 
 @router.get("/holidays")
