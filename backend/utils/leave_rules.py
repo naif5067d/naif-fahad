@@ -302,6 +302,7 @@ async def validate_leave_request(
     """
     Complete validation of a leave request.
     Returns validation result with errors or adjusted values.
+    Includes detailed calculation breakdown for STAS review.
     """
     errors = []
     warnings = []
@@ -309,11 +310,14 @@ async def validate_leave_request(
     employee_id = employee['id']
     saturday_working = employee.get('working_calendar', {}).get('saturday_working', False)
     
-    # Get holidays
-    holidays = await get_all_holidays()
+    # Get holidays with full details for STAS
+    holidays, holidays_data = await get_all_holidays_with_names()
     
-    # Calculate working days
-    working_days = count_working_days(start_date, end_date, holidays, saturday_working)
+    # Calculate working days with full breakdown
+    calculation_details = count_working_days_detailed(
+        start_date, end_date, holidays, saturday_working, holidays_data
+    )
+    working_days = calculation_details['working_days']
     
     if working_days <= 0:
         errors.append({
@@ -321,7 +325,7 @@ async def validate_leave_request(
             "message": "No working days in the selected period",
             "message_ar": "لا توجد أيام عمل في الفترة المحددة"
         })
-        return {"valid": False, "errors": errors}
+        return {"valid": False, "errors": errors, "calculation_details": calculation_details}
     
     # Check balance - لكل نوع إجازة قواعد مختلفة
     balance = await get_leave_balance(employee_id, leave_type)
@@ -340,7 +344,7 @@ async def validate_leave_request(
                 "message": f"Sick leave limit exceeded. Maximum 120 days/year. Remaining: {remaining_sick}, Requested: {working_days}",
                 "message_ar": f"تجاوز الحد الأقصى للإجازة المرضية (120 يوم/سنة). المتبقي: {remaining_sick}، المطلوب: {working_days}"
             })
-            return {"valid": False, "errors": errors}
+            return {"valid": False, "errors": errors, "calculation_details": calculation_details}
         # لا نتحقق من الرصيد - المرضية مسموحة دائماً حتى 120 يوم
     elif leave_type in ['bereavement', 'marriage', 'exam']:
         # الإجازات الإدارية: لها رصيد ثابت (مثلاً 5 أيام) لكن مخفي عن الموظف
@@ -357,7 +361,7 @@ async def validate_leave_request(
                 "message": f"Insufficient {leave_type} leave balance. Available: {balance}, Requested: {working_days}",
                 "message_ar": f"رصيد إجازات {leave_type} غير كافٍ. المتاح: {balance}، المطلوب: {working_days}"
             })
-            return {"valid": False, "errors": errors}
+            return {"valid": False, "errors": errors, "calculation_details": calculation_details}
     
     # Check date overlap
     overlapping = await check_date_overlap(employee_id, start_date, end_date, exclude_tx_id)
