@@ -138,6 +138,10 @@ async def get_team_daily(
         status_data = status_map.get(emp_id, {})
         attend_data = attendance_map.get(emp_id, {})
         
+        # جلب موقع العمل
+        work_loc_id = emp.get('work_location_id', '')
+        work_loc = location_map.get(work_loc_id, {})
+        
         # تحديد الحالة
         final_status = status_data.get('final_status', 'NOT_PROCESSED')
         status_ar = status_data.get('status_ar', 'لم يُحلل')
@@ -159,6 +163,9 @@ async def get_team_daily(
             "department": emp.get('department', ''),
             "job_title": emp.get('job_title', ''),
             "job_title_ar": emp.get('job_title_ar', ''),
+            "work_location_id": work_loc_id,
+            "work_location_name": work_loc.get('name', 'Main Office'),
+            "work_location_name_ar": work_loc.get('name_ar', 'المقر الرئيسي'),
             "date": target_date,
             "final_status": final_status,
             "status_ar": status_ar,
