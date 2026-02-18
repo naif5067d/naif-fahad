@@ -101,7 +101,7 @@ async def get_team_daily(
     يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
     """
     # الموظفون المستثنون من الحضور (ليسوا موظفين)
-    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-CEO', 'EMP-004', 'EMP-OPS2']
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
     
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
