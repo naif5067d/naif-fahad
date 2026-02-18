@@ -64,14 +64,14 @@ class ResolveBulkRequest(BaseModel):
 
 @router.post("/resolve-day")
 async def api_resolve_day(req: ResolveDayRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
-    """تحليل يوم واحد لموظف"""
-    result = await resolve_and_save(req.employee_id, req.date)
+    """تحليل يوم واحد لموظف (V2 مع العروق)"""
+    result = await resolve_and_save_v2(req.employee_id, req.date)
     return result
 
 
 @router.post("/resolve-bulk")
 async def api_resolve_bulk(req: ResolveBulkRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
-    """تحليل يوم لجميع الموظفين أو مجموعة محددة"""
+    """تحليل يوم لجميع الموظفين أو مجموعة محددة (V2 مع العروق)"""
     if req.employee_ids:
         employees = await db.employees.find(
             {"id": {"$in": req.employee_ids}, "is_active": {"$ne": False}}, 
@@ -85,11 +85,12 @@ async def api_resolve_bulk(req: ResolveBulkRequest, user=Depends(require_roles('
     
     results = []
     for emp in employees:
-        result = await resolve_and_save(emp['id'], req.date)
+        result = await resolve_and_save_v2(emp['id'], req.date)
         results.append({
             "employee_id": emp['id'],
             "status": result.get('final_status'),
-            "error": result.get('error')
+            "error": result.get('error'),
+            "trace_summary": result.get('trace_summary', {}).get('conclusion_ar')
         })
     
     return {
