@@ -102,15 +102,15 @@ async def api_resolve_bulk(req: ResolveBulkRequest, user=Depends(require_roles('
 
 @router.get("/daily-status/{employee_id}/{date}")
 async def get_daily_status(employee_id: str, date: str, user=Depends(get_current_user)):
-    """جلب السجل اليومي لموظف"""
+    """جلب السجل اليومي لموظف (مع العروق)"""
     record = await db.daily_status.find_one(
         {"employee_id": employee_id, "date": date}, 
         {"_id": 0}
     )
     
     if not record:
-        # محاولة التحليل الآن
-        record = await resolve_day(employee_id, date)
+        # محاولة التحليل الآن باستخدام V2
+        record = await resolve_day_v2(employee_id, date)
     
     return record
 
