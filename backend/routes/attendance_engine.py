@@ -67,7 +67,7 @@ class ProcessDailyRequest(BaseModel):
 
 
 # الموظفون المستثنون من الحضور (ليسوا موظفين)
-EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-CEO', 'EMP-004', 'EMP-OPS2']  # stas, mohammed, salah, naif
+EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
 
 
 @router.post("/process-daily")
