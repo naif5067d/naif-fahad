@@ -29,8 +29,14 @@ export default function EmployeeProfilePage() {
   const [carryoverDays, setCarryoverDays] = useState('');
   const [carryoverNote, setCarryoverNote] = useState('');
   const [savingCarryover, setSavingCarryover] = useState(false);
+  
+  // حالات تغيير الصورة
+  const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef(null);
 
   const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
+  const isStas = user?.role === 'stas';
 
   useEffect(() => {
     if (employeeId) {
