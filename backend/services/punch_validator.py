@@ -109,6 +109,25 @@ async def validate_punch_time(
     work_end = work_end.replace(tzinfo=RIYADH_TZ)
     
     if punch_type == 'checkin':
+        # === قاعدة جديدة: رفض التبصيم المبكر ===
+        # لا يُسمح بالتبصيم قبل (وقت_البداية - 30 دقيقة)
+        min_checkin_time = work_start - timedelta(minutes=MAX_EARLY_CHECKIN_MINUTES)
+        
+        if local_time < min_checkin_time:
+            return {
+                "valid": False,
+                "error": {
+                    "code": "error.checkin_too_early",
+                    "message": f"Check-in not open yet. Opens at {min_checkin_time.strftime('%H:%M')}",
+                    "message_ar": f"لم يفتح التبصيم بعد. يفتح الساعة {min_checkin_time.strftime('%H:%M')}",
+                    "work_start": work_start_str,
+                    "opens_at": min_checkin_time.strftime('%H:%M'),
+                    "current_time": local_time.strftime('%H:%M')
+                },
+                "work_location": work_location
+            }
+        
+        # === رفض التبصيم المتأخر جداً ===
         # حد التسجيل = وقت البداية + السماح + الحد الأقصى
         max_checkin_time = work_start + timedelta(minutes=grace_checkin + MAX_LATE_MINUTES_AFTER_GRACE)
         
