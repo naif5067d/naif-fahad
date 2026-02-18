@@ -110,23 +110,46 @@ async def validate_punch_time(
     work_end = work_end.replace(tzinfo=RIYADH_TZ)
     
     if punch_type == 'checkin':
-        # === قاعدة جديدة: رفض التبصيم المبكر ===
-        # لا يُسمح بالتبصيم قبل (وقت_البداية - 30 دقيقة)
-        min_checkin_time = work_start - timedelta(minutes=MAX_EARLY_CHECKIN_MINUTES)
+        # === قراءة إعداد السماح بالتبصيم المبكر من موقع العمل ===
+        # افتراضي = 0 (لا تبصيم قبل الدوام)
+        # المخولين يمكنهم تفعيله حتى 120 دقيقة (ساعتين)
+        allow_early_minutes = work_location.get('allow_early_checkin_minutes', DEFAULT_EARLY_CHECKIN_MINUTES)
+        
+        # التأكد من عدم تجاوز الحد الأقصى
+        allow_early_minutes = min(allow_early_minutes, MAX_ALLOWED_EARLY_CHECKIN_MINUTES)
+        
+        # === قاعدة: رفض التبصيم قبل الوقت المسموح ===
+        min_checkin_time = work_start - timedelta(minutes=allow_early_minutes)
         
         if local_time < min_checkin_time:
-            return {
-                "valid": False,
-                "error": {
-                    "code": "error.checkin_too_early",
-                    "message": f"Check-in not open yet. Opens at {min_checkin_time.strftime('%H:%M')}",
-                    "message_ar": f"لم يفتح التبصيم بعد. يفتح الساعة {min_checkin_time.strftime('%H:%M')}",
-                    "work_start": work_start_str,
-                    "opens_at": min_checkin_time.strftime('%H:%M'),
-                    "current_time": local_time.strftime('%H:%M')
-                },
-                "work_location": work_location
-            }
+            if allow_early_minutes == 0:
+                # لا يوجد سماح - يجب التبصيم في وقت الدوام فقط
+                return {
+                    "valid": False,
+                    "error": {
+                        "code": "error.checkin_too_early",
+                        "message": f"Check-in opens at work start time: {work_start_str}",
+                        "message_ar": f"التبصيم يفتح مع بداية الدوام الساعة {work_start_str}",
+                        "work_start": work_start_str,
+                        "current_time": local_time.strftime('%H:%M')
+                    },
+                    "work_location": work_location
+                }
+            else:
+                # يوجد سماح لكن الموظف أبكر منه
+                return {
+                    "valid": False,
+                    "error": {
+                        "code": "error.checkin_too_early",
+                        "message": f"Check-in opens at {min_checkin_time.strftime('%H:%M')}",
+                        "message_ar": f"التبصيم يفتح الساعة {min_checkin_time.strftime('%H:%M')}",
+                        "work_start": work_start_str,
+                        "opens_at": min_checkin_time.strftime('%H:%M'),
+                        "early_allowed_minutes": allow_early_minutes,
+                        "current_time": local_time.strftime('%H:%M')
+                    },
+                    "work_location": work_location
+                }
         
         # === رفض التبصيم المتأخر جداً ===
         # حد التسجيل = وقت البداية + السماح + الحد الأقصى
