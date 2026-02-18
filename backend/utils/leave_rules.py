@@ -143,29 +143,66 @@ async def get_all_holidays() -> list:
 
 def count_working_days(start_str: str, end_str: str, holidays: list, saturday_working: bool = False) -> int:
     """Count working days between two dates, excluding weekends and holidays"""
+    result = count_working_days_detailed(start_str, end_str, holidays, saturday_working)
+    return result['working_days']
+
+
+def count_working_days_detailed(start_str: str, end_str: str, holidays: list, saturday_working: bool = False, holidays_data: list = None) -> dict:
+    """
+    Count working days with full breakdown for STAS review.
+    Returns detailed calculation info including excluded holidays.
+    """
     start = datetime.strptime(start_str, "%Y-%m-%d")
     end = datetime.strptime(end_str, "%Y-%m-%d")
     holiday_set = set(holidays)
     
+    # Build holiday name lookup if data provided
+    holiday_names = {}
+    if holidays_data:
+        for h in holidays_data:
+            holiday_names[h.get('date')] = h.get('name', h.get('name_ar', 'إجازة رسمية'))
+    
     count = 0
+    total_calendar_days = 0
+    excluded_fridays = []
+    excluded_saturdays = []
+    excluded_holidays = []
+    working_days_list = []
+    
     current = start
     while current <= end:
+        total_calendar_days += 1
         day_of_week = current.weekday()
         date_str = current.strftime("%Y-%m-%d")
+        day_name_ar = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'][day_of_week]
         
         is_friday = day_of_week == 4
         is_saturday = day_of_week == 5
         is_holiday = date_str in holiday_set
         
-        if not is_friday and not is_holiday:
-            if is_saturday and not saturday_working:
-                pass  # Skip Saturday if not a working day
-            else:
-                count += 1
+        if is_friday:
+            excluded_fridays.append({'date': date_str, 'day': day_name_ar})
+        elif is_holiday:
+            holiday_name = holiday_names.get(date_str, 'إجازة رسمية')
+            excluded_holidays.append({'date': date_str, 'name': holiday_name, 'day': day_name_ar})
+        elif is_saturday and not saturday_working:
+            excluded_saturdays.append({'date': date_str, 'day': day_name_ar})
+        else:
+            count += 1
+            working_days_list.append({'date': date_str, 'day': day_name_ar})
         
         current += timedelta(days=1)
     
-    return count
+    return {
+        'working_days': count,
+        'total_calendar_days': total_calendar_days,
+        'excluded_fridays': excluded_fridays,
+        'excluded_saturdays': excluded_saturdays,
+        'excluded_holidays': excluded_holidays,
+        'working_days_list': working_days_list,
+        'calculation_valid': True,
+        'calculation_summary_ar': f"إجمالي {total_calendar_days} يوم تقويمي → {count} يوم عمل (استُثني: {len(excluded_fridays)} جمعة، {len(excluded_saturdays)} سبت، {len(excluded_holidays)} إجازة رسمية)"
+    }
 
 
 def extend_leave_for_holidays(start_str: str, working_days_needed: int, holidays: list, saturday_working: bool = False) -> str:
