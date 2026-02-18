@@ -422,6 +422,8 @@ export default function TransactionDetailPage() {
               if (key === 'sick_tier_info') return false;
               // Skip medical file - handled separately
               if (key === 'medical_file_url') return false;
+              // Skip calculation_details - shown in separate section for STAS
+              if (key === 'calculation_details') return false;
               // Skip objects (complex nested data)
               if (typeof value === 'object' && value !== null) return false;
               return true;
