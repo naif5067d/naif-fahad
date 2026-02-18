@@ -372,7 +372,7 @@ async def validate_leave_request(
             "message": f"Leave dates overlap with existing request {overlapping['ref_no']}",
             "message_ar": f"تتعارض تواريخ الإجازة مع الطلب {overlapping['ref_no']}"
         })
-        return {"valid": False, "errors": errors}
+        return {"valid": False, "errors": errors, "calculation_details": calculation_details}
     
     # Calculate adjusted end date (extending for holidays within period)
     adjusted_end_date = extend_leave_for_holidays(start_date, working_days, holidays, saturday_working)
@@ -399,5 +399,6 @@ async def validate_leave_request(
         "balance_before": balance,
         "balance_after": balance - working_days,
         "warnings": warnings,
-        "sick_tier_info": sick_tier_info
+        "sick_tier_info": sick_tier_info,
+        "calculation_details": calculation_details
     }
