@@ -2,11 +2,11 @@
  * Team Attendance Page - حضور الفريق
  * 
  * لسلطان ونايف:
- * - عرض جميع الموظفين مع حالتهم اليومية
- * - تعديل حالة الموظف (غائب → حاضر)
- * - فلترة يومي/أسبوعي/شهري
+ * - قائمة منسدلة لاختيار الموظف
+ * - عرض سجل الموظف (يومي/أسبوعي/شهري/سنوي)
+ * - تعديل حالة الموظف
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Dialog, 
   DialogContent, 
@@ -33,7 +40,11 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  Search
+  Search,
+  User,
+  CalendarDays,
+  TrendingDown,
+  FileWarning
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
