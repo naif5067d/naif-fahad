@@ -155,7 +155,7 @@ export default function NotificationBell() {
   const handleDeleteAll = async () => {
     setLoading(true);
     try {
-      await api.delete('/api/notifications/delete-all');
+      await api.delete('/api/notifications/all');
       setNotifications([]);
       setUnreadCount(0);
       setIsOpen(false);
