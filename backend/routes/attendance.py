@@ -71,12 +71,10 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
-    # Calculate GPS validity
-    gps_valid = False
-    distance = None
-    if req.gps_available and req.latitude and req.longitude:
-        distance = haversine_distance(req.latitude, req.longitude, GEOFENCE_CENTER['lat'], GEOFENCE_CENTER['lng'])
-        gps_valid = distance <= GEOFENCE_RADIUS_KM
+    # استخدام نتائج التحقق الجديدة
+    work_location = punch_validation.get('work_location')
+    gps_valid = punch_validation.get('gps_valid', False)
+    distance = punch_validation.get('distance_km')
 
     entry = {
         "id": str(uuid.uuid4()),
@@ -88,10 +86,12 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "location": {"lat": req.latitude, "lng": req.longitude} if req.gps_available else None,
         "gps_available": req.gps_available,
         "gps_valid": gps_valid,
-        "distance_km": round(distance, 2) if distance else None,
-        "work_location": req.work_location,
-        "warnings": validation.get('warnings', []),
-        "created_at": now.isoformat()
+        "distance_km": round(distance, 3) if distance else None,
+        "work_location": work_location.get('name_ar', req.work_location) if work_location else req.work_location,
+        "work_location_id": work_location.get('id') if work_location else None,
+        "warnings": validation.get('warnings', []) + punch_validation.get('warnings', []),
+        "created_at": now.isoformat(),
+        "source": "self_checkin"
     }
     
     await db.attendance_ledger.insert_one(entry)
@@ -105,7 +105,30 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     Check-out with server-side validation:
     - Must have checked in today
     - Cannot checkout twice
+    - GPS location validated
     """
+    # التحقق من أن المستخدم له employee_id
+    employee_id = user.get('employee_id')
+    if not employee_id:
+        raise HTTPException(400, "لا يوجد حساب موظف مرتبط")
+    
+    # هل المستخدم مدير يمكنه تجاوز GPS؟
+    bypass_gps = user.get('role') in BYPASS_GPS_ROLES
+    
+    # التحقق الكامل من التبصيم
+    punch_validation = await validate_full_punch(
+        employee_id=employee_id,
+        punch_type='checkout',
+        latitude=req.latitude,
+        longitude=req.longitude,
+        gps_available=req.gps_available,
+        bypass_gps=bypass_gps
+    )
+    
+    if not punch_validation['valid']:
+        error_messages = [e.get('message_ar', e.get('message')) for e in punch_validation['errors']]
+        raise HTTPException(400, " | ".join(error_messages))
+    
     # Validate using attendance rules
     validation = await validate_check_out(user['user_id'])
     
@@ -118,12 +141,10 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
-    # Calculate GPS validity
-    gps_valid = False
-    distance = None
-    if req.gps_available and req.latitude and req.longitude:
-        distance = haversine_distance(req.latitude, req.longitude, GEOFENCE_CENTER['lat'], GEOFENCE_CENTER['lng'])
-        gps_valid = distance <= GEOFENCE_RADIUS_KM
+    # استخدام نتائج التحقق الجديدة
+    work_location = punch_validation.get('work_location')
+    gps_valid = punch_validation.get('gps_valid', False)
+    distance = punch_validation.get('distance_km')
 
     entry = {
         "id": str(uuid.uuid4()),
@@ -135,9 +156,13 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
         "location": {"lat": req.latitude, "lng": req.longitude} if req.gps_available else None,
         "gps_available": req.gps_available,
         "gps_valid": gps_valid,
-        "distance_km": round(distance, 2) if distance else None,
-        "work_location": req.work_location or checkin.get('work_location', 'HQ'),
-        "created_at": now.isoformat()
+        "distance_km": round(distance, 3) if distance else None,
+        "work_location": work_location.get('name_ar') if work_location else checkin.get('work_location', 'HQ'),
+        "work_location_id": work_location.get('id') if work_location else None,
+        "warnings": punch_validation.get('warnings', []),
+        "created_at": now.isoformat(),
+        "source": "self_checkout"
+    }
     }
     
     await db.attendance_ledger.insert_one(entry)
