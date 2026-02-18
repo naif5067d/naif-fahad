@@ -74,6 +74,7 @@ export default function WorkLocationsPage() {
     work_end: '17:00',
     grace_checkin_minutes: 0, // مدة السماح للدخول (0-15)
     grace_checkout_minutes: 0, // مدة السماح للخروج (0-15)
+    allow_early_checkin_minutes: 0, // السماح بالتبصيم المبكر (0-120)
     work_days: {
       saturday: true,
       sunday: true,
