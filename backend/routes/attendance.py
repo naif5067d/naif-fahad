@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from database import db
-from utils.auth import get_current_user
+from utils.auth import get_current_user, require_roles
 from utils.attendance_rules import validate_check_in, validate_check_out
+from services.punch_validator import validate_full_punch, haversine_distance
 from datetime import datetime, timezone
 import uuid
 
@@ -24,18 +25,8 @@ class CheckOutRequest(BaseModel):
     work_location: Optional[str] = None
 
 
-GEOFENCE_CENTER = {"lat": 24.7136, "lng": 46.6753}  # Riyadh default
-GEOFENCE_RADIUS_KM = 5.0
-
-
-def haversine_distance(lat1, lon1, lat2, lon2):
-    import math
-    R = 6371
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
-    c = 2 * math.asin(math.sqrt(a))
-    return R * c
+# المستخدمين المسموح لهم تجاوز قيود GPS
+BYPASS_GPS_ROLES = ['stas', 'sultan', 'naif']
 
 
 @router.post("/check-in")
@@ -43,10 +34,33 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     """
     Check-in with server-side validation:
     - Employee must be active with contract
-    - Work location validated
-    - Working hours checked (warning only)
+    - GPS location validated (must be within geofence)
+    - Working hours validated (cannot check-in after grace + max late)
     """
-    # Validate using attendance rules
+    # التحقق من أن المستخدم له employee_id
+    employee_id = user.get('employee_id')
+    if not employee_id:
+        raise HTTPException(400, "لا يوجد حساب موظف مرتبط")
+    
+    # هل المستخدم مدير يمكنه تجاوز GPS؟
+    bypass_gps = user.get('role') in BYPASS_GPS_ROLES
+    
+    # التحقق الكامل من التبصيم (الوقت + الموقع)
+    punch_validation = await validate_full_punch(
+        employee_id=employee_id,
+        punch_type='checkin',
+        latitude=req.latitude,
+        longitude=req.longitude,
+        gps_available=req.gps_available,
+        bypass_gps=bypass_gps
+    )
+    
+    if not punch_validation['valid']:
+        # جمع رسائل الأخطاء
+        error_messages = [e.get('message_ar', e.get('message')) for e in punch_validation['errors']]
+        raise HTTPException(400, " | ".join(error_messages))
+    
+    # التحقق من الموظف والعقد
     validation = await validate_check_in(user['user_id'], req.work_location)
     
     if not validation['valid']:
