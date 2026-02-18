@@ -469,8 +469,23 @@ export default function TeamAttendancePage() {
         </div>
       )}
 
-      {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
+      {/* Main Tabs: Attendance | Penalties */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+        <TabsList className="mb-4 w-full justify-start">
+          <TabsTrigger value="attendance" className="flex-1 md:flex-none gap-2">
+            <Clock size={16} />
+            {lang === 'ar' ? 'الحضور' : 'Attendance'}
+          </TabsTrigger>
+          <TabsTrigger value="penalties" className="flex-1 md:flex-none gap-2">
+            <AlertTriangle size={16} />
+            {lang === 'ar' ? 'العقوبات' : 'Penalties'}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Attendance Tab Content */}
+        <TabsContent value="attendance">
+          {/* Sub Tabs */}
+          <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="daily">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
           <TabsTrigger value="weekly">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
