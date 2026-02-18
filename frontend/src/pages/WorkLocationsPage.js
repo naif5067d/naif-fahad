@@ -467,6 +467,64 @@ export default function WorkLocationsPage() {
                   </div>
                 </div>
 
+                {/* Early Check-in Allowance - للمخولين فقط */}
+                {canEdit && (
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200">
+                    <Label className="flex items-center gap-2 text-violet-700 mb-3">
+                      <Clock size={16} />
+                      {lang === 'ar' ? 'السماح بالتبصيم قبل الدوام' : 'Early Check-in Allowance'}
+                    </Label>
+                    <p className="text-xs text-violet-600 mb-3">
+                      {lang === 'ar' 
+                        ? 'يسمح للموظفين بالتبصيم قبل وقت الدوام الرسمي. القيمة 0 تعني لا تبصيم قبل الدوام.'
+                        : 'Allow employees to check-in before official work start. Value 0 means no early check-in.'}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-violet-600">
+                            {formData.allow_early_checkin_minutes === 0 
+                              ? (lang === 'ar' ? 'لا يُسمح بالتبصيم المبكر' : 'No early check-in allowed')
+                              : (lang === 'ar' 
+                                  ? `التبصيم يفتح قبل الدوام بـ ${formData.allow_early_checkin_minutes} دقيقة`
+                                  : `Check-in opens ${formData.allow_early_checkin_minutes} min before work`)}
+                          </span>
+                          <div className="text-2xl font-bold text-violet-600">
+                            {formData.allow_early_checkin_minutes}
+                            <span className="text-sm font-normal text-muted-foreground ms-1">
+                              {lang === 'ar' ? 'د' : 'm'}
+                            </span>
+                          </div>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="120"
+                          step="15"
+                          value={formData.allow_early_checkin_minutes}
+                          onChange={e => setFormData(p => ({ ...p, allow_early_checkin_minutes: parseInt(e.target.value) }))}
+                          className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                          style={{
+                            background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${(formData.allow_early_checkin_minutes / 120) * 100}%, #e2e8f0 ${(formData.allow_early_checkin_minutes / 120) * 100}%, #e2e8f0 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between mt-1">
+                          {[0, 30, 60, 90, 120].map(v => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => setFormData(p => ({ ...p, allow_early_checkin_minutes: v }))}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.allow_early_checkin_minutes === v ? 'bg-violet-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                            >
+                              {v === 0 ? (lang === 'ar' ? 'لا' : 'No') : v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Work Days */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
