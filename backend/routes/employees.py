@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional
 from database import db
 from utils.auth import get_current_user, require_roles
 from datetime import datetime, timezone
+import os
+import uuid
+import base64
 
 # Import Services
 from services.leave_service import get_employee_leave_summary
