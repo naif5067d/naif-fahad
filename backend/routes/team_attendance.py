@@ -30,12 +30,19 @@ async def get_team_summary(
 ):
     """
     ملخص سريع لحضور الفريق
+    يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
     """
+    # الموظفون المستثنون من الحضور (ليسوا موظفين)
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-CEO', 'EMP-004', 'EMP-OPS2']
+    
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # جلب جميع الموظفين النشطين
+    # جلب جميع الموظفين النشطين (باستثناء المستثنين)
     employees = await db.employees.find(
-        {"is_active": {"$ne": False}},
+        {
+            "is_active": {"$ne": False},
+            "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+        },
         {"_id": 0, "id": 1}
     ).to_list(500)
     
