@@ -106,11 +106,22 @@ class DayResolver:
                     "is_active": True
                 }, {"_id": 0})
             
-            # تحميل موقع العمل
-            work_location_id = self.employee.get('work_location_id') or self.contract.get('work_location_id') if self.contract else None
+            # تحميل موقع العمل - البحث بطرق متعددة
+            work_location_id = self.employee.get('work_location_id') or (self.contract.get('work_location_id') if self.contract else None)
+            
             if work_location_id:
                 self.work_location = await db.work_locations.find_one(
-                    {"id": work_location_id}, 
+                    {"id": work_location_id, "is_active": True}, 
+                    {"_id": 0}
+                )
+            
+            # إذا لم يُعثر، البحث في assigned_employees
+            if not self.work_location:
+                self.work_location = await db.work_locations.find_one(
+                    {
+                        "assigned_employees": self.employee_id,
+                        "is_active": True
+                    }, 
                     {"_id": 0}
                 )
     
