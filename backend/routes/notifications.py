@@ -496,14 +496,23 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         reference_url = notif.get('reference_url', '')
         
         if employee_id:
-            emp = await db.employees.find_one({"id": employee_id}, {"_id": 0, "full_name": 1, "full_name_ar": 1, "employee_code": 1})
+            # البحث بالـ id أو بالـ employee_code
+            emp = await db.employees.find_one(
+                {"$or": [{"id": employee_id}, {"employee_code": employee_id}]}, 
+                {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "employee_code": 1}
+            )
             if emp:
                 employee_name_ar = emp.get('full_name_ar', emp.get('full_name', ''))
                 employee_name_en = emp.get('full_name', '')
                 employee_code = emp.get('employee_code', employee_id)
+                actual_id = emp.get('id', employee_id)
                 # إنشاء رابط لصفحة الموظف
                 if not reference_url:
-                    reference_url = f"/employees/{employee_id}"
+                    reference_url = f"/employees/{actual_id}"
+            else:
+                # موظف غير موجود - ربما تم حذفه
+                employee_name_ar = f"موظف سابق"
+                employee_code = employee_id
         
         # تحسين عنوان ورسالة الإشعار
         title_ar = notif.get('title_ar', notif.get('message_ar', 'إشعار'))
@@ -511,8 +520,9 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         
         # استبدال ID الموظف باسمه في الرسالة
         if employee_id and employee_name_ar:
-            title_ar = title_ar.replace(employee_id, f"{employee_name_ar} ({employee_code})")
-            message_ar = message_ar.replace(employee_id, f"{employee_name_ar} ({employee_code})")
+            display_name = f"{employee_name_ar} ({employee_code})" if employee_code != employee_id else employee_name_ar
+            title_ar = title_ar.replace(employee_id, display_name)
+            message_ar = message_ar.replace(employee_id, display_name)
         
         formatted = {
             "id": notif.get('id'),
