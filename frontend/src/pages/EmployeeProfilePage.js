@@ -85,6 +85,60 @@ export default function EmployeeProfilePage() {
     }
   };
 
+  // دالة رفع الصورة
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+      toast.error(lang === 'ar' ? 'يرجى اختيار صورة صالحة' : 'Please select a valid image');
+      return;
+    }
+    
+    // التحقق من حجم الملف (أقصى 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(lang === 'ar' ? 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت' : 'Image size must be less than 5MB');
+      return;
+    }
+    
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      await api.post(`/api/employees/${employeeId}/photo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      toast.success(lang === 'ar' ? 'تم تحديث الصورة بنجاح' : 'Photo updated successfully');
+      setPhotoDialogOpen(false);
+      loadEmployeeData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل في رفع الصورة' : 'Failed to upload photo'));
+    } finally {
+      setUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // دالة حذف الصورة
+  const handleRemovePhoto = async () => {
+    setUploadingPhoto(true);
+    try {
+      await api.delete(`/api/employees/${employeeId}/photo`);
+      toast.success(lang === 'ar' ? 'تم حذف الصورة' : 'Photo removed');
+      setPhotoDialogOpen(false);
+      loadEmployeeData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل في حذف الصورة' : 'Failed to remove photo'));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
