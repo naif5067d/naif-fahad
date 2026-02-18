@@ -332,34 +332,40 @@ class DayResolver:
         )
     
     async def _analyze_attendance(self, check_in: dict, check_out: Optional[dict]) -> dict:
-        """تحليل بيانات الحضور"""
-        # ساعات العمل الافتراضية
+        """تحليل بيانات الحضور - مع تحويل التوقيت بشكل صحيح"""
+        # ساعات العمل الافتراضية (بتوقيت الرياض)
         work_start = "08:00"
         work_end = "17:00"
         required_hours = 8.0
         grace_period_in = 15  # دقائق سماح للدخول
         grace_period_out = 15  # دقائق سماح للخروج
         
-        # من موقع العمل - تصحيح أسماء الحقول
+        # من موقع العمل - قراءة الحقول بالأسماء الصحيحة
         if self.work_location:
-            # work_start أو work_start_time
-            work_start = self.work_location.get('work_start') or self.work_location.get('work_start_time', '08:00')
-            work_end = self.work_location.get('work_end') or self.work_location.get('work_end_time', '17:00')
+            work_start = self.work_location.get('work_start', '08:00')
+            work_end = self.work_location.get('work_end', '17:00')
             required_hours = self.work_location.get('daily_hours', 8.0)
-            # grace_checkin_minutes أو grace_period_checkin_minutes
-            grace_period_in = self.work_location.get('grace_checkin_minutes') or self.work_location.get('grace_period_checkin_minutes', 15)
-            grace_period_out = self.work_location.get('grace_checkout_minutes') or self.work_location.get('grace_period_checkout_minutes', 15)
+            grace_period_in = self.work_location.get('grace_checkin_minutes', 15)
+            grace_period_out = self.work_location.get('grace_checkout_minutes', 15)
         
-        # تحليل وقت الدخول
-        check_in_time = datetime.fromisoformat(check_in['timestamp'].replace('Z', '+00:00'))
-        work_start_time = datetime.strptime(f"{self.date} {work_start}", "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+        # تحويل وقت البصمة من UTC إلى توقيت الرياض
+        check_in_timestamp = check_in['timestamp']
+        if isinstance(check_in_timestamp, str):
+            check_in_utc = datetime.fromisoformat(check_in_timestamp.replace('Z', '+00:00'))
+        else:
+            check_in_utc = check_in_timestamp
+        check_in_local = check_in_utc.astimezone(RIYADH_TZ)
+        
+        # إنشاء وقت بداية العمل بتوقيت الرياض
+        work_start_local = datetime.strptime(f"{self.date} {work_start}", "%Y-%m-%d %H:%M")
+        work_start_local = work_start_local.replace(tzinfo=RIYADH_TZ)
         
         late_minutes = 0
         is_late = False
-        allowed_late = work_start_time + timedelta(minutes=grace_period_in)
+        allowed_late = work_start_local + timedelta(minutes=grace_period_in)
         
-        if check_in_time > allowed_late:
-            late_minutes = int((check_in_time - work_start_time).total_seconds() / 60)
+        if check_in_local > allowed_late:
+            late_minutes = int((check_in_local - work_start_local).total_seconds() / 60)
             is_late = True
         
         # تحليل وقت الخروج
@@ -368,15 +374,23 @@ class DayResolver:
         actual_hours = 0.0
         
         if check_out:
-            check_out_time = datetime.fromisoformat(check_out['timestamp'].replace('Z', '+00:00'))
-            work_end_time = datetime.strptime(f"{self.date} {work_end}", "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-            allowed_early = work_end_time - timedelta(minutes=grace_period_out)
+            check_out_timestamp = check_out['timestamp']
+            if isinstance(check_out_timestamp, str):
+                check_out_utc = datetime.fromisoformat(check_out_timestamp.replace('Z', '+00:00'))
+            else:
+                check_out_utc = check_out_timestamp
+            check_out_local = check_out_utc.astimezone(RIYADH_TZ)
             
-            if check_out_time < allowed_early:
-                early_leave_minutes = int((work_end_time - check_out_time).total_seconds() / 60)
+            # وقت نهاية العمل بتوقيت الرياض
+            work_end_local = datetime.strptime(f"{self.date} {work_end}", "%Y-%m-%d %H:%M")
+            work_end_local = work_end_local.replace(tzinfo=RIYADH_TZ)
+            allowed_early = work_end_local - timedelta(minutes=grace_period_out)
+            
+            if check_out_local < allowed_early:
+                early_leave_minutes = int((work_end_local - check_out_local).total_seconds() / 60)
                 is_early_leave = True
             
-            actual_hours = (check_out_time - check_in_time).total_seconds() / 3600
+            actual_hours = (check_out_local - check_in_local).total_seconds() / 3600
         
         return {
             'is_late': is_late,
@@ -388,7 +402,9 @@ class DayResolver:
             'work_start_used': work_start,
             'work_end_used': work_end,
             'grace_in_used': grace_period_in,
-            'grace_out_used': grace_period_out
+            'grace_out_used': grace_period_out,
+            'check_in_local': check_in_local.strftime("%H:%M"),
+            'check_out_local': check_out_local.strftime("%H:%M") if check_out else None
         }
     
     async def _check_permissions(self) -> Optional[dict]:
