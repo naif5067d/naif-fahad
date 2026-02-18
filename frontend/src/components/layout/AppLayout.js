@@ -8,8 +8,8 @@ import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = {
-  employee: ['dashboard', 'transactions', 'leave', 'attendance'],
-  supervisor: ['dashboard', 'transactions', 'leave', 'attendance'],
+  employee: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
+  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
   sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'financialCustody'],
