@@ -268,22 +268,37 @@ class DayResolverV2:
         date_obj = datetime.strptime(self.date, "%Y-%m-%d")
         day_of_week = date_obj.weekday()
         
-        weekend_days = [4, 5]  # الجمعة والسبت افتراضياً
-        if self.work_location:
-            weekend_days = self.work_location.get('weekend_days', [4, 5])
-        
+        # تحويل اسم اليوم
+        day_names_en = {0: "monday", 1: "tuesday", 2: "wednesday", 
+                       3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"}
         day_names = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 
                     3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
+        
+        day_name_en = day_names_en.get(day_of_week)
+        is_weekend = False
+        
+        if self.work_location:
+            # فحص work_days - إذا اليوم = false فهو عطلة
+            work_days = self.work_location.get('work_days', {})
+            if work_days and day_name_en in work_days:
+                is_weekend = not work_days.get(day_name_en, True)
+            else:
+                # الافتراضي: الجمعة والسبت عطلة
+                is_weekend = day_of_week in [4, 5]
+        else:
+            # الافتراضي: الجمعة والسبت عطلة
+            is_weekend = day_of_week in [4, 5]
         
         step.details = {
             "date": self.date,
             "day_of_week": day_of_week,
             "day_name_ar": day_names.get(day_of_week, ''),
-            "weekend_days_config": weekend_days,
-            "work_location": self.work_location.get('name') if self.work_location else "افتراضي"
+            "work_days_config": self.work_location.get('work_days', {}) if self.work_location else {},
+            "work_location": self.work_location.get('name_ar', self.work_location.get('name')) if self.work_location else "افتراضي",
+            "is_weekend": is_weekend
         }
         
-        if day_of_week in weekend_days:
+        if is_weekend:
             step.found = True
             step.result = "is_weekend"
             
