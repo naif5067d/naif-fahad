@@ -446,3 +446,128 @@ async def get_employee_trace(
         daily = await resolve_day_v2(employee_id, date)
     
     return daily
+
+
+
+@router.get("/employee/{employee_id}")
+async def get_employee_attendance(
+    employee_id: str,
+    period: str = Query(default="daily", description="daily, weekly, monthly, yearly"),
+    date: Optional[str] = None,
+    month: Optional[str] = None,
+    year: Optional[str] = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    الحصول على سجل حضور موظف محدد
+    """
+    from datetime import datetime, timedelta
+    
+    if not date:
+        date = datetime.now().strftime("%Y-%m-%d")
+    if not month:
+        month = datetime.now().strftime("%Y-%m")
+    if not year:
+        year = str(datetime.now().year)
+    
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    result = {
+        "employee_id": employee_id,
+        "employee_name": emp.get("full_name", ""),
+        "employee_name_ar": emp.get("full_name_ar", ""),
+        "employee_number": emp.get("employee_number", ""),
+        "period": period
+    }
+    
+    if period == "daily":
+        # Get daily records for selected date and surrounding days
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        start_date = (date_obj - timedelta(days=7)).strftime("%Y-%m-%d")
+        end_date = date
+        
+        daily_records = await db.daily_status.find({
+            "employee_id": employee_id,
+            "date": {"$gte": start_date, "$lte": end_date}
+        }, {"_id": 0}).sort("date", -1).to_list(100)
+        
+        # Add can_edit flag
+        for rec in daily_records:
+            rec["can_edit"] = True
+            rec["has_trace"] = True
+        
+        result["daily"] = daily_records
+        
+    elif period == "weekly":
+        # Get weekly summary
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
+        week_start = (date_obj - timedelta(days=date_obj.weekday())).strftime("%Y-%m-%d")
+        week_end = date
+        
+        daily_records = await db.daily_status.find({
+            "employee_id": employee_id,
+            "date": {"$gte": week_start, "$lte": week_end}
+        }, {"_id": 0}).to_list(100)
+        
+        summary = {
+            "employee_id": employee_id,
+            "employee_name": emp.get("full_name", ""),
+            "employee_name_ar": emp.get("full_name_ar", ""),
+            "employee_number": emp.get("employee_number", ""),
+            "total_present": sum(1 for r in daily_records if r.get("final_status") in ["PRESENT", "LATE", "EARLY_LEAVE"]),
+            "total_absent": sum(1 for r in daily_records if r.get("final_status") == "ABSENT"),
+            "total_late": sum(1 for r in daily_records if r.get("final_status") in ["LATE", "LATE_EXCUSED"]),
+            "total_leave": sum(1 for r in daily_records if r.get("final_status") in ["ON_LEAVE", "ON_ADMIN_LEAVE"]),
+            "total_late_minutes": sum(r.get("late_minutes", 0) for r in daily_records),
+            "total_early_leave_minutes": sum(r.get("early_leave_minutes", 0) for r in daily_records)
+        }
+        result["weekly"] = summary
+        result["daily"] = daily_records
+        
+    elif period == "monthly":
+        # Get monthly summary
+        month_start = f"{month}-01"
+        # Calculate month end
+        year_val, month_val = map(int, month.split("-"))
+        if month_val == 12:
+            month_end = f"{year_val + 1}-01-01"
+        else:
+            month_end = f"{year_val}-{month_val + 1:02d}-01"
+        
+        daily_records = await db.daily_status.find({
+            "employee_id": employee_id,
+            "date": {"$gte": month_start, "$lt": month_end}
+        }, {"_id": 0}).sort("date", -1).to_list(100)
+        
+        total_absent = sum(1 for r in daily_records if r.get("final_status") == "ABSENT")
+        total_late_minutes = sum(r.get("late_minutes", 0) for r in daily_records)
+        total_early_leave_minutes = sum(r.get("early_leave_minutes", 0) for r in daily_records)
+        
+        # Calculate estimated deduction
+        # Days deduction for absences
+        absent_deduction = total_absent  # يوم لكل غياب
+        # Minutes deduction (8 hours = 480 minutes = 1 day)
+        total_deficit_minutes = total_late_minutes + total_early_leave_minutes
+        deficit_days = total_deficit_minutes / 480  # كل 8 ساعات = يوم
+        
+        summary = {
+            "employee_id": employee_id,
+            "employee_name": emp.get("full_name", ""),
+            "employee_name_ar": emp.get("full_name_ar", ""),
+            "employee_number": emp.get("employee_number", ""),
+            "total_present": sum(1 for r in daily_records if r.get("final_status") in ["PRESENT", "LATE", "EARLY_LEAVE"]),
+            "total_absent": total_absent,
+            "total_late": sum(1 for r in daily_records if r.get("final_status") in ["LATE", "LATE_EXCUSED"]),
+            "total_leave": sum(1 for r in daily_records if r.get("final_status") in ["ON_LEAVE", "ON_ADMIN_LEAVE"]),
+            "total_late_minutes": total_late_minutes,
+            "total_early_leave_minutes": total_early_leave_minutes,
+            "total_deficit_minutes": total_deficit_minutes,
+            "deficit_days": round(deficit_days, 2),
+            "estimated_deduction": 0  # Will be calculated based on salary
+        }
+        result["monthly"] = summary
+        result["daily"] = daily_records
+    
+    return result
