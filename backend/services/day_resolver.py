@@ -311,13 +311,15 @@ class DayResolver:
         grace_period_in = 15  # دقائق سماح للدخول
         grace_period_out = 15  # دقائق سماح للخروج
         
-        # من موقع العمل
+        # من موقع العمل - تصحيح أسماء الحقول
         if self.work_location:
-            work_start = self.work_location.get('work_start_time', '08:00')
-            work_end = self.work_location.get('work_end_time', '17:00')
+            # work_start أو work_start_time
+            work_start = self.work_location.get('work_start') or self.work_location.get('work_start_time', '08:00')
+            work_end = self.work_location.get('work_end') or self.work_location.get('work_end_time', '17:00')
             required_hours = self.work_location.get('daily_hours', 8.0)
-            grace_period_in = self.work_location.get('grace_period_checkin_minutes', 15)
-            grace_period_out = self.work_location.get('grace_period_checkout_minutes', 15)
+            # grace_checkin_minutes أو grace_period_checkin_minutes
+            grace_period_in = self.work_location.get('grace_checkin_minutes') or self.work_location.get('grace_period_checkin_minutes', 15)
+            grace_period_out = self.work_location.get('grace_checkout_minutes') or self.work_location.get('grace_period_checkout_minutes', 15)
         
         # تحليل وقت الدخول
         check_in_time = datetime.fromisoformat(check_in['timestamp'].replace('Z', '+00:00'))
@@ -353,7 +355,11 @@ class DayResolver:
             'is_early_leave': is_early_leave,
             'early_leave_minutes': early_leave_minutes,
             'actual_hours': round(actual_hours, 2),
-            'required_hours': required_hours
+            'required_hours': required_hours,
+            'work_start_used': work_start,
+            'work_end_used': work_end,
+            'grace_in_used': grace_period_in,
+            'grace_out_used': grace_period_out
         }
     
     async def _check_permissions(self) -> Optional[dict]:
