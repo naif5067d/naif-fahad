@@ -141,6 +141,63 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 
 ---
 
+### Phase 18: Professional Dashboard & Notification Bell System ✅ (2026-02-18)
+
+**الميزات المُنفذة:**
+
+1. **بطاقة الموظف الاحترافية (Premium Employee Card):**
+   - تصميم داكن متدرج احترافي
+   - صورة الموظف مع مؤشر الحالة (نشط/غير نشط)
+   - رسالة ترحيب "مرحباً بك" مع اسم المستخدم
+   - 4 إحصائيات سريعة: رصيد الإجازة | ساعات الشهر | حالة اليوم | المعاملات المعلقة
+   - شارة سنوات الخدمة
+   - تاريخ انتهاء العقد
+   - **قسم الإجراءات والخصومات:** يظهر الخصومات والإنذارات والتأخيرات للموظف
+
+2. **نظام الجرس الشامل (Notification Bell):**
+   - جرس في Header لجميع المستخدمين
+   - شارة عدد الإشعارات غير المقروءة
+   - قائمة منسدلة بالإشعارات مع:
+     - أيقونات ملونة حسب نوع الإشعار
+     - الوقت النسبي (منذ دقيقة، منذ ساعة، الخ)
+     - زر تحديد كمقروء
+     - زر "تم رؤية الجميع"
+   - **صوت تنبيه** عند وصول إشعار جديد
+   - تحديث تلقائي كل 30 ثانية
+   - تحديث فوري عند تبديل المستخدم
+
+3. **أنواع الإشعارات المدعومة:**
+   | للموظف | للإدارة |
+   |--------|---------|
+   | معاملة مقبولة/مرفوضة | معاملة بانتظار الموافقة |
+   | تم تنفيذ الطلب | عقد ينتهي قريباً |
+   | خصم جديد | مقترح خصم يحتاج مراجعة |
+   | إنذار جديد | موظف تأخر/غاب |
+   | تسجيل تأخير | - |
+
+4. **Backend APIs الجديدة:**
+   - `GET /api/notifications/bell` - جلب جميع الإشعارات للجرس
+   - `GET /api/notifications/my` - إشعارات المستخدم الحالي
+   - `GET /api/notifications/unread-count` - عدد غير المقروءة
+   - `PATCH /api/notifications/{id}/read` - تحديد كمقروء
+   - `POST /api/notifications/mark-all-read` - تحديد الكل كمقروء
+   - `DELETE /api/notifications/{id}` - حذف إشعار
+
+**الملفات الجديدة:**
+- `/app/backend/models/notifications.py` - نموذج الإشعارات
+- `/app/backend/services/notification_service.py` - خدمة الإشعارات
+- `/app/frontend/src/components/NotificationBell.js` - مكون الجرس
+
+**الملفات المُحدثة:**
+- `/app/backend/routes/notifications.py` - إضافة APIs الجديدة
+- `/app/backend/routes/employees.py` - تحديث summary لإرجاع الخصومات
+- `/app/frontend/src/pages/DashboardPage.js` - بطاقة الموظف الجديدة
+- `/app/frontend/src/components/layout/AppLayout.js` - إضافة الجرس
+
+**Testing:** ✅ Working - All features verified via screenshots
+
+---
+
 ### Phase 17: Employee Card, Notifications & Leave Carryover ✅ (2026-02-17)
 
 **الميزات المُنفذة:**
