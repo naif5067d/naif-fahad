@@ -1,0 +1,448 @@
+"""
+Team Attendance Routes - حضور الفريق (سلطان/نايف)
+
+يعرض:
+- جميع الموظفين مع حالتهم اليومية
+- إمكانية تغيير الحالة (غائب → حاضر)
+- فلترة يومي/أسبوعي/شهري
+"""
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime, timezone, timedelta
+from database import db
+from utils.auth import get_current_user, require_roles
+
+router = APIRouter(prefix="/team-attendance", tags=["Team Attendance"])
+
+
+class StatusUpdateRequest(BaseModel):
+    new_status: str  # PRESENT, ABSENT, ON_LEAVE, etc.
+    reason: str
+    check_in_time: Optional[str] = None  # HH:MM
+    check_out_time: Optional[str] = None
+
+
+@router.get("/summary")
+async def get_team_summary(
+    date: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    ملخص سريع لحضور الفريق
+    """
+    target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # جلب جميع الموظفين النشطين
+    employees = await db.employees.find(
+        {"is_active": {"$ne": False}},
+        {"_id": 0, "id": 1}
+    ).to_list(500)
+    
+    emp_ids = [e['id'] for e in employees]
+    total = len(emp_ids)
+    
+    # جلب السجلات اليومية
+    statuses = await db.daily_status.find(
+        {"employee_id": {"$in": emp_ids}, "date": target_date},
+        {"_id": 0, "final_status": 1}
+    ).to_list(500)
+    
+    # حساب الإحصائيات
+    summary = {
+        "date": target_date,
+        "total": total,
+        "present": 0,
+        "absent": 0,
+        "late": 0,
+        "on_leave": 0,
+        "weekend": 0,
+        "holiday": 0,
+        "not_processed": 0
+    }
+    
+    processed_count = len(statuses)
+    summary["not_processed"] = total - processed_count
+    
+    for s in statuses:
+        status = s.get('final_status', '')
+        if status in ['PRESENT', 'EARLY_LEAVE']:
+            summary['present'] += 1
+        elif status == 'ABSENT':
+            summary['absent'] += 1
+        elif status == 'LATE':
+            summary['late'] += 1
+            summary['present'] += 1  # المتأخر حاضر
+        elif status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
+            summary['on_leave'] += 1
+        elif status == 'WEEKEND':
+            summary['weekend'] += 1
+        elif status == 'HOLIDAY':
+            summary['holiday'] += 1
+    
+    return summary
+
+
+@router.get("/daily")
+async def get_team_daily(
+    date: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    جدول الحضور اليومي لجميع الموظفين
+    يُظهر جميع الموظفين حتى لو لم يسجلوا بصمة
+    """
+    target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # جلب جميع الموظفين النشطين
+    employees = await db.employees.find(
+        {"is_active": {"$ne": False}},
+        {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "employee_number": 1, "department": 1, "job_title": 1, "job_title_ar": 1}
+    ).to_list(500)
+    
+    emp_map = {e['id']: e for e in employees}
+    emp_ids = list(emp_map.keys())
+    
+    # جلب السجلات اليومية المحللة
+    daily_statuses = await db.daily_status.find(
+        {"employee_id": {"$in": emp_ids}, "date": target_date},
+        {"_id": 0}
+    ).to_list(500)
+    
+    status_map = {s['employee_id']: s for s in daily_statuses}
+    
+    # جلب البصمات
+    attendance = await db.attendance_ledger.find(
+        {"employee_id": {"$in": emp_ids}, "date": target_date},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # تجميع البصمات حسب الموظف
+    attendance_map = {}
+    for a in attendance:
+        emp_id = a['employee_id']
+        if emp_id not in attendance_map:
+            attendance_map[emp_id] = {"check_in": None, "check_out": None}
+        if a['type'] == 'check_in':
+            attendance_map[emp_id]['check_in'] = a['timestamp']
+        elif a['type'] == 'check_out':
+            attendance_map[emp_id]['check_out'] = a['timestamp']
+    
+    # بناء النتيجة
+    result = []
+    for emp_id, emp in emp_map.items():
+        status_data = status_map.get(emp_id, {})
+        attend_data = attendance_map.get(emp_id, {})
+        
+        # تحديد الحالة
+        final_status = status_data.get('final_status', 'NOT_PROCESSED')
+        status_ar = status_data.get('status_ar', 'لم يُحلل')
+        
+        # إذا لم يُحلل بعد، نحدد حسب البصمة
+        if final_status == 'NOT_PROCESSED':
+            if attend_data.get('check_in'):
+                final_status = 'PRESENT'
+                status_ar = 'حاضر (غير مؤكد)'
+            else:
+                final_status = 'UNKNOWN'
+                status_ar = 'غير محدد'
+        
+        result.append({
+            "employee_id": emp_id,
+            "employee_name": emp.get('full_name', ''),
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "employee_number": emp.get('employee_number', ''),
+            "department": emp.get('department', ''),
+            "job_title": emp.get('job_title', ''),
+            "job_title_ar": emp.get('job_title_ar', ''),
+            "date": target_date,
+            "final_status": final_status,
+            "status_ar": status_ar,
+            "decision_reason_ar": status_data.get('decision_reason_ar', ''),
+            "check_in_time": attend_data.get('check_in'),
+            "check_out_time": attend_data.get('check_out'),
+            "late_minutes": status_data.get('late_minutes', 0),
+            "early_leave_minutes": status_data.get('early_leave_minutes', 0),
+            "actual_hours": status_data.get('actual_hours', 0),
+            "daily_status_id": status_data.get('id'),
+            "can_edit": final_status not in ['WEEKEND', 'HOLIDAY'],
+            "has_trace": 'trace_log' in status_data
+        })
+    
+    # ترتيب حسب الحالة (الغائبون أولاً)
+    status_order = {'ABSENT': 0, 'LATE': 1, 'UNKNOWN': 2, 'PRESENT': 3, 'ON_LEAVE': 4, 'WEEKEND': 5, 'HOLIDAY': 6}
+    result.sort(key=lambda x: (status_order.get(x['final_status'], 99), x['employee_name_ar']))
+    
+    return result
+
+
+@router.get("/weekly")
+async def get_team_weekly(
+    date: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    جدول الحضور الأسبوعي
+    """
+    target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    dt = datetime.strptime(target_date, "%Y-%m-%d")
+    
+    # حساب أيام الأسبوع (الأحد - الخميس)
+    # في السعودية: الأحد = 0 (يوم العمل الأول)
+    day_of_week = dt.weekday()  # Python: Monday=0, Sunday=6
+    # نريد الأحد كأول يوم عمل
+    # الأحد في Python = 6, نحسب الفرق
+    if day_of_week == 6:  # الأحد
+        days_from_sunday = 0
+    else:
+        days_from_sunday = day_of_week + 1
+    
+    week_start = dt - timedelta(days=days_from_sunday)
+    week_end = week_start + timedelta(days=6)
+    
+    start_str = week_start.strftime("%Y-%m-%d")
+    end_str = week_end.strftime("%Y-%m-%d")
+    
+    # جلب الموظفين
+    employees = await db.employees.find(
+        {"is_active": {"$ne": False}},
+        {"_id": 0, "id": 1, "full_name_ar": 1, "employee_number": 1}
+    ).to_list(500)
+    
+    emp_map = {e['id']: e for e in employees}
+    emp_ids = list(emp_map.keys())
+    
+    # جلب السجلات اليومية للأسبوع
+    statuses = await db.daily_status.find({
+        "employee_id": {"$in": emp_ids},
+        "date": {"$gte": start_str, "$lte": end_str}
+    }, {"_id": 0}).to_list(5000)
+    
+    # تجميع حسب الموظف
+    emp_weekly = {}
+    for emp_id, emp in emp_map.items():
+        emp_weekly[emp_id] = {
+            "employee_id": emp_id,
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "employee_number": emp.get('employee_number', ''),
+            "week_start": start_str,
+            "week_end": end_str,
+            "days": {},
+            "total_present": 0,
+            "total_absent": 0,
+            "total_late": 0,
+            "total_leave": 0,
+            "total_late_minutes": 0
+        }
+    
+    for s in statuses:
+        emp_id = s['employee_id']
+        date = s['date']
+        status = s.get('final_status', 'UNKNOWN')
+        
+        if emp_id in emp_weekly:
+            emp_weekly[emp_id]['days'][date] = {
+                "status": status,
+                "status_ar": s.get('status_ar', ''),
+                "late_minutes": s.get('late_minutes', 0)
+            }
+            
+            if status in ['PRESENT', 'EARLY_LEAVE']:
+                emp_weekly[emp_id]['total_present'] += 1
+            elif status == 'ABSENT':
+                emp_weekly[emp_id]['total_absent'] += 1
+            elif status == 'LATE':
+                emp_weekly[emp_id]['total_late'] += 1
+                emp_weekly[emp_id]['total_present'] += 1
+                emp_weekly[emp_id]['total_late_minutes'] += s.get('late_minutes', 0)
+            elif status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
+                emp_weekly[emp_id]['total_leave'] += 1
+    
+    return list(emp_weekly.values())
+
+
+@router.get("/monthly")
+async def get_team_monthly(
+    month: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    ملخص الحضور الشهري
+    """
+    if not month:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    
+    month_start = f"{month}-01"
+    dt = datetime.strptime(month_start, "%Y-%m-%d")
+    if dt.month == 12:
+        month_end = f"{dt.year + 1}-01-01"
+    else:
+        month_end = f"{dt.year}-{dt.month + 1:02d}-01"
+    
+    # جلب الموظفين
+    employees = await db.employees.find(
+        {"is_active": {"$ne": False}},
+        {"_id": 0, "id": 1, "full_name_ar": 1, "employee_number": 1, "salary": 1}
+    ).to_list(500)
+    
+    emp_map = {e['id']: e for e in employees}
+    emp_ids = list(emp_map.keys())
+    
+    # جلب السجلات الشهرية
+    statuses = await db.daily_status.find({
+        "employee_id": {"$in": emp_ids},
+        "date": {"$gte": month_start, "$lt": month_end}
+    }, {"_id": 0}).to_list(10000)
+    
+    # تجميع حسب الموظف
+    emp_monthly = {}
+    for emp_id, emp in emp_map.items():
+        salary = emp.get('salary', 0)
+        emp_monthly[emp_id] = {
+            "employee_id": emp_id,
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "employee_number": emp.get('employee_number', ''),
+            "month": month,
+            "salary": salary,
+            "daily_wage": round(salary / 30, 2) if salary else 0,
+            "total_present": 0,
+            "total_absent": 0,
+            "total_late": 0,
+            "total_leave": 0,
+            "total_late_minutes": 0,
+            "total_early_leave_minutes": 0,
+            "estimated_deduction": 0
+        }
+    
+    for s in statuses:
+        emp_id = s['employee_id']
+        status = s.get('final_status', 'UNKNOWN')
+        
+        if emp_id in emp_monthly:
+            if status in ['PRESENT', 'EARLY_LEAVE']:
+                emp_monthly[emp_id]['total_present'] += 1
+                emp_monthly[emp_id]['total_early_leave_minutes'] += s.get('early_leave_minutes', 0)
+            elif status == 'ABSENT':
+                emp_monthly[emp_id]['total_absent'] += 1
+                # حساب الخصم المتوقع
+                emp_monthly[emp_id]['estimated_deduction'] += emp_monthly[emp_id]['daily_wage']
+            elif status == 'LATE':
+                emp_monthly[emp_id]['total_late'] += 1
+                emp_monthly[emp_id]['total_present'] += 1
+                emp_monthly[emp_id]['total_late_minutes'] += s.get('late_minutes', 0)
+            elif status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
+                emp_monthly[emp_id]['total_leave'] += 1
+    
+    # ترتيب حسب الغياب
+    result = sorted(emp_monthly.values(), key=lambda x: (-x['total_absent'], -x['total_late']))
+    return result
+
+
+@router.post("/{employee_id}/update-status")
+async def update_employee_status(
+    employee_id: str,
+    date: str,
+    body: StatusUpdateRequest,
+    user=Depends(require_roles('sultan', 'naif'))
+):
+    """
+    تعديل حالة الموظف (سلطان/نايف فقط)
+    
+    مثال: تحويل موظف من غائب إلى حاضر مع تسجيل السبب
+    """
+    # التحقق من الموظف
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # جلب السجل اليومي
+    daily = await db.daily_status.find_one({
+        "employee_id": employee_id,
+        "date": date
+    }, {"_id": 0})
+    
+    if not daily:
+        # إنشاء سجل جديد
+        from services.day_resolver_v2 import resolve_and_save_v2
+        daily = await resolve_and_save_v2(employee_id, date)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديث الحالة
+    status_ar_map = {
+        'PRESENT': 'حاضر',
+        'ABSENT': 'غائب',
+        'LATE': 'متأخر',
+        'ON_LEAVE': 'إجازة',
+        'EXCUSED': 'معذور',
+        'ON_MISSION': 'مهمة خارجية'
+    }
+    
+    correction = {
+        "from_status": daily.get('final_status'),
+        "to_status": body.new_status,
+        "reason": body.reason,
+        "corrected_by": user['user_id'],
+        "corrected_by_name": user.get('full_name', user['user_id']),
+        "corrected_at": now,
+        "check_in_time": body.check_in_time,
+        "check_out_time": body.check_out_time
+    }
+    
+    await db.daily_status.update_one(
+        {"employee_id": employee_id, "date": date},
+        {
+            "$set": {
+                "final_status": body.new_status,
+                "status_ar": status_ar_map.get(body.new_status, body.new_status),
+                "decision_reason_ar": f"تم التعديل بواسطة {user.get('full_name', user['user_id'])}: {body.reason}",
+                "decision_source": "manual_correction",
+                "check_in_time": body.check_in_time or daily.get('check_in_time'),
+                "check_out_time": body.check_out_time or daily.get('check_out_time'),
+                "updated_at": now,
+                "updated_by": user['user_id']
+            },
+            "$push": {
+                "corrections": correction
+            }
+        },
+        upsert=True
+    )
+    
+    # إرسال إشعار للموظف
+    from services.notification_service import create_notification
+    await create_notification(
+        recipient_id=employee_id,
+        recipient_role="employee",
+        title="تحديث حالة الحضور",
+        message=f"تم تعديل حالتك ليوم {date} إلى: {status_ar_map.get(body.new_status, body.new_status)}",
+        link="/attendance"
+    )
+    
+    return {
+        "success": True,
+        "message": f"تم تعديل حالة {emp.get('full_name_ar', '')} إلى {status_ar_map.get(body.new_status, body.new_status)}",
+        "correction": correction
+    }
+
+
+@router.get("/{employee_id}/trace/{date}")
+async def get_employee_trace(
+    employee_id: str,
+    date: str,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    عرض العروق (Trace Evidence) لقرار الحضور
+    """
+    daily = await db.daily_status.find_one({
+        "employee_id": employee_id,
+        "date": date
+    }, {"_id": 0})
+    
+    if not daily:
+        # محاولة التحليل الآن
+        from services.day_resolver_v2 import resolve_day_v2
+        daily = await resolve_day_v2(employee_id, date)
+    
+    return daily
