@@ -321,14 +321,29 @@ export default function TeamAttendancePage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Users className="text-primary" />
-            {lang === 'ar' ? 'حضور الفريق' : 'Team Attendance'}
+            {lang === 'ar' ? 'الحضور والعقوبات' : 'Attendance & Penalties'}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {lang === 'ar' ? 'متابعة حضور الموظفين وتعديل الحالات' : 'Track employee attendance and modify status'}
+            {lang === 'ar' ? 'متابعة حضور الموظفين والعقوبات والخصومات' : 'Track attendance, penalties and deductions'}
           </p>
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Manual Process Button */}
+          <Button 
+            variant="outline" 
+            onClick={handleManualProcess}
+            disabled={processingAttendance}
+            className="gap-2"
+          >
+            {processingAttendance ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <PlayCircle size={16} />
+            )}
+            {lang === 'ar' ? 'تحضير' : 'Process'}
+          </Button>
+          
           {/* Employee Selector */}
           <Select value={selectedEmployee || 'all'} onValueChange={handleEmployeeSelect}>
             <SelectTrigger className="w-[200px]" data-testid="employee-selector">
@@ -341,7 +356,7 @@ export default function TeamAttendancePage() {
                   {lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}
                 </span>
               </SelectItem>
-              {employees.map(emp => (
+              {filteredEmployees.map(emp => (
                 <SelectItem key={emp.id} value={emp.id}>
                   <span className="flex items-center gap-2">
                     <User size={16} />
