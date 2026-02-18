@@ -364,6 +364,14 @@ export default function EmployeesPage() {
               <Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Full Name (AR)'}</Label>
               <Input data-testid="edit-name-ar" value={editForm.full_name_ar || ''} onChange={e => setEditForm(f => ({ ...f, full_name_ar: e.target.value }))} dir="rtl" />
             </div>
+            <div>
+              <Label>{lang === 'ar' ? 'المسمى الوظيفي (إنجليزي)' : 'Job Title (EN)'}</Label>
+              <Input data-testid="edit-job-title-en" value={editForm.job_title || ''} onChange={e => setEditForm(f => ({ ...f, job_title: e.target.value }))} />
+            </div>
+            <div>
+              <Label>{lang === 'ar' ? 'المسمى الوظيفي (عربي)' : 'Job Title (AR)'}</Label>
+              <Input data-testid="edit-job-title-ar" value={editForm.job_title_ar || ''} onChange={e => setEditForm(f => ({ ...f, job_title_ar: e.target.value }))} dir="rtl" />
+            </div>
             <div className="flex items-center justify-between">
               <Label>{lang === 'ar' ? 'نشط' : 'Active'}</Label>
               <Switch data-testid="edit-active-toggle" checked={editForm.is_active} onCheckedChange={v => setEditForm(f => ({ ...f, is_active: v }))} />
