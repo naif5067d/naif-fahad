@@ -502,13 +502,13 @@ export default function TransactionDetailPage() {
         </div>
       )}
 
-      {/* Timeline */}
+      {/* Timeline - Horizontal for better mobile/tablet experience */}
       {tx.timeline?.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-6">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h2 className="text-lg font-semibold mb-4">
             {lang === 'ar' ? 'الجدول الزمني' : 'Timeline'}
           </h2>
-          <Timeline events={tx.timeline} />
+          <Timeline events={tx.timeline} horizontal={true} />
         </div>
       )}
 
