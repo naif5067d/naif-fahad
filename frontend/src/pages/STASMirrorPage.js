@@ -304,12 +304,294 @@ export default function STASMirrorPage() {
         <h1 className="text-2xl font-bold tracking-tight">{t('stas.mirror')}</h1>
       </div>
 
-      <Tabs defaultValue="mirror" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="deductions" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="deductions" data-testid="tab-deductions" className="flex items-center gap-2">
+            <DollarSign size={16} />
+            {lang === 'ar' ? 'الخصومات' : 'Deductions'}
+            {(pendingDeductions.length + approvedDeductions.length) > 0 && (
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {pendingDeductions.length + approvedDeductions.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="mirror" data-testid="tab-mirror">{t('stas.mirror')}</TabsTrigger>
           <TabsTrigger value="holidays" data-testid="tab-holidays">{t('stas.holidayManagement')}</TabsTrigger>
           <TabsTrigger value="maintenance" data-testid="tab-maintenance">{t('stas.maintenance')}</TabsTrigger>
         </TabsList>
+
+        {/* === Deductions Tab === */}
+        <TabsContent value="deductions" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Pending & Approved Lists */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Pending Deductions - للمراجعة */}
+              <div>
+                <h2 className="text-sm font-semibold text-orange-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Clock size={16} />
+                  {lang === 'ar' ? 'بانتظار المراجعة' : 'Pending Review'}
+                  <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs">{pendingDeductions.length}</span>
+                </h2>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {pendingDeductions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">{lang === 'ar' ? 'لا يوجد مقترحات معلقة' : 'No pending proposals'}</p>
+                  ) : pendingDeductions.map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => loadDeductionTrace(d)}
+                      className={`w-full text-right p-3 rounded-lg border transition-all ${
+                        selectedDeduction?.id === d.id 
+                          ? 'border-orange-500 bg-orange-50' 
+                          : 'border-border hover:border-orange-300 hover:bg-orange-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-orange-600 font-medium">{d.deduction_type_ar}</span>
+                        <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
+                      </div>
+                      <p className="text-sm font-medium mt-1">{d.employee_name_ar || d.employee_id}</p>
+                      <p className="text-xs text-muted-foreground">{d.period_start}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Approved Deductions - للتنفيذ */}
+              <div>
+                <h2 className="text-sm font-semibold text-green-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <CheckCircle size={16} />
+                  {lang === 'ar' ? 'موافق عليها - للتنفيذ' : 'Approved - Ready to Execute'}
+                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">{approvedDeductions.length}</span>
+                </h2>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {approvedDeductions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">{lang === 'ar' ? 'لا يوجد مقترحات موافق عليها' : 'No approved proposals'}</p>
+                  ) : approvedDeductions.map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => loadDeductionTrace(d)}
+                      className={`w-full text-right p-3 rounded-lg border transition-all ${
+                        selectedDeduction?.id === d.id 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-border hover:border-green-300 hover:bg-green-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-green-600 font-medium">{d.deduction_type_ar}</span>
+                        <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
+                      </div>
+                      <p className="text-sm font-medium mt-1">{d.employee_name_ar || d.employee_id}</p>
+                      <p className="text-xs text-muted-foreground">{d.period_start}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Deduction Details & Trace */}
+            <div className="lg:col-span-2">
+              {selectedDeduction ? (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <DollarSign className="text-red-500" size={20} />
+                        {lang === 'ar' ? 'تفاصيل مقترح الخصم' : 'Deduction Proposal Details'}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        selectedDeduction.status === 'pending' 
+                          ? 'bg-orange-100 text-orange-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {selectedDeduction.status === 'pending' 
+                          ? (lang === 'ar' ? 'بانتظار المراجعة' : 'Pending')
+                          : (lang === 'ar' ? 'موافق عليه' : 'Approved')}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Basic Info */}
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الموظف' : 'Employee'}</p>
+                        <p className="font-medium">{selectedDeduction.employee_name_ar || selectedDeduction.employee_id}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'نوع الخصم' : 'Type'}</p>
+                        <p className="font-medium">{selectedDeduction.deduction_type_ar}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'المبلغ' : 'Amount'}</p>
+                        <p className="font-bold text-red-600 text-lg">{selectedDeduction.amount?.toFixed(2)} ر.س</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'التاريخ' : 'Date'}</p>
+                        <p className="font-medium">{selectedDeduction.period_start}</p>
+                      </div>
+                    </div>
+
+                    {/* Reason & Explanation */}
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-sm font-semibold text-red-700 mb-2">{lang === 'ar' ? 'سبب الخصم' : 'Reason'}</p>
+                      <p className="text-sm">{selectedDeduction.reason_ar || selectedDeduction.reason}</p>
+                      
+                      {selectedDeduction.explanation && (
+                        <div className="mt-3 pt-3 border-t border-red-200">
+                          <p className="text-xs font-semibold text-red-600 mb-2">{lang === 'ar' ? 'التفسير' : 'Explanation'}</p>
+                          <div className="text-xs space-y-1">
+                            {Object.entries(selectedDeduction.explanation).map(([key, value]) => (
+                              <div key={key} className="flex justify-between">
+                                <span className="text-muted-foreground">{key}:</span>
+                                <span className="font-medium">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Trace Log - العروق */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
+                        className="w-full p-3 bg-violet-50 flex items-center justify-between hover:bg-violet-100 transition-colors"
+                      >
+                        <span className="font-semibold text-violet-700 flex items-center gap-2">
+                          <Eye size={16} />
+                          {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log - Verification Steps'}
+                        </span>
+                        {expandedDeduction === selectedDeduction.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      
+                      {expandedDeduction === selectedDeduction.id && (
+                        <div className="p-4 space-y-2">
+                          {loadingTrace ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="animate-spin" size={20} />
+                            </div>
+                          ) : deductionTrace?.trace_log ? (
+                            deductionTrace.trace_log.map((step, idx) => (
+                              <div 
+                                key={idx}
+                                className={`p-3 rounded-lg border ${
+                                  step.found 
+                                    ? 'bg-green-50 border-green-200' 
+                                    : step.checked 
+                                      ? 'bg-slate-50 border-slate-200'
+                                      : 'bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-sm flex items-center gap-2">
+                                    {step.found ? (
+                                      <CheckCircle className="text-green-500" size={14} />
+                                    ) : step.checked ? (
+                                      <XCircle className="text-slate-400" size={14} />
+                                    ) : (
+                                      <Clock className="text-gray-400" size={14} />
+                                    )}
+                                    {step.step_ar || step.step}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                    step.found 
+                                      ? 'bg-green-100 text-green-700' 
+                                      : step.checked 
+                                        ? 'bg-slate-100 text-slate-600'
+                                        : 'bg-gray-100 text-gray-500'
+                                  }`}>
+                                    {step.found 
+                                      ? (lang === 'ar' ? 'وُجد' : 'Found')
+                                      : step.checked 
+                                        ? (lang === 'ar' ? 'لم يُوجد' : 'Not found')
+                                        : (lang === 'ar' ? 'لم يُفحص' : 'Not checked')}
+                                  </span>
+                                </div>
+                                {step.details && (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    {typeof step.details === 'object' 
+                                      ? Object.entries(step.details).slice(0, 3).map(([k, v]) => (
+                                          <span key={k} className="mr-3">{k}: {String(v)}</span>
+                                        ))
+                                      : step.details}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              {lang === 'ar' ? 'لا يوجد سجل فحوصات' : 'No trace log available'}
+                            </p>
+                          )}
+                          
+                          {/* Trace Summary */}
+                          {deductionTrace?.trace_summary && (
+                            <div className="mt-4 p-3 bg-violet-100 rounded-lg">
+                              <p className="font-semibold text-violet-700 text-sm mb-1">
+                                {lang === 'ar' ? 'الخلاصة' : 'Conclusion'}
+                              </p>
+                              <p className="text-sm">{deductionTrace.trace_summary.conclusion_ar || deductionTrace.trace_summary.conclusion}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-4 border-t space-y-3">
+                      <div>
+                        <Label>{lang === 'ar' ? 'ملاحظة (اختياري)' : 'Note (optional)'}</Label>
+                        <Input
+                          value={reviewNote}
+                          onChange={(e) => setReviewNote(e.target.value)}
+                          placeholder={lang === 'ar' ? 'أضف ملاحظة...' : 'Add a note...'}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      {selectedDeduction.status === 'pending' ? (
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={() => handleReviewDeduction(selectedDeduction.id, true)}
+                            disabled={reviewingDeduction}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                          >
+                            {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <CheckCircle size={16} className="mr-2" />}
+                            {lang === 'ar' ? 'موافقة' : 'Approve'}
+                          </Button>
+                          <Button
+                            onClick={() => handleReviewDeduction(selectedDeduction.id, false)}
+                            disabled={reviewingDeduction}
+                            variant="destructive"
+                            className="flex-1"
+                          >
+                            {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <XCircle size={16} className="mr-2" />}
+                            {lang === 'ar' ? 'رفض' : 'Reject'}
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => handleExecuteDeduction(selectedDeduction.id)}
+                          disabled={executingDeduction}
+                          className="w-full bg-violet-600 hover:bg-violet-700"
+                        >
+                          {executingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <Shield size={16} className="mr-2" />}
+                          {lang === 'ar' ? 'تنفيذ الخصم' : 'Execute Deduction'}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                  <div className="text-center text-muted-foreground">
+                    <DollarSign size={48} className="mx-auto mb-3 opacity-30" />
+                    <p>{lang === 'ar' ? 'اختر مقترح خصم للمراجعة' : 'Select a deduction proposal to review'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
 
         {/* Mirror Tab */}
         <TabsContent value="mirror" className="mt-4">
