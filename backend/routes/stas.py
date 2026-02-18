@@ -479,6 +479,121 @@ async def get_pending_executions(user=Depends(require_roles('stas'))):
     return txs
 
 
+# ==================== DEDUCTION PROPOSAL MIRROR ====================
+
+@router.get("/deduction-mirror/{proposal_id}")
+async def get_deduction_mirror(proposal_id: str, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """
+    مرآة مقترح الخصم مع العروق (Trace Evidence)
+    
+    يعرض:
+    - تفاصيل مقترح الخصم
+    - العروق (Trace Log) من السجل اليومي
+    - معادلة الحساب
+    - السياسة المستخدمة
+    """
+    proposal = await db.deduction_proposals.find_one({"id": proposal_id}, {"_id": 0})
+    
+    if not proposal:
+        raise HTTPException(status_code=404, detail="مقترح الخصم غير موجود")
+    
+    # جلب بيانات الموظف
+    emp = await db.employees.find_one(
+        {"id": proposal['employee_id']},
+        {"_id": 0, "full_name": 1, "full_name_ar": 1, "salary": 1}
+    )
+    
+    # جلب السجل اليومي مع العروق
+    daily_status = await db.daily_status.find_one({
+        "employee_id": proposal['employee_id'],
+        "date": proposal['date']
+    }, {"_id": 0})
+    
+    # بناء العروق للعرض
+    trace_evidence = {
+        "daily_status_id": daily_status.get('id') if daily_status else None,
+        "final_status": daily_status.get('final_status') if daily_status else "N/A",
+        "final_status_ar": daily_status.get('status_ar') if daily_status else "غير متوفر",
+        "decision_reason_ar": daily_status.get('decision_reason_ar') if daily_status else "غير متوفر",
+        "decision_source": daily_status.get('decision_source') if daily_status else "N/A",
+        "trace_log": daily_status.get('trace_log', []) if daily_status else [],
+        "trace_summary": daily_status.get('trace_summary', {}) if daily_status else {}
+    }
+    
+    # حساب معادلة الخصم
+    salary = emp.get('salary', 0) if emp else 0
+    daily_wage = salary / 30
+    hourly_wage = daily_wage / 8
+    
+    calculation = {
+        "monthly_salary": salary,
+        "daily_wage": round(daily_wage, 2),
+        "hourly_wage": round(hourly_wage, 2),
+        "deduction_type": proposal.get('deduction_type', 'absence'),
+        "deduction_amount": proposal.get('amount', 0),
+        "formula_ar": ""
+    }
+    
+    if proposal.get('deduction_type') == 'absence':
+        calculation['formula_ar'] = f"الراتب الشهري ({salary}) ÷ 30 = {round(daily_wage, 2)} ريال (يوم كامل)"
+    elif proposal.get('deduction_type') == 'late':
+        minutes = proposal.get('minutes', 0)
+        calculation['formula_ar'] = f"الراتب الشهري ({salary}) ÷ 30 ÷ 8 × ({minutes}/60) = {round(hourly_wage * minutes / 60, 2)} ريال"
+    elif proposal.get('deduction_type') == 'hours_deficit':
+        hours = proposal.get('hours', 0)
+        calculation['formula_ar'] = f"الراتب الشهري ({salary}) ÷ 30 ÷ 8 × {hours} = {round(hourly_wage * hours, 2)} ريال"
+    
+    # السياسة المستخدمة
+    policy_reference = {
+        "name_ar": "نظام العمل السعودي",
+        "article_ar": "المادة 80 - الغياب والانقطاع",
+        "rule_ar": "الأجر اليومي = الراتب الشهري ÷ 30",
+        "max_deduction_ar": "لا يجوز أن تزيد الخصومات عن 50% من الأجر الشهري"
+    }
+    
+    # الفحوصات
+    pre_checks = []
+    
+    # فحص 1: هل المقترح مبرر؟
+    pre_checks.append({
+        "name": "justified",
+        "name_ar": "المبرر",
+        "status": "PASS" if trace_evidence['decision_source'] else "FAIL",
+        "detail": trace_evidence.get('trace_summary', {}).get('conclusion_ar', 'غير متوفر')
+    })
+    
+    # فحص 2: هل تجاوز 50%؟
+    max_allowed = salary * 0.5
+    exceeds_50 = proposal.get('amount', 0) > max_allowed
+    pre_checks.append({
+        "name": "max_50_percent",
+        "name_ar": "حد الـ 50%",
+        "status": "FAIL" if exceeds_50 else "PASS",
+        "detail": f"المبلغ: {proposal.get('amount', 0)} | الحد الأقصى: {round(max_allowed, 2)}"
+    })
+    
+    # فحص 3: هل تم فحص جميع الخطوات؟
+    steps_checked = trace_evidence.get('trace_summary', {}).get('steps_checked', 0)
+    pre_checks.append({
+        "name": "all_steps_checked",
+        "name_ar": "اكتمال الفحص",
+        "status": "PASS" if steps_checked == 8 else "WARN",
+        "detail": f"تم فحص {steps_checked} من 8 خطوات"
+    })
+    
+    return {
+        "proposal": proposal,
+        "employee": emp,
+        "trace_evidence": trace_evidence,
+        "calculation": calculation,
+        "policy_reference": policy_reference,
+        "pre_checks": pre_checks,
+        "can_execute": all(c['status'] != 'FAIL' for c in pre_checks)
+    }
+
+
+
+
 
 # ==================== HOLIDAY MANAGEMENT ====================
 
