@@ -167,7 +167,7 @@ export const translations = {
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
-      myFinances: "ماليّاتي", teamAttendance: "حضور الفريق"
+      myFinances: "ماليّاتي", teamAttendance: "حضور الفريق", penalties: "العقوبات"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
