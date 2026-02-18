@@ -557,7 +557,7 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         
         expiring = await db.contracts_v2.find({
             "status": "active",
-            "end_date": {"$ne": None, "$ne": "", "$lte": cutoff_str, "$gte": today_str}
+            "end_date": {"$nin": [None, ""], "$lte": cutoff_str, "$gte": today_str}
         }, {"_id": 0}).to_list(5)
         
         for contract in expiring:
