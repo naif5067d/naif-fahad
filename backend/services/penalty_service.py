@@ -330,8 +330,12 @@ async def calculate_yearly_absence(employee_id: str, year: int) -> Dict:
 async def create_monthly_penalty_report(year: int, month: int) -> List[Dict]:
     """
     إنشاء تقرير العقوبات الشهري لجميع الموظفين
+    يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
     """
-    employees = await db.employees.find({"is_active": {"$ne": False}}, {"_id": 0, "id": 1}).to_list(1000)
+    employees = await db.employees.find({
+        "is_active": {"$ne": False},
+        "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+    }, {"_id": 0, "id": 1}).to_list(1000)
     
     reports = []
     for emp in employees:
