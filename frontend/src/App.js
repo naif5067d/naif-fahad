@@ -21,6 +21,7 @@ import CompanySettingsPage from "@/pages/CompanySettingsPage";
 import SystemMaintenancePage from "@/pages/SystemMaintenancePage";
 import ContractsManagementPage from "@/pages/ContractsManagementPage";
 import SettlementPage from "@/pages/SettlementPage";
+import MyFinancesPage from "@/pages/MyFinancesPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
