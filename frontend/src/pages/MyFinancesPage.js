@@ -29,7 +29,7 @@ import api from '@/lib/api';
 
 export default function MyFinancesPage() {
   const { lang } = useLanguage();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [summary, setSummary] = useState(null);
   const [deductions, setDeductions] = useState([]);
   const [warnings, setWarnings] = useState([]);
