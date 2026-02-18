@@ -24,7 +24,7 @@ const ICONS = {
   dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
   attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
-  custody: Package, financialCustody: Wallet, systemMaintenance: Wrench,
+  custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt,
 };
 
 const PATHS = {
@@ -32,7 +32,7 @@ const PATHS = {
   attendance: '/attendance', contracts: '/contracts',
   contractsManagement: '/contracts-management', settlement: '/settlement', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
-  systemMaintenance: '/system-maintenance',
+  systemMaintenance: '/system-maintenance', myFinances: '/my-finances',
 };
 
 const ROLE_COLORS = {
