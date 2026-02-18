@@ -163,7 +163,6 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
         "created_at": now.isoformat(),
         "source": "self_checkout"
     }
-    }
     
     await db.attendance_ledger.insert_one(entry)
     entry.pop('_id', None)
