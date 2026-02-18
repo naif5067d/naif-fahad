@@ -357,6 +357,21 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         })
     
     # بيانات الموظف الشاملة (للجميع)
+    # حساب ساعات النقص من daily_status
+    current_month = datetime.now(timezone.utc).strftime("%Y-%m")
+    month_statuses = await db.daily_status.find({
+        "employee_id": employee_id,
+        "date": {"$regex": f"^{current_month}"}
+    }, {"_id": 0}).to_list(100)
+    
+    total_late_minutes_month = sum(s.get("late_minutes", 0) for s in month_statuses)
+    total_early_leave_minutes = sum(s.get("early_leave_minutes", 0) for s in month_statuses)
+    total_deficit_minutes = total_late_minutes_month + total_early_leave_minutes
+    deficit_hours = round(total_deficit_minutes / 60, 2)
+    
+    # الساعات المطلوبة شهرياً (افتراضي 176 ساعة = 22 يوم × 8 ساعات)
+    required_monthly_hours = 176
+    
     employee_summary = {
         "employee": emp,
         "contract": contract,
@@ -364,7 +379,13 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "attendance": {
             "today_status": "present" if today_attendance else "not_checked_in",
             "today_status_ar": "حاضر" if today_attendance else "لم يسجل الحضور",
-            "monthly_hours": monthly_hours
+            "monthly_hours": monthly_hours,
+            "required_monthly_hours": required_monthly_hours,
+            "remaining_hours": max(0, required_monthly_hours - monthly_hours),
+            "deficit_hours": deficit_hours,
+            "deficit_minutes": total_deficit_minutes,
+            "late_minutes_month": total_late_minutes_month,
+            "early_leave_minutes": total_early_leave_minutes
         },
         "annual_leave": {
             "balance": round(pro_rata.get('available_balance', 0), 2),
