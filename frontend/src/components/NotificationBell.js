@@ -225,17 +225,30 @@ export default function NotificationBell() {
               )}
             </div>
             
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                disabled={loading}
-                className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
-                data-testid="mark-all-read-btn"
-              >
-                <CheckCheck size={14} />
-                {lang === 'ar' ? 'تم رؤية الجميع' : 'Mark all read'}
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  disabled={loading}
+                  className="flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-50"
+                  data-testid="mark-all-read-btn"
+                >
+                  <CheckCheck size={14} />
+                  {lang === 'ar' ? 'رؤية الكل' : 'Read all'}
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={loading}
+                  className="flex items-center gap-1 text-xs text-red-500 hover:underline disabled:opacity-50"
+                  data-testid="delete-all-btn"
+                >
+                  <X size={14} />
+                  {lang === 'ar' ? 'حذف الكل' : 'Delete all'}
+                </button>
+              )}
+            </div>
           </div>
           
           {/* قائمة الإشعارات */}
