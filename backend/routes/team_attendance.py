@@ -6,7 +6,7 @@ Team Attendance Routes - حضور الفريق (سلطان/نايف)
 - إمكانية تغيير الحالة (غائب → حاضر)
 - فلترة يومي/أسبوعي/شهري
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
