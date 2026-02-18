@@ -256,12 +256,20 @@ async def validate_employee_for_attendance(user_id: str) -> dict:
             }
         }
     
-    # Check for active contract
+    # Check for active contract - search by both employee_id and status
     contract = await db.contracts.find_one({
         "employee_id": emp['id'],
-        "is_active": True,
+        "status": "active",
         "is_snapshot": {"$ne": True}
     }, {"_id": 0})
+    
+    # If not found, try with is_active for backwards compatibility
+    if not contract:
+        contract = await db.contracts.find_one({
+            "employee_id": emp['id'],
+            "is_active": True,
+            "is_snapshot": {"$ne": True}
+        }, {"_id": 0})
     
     if not contract:
         return {
