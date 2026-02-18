@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt, AlertTriangle, UsersRound } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
