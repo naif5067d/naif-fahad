@@ -394,3 +394,137 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         })
     
     return employee_summary
+
+
+
+# ==================== EMPLOYEE PHOTO MANAGEMENT ====================
+
+UPLOAD_DIR = "uploads/photos"
+ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+@router.post("/{employee_id}/photo")
+async def upload_employee_photo(
+    employee_id: str,
+    photo: UploadFile = File(...),
+    user=Depends(require_roles('stas'))
+):
+    """
+    رفع صورة الموظف - STAS فقط
+    """
+    # التحقق من وجود الموظف
+    emp = await db.employees.find_one({"id": employee_id})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من نوع الملف
+    if not photo.filename:
+        raise HTTPException(status_code=400, detail="اسم الملف غير موجود")
+    
+    file_ext = os.path.splitext(photo.filename)[1].lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"نوع الملف غير مدعوم. الأنواع المدعومة: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    
+    # قراءة المحتوى والتحقق من الحجم
+    content = await photo.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="حجم الصورة يجب أن يكون أقل من 5 ميجابايت")
+    
+    # إنشاء مجلد الرفع
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    
+    # حذف الصورة القديمة إن وجدت
+    old_photo = emp.get('photo_filename')
+    if old_photo:
+        old_path = os.path.join(UPLOAD_DIR, old_photo)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except:
+                pass
+    
+    # إنشاء اسم ملف فريد
+    filename = f"{employee_id}_{uuid.uuid4().hex[:8]}{file_ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    
+    # حفظ الملف
+    with open(filepath, 'wb') as f:
+        f.write(content)
+    
+    # تحديث بيانات الموظف مع URL الصورة
+    photo_url = f"/api/employees/{employee_id}/photo-file"
+    
+    await db.employees.update_one(
+        {"id": employee_id},
+        {"$set": {
+            "photo_filename": filename,
+            "photo_url": photo_url,
+            "photo_updated_at": datetime.now(timezone.utc).isoformat(),
+            "photo_updated_by": user['user_id']
+        }}
+    )
+    
+    return {
+        "message": "تم رفع الصورة بنجاح",
+        "photo_url": photo_url
+    }
+
+
+@router.get("/{employee_id}/photo-file")
+async def get_employee_photo_file(employee_id: str):
+    """
+    الحصول على ملف صورة الموظف
+    """
+    from fastapi.responses import FileResponse
+    
+    emp = await db.employees.find_one({"id": employee_id}, {"photo_filename": 1})
+    if not emp or not emp.get('photo_filename'):
+        raise HTTPException(status_code=404, detail="الصورة غير موجودة")
+    
+    filepath = os.path.join(UPLOAD_DIR, emp['photo_filename'])
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="ملف الصورة غير موجود")
+    
+    return FileResponse(filepath)
+
+
+@router.delete("/{employee_id}/photo")
+async def delete_employee_photo(
+    employee_id: str,
+    user=Depends(require_roles('stas'))
+):
+    """
+    حذف صورة الموظف - STAS فقط
+    """
+    emp = await db.employees.find_one({"id": employee_id})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # حذف الملف
+    old_photo = emp.get('photo_filename')
+    if old_photo:
+        old_path = os.path.join(UPLOAD_DIR, old_photo)
+        if os.path.exists(old_path):
+            try:
+                os.remove(old_path)
+            except:
+                pass
+    
+    # تحديث بيانات الموظف
+    await db.employees.update_one(
+        {"id": employee_id},
+        {"$unset": {
+            "photo_filename": "",
+            "photo_url": ""
+        },
+        "$set": {
+            "photo_deleted_at": datetime.now(timezone.utc).isoformat(),
+            "photo_deleted_by": user['user_id']
+        }}
+    )
+    
+    return {"message": "تم حذف الصورة بنجاح"}
