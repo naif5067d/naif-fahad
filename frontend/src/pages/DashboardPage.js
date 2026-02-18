@@ -219,8 +219,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Employee Personal Card - Shown to employees only */}
-      {isEmployee && employeeSummary && (
+      {/* Employee Personal Card - Shown to anyone with employee_id */}
+      {hasEmployeeCard && employeeSummary && (
         <div className="card-premium rounded-2xl overflow-hidden" data-testid="employee-personal-card">
           <div className="p-5 space-y-4">
             {/* Employee Header */}
