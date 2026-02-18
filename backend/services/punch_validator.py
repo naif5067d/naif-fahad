@@ -26,8 +26,9 @@ MAX_LATE_MINUTES_AFTER_GRACE = 120  # ساعتين كحد أقصى بعد وقت
 # نصف قطر دائرة التبصيم بالكيلومتر
 DEFAULT_GEOFENCE_RADIUS_KM = 0.5  # 500 متر
 
-# الحد الأقصى للتبصيم المبكر قبل بداية الدوام (دقائق)
-MAX_EARLY_CHECKIN_MINUTES = 30  # نصف ساعة قبل الدوام فقط
+# الحد الأقصى للتبصيم المبكر قبل بداية الدوام (دقائق) - افتراضي 0 = لا تبصيم قبل الدوام
+DEFAULT_EARLY_CHECKIN_MINUTES = 0  # لا يُسمح بالتبصيم المبكر افتراضياً
+MAX_ALLOWED_EARLY_CHECKIN_MINUTES = 120  # الحد الأقصى ساعتين للمخولين
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
