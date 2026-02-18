@@ -405,13 +405,14 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
-      {/* Transaction Details */}
-      <div className="bg-card rounded-2xl border border-border p-6">
+      {/* Transaction Details - تصميم أفقي محسن */}
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
         <h2 className="text-lg font-semibold mb-4">
           {lang === 'ar' ? 'تفاصيل المعاملة' : 'Transaction Details'}
         </h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Horizontal scrollable cards for mobile */}
+        <div className="flex flex-wrap gap-3">
           {Object.entries(tx.data || {})
             .filter(([key, value]) => {
               // Skip Arabic name if showing English
@@ -429,9 +430,9 @@ export default function TransactionDetailPage() {
               return true;
             })
             .map(([key, value]) => (
-              <div key={key} className="bg-muted/30 rounded-xl p-4">
-                <p className="text-xs text-muted-foreground mb-1">{getDataKeyLabel(key)}</p>
-                <p className="font-medium">{getDataValueLabel(key, value)}</p>
+              <div key={key} className="flex-1 min-w-[140px] max-w-[200px] bg-muted/30 rounded-xl p-3 border border-border/50">
+                <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">{getDataKeyLabel(key)}</p>
+                <p className="font-semibold text-sm">{getDataValueLabel(key, value)}</p>
               </div>
             ))
           }
@@ -440,7 +441,7 @@ export default function TransactionDetailPage() {
         {/* Medical File Attachment - ملف التقرير الطبي */}
         {tx.data?.medical_file_url && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg">
                   <FileText className="w-5 h-5 text-red-600" />
