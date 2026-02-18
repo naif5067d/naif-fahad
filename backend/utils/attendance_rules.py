@@ -271,6 +271,14 @@ async def validate_employee_for_attendance(user_id: str) -> dict:
             "is_snapshot": {"$ne": True}
         }, {"_id": 0})
     
+    # If still not found, try contracts_v2 (new system)
+    if not contract:
+        contract = await db.contracts_v2.find_one({
+            "employee_id": emp['id'],
+            "status": "active",
+            "is_active": True
+        }, {"_id": 0})
+    
     if not contract:
         return {
             "valid": False,
