@@ -62,6 +62,76 @@ class ResolveBulkRequest(BaseModel):
     employee_ids: Optional[List[str]] = None  # إذا فارغ = جميع الموظفين
 
 
+class ProcessDailyRequest(BaseModel):
+    date: str  # YYYY-MM-DD
+
+
+# الموظفون المستثنون من الحضور (ليسوا موظفين)
+EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-CEO', 'EMP-004', 'EMP-OPS2']  # stas, mohammed, salah, naif
+
+
+@router.post("/process-daily")
+async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """
+    التحضير اليدوي - تحليل الحضور لجميع الموظفين ليوم محدد
+    
+    لا يتعارض مع البصمة الذاتية:
+    - إذا الموظف سجل بصمة ذاتية، لا يُغيّر
+    - إذا لم يسجل، يُحلل حالته
+    
+    يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
+    """
+    # جلب الموظفين النشطين (باستثناء المستثنين)
+    employees = await db.employees.find(
+        {
+            "is_active": {"$ne": False},
+            "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+        }, 
+        {"_id": 0, "id": 1}
+    ).to_list(500)
+    
+    processed = 0
+    skipped = 0
+    results = []
+    
+    for emp in employees:
+        # فحص إذا كان هناك سجل يومي موجود مسبقاً (من بصمة ذاتية)
+        existing = await db.daily_status.find_one({
+            "employee_id": emp['id'],
+            "date": req.date,
+            "source": "self_checkin"  # بصمة ذاتية
+        })
+        
+        if existing:
+            # لا نُغيّر البصمة الذاتية
+            skipped += 1
+            results.append({
+                "employee_id": emp['id'],
+                "action": "skipped",
+                "reason": "بصمة ذاتية موجودة"
+            })
+            continue
+        
+        # تحليل اليوم
+        result = await resolve_and_save_v2(emp['id'], req.date)
+        processed += 1
+        results.append({
+            "employee_id": emp['id'],
+            "action": "processed",
+            "status": result.get('final_status'),
+            "status_ar": result.get('status_ar')
+        })
+    
+    return {
+        "success": True,
+        "date": req.date,
+        "processed": processed,
+        "skipped": skipped,
+        "message_ar": f"تم تحضير {processed} موظف، تم تخطي {skipped} (بصمة ذاتية)",
+        "results": results
+    }
+
+
 @router.post("/resolve-day")
 async def api_resolve_day(req: ResolveDayRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     """تحليل يوم واحد لموظف (V2 مع العروق)"""
