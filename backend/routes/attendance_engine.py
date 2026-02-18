@@ -2,11 +2,14 @@
 Attendance Engine Routes - واجهات محرك الحضور والخصومات
 
 يشمل:
-- Day Resolver API
+- Day Resolver API (V2 with Trace Evidence)
 - Monthly Hours API
 - Deduction Proposals API
+- Warning/Violation API
+- Jobs API
 - Team Attendance API
 """
+import uuid
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
@@ -15,7 +18,7 @@ from database import db
 from utils.auth import get_current_user, require_roles
 
 # Services
-from services.day_resolver import resolve_day, resolve_and_save, DayResolver
+from services.day_resolver_v2 import resolve_day_v2, resolve_and_save_v2, DayResolverV2
 from services.monthly_hours_service import (
     calculate_monthly_hours, 
     calculate_and_save as calc_save_monthly,
@@ -27,6 +30,21 @@ from services.deduction_service import (
     get_approved_proposals,
     review_proposal,
     execute_proposal
+)
+from services.attendance_jobs import (
+    run_daily_job,
+    run_monthly_job,
+    run_daily_job_for_range,
+    get_job_logs
+)
+from services.warning_service import (
+    get_pending_warnings,
+    get_approved_warnings,
+    review_warning,
+    execute_warning,
+    get_employee_warnings,
+    check_and_create_warnings,
+    get_employee_absence_pattern
 )
 
 router = APIRouter(prefix="/api/attendance-engine", tags=["attendance-engine"])
