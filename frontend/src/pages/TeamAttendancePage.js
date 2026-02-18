@@ -43,7 +43,8 @@ import {
   User,
   TrendingDown,
   FileWarning,
-  CalendarDays
+  CalendarDays,
+  MapPin
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
