@@ -750,39 +750,35 @@ async def activate_ramadan_mode(req: RamadanModeRequest, user=Depends(require_ro
     
     # تحديث أوقات جميع مواقع العمل تلقائياً
     now = datetime.now(timezone.utc).isoformat()
-    await db.work_locations.update_many(
-        {},
-        {"$set": {
-            "ramadan_hours_active": True,
-            "original_work_start": {"$ifNull": ["$work_start", "08:00"]},
-            "original_work_end": {"$ifNull": ["$work_end", "17:00"]},
-            "work_start": req.work_start,
-            "work_end": req.work_end,
-            "ramadan_updated_at": now
-        }}
-    )
     
-    # حفظ الأوقات الأصلية إذا لم تكن محفوظة
+    # حفظ الأوقات الأصلية وتحديث الأوقات الجديدة
     locations = await db.work_locations.find({}, {"_id": 0}).to_list(100)
     for loc in locations:
+        update_data = {
+            "ramadan_hours_active": True,
+            "work_start": req.work_start,
+            "work_end": req.work_end,
+            "daily_hours": req.daily_hours,  # 6 ساعات في رمضان
+            "ramadan_updated_at": now
+        }
+        
+        # حفظ الأوقات الأصلية إذا لم تكن محفوظة
         if not loc.get('original_work_start_saved'):
-            await db.work_locations.update_one(
-                {"id": loc['id']},
-                {"$set": {
-                    "original_work_start_saved": loc.get('work_start', '08:00'),
-                    "original_work_end_saved": loc.get('work_end', '17:00'),
-                    "work_start": req.work_start,
-                    "work_end": req.work_end,
-                    "ramadan_hours_active": True
-                }}
-            )
+            update_data["original_work_start_saved"] = loc.get('work_start', '08:00')
+            update_data["original_work_end_saved"] = loc.get('work_end', '17:00')
+            update_data["original_daily_hours_saved"] = loc.get('daily_hours', 8.0)
+        
+        await db.work_locations.update_one(
+            {"id": loc['id']},
+            {"$set": update_data}
+        )
     
     return {
         "message": "تم تفعيل دوام رمضان بنجاح",
         "message_en": "Ramadan mode activated",
         "settings": settings,
         "work_locations_updated": True,
-        "note_ar": f"تم تحديث أوقات جميع مواقع العمل إلى {req.work_start} - {req.work_end}"
+        "note_ar": f"تم تحديث أوقات جميع مواقع العمل إلى {req.work_start} - {req.work_end} ({req.daily_hours} ساعات)"
     }
 
 
