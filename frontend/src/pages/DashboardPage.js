@@ -2,9 +2,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { FileText, CalendarDays, Users, Shield, DollarSign, Clock, ChevronRight, Briefcase, UserCheck, MapPin, Wallet, Settings2, Bell, Pin, X, Award, CheckCircle2, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
+import { 
+  FileText, CalendarDays, Users, Shield, DollarSign, Clock, ChevronRight, 
+  Briefcase, UserCheck, MapPin, Wallet, Settings2, Bell, Pin, X, Award, 
+  CheckCircle2, AlertTriangle as AlertTriangleIcon, Timer, TrendingDown,
+  AlertCircle, Sparkles, ArrowUpRight, Calendar
+} from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import api from '@/lib/api';
 
 const STAT_CONFIG = {
