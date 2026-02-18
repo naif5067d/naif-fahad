@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class DarAlCodeAPITester:
-    def __init__(self, base_url="https://employee-closeout.preview.emergentagent.com"):
+    def __init__(self, base_url="https://hr-settlement-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.tokens = {}
         self.tests_run = 0
@@ -242,7 +242,7 @@ class DarAlCodeAPITester:
 
 def main():
     print("🚀 DAR AL CODE HR OS - API Testing Suite")
-    print(f"Backend URL: https://employee-closeout.preview.emergentagent.com")
+    print(f"Backend URL: https://hr-settlement-1.preview.emergentagent.com")
     print("=" * 60)
 
     tester = DarAlCodeAPITester()
