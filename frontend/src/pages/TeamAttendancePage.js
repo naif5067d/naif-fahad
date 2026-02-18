@@ -263,6 +263,48 @@ export default function TeamAttendancePage() {
     }
   };
 
+  // Manual Attendance Processing - التحضير اليدوي
+  const handleManualProcess = async () => {
+    setProcessingAttendance(true);
+    try {
+      const res = await api.post('/api/attendance-engine/process-daily', { date });
+      toast.success(lang === 'ar' 
+        ? `تم التحضير بنجاح: ${res.data.processed || 0} موظف` 
+        : `Processed successfully: ${res.data.processed || 0} employees`
+      );
+      // Refresh data
+      fetchAllData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'خطأ في التحضير' : 'Error processing'));
+    } finally {
+      setProcessingAttendance(false);
+    }
+  };
+
+  // Fetch Penalties Report
+  const fetchPenaltiesReport = async () => {
+    setLoading(true);
+    try {
+      const [yearVal, monthVal] = month.split('-').map(Number);
+      const res = await api.get('/api/penalties/monthly-report', {
+        params: { year: yearVal, month: monthVal }
+      });
+      setPenaltiesReport(res.data);
+    } catch (err) {
+      console.error('Error fetching penalties:', err);
+      toast.error(lang === 'ar' ? 'خطأ في جلب العقوبات' : 'Error fetching penalties');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch penalties when switching to penalties tab
+  useEffect(() => {
+    if (mainTab === 'penalties') {
+      fetchPenaltiesReport();
+    }
+  }, [mainTab, month]);
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '-';
     return timestamp.slice(11, 16);
