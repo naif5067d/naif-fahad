@@ -76,6 +76,7 @@ const formatRelativeTime = (dateStr, lang) => {
 export default function NotificationBell() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -104,12 +105,12 @@ export default function NotificationBell() {
     }
   }, [lastCount]);
   
-  // جلب الإشعارات عند التحميل وكل 30 ثانية
+  // جلب الإشعارات عند التحميل وكل 30 ثانية وعند تبديل المستخدم
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, user?.id]);
   
   // إغلاق القائمة عند النقر خارجها
   useEffect(() => {
