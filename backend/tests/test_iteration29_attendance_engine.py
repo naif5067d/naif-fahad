@@ -28,9 +28,15 @@ def admin_auth(session):
     stas_user = next((u for u in users_resp.json() if u['username'] == 'stas'), None)
     assert stas_user is not None, "STAS user not found"
     
-    # Switch to STAS user
+    # Switch to STAS user - get JWT token
     switch_resp = session.post(f"{BASE_URL}/api/auth/switch/{stas_user['id']}")
     assert switch_resp.status_code == 200
+    
+    token = switch_resp.json().get('token')
+    assert token is not None, "No token returned"
+    
+    # Set Authorization header
+    session.headers.update({'Authorization': f'Bearer {token}'})
     
     return session
 
@@ -44,9 +50,15 @@ def employee_auth(session):
     emp_user = next((u for u in users_resp.json() if u['username'] == 'emp2c291a9b'), None)
     assert emp_user is not None, "Employee user not found"
     
-    # Switch to employee
+    # Switch to employee - get JWT token
     switch_resp = session.post(f"{BASE_URL}/api/auth/switch/{emp_user['id']}")
     assert switch_resp.status_code == 200
+    
+    token = switch_resp.json().get('token')
+    assert token is not None, "No token returned"
+    
+    # Set Authorization header
+    session.headers.update({'Authorization': f'Bearer {token}'})
     
     return session
 
@@ -75,7 +87,7 @@ class TestDayResolver:
         assert len(employees) > 0
         
         # Find non-admin employee
-        employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+        employee = next((e for e in employees if e.get('id') not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
         
         if employee is None:
             pytest.skip("No non-admin employee found")
@@ -105,7 +117,7 @@ class TestDayResolver:
         """Test that resolve day returns trace evidence"""
         emp_resp = admin_auth.get(f"{BASE_URL}/api/employees")
         employees = emp_resp.json()
-        employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+        employee = next((e for e in employees if e.get('id') not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
         
         if employee is None:
             pytest.skip("No non-admin employee found")
@@ -244,7 +256,7 @@ class TestDailyStatus:
         # Get an employee
         emp_resp = admin_auth.get(f"{BASE_URL}/api/employees")
         employees = emp_resp.json()
-        employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+        employee = next((e for e in employees if e.get('id') not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
         
         if employee is None:
             pytest.skip("No non-admin employee found")
@@ -264,7 +276,7 @@ class TestDailyStatus:
         # Get an employee
         emp_resp = admin_auth.get(f"{BASE_URL}/api/employees")
         employees = emp_resp.json()
-        employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+        employee = next((e for e in employees if e.get('id') not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
         
         if employee is None:
             pytest.skip("No non-admin employee found")
@@ -307,7 +319,7 @@ class TestMonthlyHours:
         # Get an employee
         emp_resp = admin_auth.get(f"{BASE_URL}/api/employees")
         employees = emp_resp.json()
-        employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+        employee = next((e for e in employees if e.get('id') not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
         
         if employee is None:
             pytest.skip("No non-admin employee found")
