@@ -424,3 +424,234 @@ async def set_review_status(record_id: str, user=Depends(require_roles('stas')))
     )
     
     return {"message": "تم تحويل السجل للمراجعة"}
+
+
+
+# ==================== JOBS API ====================
+
+class DailyJobRequest(BaseModel):
+    target_date: Optional[str] = None  # YYYY-MM-DD
+
+
+class MonthlyJobRequest(BaseModel):
+    target_month: Optional[str] = None  # YYYY-MM
+    finalize: bool = False
+
+
+class DateRangeRequest(BaseModel):
+    start_date: str
+    end_date: str
+
+
+@router.post("/jobs/daily")
+async def api_run_daily_job(req: DailyJobRequest, user=Depends(require_roles('stas'))):
+    """
+    تشغيل Job الحضور اليومي
+    
+    يحلل جميع الموظفين ليوم محدد وينشئ مقترحات الخصم للغياب
+    """
+    result = await run_daily_job(req.target_date)
+    return result
+
+
+@router.post("/jobs/monthly")
+async def api_run_monthly_job(req: MonthlyJobRequest, user=Depends(require_roles('stas'))):
+    """
+    تشغيل Job الحساب الشهري
+    
+    يحسب الساعات الشهرية لجميع الموظفين.
+    إذا finalize=True يُغلق الشهر وينشئ مقترحات الخصم.
+    """
+    result = await run_monthly_job(req.target_month, req.finalize)
+    return result
+
+
+@router.post("/jobs/daily-range")
+async def api_run_daily_range(req: DateRangeRequest, user=Depends(require_roles('stas'))):
+    """
+    تشغيل Job الحضور اليومي لفترة من التواريخ
+    """
+    result = await run_daily_job_for_range(req.start_date, req.end_date)
+    return result
+
+
+@router.get("/jobs/logs")
+async def api_get_job_logs(job_type: Optional[str] = None, limit: int = 20, user=Depends(require_roles('stas'))):
+    """جلب سجلات تشغيل الـ Jobs"""
+    logs = await get_job_logs(job_type, limit)
+    return logs
+
+
+# ==================== WARNINGS API ====================
+
+class WarningReviewRequest(BaseModel):
+    approved: bool
+    note: Optional[str] = ""
+
+
+class WarningExecuteRequest(BaseModel):
+    note: Optional[str] = ""
+
+
+@router.get("/warnings/pending")
+async def api_get_pending_warnings(user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """جلب الإنذارات المعلقة للمراجعة"""
+    return await get_pending_warnings()
+
+
+@router.get("/warnings/approved")
+async def api_get_approved_warnings(user=Depends(require_roles('stas'))):
+    """جلب الإنذارات الموافق عليها (للتنفيذ)"""
+    return await get_approved_warnings()
+
+
+@router.get("/warnings/employee/{employee_id}")
+async def api_get_employee_warnings(employee_id: str, year: Optional[str] = None, user=Depends(get_current_user)):
+    """جلب إنذارات موظف"""
+    return await get_employee_warnings(employee_id, year)
+
+
+@router.get("/warnings/employee/{employee_id}/pattern")
+async def api_get_absence_pattern(employee_id: str, year: Optional[str] = None, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """تحليل نمط الغياب لموظف"""
+    return await get_employee_absence_pattern(employee_id, year)
+
+
+@router.post("/warnings/{warning_id}/review")
+async def api_review_warning(
+    warning_id: str,
+    req: WarningReviewRequest,
+    user=Depends(require_roles('sultan', 'naif'))
+):
+    """مراجعة الإنذار (سلطان/نايف)"""
+    result = await review_warning(warning_id, req.approved, user['user_id'], req.note)
+    
+    if result.get('error'):
+        raise HTTPException(status_code=400, detail=result['error'])
+    
+    return result
+
+
+@router.post("/warnings/{warning_id}/execute")
+async def api_execute_warning(
+    warning_id: str,
+    req: WarningExecuteRequest,
+    user=Depends(require_roles('stas'))
+):
+    """تنفيذ الإنذار (STAS فقط)"""
+    result = await execute_warning(warning_id, user['user_id'], req.note)
+    
+    if result.get('error'):
+        raise HTTPException(status_code=400, detail=result['error'])
+    
+    return result
+
+
+@router.post("/warnings/check/{employee_id}")
+async def api_check_warnings(employee_id: str, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """فحص الموظف وإنشاء الإنذارات اللازمة"""
+    return await check_and_create_warnings(employee_id)
+
+
+# ==================== MY FINANCES (Employee) ====================
+
+@router.get("/my-finances/deductions")
+async def get_my_deductions(user=Depends(get_current_user)):
+    """
+    جلب خصومات الموظف الحالي (صفحة ماليّاتي)
+    """
+    employee_id = user.get('employee_id') or user.get('user_id')
+    
+    # جلب الخصومات المنفذة من finance_ledger
+    deductions = await db.finance_ledger.find({
+        "employee_id": employee_id,
+        "type": "debit"
+    }, {"_id": 0}).sort("executed_at", -1).to_list(100)
+    
+    return deductions
+
+
+@router.get("/my-finances/warnings")
+async def get_my_warnings(user=Depends(get_current_user)):
+    """جلب إنذارات الموظف الحالي"""
+    employee_id = user.get('employee_id') or user.get('user_id')
+    
+    warnings = await db.warning_ledger.find({
+        "employee_id": employee_id,
+        "status": "executed"
+    }, {"_id": 0}).sort("executed_at", -1).to_list(50)
+    
+    return warnings
+
+
+@router.get("/my-finances/summary")
+async def get_my_finance_summary(user=Depends(get_current_user)):
+    """
+    ملخص مالي للموظف الحالي
+    """
+    employee_id = user.get('employee_id') or user.get('user_id')
+    current_month = datetime.now(timezone.utc).strftime("%Y-%m")
+    current_year = datetime.now(timezone.utc).strftime("%Y")
+    
+    # إجمالي الخصومات هذا الشهر
+    monthly_deductions = await db.finance_ledger.aggregate([
+        {
+            "$match": {
+                "employee_id": employee_id,
+                "type": "debit",
+                "month": current_month
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total": {"$sum": "$amount"},
+                "count": {"$sum": 1}
+            }
+        }
+    ]).to_list(1)
+    
+    # إجمالي الخصومات هذه السنة
+    yearly_deductions = await db.finance_ledger.aggregate([
+        {
+            "$match": {
+                "employee_id": employee_id,
+                "type": "debit",
+                "month": {"$regex": f"^{current_year}"}
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total": {"$sum": "$amount"},
+                "count": {"$sum": 1}
+            }
+        }
+    ]).to_list(1)
+    
+    # عدد الإنذارات
+    warnings_count = await get_employee_warnings(employee_id, current_year)
+    
+    # حالة الغياب
+    absence_pattern = await get_employee_absence_pattern(employee_id, current_year)
+    
+    return {
+        "employee_id": employee_id,
+        "current_month": current_month,
+        "current_year": current_year,
+        "monthly_deductions": {
+            "total": monthly_deductions[0]['total'] if monthly_deductions else 0,
+            "count": monthly_deductions[0]['count'] if monthly_deductions else 0
+        },
+        "yearly_deductions": {
+            "total": yearly_deductions[0]['total'] if yearly_deductions else 0,
+            "count": yearly_deductions[0]['count'] if yearly_deductions else 0
+        },
+        "warnings_count": len(warnings_count),
+        "absence_summary": {
+            "total_absent_days": absence_pattern['total_absent_days'],
+            "max_consecutive": absence_pattern['max_consecutive_days'],
+            "warning_15_days": absence_pattern['reaches_15_consecutive'],
+            "warning_30_days": absence_pattern['reaches_30_scattered']
+        }
+    }
