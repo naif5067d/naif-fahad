@@ -1,10 +1,12 @@
 /**
- * Team Attendance Page - حضور الفريق
+ * Team Attendance & Penalties Page - الحضور والعقوبات
  * 
- * لسلطان ونايف:
+ * لسلطان ونايف وستاس:
+ * - تبويبات: الحضور | العقوبات
  * - قائمة منسدلة لاختيار الموظف
  * - عرض سجل الموظف (يومي/أسبوعي/شهري/سنوي)
  * - تعديل حالة الموظف
+ * - زر التحضير اليدوي (لا يتعارض مع الذاتي)
  */
 import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { 
   Select,
   SelectContent,
@@ -44,10 +47,17 @@ import {
   TrendingDown,
   FileWarning,
   CalendarDays,
-  MapPin
+  MapPin,
+  PlayCircle,
+  Loader2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+
+// الموظفون المستثنون من الحضور والعقوبات (ليسوا موظفين)
+const EXEMPT_ROLES = ['stas', 'mohammed', 'salah', 'naif'];
 
 const STATUS_COLORS = {
   'PRESENT': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
