@@ -167,11 +167,11 @@ def count_working_days_detailed(start_str: str, end_str: str, holidays: list, sa
     end = datetime.strptime(end_str, "%Y-%m-%d")
     holiday_set = set(holidays)
     
-    # Build holiday name lookup if data provided
+    # Build holiday name lookup if data provided - prefer Arabic name
     holiday_names = {}
     if holidays_data:
         for h in holidays_data:
-            holiday_names[h.get('date')] = h.get('name', h.get('name_ar', 'إجازة رسمية'))
+            holiday_names[h.get('date')] = h.get('name_ar', h.get('name', 'إجازة رسمية'))
     
     count = 0
     total_calendar_days = 0
