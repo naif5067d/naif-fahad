@@ -85,6 +85,8 @@ async def create_contract(req: ContractCreate, user=Depends(require_roles('stas'
         "probation_months": req.probation_months,
         "notice_period_days": req.notice_period_days,
         "notes": req.notes,
+        "status": "active",
+        "is_active": True,
         "is_snapshot": False,
         "transaction_id": None,
         "created_by": user['user_id'],
