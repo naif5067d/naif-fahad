@@ -287,7 +287,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {loadingEmployeeSummary && isEmployee && (
+      {loadingEmployeeSummary && hasEmployeeCard && (
         <div className="card-premium rounded-2xl p-8 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
