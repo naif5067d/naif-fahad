@@ -763,6 +763,215 @@ export default function TeamAttendancePage() {
           </Card>
         </TabsContent>
       </Tabs>
+        </TabsContent>
+
+        {/* Penalties Tab Content */}
+        <TabsContent value="penalties">
+          {/* Penalties Summary Cards */}
+          {penaltiesReport?.summary && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card className="border-blue-200">
+                <CardContent className="p-4 text-center">
+                  <p className="text-3xl font-bold text-blue-600">{penaltiesReport.summary.total_employees}</p>
+                  <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'موظف' : 'Employees'}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-red-200">
+                <CardContent className="p-4 text-center">
+                  <p className="text-3xl font-bold text-red-600">{penaltiesReport.summary.total_absent_days}</p>
+                  <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'أيام غياب' : 'Absent Days'}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-amber-200">
+                <CardContent className="p-4 text-center">
+                  <p className="text-3xl font-bold text-amber-600">{penaltiesReport.summary.total_deficit_hours?.toFixed(1) || 0}</p>
+                  <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'ساعات نقص' : 'Deficit Hours'}</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-violet-200">
+                <CardContent className="p-4 text-center">
+                  <p className="text-3xl font-bold text-violet-600">
+                    {penaltiesReport.summary.total_deduction_amount?.toFixed(0) || 0} ر.س
+                  </p>
+                  <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم' : 'Total Deduction'}</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Rules Info */}
+          <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 mb-6">
+            <CardContent className="p-4">
+              <h3 className="font-bold flex items-center gap-2 mb-3">
+                <AlertTriangle className="text-amber-600" size={20} />
+                {lang === 'ar' ? 'قواعد الخصم' : 'Deduction Rules'}
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-amber-700">{lang === 'ar' ? 'الغياب:' : 'Absence:'}</p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
+                    <li>{lang === 'ar' ? 'يوم غياب = خصم يوم' : '1 day absence = 1 day deduction'}</li>
+                    <li>{lang === 'ar' ? '3 أيام متصلة = إنذار أول' : '3 consecutive = 1st warning'}</li>
+                    <li>{lang === 'ar' ? '5 أيام متصلة = إنذار ثاني' : '5 consecutive = 2nd warning'}</li>
+                    <li>{lang === 'ar' ? '10 أيام متصلة = إنذار نهائي' : '10 consecutive = Final warning'}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-amber-700">{lang === 'ar' ? 'التأخير والخروج المبكر:' : 'Late & Early Leave:'}</p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
+                    <li>{lang === 'ar' ? 'يحسب بالدقائق' : 'Calculated in minutes'}</li>
+                    <li>{lang === 'ar' ? 'يجمع شهرياً' : 'Accumulated monthly'}</li>
+                    <li>{lang === 'ar' ? 'كل 8 ساعات نقص = خصم يوم' : 'Every 8 hours = 1 day deduction'}</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employees Penalties List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>{lang === 'ar' ? 'تفاصيل العقوبات' : 'Penalties Details'}</span>
+                <Input
+                  type="month"
+                  value={month}
+                  onChange={(e) => setMonth(e.target.value)}
+                  className="w-auto"
+                />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <RefreshCw className="animate-spin text-primary" size={32} />
+                </div>
+              ) : !penaltiesReport?.employees?.length ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {penaltiesReport.employees.map((emp) => (
+                    <div 
+                      key={emp.employee_id}
+                      className="border rounded-lg overflow-hidden"
+                    >
+                      {/* Employee Row */}
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
+                        onClick={() => setExpandedPenaltyEmployee(expandedPenaltyEmployee === emp.employee_id ? null : emp.employee_id)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {emp.employee_name_ar?.[0] || '?'}
+                          </div>
+                          <div>
+                            <p className="font-medium">{emp.employee_name_ar}</p>
+                            <p className="text-xs text-muted-foreground">{emp.employee_id}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          {/* Absence */}
+                          {emp.absence?.total_days > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              <UserX size={12} className="mr-1" />
+                              {emp.absence.total_days} {lang === 'ar' ? 'غياب' : 'absent'}
+                            </Badge>
+                          )}
+                          
+                          {/* Deficit */}
+                          {emp.deficit?.total_deficit_hours > 0 && (
+                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+                              <Clock size={12} className="mr-1" />
+                              {emp.deficit.total_deficit_hours} {lang === 'ar' ? 'ساعة' : 'hrs'}
+                            </Badge>
+                          )}
+                          
+                          {/* Total Deduction */}
+                          {emp.total_deduction_days > 0 && (
+                            <Badge className="bg-violet-100 text-violet-700 text-xs">
+                              <TrendingDown size={12} className="mr-1" />
+                              {emp.total_deduction_days} {lang === 'ar' ? 'يوم خصم' : 'days'}
+                            </Badge>
+                          )}
+                          
+                          {/* Warnings */}
+                          {emp.absence?.warnings?.length > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              <AlertTriangle size={12} className="mr-1" />
+                              {emp.absence.warnings[0].name_ar}
+                            </Badge>
+                          )}
+                          
+                          {expandedPenaltyEmployee === emp.employee_id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </div>
+                      </div>
+                      
+                      {/* Expanded Details */}
+                      {expandedPenaltyEmployee === emp.employee_id && (
+                        <div className="p-4 pt-0 border-t bg-muted/30">
+                          <div className="grid md:grid-cols-2 gap-4 mt-4">
+                            {/* Absence Details */}
+                            <div className="p-3 bg-red-50 dark:bg-red-900/10 rounded-lg">
+                              <h4 className="font-medium text-red-700 mb-2 flex items-center gap-2">
+                                <UserX size={16} />
+                                {lang === 'ar' ? 'الغياب' : 'Absence'}
+                              </h4>
+                              <div className="text-sm space-y-1">
+                                <p>{lang === 'ar' ? 'إجمالي أيام الغياب:' : 'Total absent days:'} <strong>{emp.absence?.total_days || 0}</strong></p>
+                                <p>{lang === 'ar' ? 'خصم:' : 'Deduction:'} <strong>{emp.absence?.deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}</strong></p>
+                              </div>
+                            </div>
+                            
+                            {/* Deficit Details */}
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
+                              <h4 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
+                                <Clock size={16} />
+                                {lang === 'ar' ? 'نقص الساعات' : 'Hours Deficit'}
+                              </h4>
+                              <div className="text-sm space-y-1">
+                                <p>{lang === 'ar' ? 'دقائق التأخير:' : 'Late minutes:'} <strong>{emp.deficit?.total_late_minutes || 0}</strong></p>
+                                <p>{lang === 'ar' ? 'دقائق الخروج المبكر:' : 'Early leave:'} <strong>{emp.deficit?.total_early_leave_minutes || 0}</strong></p>
+                                <p>{lang === 'ar' ? 'إجمالي النقص:' : 'Total deficit:'} <strong>{emp.deficit?.total_deficit_hours || 0} {lang === 'ar' ? 'ساعة' : 'hours'}</strong></p>
+                                <p>{lang === 'ar' ? 'خصم:' : 'Deduction:'} <strong>{emp.deficit?.deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}</strong></p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Summary */}
+                          <div className="mt-4 p-3 bg-violet-50 dark:bg-violet-900/10 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-medium">{lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}</p>
+                                <p className="text-2xl font-bold text-violet-700">
+                                  {emp.total_deduction_days} {lang === 'ar' ? 'يوم' : 'days'}
+                                </p>
+                              </div>
+                              {emp.total_deduction_amount > 0 && (
+                                <div className="text-left">
+                                  <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'المبلغ:' : 'Amount:'}</p>
+                                  <p className="text-xl font-bold text-violet-700">
+                                    {emp.total_deduction_amount?.toFixed(2) || 0} ر.س
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
