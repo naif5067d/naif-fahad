@@ -181,8 +181,30 @@ export default function EmployeeProfilePage() {
       {/* Employee Card - Hero Section */}
       <div className="gradient-hero rounded-2xl p-6 text-white">
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center text-3xl font-bold">
-            {(lang === 'ar' ? employee.full_name_ar : employee.full_name)?.[0] || 'U'}
+          {/* Profile Photo with edit option for STAS */}
+          <div className="relative">
+            {employee.photo_url ? (
+              <img 
+                src={employee.photo_url} 
+                alt={employee.full_name}
+                className="w-20 h-20 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center text-3xl font-bold">
+                {(lang === 'ar' ? employee.full_name_ar : employee.full_name)?.[0] || 'U'}
+              </div>
+            )}
+            {/* زر تعديل الصورة - مرئي فقط لـ STAS */}
+            {isStas && (
+              <button
+                onClick={() => setPhotoDialogOpen(true)}
+                className="absolute -bottom-1 -end-1 w-7 h-7 rounded-full bg-white text-primary flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors"
+                data-testid="edit-photo-btn"
+                title={lang === 'ar' ? 'تعديل الصورة' : 'Edit Photo'}
+              >
+                <Camera size={14} />
+              </button>
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold mb-1">
