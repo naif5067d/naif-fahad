@@ -23,6 +23,7 @@ import ContractsManagementPage from "@/pages/ContractsManagementPage";
 import SettlementPage from "@/pages/SettlementPage";
 import MyFinancesPage from "@/pages/MyFinancesPage";
 import TeamAttendancePage from "@/pages/TeamAttendancePage";
+import PenaltiesPage from "@/pages/PenaltiesPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
