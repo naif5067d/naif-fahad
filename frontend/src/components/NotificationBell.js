@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Bell, Check, CheckCheck, FileText, XCircle, CheckCircle, 
   Clock, DollarSign, AlertTriangle, Calendar, FileWarning,
