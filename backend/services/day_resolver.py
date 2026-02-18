@@ -15,8 +15,12 @@ Day Resolver Service - محرك القرار اليومي
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
+from zoneinfo import ZoneInfo
 from database import db
 from models.daily_status import DailyStatusEnum, LockStatus, STATUS_AR
+
+# توقيت الرياض
+RIYADH_TZ = ZoneInfo("Asia/Riyadh")
 
 
 class DayResolver:
