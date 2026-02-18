@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import {
   User, Calendar, Briefcase, Building2, Clock, CreditCard, 
   FileText, AlertTriangle, CheckCircle2, Phone, Mail, 
   ArrowLeft, ChevronRight, CalendarDays, DollarSign, 
-  RefreshCw, Award, Timer, UserCheck
+  RefreshCw, Award, Timer, UserCheck, Camera, Upload
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
