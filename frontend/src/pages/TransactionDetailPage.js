@@ -342,53 +342,62 @@ export default function TransactionDetailPage() {
         </div>
         
         {/* STAS Actions */}
-        {stasActions && (
+        {userActions && (
           <div className="mt-6 pt-6 border-t border-border">
-            <h3 className="text-sm font-semibold mb-4 text-muted-foreground">
-              {lang === 'ar' ? 'إجراءات STAS' : 'STAS Actions'}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                {lang === 'ar' ? `إجراءات ${userActions.stageName}` : `${userActions.stageName} Actions`}
+              </h3>
+              <span className={`text-xs px-2 py-1 rounded-full ${STATUS_CONFIG[tx.status]?.bg} ${STATUS_CONFIG[tx.status]?.text}`}>
+                {lang === 'ar' ? 'بانتظار إجراءك' : 'Awaiting your action'}
+              </span>
+            </div>
+            
             <div className="flex flex-wrap gap-3">
-              {/* Execute Button - only if not rejected */}
-              {stasActions.canExecute && (
+              {/* Approve/Execute Button */}
+              {userActions.canApprove && (
                 <Button
                   onClick={() => handleAction('approve')}
                   disabled={actionLoading}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-                  data-testid="stas-execute-btn"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6"
+                  data-testid="approve-btn"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <Check size={16} className="me-2" />}
-                  {lang === 'ar' ? 'تنفيذ' : 'Execute'}
-                </Button>
-              )}
-              
-              {/* Return Button - based on rejection source */}
-              {stasActions.returnTo && (
-                <Button
-                  onClick={() => handleAction(stasActions.returnTo === 'ceo' ? 'return_to_ceo' : 'return_to_sultan')}
-                  disabled={actionLoading}
-                  variant="outline"
-                  className="rounded-xl border-blue-400 text-blue-600 hover:bg-blue-50"
-                  data-testid="stas-return-btn"
-                >
-                  {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <RotateCcw size={16} className="me-2" />}
-                  {stasActions.returnTo === 'ceo' 
-                    ? (lang === 'ar' ? 'إعادة لـ CEO' : 'Return to CEO')
-                    : (lang === 'ar' ? 'إعادة لـ Sultan' : 'Return to Sultan')
+                  {userActions.isExecute 
+                    ? (lang === 'ar' ? 'تنفيذ' : 'Execute')
+                    : (lang === 'ar' ? 'موافقة' : 'Approve')
                   }
                 </Button>
               )}
               
-              {/* Cancel Button */}
-              {stasActions.canCancel && (
+              {/* Return Button - for STAS when rejected */}
+              {userActions.canReturn && userActions.returnTo && (
+                <Button
+                  onClick={() => handleAction(userActions.returnTo === 'ceo' ? 'return_to_ceo' : 'return_to_sultan')}
+                  disabled={actionLoading}
+                  variant="outline"
+                  className="rounded-xl border-blue-400 text-blue-600 hover:bg-blue-50"
+                  data-testid="return-btn"
+                >
+                  {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <RotateCcw size={16} className="me-2" />}
+                  {userActions.returnTo === 'ceo' 
+                    ? (lang === 'ar' ? 'إعادة لـ CEO' : 'Return to CEO')
+                    : (lang === 'ar' ? 'إعادة لمدير العمليات' : 'Return to Ops Manager')
+                  }
+                </Button>
+              )}
+              
+              {/* Reject Button */}
+              {userActions.canReject && (
                 <Button
                   onClick={() => handleAction('reject')}
                   disabled={actionLoading}
                   variant="destructive"
-                  className="rounded-xl"
-                  data-testid="stas-cancel-btn"
+                  className="rounded-xl px-6"
+                  data-testid="reject-btn"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <XIcon size={16} className="me-2" />}
-                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                  {lang === 'ar' ? 'رفض' : 'Reject'}
                 </Button>
               )}
             </div>
