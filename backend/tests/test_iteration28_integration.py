@@ -165,7 +165,7 @@ class TestPenalties:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
@@ -277,7 +277,7 @@ class TestContracts:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
@@ -354,7 +354,7 @@ class TestEmployees:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
@@ -407,7 +407,7 @@ class TestSettlement:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
@@ -504,7 +504,7 @@ class TestDataIntegration:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
