@@ -8,13 +8,19 @@ import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = {
+  // الموظفون العاديون فقط يرون الحضور والمالياتي
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'teamAttendance', 'penalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'teamAttendance', 'penalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // سلطان موظف + إداري (يرى الحضور الشخصي + حضور الفريق)
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // نايف إداري فقط (لا يُعامل كموظف)
+  naif: ['dashboard', 'transactions', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // صلاح مالي فقط (لا يُعامل كموظف)
   salah: ['dashboard', 'transactions', 'financialCustody'],
+  // محمد CEO فقط (لا يُعامل كموظف)
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'teamAttendance', 'penalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // ستاس إداري + صلاحيات كاملة (لا يُعامل كموظف)
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
