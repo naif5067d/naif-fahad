@@ -227,7 +227,9 @@ async def validate_punch_location(
     # الحصول على إحداثيات الموقع
     location_lat = work_location.get('latitude')
     location_lng = work_location.get('longitude')
-    geofence_radius = work_location.get('geofence_radius_km', DEFAULT_GEOFENCE_RADIUS_KM)
+    # radius_meters أو geofence_radius_km
+    radius_meters = work_location.get('radius_meters', 500)
+    geofence_radius = radius_meters / 1000  # تحويل إلى كيلومتر
     
     if location_lat is None or location_lng is None:
         # موقع العمل بدون إحداثيات - السماح مع تحذير
