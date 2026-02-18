@@ -30,6 +30,7 @@ from routes.admin import router as admin_router
 from routes.settlement import router as settlement_router
 from routes.deductions import router as deductions_router
 from routes.notifications import router as notifications_router
+from routes.attendance_engine import router as attendance_engine_router
 from seed import seed_database
 
 # App Version
