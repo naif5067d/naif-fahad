@@ -40,11 +40,10 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  Search,
   User,
-  CalendarDays,
   TrendingDown,
-  FileWarning
+  FileWarning,
+  CalendarDays
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -59,31 +58,50 @@ const STATUS_COLORS = {
   'HOLIDAY': 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
   'ON_MISSION': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
   'UNKNOWN': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  'NOT_PROCESSED': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+  'NOT_PROCESSED': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  'PERMISSION': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
 };
 
-const STATUS_ICONS = {
-  'PRESENT': CheckCircle,
-  'ABSENT': XCircle,
-  'LATE': Clock,
-  'ON_LEAVE': Calendar,
-  'WEEKEND': Calendar,
-  'HOLIDAY': Calendar,
-  'UNKNOWN': AlertTriangle
+const STATUS_AR = {
+  'PRESENT': 'حاضر',
+  'ABSENT': 'غائب',
+  'LATE': 'متأخر',
+  'ON_LEAVE': 'إجازة',
+  'ON_ADMIN_LEAVE': 'إجازة إدارية',
+  'WEEKEND': 'عطلة نهاية أسبوع',
+  'HOLIDAY': 'عطلة رسمية',
+  'ON_MISSION': 'مهمة خارجية',
+  'UNKNOWN': 'غير محدد',
+  'NOT_PROCESSED': 'غير محلل',
+  'PERMISSION': 'استئذان',
+  'EARLY_LEAVE': 'خروج مبكر',
+  'LATE_EXCUSED': 'تأخير معذور',
+  'EARLY_EXCUSED': 'خروج مبكر معذور'
 };
 
 export default function TeamAttendancePage() {
   const { lang } = useLanguage();
   const { user } = useAuth();
+  
+  // View mode: 'all' for all employees, 'single' for one employee
+  const [viewMode, setViewMode] = useState('all');
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  
   const [tab, setTab] = useState('daily');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  
   const [summary, setSummary] = useState(null);
   const [dailyData, setDailyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
+  const [yearlyData, setYearlyData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Employee record for single view
+  const [employeeRecord, setEmployeeRecord] = useState(null);
   
   // Edit Dialog
   const [editDialog, setEditDialog] = useState(null);
@@ -98,14 +116,31 @@ export default function TeamAttendancePage() {
   const [traceDialog, setTraceDialog] = useState(null);
   const [traceData, setTraceData] = useState(null);
 
+  // Fetch employees list
   useEffect(() => {
-    fetchData();
-  }, [tab, date, month]);
+    const fetchEmployees = async () => {
+      try {
+        const res = await api.get('/api/employees');
+        setEmployees(res.data.filter(e => e.is_active !== false));
+      } catch (err) {
+        console.error('Error fetching employees:', err);
+      }
+    };
+    fetchEmployees();
+  }, []);
 
-  const fetchData = async () => {
+  // Fetch data based on view mode and tab
+  useEffect(() => {
+    if (viewMode === 'all') {
+      fetchAllData();
+    } else if (viewMode === 'single' && selectedEmployee) {
+      fetchEmployeeData();
+    }
+  }, [viewMode, selectedEmployee, tab, date, month, year]);
+
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch summary
       const summaryRes = await api.get('/api/team-attendance/summary', { params: { date } });
       setSummary(summaryRes.data);
       
@@ -122,6 +157,31 @@ export default function TeamAttendancePage() {
     } catch (err) {
       console.error('Error fetching data:', err);
       toast.error(lang === 'ar' ? 'خطأ في جلب البيانات' : 'Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEmployeeData = async () => {
+    if (!selectedEmployee) return;
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/team-attendance/employee/${selectedEmployee}`, {
+        params: { period: tab, date, month, year }
+      });
+      setEmployeeRecord(res.data);
+    } catch (err) {
+      console.error('Error fetching employee data:', err);
+      // Fallback to manual filtering
+      if (tab === 'daily') {
+        const res = await api.get('/api/team-attendance/daily', { params: { date } });
+        const empData = res.data.find(e => e.employee_id === selectedEmployee);
+        setEmployeeRecord({ daily: empData ? [empData] : [], summary: {} });
+      } else if (tab === 'monthly') {
+        const res = await api.get('/api/team-attendance/monthly', { params: { month } });
+        const empData = res.data.find(e => e.employee_id === selectedEmployee);
+        setEmployeeRecord({ monthly: empData, summary: empData || {} });
+      }
     } finally {
       setLoading(false);
     }
@@ -148,7 +208,8 @@ export default function TeamAttendancePage() {
       await api.post(`/api/team-attendance/${editDialog.employee_id}/update-status?date=${editDialog.date}`, editForm);
       toast.success(lang === 'ar' ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
       setEditDialog(null);
-      fetchData();
+      if (viewMode === 'all') fetchAllData();
+      else fetchEmployeeData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Error updating status');
     } finally {
@@ -166,17 +227,24 @@ export default function TeamAttendancePage() {
     }
   };
 
-  const filteredDaily = dailyData.filter(e => 
-    !searchQuery || 
-    e.employee_name_ar?.includes(searchQuery) ||
-    e.employee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.employee_number?.includes(searchQuery)
-  );
+  const handleEmployeeSelect = (empId) => {
+    if (empId === 'all') {
+      setViewMode('all');
+      setSelectedEmployee(null);
+    } else {
+      setViewMode('single');
+      setSelectedEmployee(empId);
+    }
+  };
 
   const formatTime = (timestamp) => {
     if (!timestamp) return '-';
     return timestamp.slice(11, 16);
   };
+
+  const selectedEmployeeData = useMemo(() => {
+    return employees.find(e => e.id === selectedEmployee);
+  }, [employees, selectedEmployee]);
 
   return (
     <div className="space-y-6 p-4 md:p-6" data-testid="team-attendance-page">
@@ -192,21 +260,81 @@ export default function TeamAttendancePage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-auto"
-          />
-          <Button variant="outline" size="icon" onClick={fetchData} disabled={loading}>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Employee Selector */}
+          <Select value={selectedEmployee || 'all'} onValueChange={handleEmployeeSelect}>
+            <SelectTrigger className="w-[200px]" data-testid="employee-selector">
+              <SelectValue placeholder={lang === 'ar' ? 'اختر موظف' : 'Select Employee'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <span className="flex items-center gap-2">
+                  <Users size={16} />
+                  {lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}
+                </span>
+              </SelectItem>
+              {employees.map(emp => (
+                <SelectItem key={emp.id} value={emp.id}>
+                  <span className="flex items-center gap-2">
+                    <User size={16} />
+                    {lang === 'ar' ? emp.full_name_ar : emp.full_name} ({emp.employee_number})
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Date Selector */}
+          {tab !== 'yearly' && (
+            <Input
+              type={tab === 'monthly' ? 'month' : 'date'}
+              value={tab === 'monthly' ? month : date}
+              onChange={(e) => tab === 'monthly' ? setMonth(e.target.value) : setDate(e.target.value)}
+              className="w-auto"
+            />
+          )}
+          {tab === 'yearly' && (
+            <Select value={year} onValueChange={setYear}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[2024, 2025, 2026].map(y => (
+                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          
+          <Button variant="outline" size="icon" onClick={() => viewMode === 'all' ? fetchAllData() : fetchEmployeeData()} disabled={loading}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      {summary && (
+      {/* Selected Employee Info */}
+      {viewMode === 'single' && selectedEmployeeData && (
+        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xl font-bold">
+                {selectedEmployeeData.full_name_ar?.[0] || selectedEmployeeData.full_name?.[0] || '?'}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">
+                  {lang === 'ar' ? selectedEmployeeData.full_name_ar : selectedEmployeeData.full_name}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {selectedEmployeeData.employee_number} • {selectedEmployeeData.job_title_ar || selectedEmployeeData.job_title}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary Cards - Only for All Employees View */}
+      {viewMode === 'all' && summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           <Card className="border-emerald-200">
             <CardContent className="p-4 text-center">
@@ -264,31 +392,28 @@ export default function TeamAttendancePage() {
           <TabsTrigger value="daily">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
           <TabsTrigger value="weekly">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
           <TabsTrigger value="monthly">{lang === 'ar' ? 'شهري' : 'Monthly'}</TabsTrigger>
+          <TabsTrigger value="yearly">{lang === 'ar' ? 'سنوي' : 'Yearly'}</TabsTrigger>
         </TabsList>
 
         {/* Daily Tab */}
         <TabsContent value="daily">
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{lang === 'ar' ? 'سجل الحضور اليومي' : 'Daily Attendance'}</CardTitle>
-                <div className="relative">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                  <Input
-                    placeholder={lang === 'ar' ? 'بحث...' : 'Search...'}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-48 pr-9"
-                  />
-                </div>
-              </div>
+              <CardTitle className="text-lg">
+                {lang === 'ar' ? 'سجل الحضور اليومي' : 'Daily Attendance'}
+                {viewMode === 'single' && selectedEmployeeData && (
+                  <span className="text-sm font-normal text-muted-foreground mr-2">
+                    - {selectedEmployeeData.full_name_ar}
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <RefreshCw className="animate-spin text-primary" size={32} />
                 </div>
-              ) : filteredDaily.length === 0 ? (
+              ) : (viewMode === 'all' ? dailyData : employeeRecord?.daily || []).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
                 </div>
@@ -297,7 +422,8 @@ export default function TeamAttendancePage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-start p-3">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
+                        {viewMode === 'all' && <th className="text-start p-3">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>}
+                        {viewMode === 'single' && <th className="text-start p-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>}
                         <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'In'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
@@ -307,17 +433,22 @@ export default function TeamAttendancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredDaily.map((emp, idx) => (
-                        <tr key={emp.employee_id} className="border-b hover:bg-muted/50">
-                          <td className="p-3">
-                            <div>
-                              <p className="font-medium">{emp.employee_name_ar || emp.employee_name}</p>
-                              <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
-                            </div>
-                          </td>
+                      {(viewMode === 'all' ? dailyData : employeeRecord?.daily || []).map((emp, idx) => (
+                        <tr key={emp.employee_id + '-' + (emp.date || idx)} className="border-b hover:bg-muted/50">
+                          {viewMode === 'all' && (
+                            <td className="p-3">
+                              <div>
+                                <p className="font-medium">{emp.employee_name_ar || emp.employee_name}</p>
+                                <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
+                              </div>
+                            </td>
+                          )}
+                          {viewMode === 'single' && (
+                            <td className="p-3 font-mono text-sm">{emp.date}</td>
+                          )}
                           <td className="p-3 text-center">
                             <Badge className={STATUS_COLORS[emp.final_status] || STATUS_COLORS.UNKNOWN}>
-                              {emp.status_ar || emp.final_status}
+                              {STATUS_AR[emp.final_status] || emp.status_ar || emp.final_status}
                             </Badge>
                           </td>
                           <td className="p-3 text-center font-mono text-xs">
@@ -381,7 +512,7 @@ export default function TeamAttendancePage() {
                 <div className="flex justify-center py-8">
                   <RefreshCw className="animate-spin text-primary" size={32} />
                 </div>
-              ) : weeklyData.length === 0 ? (
+              ) : (viewMode === 'all' ? weeklyData : employeeRecord?.weekly ? [employeeRecord.weekly] : []).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
                 </div>
@@ -399,7 +530,7 @@ export default function TeamAttendancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {weeklyData.map((emp) => (
+                      {(viewMode === 'all' ? weeklyData : employeeRecord?.weekly ? [employeeRecord.weekly] : []).map((emp) => (
                         <tr key={emp.employee_id} className="border-b hover:bg-muted/50">
                           <td className="p-3">
                             <p className="font-medium">{emp.employee_name_ar}</p>
@@ -437,19 +568,13 @@ export default function TeamAttendancePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">{lang === 'ar' ? 'ملخص الشهر' : 'Monthly Summary'}</CardTitle>
-              <Input
-                type="month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="w-auto"
-              />
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <RefreshCw className="animate-spin text-primary" size={32} />
                 </div>
-              ) : monthlyData.length === 0 ? (
+              ) : (viewMode === 'all' ? monthlyData : employeeRecord?.monthly ? [employeeRecord.monthly] : []).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
                 </div>
@@ -467,7 +592,7 @@ export default function TeamAttendancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {monthlyData.map((emp) => (
+                      {(viewMode === 'all' ? monthlyData : employeeRecord?.monthly ? [employeeRecord.monthly] : []).map((emp) => (
                         <tr key={emp.employee_id} className="border-b hover:bg-muted/50">
                           <td className="p-3">
                             <p className="font-medium">{emp.employee_name_ar}</p>
@@ -503,6 +628,27 @@ export default function TeamAttendancePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Yearly Tab */}
+        <TabsContent value="yearly">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{lang === 'ar' ? 'ملخص السنة' : 'Yearly Summary'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <RefreshCw className="animate-spin text-primary" size={32} />
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CalendarDays className="mx-auto mb-4 text-muted-foreground" size={48} />
+                  <p>{lang === 'ar' ? 'الملخص السنوي قيد التطوير' : 'Yearly summary coming soon'}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Edit Dialog */}
@@ -520,7 +666,7 @@ export default function TeamAttendancePage() {
                 <p className="font-medium">{editDialog.employee_name_ar}</p>
                 <p className="text-sm text-muted-foreground">{editDialog.date}</p>
                 <Badge className={STATUS_COLORS[editDialog.final_status] + ' mt-2'}>
-                  {lang === 'ar' ? 'الحالة الحالية:' : 'Current:'} {editDialog.status_ar}
+                  {lang === 'ar' ? 'الحالة الحالية:' : 'Current:'} {STATUS_AR[editDialog.final_status] || editDialog.status_ar}
                 </Badge>
               </div>
               
@@ -604,7 +750,7 @@ export default function TeamAttendancePage() {
             <div className="space-y-4 py-4">
               {/* Summary */}
               <div className="p-4 bg-muted rounded-lg">
-                <p className="font-medium text-lg">{traceData.status_ar || traceData.final_status}</p>
+                <p className="font-medium text-lg">{STATUS_AR[traceData.final_status] || traceData.status_ar || traceData.final_status}</p>
                 <p className="text-sm text-muted-foreground mt-1">{traceData.decision_reason_ar}</p>
               </div>
               
