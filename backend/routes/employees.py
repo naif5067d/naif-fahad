@@ -261,6 +261,7 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     للموظف:
     - الحضور/الانصراف
     - رصيد الإجازة السنوية فقط (Pro-Rata)
+    - الخصومات والإنذارات الخاصة به
     
     للإدارة:
     - كل البيانات + الحقول الجاهزة للربط
@@ -303,18 +304,87 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "type": "check_in"
     })
     
-    # بيانات الموظف المختصرة (للجميع)
+    # 7. بيانات الشهر الحالي (للجميع)
+    month_start = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
+    month_end = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # إحصائيات الحضور الشهرية (تأخير، غياب)
+    month_attendance = await db.daily_status.find({
+        "employee_id": employee_id,
+        "date": {"$gte": month_start, "$lte": month_end}
+    }, {"_id": 0}).to_list(31)
+    
+    late_count = sum(1 for a in month_attendance if a.get('is_late'))
+    absent_count = sum(1 for a in month_attendance if a.get('final_status') == 'ABSENT')
+    total_late_minutes = sum(a.get('late_minutes', 0) for a in month_attendance)
+    monthly_hours = round(sum(a.get('worked_hours', 0) for a in month_attendance), 1)
+    
+    # المعاملات المعلقة للموظف
+    pending_txs = await db.transactions.count_documents({
+        "data.employee_id": employee_id,
+        "status": {"$regex": "^pending"}
+    })
+    
+    # الخصومات المنفذة هذا الشهر (للموظف أيضاً)
+    month_deductions = await db.finance_ledger.find({
+        "employee_id": employee_id,
+        "type": "debit",
+        "created_at": {"$gte": month_start}
+    }, {"_id": 0}).sort("created_at", -1).to_list(10)
+    
+    deductions_for_employee = []
+    for d in month_deductions[:3]:
+        deductions_for_employee.append({
+            "amount": d.get('amount', 0),
+            "reason": d.get('note', d.get('description', '')),
+            "reason_ar": d.get('note', d.get('description', '')),
+            "date": d.get('created_at', '')[:10] if d.get('created_at') else ''
+        })
+    
+    # الإنذارات (للموظف أيضاً)
+    warnings = await db.warnings.find({
+        "employee_id": employee_id,
+        "status": "active"
+    }, {"_id": 0}).sort("created_at", -1).to_list(5)
+    
+    warnings_for_employee = []
+    for w in warnings[:3]:
+        warnings_for_employee.append({
+            "level": w.get('level', 1),
+            "reason": w.get('reason', ''),
+            "reason_ar": w.get('reason_ar', w.get('reason', '')),
+            "date": w.get('created_at', '')[:10] if w.get('created_at') else ''
+        })
+    
+    # بيانات الموظف الشاملة (للجميع)
     employee_summary = {
         "employee": emp,
+        "contract": contract,
+        "service_info": service_info,
         "attendance": {
             "today_status": "present" if today_attendance else "not_checked_in",
-            "today_status_ar": "حاضر" if today_attendance else "لم يسجل الحضور"
+            "today_status_ar": "حاضر" if today_attendance else "لم يسجل الحضور",
+            "monthly_hours": monthly_hours
         },
         "annual_leave": {
             "balance": round(pro_rata.get('available_balance', 0), 2),
             "policy_days": policy['days'],
             "policy_source_ar": policy['source_ar']
         },
+        "leave_details": {
+            "balance": round(pro_rata.get('available_balance', 0), 2),
+            "entitlement": policy['days'],
+            "earned_to_date": round(pro_rata.get('earned_to_date', 0), 2),
+            "used": pro_rata.get('used_executed', 0)
+        },
+        "pending_transactions": pending_txs,
+        "attendance_issues": {
+            "late_count": late_count,
+            "absent_count": absent_count,
+            "total_late_minutes": total_late_minutes
+        },
+        "deductions": deductions_for_employee,
+        "warnings": warnings_for_employee,
         "timestamp": format_datetime_riyadh(datetime.now(timezone.utc).isoformat())
     }
     
@@ -331,7 +401,7 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         # الغياب غير المسوى
         unsettled_absences = await get_unsettled_absences(employee_id)
         
-        # الخصومات
+        # الخصومات الكاملة
         deductions = await db.finance_ledger.find({
             "employee_id": employee_id,
             "type": "debit",
@@ -357,24 +427,11 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         active_transactions = await get_employee_active_transactions(employee_id)
         
         employee_summary.update({
-            "contract": contract,
-            "service_info": service_info,
             "supervisor": supervisor,
-            "leave_details": {
-                "balance": round(pro_rata.get('available_balance', 0), 2),
-                "entitlement": policy['days'],
-                "earned_to_date": round(pro_rata.get('earned_to_date', 0), 2),
-                "used": pro_rata.get('used_executed', 0),
-                "daily_accrual": pro_rata.get('daily_accrual', 0),
-                "days_worked": pro_rata.get('days_worked', 0),
-                "formula": pro_rata.get('formula', ''),
-                "policy_source": policy['source'],
-                "policy_source_ar": policy['source_ar']
-            },
             "attendance_details": {
                 "summary_30_days": attendance_summary,
                 "unsettled_absences": len(unsettled_absences),
-                "unsettled_details": unsettled_absences[:5] if viewer_is_admin else []
+                "unsettled_details": unsettled_absences[:5]
             },
             "finance": {
                 "pending_deductions": total_deductions,
