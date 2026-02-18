@@ -126,15 +126,15 @@ export default function DashboardPage() {
         .catch(() => {});
     }
     
-    // جلب ملخص الموظف للموظفين العاديين
-    if (isEmployee && user?.employee_id) {
+    // جلب ملخص الموظف لكل من لديه employee_id
+    if (hasEmployeeCard && user?.employee_id) {
       setLoadingEmployeeSummary(true);
       api.get(`/api/employees/${user.employee_id}/summary`)
         .then(r => setEmployeeSummary(r.data))
-        .catch(() => {})
+        .catch((err) => console.log('Employee summary error:', err))
         .finally(() => setLoadingEmployeeSummary(false));
     }
-  }, [isAdmin, isEmployee, user?.employee_id]);
+  }, [isAdmin, hasEmployeeCard, user?.employee_id]);
 
   const dismissAnnouncement = async (id) => {
     try {
