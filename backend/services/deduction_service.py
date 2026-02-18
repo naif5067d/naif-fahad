@@ -63,6 +63,33 @@ async def create_deduction_proposal(
     await db.deduction_proposals.insert_one(proposal)
     proposal.pop('_id', None)
     
+    # إرسال إشعار للإدارة (سلطان/نايف) لمراجعة مقترح الخصم
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        
+        # جلب اسم الموظف
+        emp = await db.employees.find_one({"id": employee_id}, {"_id": 0, "full_name_ar": 1})
+        emp_name = emp.get('full_name_ar', employee_id) if emp else employee_id
+        
+        # إشعار لسلطان
+        await create_notification(
+            recipient_id="",  # يُملأ لاحقاً
+            notification_type=NotificationType.ALERT,
+            title="New Deduction Proposal",
+            title_ar="مقترح خصم جديد",
+            message=f"Deduction proposal for {emp_name}: {amount} SAR",
+            message_ar=f"مقترح خصم لـ {emp_name}: {amount} ر.س - {reason_ar}",
+            priority=NotificationPriority.HIGH,
+            recipient_role="sultan",
+            reference_type="deduction_proposal",
+            reference_id=proposal['id'],
+            reference_url=f"/deductions?id={proposal['id']}"
+        )
+    except Exception as e:
+        # لا نوقف العملية إذا فشل الإشعار
+        pass
+    
     return proposal
 
 
