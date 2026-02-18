@@ -1,14 +1,22 @@
 """
-Notifications API - Contract Expiration & Leave Carryover Alerts
-إشعارات انتهاء العقود وترحيل الإجازات
+Notifications API - نظام الإشعارات الشامل
+جميع الإشعارات في التطبيق: معاملات، خصومات، حضور، إنذارات، عقود
 """
 
 from fastapi import APIRouter, HTTPException, Depends
 from database import db
 from utils.auth import get_current_user, require_roles
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
+
+# استيراد خدمة الإشعارات
+from services.notification_service import (
+    get_user_notifications,
+    mark_notification_read,
+    mark_all_notifications_read,
+    get_unread_count
+)
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
