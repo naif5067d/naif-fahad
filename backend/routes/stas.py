@@ -796,11 +796,13 @@ async def deactivate_ramadan(user=Depends(require_roles('stas'))):
                 {"$set": {
                     "work_start": loc.get('original_work_start_saved', '08:00'),
                     "work_end": loc.get('original_work_end_saved', '17:00'),
+                    "daily_hours": loc.get('original_daily_hours_saved', 8.0),
                     "ramadan_hours_active": False
                 },
                 "$unset": {
                     "original_work_start_saved": "",
-                    "original_work_end_saved": ""
+                    "original_work_end_saved": "",
+                    "original_daily_hours_saved": ""
                 }}
             )
     
