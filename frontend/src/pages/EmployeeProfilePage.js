@@ -511,6 +511,84 @@ export default function EmployeeProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Photo Upload Dialog - STAS only */}
+      {isStas && (
+        <Dialog open={photoDialogOpen} onOpenChange={setPhotoDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{lang === 'ar' ? 'تعديل صورة الموظف' : 'Edit Employee Photo'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Current Photo Preview */}
+              <div className="flex justify-center">
+                {employee.photo_url ? (
+                  <img 
+                    src={employee.photo_url} 
+                    alt={employee.full_name}
+                    className="w-32 h-32 rounded-2xl object-cover border-2 border-border"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-2xl bg-muted flex items-center justify-center text-4xl font-bold text-muted-foreground">
+                    {(lang === 'ar' ? employee.full_name_ar : employee.full_name)?.[0] || 'U'}
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-center text-sm text-muted-foreground">
+                {lang === 'ar' 
+                  ? `${employee.full_name_ar || employee.full_name}`
+                  : employee.full_name
+                }
+              </p>
+
+              {/* Upload Button */}
+              <div className="space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  data-testid="photo-file-input"
+                />
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  data-testid="upload-photo-btn"
+                >
+                  <Upload size={16} className="me-2" />
+                  {uploadingPhoto 
+                    ? (lang === 'ar' ? 'جاري الرفع...' : 'Uploading...') 
+                    : (lang === 'ar' ? 'رفع صورة جديدة' : 'Upload New Photo')
+                  }
+                </Button>
+                
+                {employee.photo_url && (
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleRemovePhoto}
+                    disabled={uploadingPhoto}
+                    data-testid="remove-photo-btn"
+                  >
+                    {lang === 'ar' ? 'حذف الصورة' : 'Remove Photo'}
+                  </Button>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                {lang === 'ar' 
+                  ? 'الصيغ المدعومة: JPG, PNG, GIF (أقصى حجم: 5 ميجابايت)'
+                  : 'Supported: JPG, PNG, GIF (Max: 5MB)'
+                }
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
