@@ -33,7 +33,7 @@ class TestAuthSetup:
     
     def test_01_switch_to_sultan(self, session):
         """Switch to sultan user for admin access"""
-        response = session.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        response = session.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         print(f"Switch response status: {response.status_code}")
         
         if response.status_code == 200:
@@ -58,8 +58,8 @@ class TestTeamAttendance:
         s = requests.Session()
         s.headers.update({"Content-Type": "application/json"})
         
-        # Switch to sultan
-        response = s.get(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
+        # Switch to sultan (POST method)
+        response = s.post(f"{BASE_URL}/api/auth/switch/{SULTAN_USER_ID}")
         if response.status_code == 200:
             data = response.json()
             token = data.get("token") or data.get("access_token")
