@@ -81,6 +81,18 @@ logger = logging.getLogger(__name__)
 async def startup():
     result = await seed_database(db)
     logger.info(f"Seed: {result['message']}")
+    
+    # تشغيل جدولة المهام
+    from services.scheduler import init_scheduler
+    init_scheduler()
+    logger.info("✅ Scheduler initialized")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    from services.scheduler import shutdown_scheduler
+    shutdown_scheduler()
+    logger.info("🛑 Scheduler stopped")
 
 
 @app.get("/api/health")
