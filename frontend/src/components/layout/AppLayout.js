@@ -10,11 +10,11 @@ import NotificationBell from '@/components/NotificationBell';
 const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
-  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'teamAttendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'leave', 'attendance', 'teamAttendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   salah: ['dashboard', 'transactions', 'financialCustody'],
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'leave', 'attendance', 'teamAttendance', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
