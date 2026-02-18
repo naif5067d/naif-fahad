@@ -62,7 +62,6 @@ async def create_notification(
 
 async def notify_transaction_submitted(transaction: dict, submitter_name: str):
     """إشعار بتقديم معاملة جديدة - للمرحلة التالية"""
-    workflow = transaction.get('workflow', [])
     current_stage = transaction.get('current_stage')
     
     # تحديد المستلم حسب المرحلة
