@@ -94,6 +94,9 @@ export default function TeamAttendancePage() {
   const { lang } = useLanguage();
   const { user } = useAuth();
   
+  // Main tab: 'attendance' or 'penalties'
+  const [mainTab, setMainTab] = useState('attendance');
+  
   // View mode: 'all' for all employees, 'single' for one employee
   const [viewMode, setViewMode] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -114,6 +117,13 @@ export default function TeamAttendancePage() {
   // Employee record for single view
   const [employeeRecord, setEmployeeRecord] = useState(null);
   
+  // Manual Attendance Processing
+  const [processingAttendance, setProcessingAttendance] = useState(false);
+  
+  // Penalties data
+  const [penaltiesReport, setPenaltiesReport] = useState(null);
+  const [expandedPenaltyEmployee, setExpandedPenaltyEmployee] = useState(null);
+  
   // Edit Dialog
   const [editDialog, setEditDialog] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -126,6 +136,11 @@ export default function TeamAttendancePage() {
   // Trace Dialog
   const [traceDialog, setTraceDialog] = useState(null);
   const [traceData, setTraceData] = useState(null);
+
+  // Filter employees - exclude non-employee roles
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(e => !EXEMPT_ROLES.includes(e.role));
+  }, [employees]);
 
   // Fetch employees list
   useEffect(() => {
