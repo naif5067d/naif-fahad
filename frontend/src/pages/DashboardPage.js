@@ -218,6 +218,80 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Employee Personal Card - Shown to employees only */}
+      {isEmployee && employeeSummary && (
+        <div className="card-premium rounded-2xl overflow-hidden" data-testid="employee-personal-card">
+          <div className="p-5 space-y-4">
+            {/* Employee Header */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                {(lang === 'ar' ? user?.full_name_ar : user?.full_name)?.[0] || 'U'}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold">
+                  {lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {lang === 'ar' ? employeeSummary.contract?.job_title_ar : employeeSummary.contract?.job_title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {lang === 'ar' ? employeeSummary.contract?.department_ar : employeeSummary.contract?.department}
+                </p>
+              </div>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                user?.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {user?.is_active !== false ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير نشط' : 'Inactive')}
+              </span>
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 bg-muted/50 rounded-xl">
+                <CalendarDays size={20} className="mx-auto mb-1 text-primary" />
+                <p className="text-xl font-bold text-primary">{employeeSummary.leave_details?.balance || 0}</p>
+                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'رصيد الإجازة' : 'Leave Balance'}</p>
+              </div>
+              <div className="text-center p-3 bg-muted/50 rounded-xl">
+                <Award size={20} className="mx-auto mb-1 text-amber-500" />
+                <p className="text-xl font-bold text-amber-600">{employeeSummary.service_info?.years_display || '0'}</p>
+                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'سنوات الخدمة' : 'Service Years'}</p>
+              </div>
+              <div className="text-center p-3 bg-muted/50 rounded-xl">
+                <Clock size={20} className="mx-auto mb-1 text-green-500" />
+                <p className="text-xl font-bold">
+                  {employeeSummary.attendance?.today_status === 'present' ? (
+                    <CheckCircle2 size={24} className="mx-auto text-green-500" />
+                  ) : (
+                    <AlertTriangleIcon size={24} className="mx-auto text-amber-500" />
+                  )}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'حضور اليوم' : 'Today'}</p>
+              </div>
+            </div>
+
+            {/* Contract Info Summary */}
+            {employeeSummary.contract && (
+              <div className="flex items-center justify-between text-sm pt-2 border-t">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Briefcase size={14} />
+                  <span>{lang === 'ar' ? 'انتهاء العقد:' : 'Contract ends:'}</span>
+                </div>
+                <span className="font-medium">
+                  {employeeSummary.contract.end_date || (lang === 'ar' ? 'غير محدد' : 'Unlimited')}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {loadingEmployeeSummary && isEmployee && (
+        <div className="card-premium rounded-2xl p-8 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
       {/* Expiring Contracts Alert (Admin only) */}
       {isAdmin && expiringContracts.employees?.length > 0 && (
         <div className="space-y-3" data-testid="expiring-contracts-section">
