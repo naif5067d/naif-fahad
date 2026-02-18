@@ -29,6 +29,7 @@ class WorkLocationCreate(BaseModel):
     work_end: str    # "17:00"
     grace_checkin_minutes: int = 0  # مدة السماح للدخول (0-15 دقيقة)
     grace_checkout_minutes: int = 0  # مدة السماح للخروج (0-15 دقيقة)
+    allow_early_checkin_minutes: int = 0  # السماح بالتبصيم المبكر (0-120 دقيقة)
     work_days: WorkDays
     assigned_employees: List[str] = []  # List of employee IDs
 
@@ -43,6 +44,7 @@ class WorkLocationUpdate(BaseModel):
     work_end: Optional[str] = None
     grace_checkin_minutes: Optional[int] = None
     grace_checkout_minutes: Optional[int] = None
+    allow_early_checkin_minutes: Optional[int] = None  # السماح بالتبصيم المبكر
     work_days: Optional[WorkDays] = None
     assigned_employees: Optional[List[str]] = None
 
