@@ -105,7 +105,8 @@ export default function DashboardPage() {
 
   const role = user?.role || 'employee';
   const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
-  const isEmployee = role === 'employee' || role === 'supervisor';
+  // البطاقة تظهر لكل من لديه employee_id (موظفين + مدراء)
+  const hasEmployeeCard = !!user?.employee_id;
   
   // بيانات ملخص الموظف للبطاقة الشخصية
   const [employeeSummary, setEmployeeSummary] = useState(null);
