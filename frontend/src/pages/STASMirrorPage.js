@@ -354,6 +354,83 @@ export default function STASMirrorPage() {
                     </CardContent>
                   </Card>
 
+                  {/* Leave Calculation Details - سجل الإجازات - STAS فقط */}
+                  {mirror.transaction?.type === 'leave_request' && mirror.transaction?.data?.calculation_details && (
+                    <Card className="border-2 border-violet-500/30 shadow-none" data-testid="leave-calculation-card">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                            <Calendar size={16} />
+                            {lang === 'ar' ? 'سجل حساب الإجازة' : 'Leave Calculation Record'}
+                          </CardTitle>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            mirror.transaction.data.calculation_details.calculation_valid 
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
+                            {mirror.transaction.data.calculation_details.calculation_valid 
+                              ? (lang === 'ar' ? 'صحيح' : 'Valid')
+                              : (lang === 'ar' ? 'خطأ' : 'Error')
+                            }
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Summary */}
+                        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-lg p-3 border border-violet-200 dark:border-violet-800">
+                          <p className="text-violet-800 dark:text-violet-200 text-sm font-medium text-center">
+                            {mirror.transaction.data.calculation_details.calculation_summary_ar}
+                          </p>
+                        </div>
+
+                        {/* Numbers Grid - Horizontal */}
+                        <div className="flex gap-2 overflow-x-auto pb-2">
+                          <div className="flex-1 min-w-[80px] bg-muted/50 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold">{mirror.transaction.data.calculation_details.total_calendar_days}</p>
+                            <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'تقويمي' : 'Calendar'}</p>
+                          </div>
+                          <div className="flex-1 min-w-[80px] bg-emerald-100 dark:bg-emerald-900/30 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{mirror.transaction.data.calculation_details.working_days}</p>
+                            <p className="text-[10px] text-emerald-600">{lang === 'ar' ? 'عمل' : 'Work'}</p>
+                          </div>
+                          <div className="flex-1 min-w-[80px] bg-amber-100 dark:bg-amber-900/30 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{mirror.transaction.data.calculation_details.excluded_fridays?.length || 0}</p>
+                            <p className="text-[10px] text-amber-600">{lang === 'ar' ? 'جمعة' : 'Fri'}</p>
+                          </div>
+                          <div className="flex-1 min-w-[80px] bg-red-100 dark:bg-red-900/30 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-red-700 dark:text-red-400">{mirror.transaction.data.calculation_details.excluded_holidays?.length || 0}</p>
+                            <p className="text-[10px] text-red-600">{lang === 'ar' ? 'إجازة' : 'Holiday'}</p>
+                          </div>
+                        </div>
+
+                        {/* Excluded Holidays */}
+                        {mirror.transaction.data.calculation_details.excluded_holidays?.length > 0 && (
+                          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 border border-red-200 dark:border-red-800">
+                            <h4 className="text-xs font-semibold text-red-800 dark:text-red-200 mb-2 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                              {lang === 'ar' ? 'الإجازات الرسمية المستثناة:' : 'Excluded Holidays:'}
+                            </h4>
+                            <div className="space-y-1">
+                              {mirror.transaction.data.calculation_details.excluded_holidays.map((h, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-white dark:bg-red-950/30 rounded px-2 py-1.5 text-xs">
+                                  <span className="font-medium text-red-700 dark:text-red-300">{h.name}</span>
+                                  <span className="text-red-600 dark:text-red-400 font-mono">{h.date}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* No holidays */}
+                        {(!mirror.transaction.data.calculation_details.excluded_holidays || mirror.transaction.data.calculation_details.excluded_holidays.length === 0) && (
+                          <div className="text-center text-xs text-emerald-600 py-2">
+                            {lang === 'ar' ? 'لا توجد إجازات رسمية ضمن الفترة' : 'No public holidays in period'}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Before/After */}
                   <Card className="border border-border shadow-none" data-testid="before-after-card">
                     <CardHeader className="pb-2"><CardTitle className="text-sm">{t('stas.beforeAfter')}</CardTitle></CardHeader>
