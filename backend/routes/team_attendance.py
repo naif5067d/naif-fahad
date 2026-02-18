@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 from database import db
 from utils.auth import get_current_user, require_roles
 
-router = APIRouter(prefix="/team-attendance", tags=["Team Attendance"])
+router = APIRouter(prefix="/api/team-attendance", tags=["Team Attendance"])
 
 
 class StatusUpdateRequest(BaseModel):
