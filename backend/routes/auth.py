@@ -72,9 +72,9 @@ async def login(req: LoginRequest):
         "user_id": user['id'],
         "role": user['role'],
         "username": user['username'],
-        "full_name": user['full_name']
         "full_name": user['full_name'],
         "employee_id": user.get('employee_id')
+    })
 
     return {
         "token": token,
