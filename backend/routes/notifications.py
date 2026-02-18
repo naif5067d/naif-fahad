@@ -298,3 +298,285 @@ async def get_carryover_history(
     ).sort("created_at", -1).to_list(100)
     
     return history
+
+
+
+# ============================================================
+# نظام الإشعارات الشامل
+# ============================================================
+
+@router.get("/my")
+async def get_my_notifications(
+    unread_only: bool = False,
+    limit: int = 50,
+    user=Depends(get_current_user)
+):
+    """
+    جلب إشعارات المستخدم الحالي
+    يعمل لجميع الأدوار
+    """
+    user_id = user['user_id']
+    
+    # جلب الإشعارات الموجهة للمستخدم مباشرة أو لدوره
+    query = {
+        "$or": [
+            {"recipient_id": user_id},
+            {"recipient_role": user.get('role')}
+        ]
+    }
+    if unread_only:
+        query["is_read"] = False
+    
+    notifications = await db.notifications.find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).to_list(limit)
+    
+    # عدد غير المقروءة
+    unread_count = await db.notifications.count_documents({
+        "$or": [
+            {"recipient_id": user_id},
+            {"recipient_role": user.get('role')}
+        ],
+        "is_read": False
+    })
+    
+    return {
+        "notifications": notifications,
+        "unread_count": unread_count,
+        "total": len(notifications)
+    }
+
+
+@router.get("/unread-count")
+async def get_my_unread_count(user=Depends(get_current_user)):
+    """
+    عدد الإشعارات غير المقروءة
+    يُستخدم لتحديث أيقونة الجرس
+    """
+    user_id = user['user_id']
+    
+    count = await db.notifications.count_documents({
+        "$or": [
+            {"recipient_id": user_id},
+            {"recipient_role": user.get('role')}
+        ],
+        "is_read": False
+    })
+    
+    # جلب أحدث 3 إشعارات للـ preview
+    recent = await db.notifications.find(
+        {
+            "$or": [
+                {"recipient_id": user_id},
+                {"recipient_role": user.get('role')}
+            ],
+            "is_read": False
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(3)
+    
+    return {
+        "count": count,
+        "has_critical": any(n.get('priority') == 'critical' for n in recent),
+        "recent_preview": recent
+    }
+
+
+@router.patch("/{notification_id}/read")
+async def mark_as_read(notification_id: str, user=Depends(get_current_user)):
+    """
+    تحديد إشعار كمقروء
+    """
+    user_id = user['user_id']
+    now = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.notifications.update_one(
+        {
+            "id": notification_id,
+            "$or": [
+                {"recipient_id": user_id},
+                {"recipient_role": user.get('role')}
+            ]
+        },
+        {"$set": {"is_read": True, "read_at": now}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="الإشعار غير موجود")
+    
+    return {"message": "تم تحديد الإشعار كمقروء"}
+
+
+@router.post("/mark-all-read")
+async def mark_all_as_read(user=Depends(get_current_user)):
+    """
+    تحديد جميع الإشعارات كمقروءة
+    """
+    user_id = user['user_id']
+    now = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.notifications.update_many(
+        {
+            "$or": [
+                {"recipient_id": user_id},
+                {"recipient_role": user.get('role')}
+            ],
+            "is_read": False
+        },
+        {"$set": {"is_read": True, "read_at": now}}
+    )
+    
+    return {
+        "message": "تم تحديد جميع الإشعارات كمقروءة",
+        "count": result.modified_count
+    }
+
+
+@router.delete("/{notification_id}")
+async def delete_notification(notification_id: str, user=Depends(get_current_user)):
+    """
+    حذف إشعار
+    """
+    user_id = user['user_id']
+    
+    result = await db.notifications.delete_one({
+        "id": notification_id,
+        "$or": [
+            {"recipient_id": user_id},
+            {"recipient_role": user.get('role')}
+        ]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الإشعار غير موجود")
+    
+    return {"message": "تم حذف الإشعار"}
+
+
+# ============================================================
+# الجرس الشامل - Header Bell
+# ============================================================
+
+@router.get("/bell")
+async def get_bell_notifications(user=Depends(get_current_user)):
+    """
+    جلب بيانات الجرس الشامل
+    يجمع جميع أنواع الإشعارات للمستخدم
+    """
+    user_id = user['user_id']
+    role = user.get('role')
+    is_admin = role in ['sultan', 'naif', 'stas', 'mohammed', 'salah']
+    
+    result = {
+        "notifications": [],
+        "unread_count": 0,
+        "has_critical": False,
+        "categories": {}
+    }
+    
+    # 1. الإشعارات المخزنة
+    stored_notifications = await db.notifications.find(
+        {
+            "$or": [
+                {"recipient_id": user_id},
+                {"recipient_role": role}
+            ]
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(30)
+    
+    unread_stored = [n for n in stored_notifications if not n.get('is_read')]
+    result["notifications"].extend(stored_notifications[:20])
+    result["unread_count"] += len(unread_stored)
+    
+    # 2. للإدارة: المعاملات المعلقة
+    if is_admin:
+        stage_map = {
+            'sultan': ['pending_ops', 'pending_ceo'],
+            'naif': ['pending_ops'],
+            'stas': ['pending_stas'],
+            'mohammed': ['pending_ceo'],
+            'salah': ['pending_finance']
+        }
+        
+        pending_statuses = stage_map.get(role, [])
+        if pending_statuses:
+            pending_txs = await db.transactions.find(
+                {"status": {"$in": pending_statuses}},
+                {"_id": 0}
+            ).sort("created_at", -1).to_list(10)
+            
+            for tx in pending_txs:
+                # تحقق من عدم وجود إشعار مكرر
+                if not any(n.get('reference_id') == tx.get('id') and n.get('notification_type') == 'transaction_pending' for n in result["notifications"]):
+                    result["notifications"].append({
+                        "id": f"pending-tx-{tx.get('id')}",
+                        "notification_type": "transaction_pending",
+                        "title": "Pending approval",
+                        "title_ar": "بانتظار موافقتك",
+                        "message": f"Ref: {tx.get('ref_no')}",
+                        "message_ar": f"المرجع: {tx.get('ref_no')}",
+                        "priority": "high",
+                        "icon": "FileText",
+                        "color": "#F97316",
+                        "reference_type": "transaction",
+                        "reference_id": tx.get('id'),
+                        "reference_url": f"/transactions/{tx.get('id')}",
+                        "is_read": False,
+                        "is_live": True,
+                        "created_at": tx.get('created_at')
+                    })
+                    result["unread_count"] += 1
+    
+    # 3. للإدارة: تنبيهات العقود (أقل من 30 يوم)
+    if is_admin and role in ['sultan', 'naif', 'stas']:
+        today = datetime.now(timezone.utc).date()
+        cutoff_date = today + timedelta(days=30)
+        today_str = today.strftime('%Y-%m-%d')
+        cutoff_str = cutoff_date.strftime('%Y-%m-%d')
+        
+        expiring = await db.contracts_v2.find({
+            "status": "active",
+            "end_date": {"$ne": None, "$ne": "", "$lte": cutoff_str, "$gte": today_str}
+        }, {"_id": 0}).to_list(5)
+        
+        for contract in expiring:
+            end_date = datetime.strptime(contract['end_date'], '%Y-%m-%d').date()
+            days_remaining = (end_date - today).days
+            
+            if not any(n.get('reference_id') == contract.get('id') and 'contract' in n.get('notification_type', '') for n in result["notifications"]):
+                result["notifications"].append({
+                    "id": f"contract-exp-{contract.get('id')}",
+                    "notification_type": "contract_expiring",
+                    "title": f"Contract expires in {days_remaining} days",
+                    "title_ar": f"عقد ينتهي خلال {days_remaining} يوم",
+                    "message": contract.get('employee_name_ar', contract.get('employee_name', '')),
+                    "message_ar": contract.get('employee_name_ar', contract.get('employee_name', '')),
+                    "priority": "critical" if days_remaining <= 7 else "high",
+                    "icon": "FileWarning",
+                    "color": "#EF4444" if days_remaining <= 7 else "#F59E0B",
+                    "reference_type": "contract",
+                    "reference_id": contract.get('id'),
+                    "reference_url": "/contracts-management",
+                    "is_read": False,
+                    "is_live": True,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "metadata": {"days_remaining": days_remaining}
+                })
+                if days_remaining <= 7:
+                    result["has_critical"] = True
+                result["unread_count"] += 1
+    
+    # ترتيب حسب التاريخ
+    result["notifications"].sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    # تصنيف الإشعارات
+    for notif in result["notifications"]:
+        cat = notif.get('notification_type', 'other').split('_')[0]
+        result["categories"][cat] = result["categories"].get(cat, 0) + 1
+    
+    # فحص الحرجة
+    if any(n.get('priority') == 'critical' for n in result["notifications"][:10]):
+        result["has_critical"] = True
+    
+    return result
