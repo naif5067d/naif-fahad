@@ -145,8 +145,7 @@ async def get_header_alerts(user=Depends(get_current_user)):
     query = {
         "status": "active",
         "end_date": {
-            "$ne": None,
-            "$ne": "",
+            "$nin": [None, ""],
             "$lte": cutoff_str,
             "$gte": today_str
         }
