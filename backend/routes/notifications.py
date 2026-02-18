@@ -483,24 +483,52 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         {"_id": 0}
     ).sort("created_at", -1).to_list(30)
     
-    # تحويل الإشعارات القديمة للبنية الجديدة
+    # تحويل الإشعارات القديمة للبنية الجديدة مع تحسين العرض
     for notif in stored_notifications:
         # التحقق من حالة القراءة (البنية القديمة تستخدم 'read' والجديدة 'is_read')
         is_read = notif.get('is_read', notif.get('read', False))
+        
+        # تحسين عرض اسم الموظف
+        employee_id = notif.get('employee_id', '')
+        employee_name_ar = ''
+        employee_name_en = ''
+        employee_code = ''
+        reference_url = notif.get('reference_url', '')
+        
+        if employee_id:
+            emp = await db.employees.find_one({"id": employee_id}, {"_id": 0, "full_name": 1, "full_name_ar": 1, "employee_code": 1})
+            if emp:
+                employee_name_ar = emp.get('full_name_ar', emp.get('full_name', ''))
+                employee_name_en = emp.get('full_name', '')
+                employee_code = emp.get('employee_code', employee_id)
+                # إنشاء رابط لصفحة الموظف
+                if not reference_url:
+                    reference_url = f"/employees/{employee_id}"
+        
+        # تحسين عنوان ورسالة الإشعار
+        title_ar = notif.get('title_ar', notif.get('message_ar', 'إشعار'))
+        message_ar = notif.get('message_ar', '')
+        
+        # استبدال ID الموظف باسمه في الرسالة
+        if employee_id and employee_name_ar:
+            title_ar = title_ar.replace(employee_id, f"{employee_name_ar} ({employee_code})")
+            message_ar = message_ar.replace(employee_id, f"{employee_name_ar} ({employee_code})")
         
         formatted = {
             "id": notif.get('id'),
             "notification_type": notif.get('notification_type', notif.get('type', 'system')),
             "title": notif.get('title', notif.get('message_en', 'Notification')),
-            "title_ar": notif.get('title_ar', notif.get('message_ar', 'إشعار')),
+            "title_ar": title_ar,
             "message": notif.get('message', notif.get('message_en', '')),
-            "message_ar": notif.get('message_ar', ''),
+            "message_ar": message_ar,
             "priority": notif.get('priority', 'normal'),
-            "icon": notif.get('icon', 'Bell'),
-            "color": notif.get('color', '#6B7280'),
-            "reference_type": notif.get('reference_type', ''),
-            "reference_id": notif.get('reference_id', notif.get('transaction_id', '')),
-            "reference_url": notif.get('reference_url', ''),
+            "icon": notif.get('icon', 'AlertTriangle'),
+            "color": notif.get('color', '#F59E0B'),
+            "reference_type": notif.get('reference_type', 'employee'),
+            "reference_id": notif.get('reference_id', notif.get('transaction_id', employee_id)),
+            "reference_url": reference_url,
+            "employee_name_ar": employee_name_ar,
+            "employee_code": employee_code,
             "is_read": is_read,
             "created_at": notif.get('created_at', '')
         }
