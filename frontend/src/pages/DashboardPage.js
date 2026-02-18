@@ -225,9 +225,18 @@ export default function DashboardPage() {
           <div className="p-5 space-y-4">
             {/* Employee Header */}
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                {(lang === 'ar' ? user?.full_name_ar : user?.full_name)?.[0] || 'U'}
-              </div>
+              {/* Profile Photo or Initial */}
+              {employeeSummary.employee?.photo_url ? (
+                <img 
+                  src={employeeSummary.employee.photo_url}
+                  alt={lang === 'ar' ? user?.full_name_ar : user?.full_name}
+                  className="w-16 h-16 rounded-2xl object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
+                  {(lang === 'ar' ? user?.full_name_ar : user?.full_name)?.[0] || 'U'}
+                </div>
+              )}
               <div className="flex-1">
                 <h3 className="text-lg font-bold">
                   {lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name}
