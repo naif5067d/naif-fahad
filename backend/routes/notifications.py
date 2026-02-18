@@ -48,8 +48,7 @@ async def get_expiring_contracts(
     query = {
         "status": "active",
         "end_date": {
-            "$ne": None,
-            "$ne": "",
+            "$nin": [None, ""],
             "$lte": cutoff_str,
             "$gte": today_str
         }
