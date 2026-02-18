@@ -1091,3 +1091,94 @@ available_balance = earned_to_date - used_executed
 - ✅ زر تعديل الصورة مرئي لـ STAS
 - ✅ زر تعديل الصورة مخفي عن المستخدمين الآخرين
 - ✅ نافذة تعديل الصورة تعمل بشكل صحيح
+
+
+
+### Phase 21: Daily Attendance Engine Fix & Automation ✅ (2026-02-18)
+
+**المشكلة المُصلحة:**
+- أسماء الحقول في الكود (`work_start_time`) لا تتطابق مع قاعدة البيانات (`work_start`)
+- تحويل التوقيت من UTC إلى توقيت الرياض كان خاطئاً
+
+**الإصلاحات:**
+1. **تصحيح أسماء الحقول في day_resolver.py و day_resolver_v2.py:**
+   - `work_start` بدلاً من `work_start_time`
+   - `work_end` بدلاً من `work_end_time`
+   - `grace_checkin_minutes` بدلاً من `grace_period_checkin_minutes`
+   - `grace_checkout_minutes` بدلاً من `grace_period_checkout_minutes`
+
+2. **تصحيح تحويل التوقيت:**
+   - إضافة `from zoneinfo import ZoneInfo`
+   - استخدام `RIYADH_TZ = ZoneInfo("Asia/Riyadh")`
+   - تحويل أوقات البصمة من UTC إلى توقيت الرياض قبل المقارنة
+
+3. **تصحيح فحص عطلة نهاية الأسبوع:**
+   - قراءة `work_days` كـ object (ليس array)
+   - فحص اليوم: إذا `work_days[day_name] == false` فهو عطلة
+
+4. **أتمتة الوظائف (APScheduler):**
+   - وظيفة يومية: 1:00 صباحاً (توقيت الرياض) = 22:00 UTC
+   - وظيفة شهرية: 3:00 صباحاً (توقيت الرياض) في أول كل شهر
+   - ملف: `/app/backend/services/scheduler.py`
+
+5. **حد "نسيان البصمة" (3 طلبات شهرياً):**
+   - API جديد: `POST /api/attendance-engine/forgotten-punch`
+   - التحقق من عدد الطلبات المقبولة في الشهر الحالي
+   - رفض الطلب إذا تجاوز 3 طلبات (القاعدة مخفية عن الموظف)
+
+**الملفات المُعدلة:**
+- `/app/backend/services/day_resolver.py`
+- `/app/backend/services/day_resolver_v2.py`
+- `/app/backend/services/scheduler.py` (جديد)
+- `/app/backend/routes/attendance_engine.py`
+- `/app/backend/server.py`
+
+**الاختبارات (iteration_29):**
+- ✅ Day Resolver V2 يعمل مع trace evidence
+- ✅ تحويل التوقيت إلى الرياض يعمل
+- ✅ APIs ماليّاتي تعمل (summary, deductions, warnings)
+- ✅ لوحة الموظف تعرض ساعات العمل وساعات النقص
+- ✅ رابط ماليّاتي في القائمة الجانبية
+- ✅ APScheduler مُهيأ بشكل صحيح
+
+---
+
+## Backlog (P1/P2)
+
+### P1 Tasks:
+1. **مرآة STAS للخصومات:** عرض trace_log للخصومات المقترحة في صفحة STAS Mirror
+2. **واجهة مراجعة/تنفيذ الخصومات:** للمدراء (sultan/naif) و STAS
+3. **ربط صفحة ماليّاتي بـ APIs فعلية:** عرض الخصومات والإنذارات الفعلية
+
+### P2 Tasks:
+1. لوحة تحكم CEO
+2. نظام القروض
+3. تقارير PDF للمعاملات
+4. منع الخصومات من تجاوز 50% من الراتب
+5. نظام التحذيرات التدريجي
+
+---
+
+## API Endpoints Reference
+
+### Attendance Engine
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/attendance-engine/resolve-day` | تحليل يوم لموظف |
+| POST | `/api/attendance-engine/resolve-bulk` | تحليل يوم لجميع الموظفين |
+| POST | `/api/attendance-engine/process-daily` | التحضير اليومي التلقائي |
+| GET | `/api/attendance-engine/daily-status/{emp}/{date}` | حالة يوم محدد |
+| GET | `/api/attendance-engine/daily-status-range/{emp}` | حالة فترة |
+| GET | `/api/attendance-engine/monthly-hours/{emp}/{month}` | ساعات الشهر |
+| GET | `/api/attendance-engine/my-finances/summary` | ملخص ماليّاتي |
+| GET | `/api/attendance-engine/my-finances/deductions` | قائمة الخصومات |
+| GET | `/api/attendance-engine/my-finances/warnings` | قائمة الإنذارات |
+| POST | `/api/attendance-engine/forgotten-punch` | طلب نسيان بصمة |
+| GET | `/api/attendance-engine/forgotten-punch/pending` | الطلبات المعلقة |
+
+### Jobs (Automated)
+| Schedule | Job | Description |
+|----------|-----|-------------|
+| 22:00 UTC | Daily Attendance | معالجة حضور الأمس |
+| 00:00 UTC (1st) | Monthly Summary | ملخص الشهر السابق |
+
