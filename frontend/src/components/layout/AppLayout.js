@@ -32,7 +32,7 @@ const PATHS = {
   attendance: '/attendance', contracts: '/contracts',
   contractsManagement: '/contracts-management', settlement: '/settlement', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
-  systemMaintenance: '/system-maintenance', myFinances: '/my-finances',
+  systemMaintenance: '/system-maintenance', myFinances: '/my-finances', teamAttendance: '/team-attendance',
 };
 
 const ROLE_COLORS = {
