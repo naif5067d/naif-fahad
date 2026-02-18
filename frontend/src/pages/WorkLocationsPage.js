@@ -169,6 +169,7 @@ export default function WorkLocationsPage() {
       work_end: '17:00',
       grace_checkin_minutes: 0,
       grace_checkout_minutes: 0,
+      allow_early_checkin_minutes: 0,
       work_days: {
         saturday: true,
         sunday: true,
