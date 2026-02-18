@@ -8,7 +8,8 @@ export const translations = {
       logout: "Logout", profile: "Profile", workLocations: "Work Locations",
       custody: "Tangible Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
-      myFinances: "My Finances", teamAttendance: "Team Attendance", penalties: "Penalties"
+      myFinances: "My Finances", teamAttendance: "Team Attendance", penalties: "Penalties",
+      attendancePenalties: "Attendance & Penalties"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
