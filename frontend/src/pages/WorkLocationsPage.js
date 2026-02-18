@@ -150,6 +150,7 @@ export default function WorkLocationsPage() {
       work_end: location.work_end,
       grace_checkin_minutes: location.grace_checkin_minutes || 0,
       grace_checkout_minutes: location.grace_checkout_minutes || 0,
+      allow_early_checkin_minutes: location.allow_early_checkin_minutes || 0,
       work_days: location.work_days,
       assigned_employees: location.assigned_employees || [],
     });
