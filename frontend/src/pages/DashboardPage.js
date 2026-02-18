@@ -227,78 +227,197 @@ export default function DashboardPage() {
 
       {/* Employee Personal Card - Shown to anyone with employee_id */}
       {hasEmployeeCard && employeeSummary && (
-        <div className="card-premium rounded-2xl overflow-hidden" data-testid="employee-personal-card">
-          <div className="p-5 space-y-4">
-            {/* Employee Header */}
-            <div className="flex items-center gap-4">
-              {/* Profile Photo or Initial */}
-              {employeeSummary.employee?.photo_url ? (
-                <img 
-                  src={employeeSummary.employee.photo_url}
-                  alt={lang === 'ar' ? user?.full_name_ar : user?.full_name}
-                  className="w-16 h-16 rounded-2xl object-cover"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                  {(lang === 'ar' ? user?.full_name_ar : user?.full_name)?.[0] || 'U'}
+        <div className="space-y-4" data-testid="employee-personal-card">
+          {/* Main Employee Card - Premium Design */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+            </div>
+            
+            <div className="relative p-6">
+              {/* Header with Profile */}
+              <div className="flex items-start gap-4 mb-6">
+                {/* Profile Photo */}
+                <div className="relative">
+                  {employeeSummary.employee?.photo_url ? (
+                    <img 
+                      src={employeeSummary.employee.photo_url}
+                      alt={lang === 'ar' ? user?.full_name_ar : user?.full_name}
+                      className="w-20 h-20 rounded-2xl object-cover ring-2 ring-white/20"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-3xl font-bold">
+                      {(lang === 'ar' ? user?.full_name_ar : user?.full_name)?.[0] || 'U'}
+                    </div>
+                  )}
+                  {/* Status Indicator */}
+                  <span className={`absolute -bottom-1 -end-1 w-5 h-5 rounded-full border-2 border-slate-900 ${
+                    user?.is_active !== false ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                </div>
+                
+                {/* Name & Role */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles size={14} className="text-amber-400" />
+                    <span className="text-xs text-amber-400 font-medium">
+                      {lang === 'ar' ? 'مرحباً بك' : 'Welcome back'}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold truncate">
+                    {lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name}
+                  </h3>
+                  <p className="text-sm text-white/70 truncate">
+                    {lang === 'ar' ? employeeSummary.contract?.job_title_ar : employeeSummary.contract?.job_title}
+                  </p>
+                  <p className="text-xs text-white/50">
+                    {lang === 'ar' ? employeeSummary.contract?.department_ar : employeeSummary.contract?.department}
+                  </p>
+                </div>
+                
+                {/* Service Years Badge */}
+                <div className="text-center px-3 py-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <Award size={20} className="mx-auto text-amber-400 mb-1" />
+                  <p className="text-lg font-bold">{employeeSummary.service_info?.years_display || '0'}</p>
+                  <p className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {lang === 'ar' ? 'سنوات' : 'Years'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Quick Stats Grid */}
+              <div className="grid grid-cols-4 gap-3">
+                {/* Leave Balance */}
+                <div className="text-center p-3 bg-white/5 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+                     onClick={() => navigate('/leave')}>
+                  <CalendarDays size={18} className="mx-auto mb-1 text-blue-400" />
+                  <p className="text-xl font-bold">{employeeSummary.leave_details?.balance || 0}</p>
+                  <p className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {lang === 'ar' ? 'رصيد الإجازة' : 'Leave'}
+                  </p>
+                </div>
+                
+                {/* Today Status */}
+                <div className="text-center p-3 bg-white/5 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+                     onClick={() => navigate('/attendance')}>
+                  {employeeSummary.attendance?.today_status === 'present' ? (
+                    <CheckCircle2 size={18} className="mx-auto mb-1 text-green-400" />
+                  ) : (
+                    <Clock size={18} className="mx-auto mb-1 text-amber-400" />
+                  )}
+                  <p className="text-sm font-bold">
+                    {employeeSummary.attendance?.today_status === 'present' 
+                      ? (lang === 'ar' ? 'حاضر' : 'Present')
+                      : (lang === 'ar' ? 'غير مسجل' : 'Not yet')}
+                  </p>
+                  <p className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {lang === 'ar' ? 'اليوم' : 'Today'}
+                  </p>
+                </div>
+                
+                {/* Monthly Hours */}
+                <div className="text-center p-3 bg-white/5 rounded-xl backdrop-blur-sm">
+                  <Timer size={18} className="mx-auto mb-1 text-purple-400" />
+                  <p className="text-xl font-bold">{employeeSummary.attendance?.monthly_hours || 0}</p>
+                  <p className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {lang === 'ar' ? 'ساعات الشهر' : 'Hours'}
+                  </p>
+                </div>
+                
+                {/* Pending Transactions */}
+                <div className="text-center p-3 bg-white/5 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-colors cursor-pointer"
+                     onClick={() => navigate('/transactions')}>
+                  <FileText size={18} className="mx-auto mb-1 text-orange-400" />
+                  <p className="text-xl font-bold">{employeeSummary.pending_transactions || 0}</p>
+                  <p className="text-[9px] text-white/60 uppercase tracking-wider">
+                    {lang === 'ar' ? 'معاملات' : 'Pending'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Contract End Date */}
+              {employeeSummary.contract?.end_date && (
+                <div className="mt-4 flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl">
+                  <div className="flex items-center gap-2 text-white/70">
+                    <Briefcase size={14} />
+                    <span>{lang === 'ar' ? 'انتهاء العقد' : 'Contract ends'}</span>
+                  </div>
+                  <span className="font-medium text-white/90">{employeeSummary.contract.end_date}</span>
                 </div>
               )}
-              <div className="flex-1">
-                <h3 className="text-lg font-bold">
-                  {lang === 'ar' ? (user?.full_name_ar || user?.full_name) : user?.full_name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {lang === 'ar' ? employeeSummary.contract?.job_title_ar : employeeSummary.contract?.job_title}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {lang === 'ar' ? employeeSummary.contract?.department_ar : employeeSummary.contract?.department}
-                </p>
-              </div>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user?.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
-                {user?.is_active !== false ? (lang === 'ar' ? 'نشط' : 'Active') : (lang === 'ar' ? 'غير نشط' : 'Inactive')}
-              </span>
             </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 bg-muted/50 rounded-xl">
-                <CalendarDays size={20} className="mx-auto mb-1 text-primary" />
-                <p className="text-xl font-bold text-primary">{employeeSummary.leave_details?.balance || 0}</p>
-                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'رصيد الإجازة' : 'Leave Balance'}</p>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-xl">
-                <Award size={20} className="mx-auto mb-1 text-amber-500" />
-                <p className="text-xl font-bold text-amber-600">{employeeSummary.service_info?.years_display || '0'}</p>
-                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'سنوات الخدمة' : 'Service Years'}</p>
-              </div>
-              <div className="text-center p-3 bg-muted/50 rounded-xl">
-                <Clock size={20} className="mx-auto mb-1 text-green-500" />
-                <p className="text-xl font-bold">
-                  {employeeSummary.attendance?.today_status === 'present' ? (
-                    <CheckCircle2 size={24} className="mx-auto text-green-500" />
-                  ) : (
-                    <AlertTriangleIcon size={24} className="mx-auto text-amber-500" />
-                  )}
-                </p>
-                <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'حضور اليوم' : 'Today'}</p>
-              </div>
-            </div>
-
-            {/* Contract Info Summary */}
-            {employeeSummary.contract && (
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Briefcase size={14} />
-                  <span>{lang === 'ar' ? 'انتهاء العقد:' : 'Contract ends:'}</span>
-                </div>
-                <span className="font-medium">
-                  {employeeSummary.contract.end_date || (lang === 'ar' ? 'غير محدد' : 'Unlimited')}
-                </span>
-              </div>
-            )}
           </div>
+          
+          {/* Actions & Deductions Section */}
+          {(employeeSummary.deductions?.length > 0 || employeeSummary.warnings?.length > 0 || employeeSummary.attendance_issues?.length > 0) && (
+            <div className="card-premium rounded-2xl overflow-hidden" data-testid="employee-actions-card">
+              <div className="px-4 py-3 border-b border-border bg-red-50/50 dark:bg-red-950/20">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} className="text-red-500" />
+                  <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                    {lang === 'ar' ? 'الإجراءات والخصومات' : 'Actions & Deductions'}
+                  </h4>
+                </div>
+              </div>
+              
+              <div className="p-4 space-y-3">
+                {/* Warnings */}
+                {employeeSummary.warnings?.map((warning, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <AlertTriangleIcon size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                        {lang === 'ar' ? `إنذار ${warning.level === 1 ? 'أول' : warning.level === 2 ? 'ثاني' : 'ثالث'}` : `Warning #${warning.level}`}
+                      </p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{warning.reason_ar || warning.reason}</p>
+                      <p className="text-[10px] text-amber-500 mt-1">{warning.date}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Deductions */}
+                {employeeSummary.deductions?.map((deduction, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-800">
+                    <DollarSign size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                        {lang === 'ar' ? `خصم: ${deduction.amount} ر.س` : `Deduction: ${deduction.amount} SAR`}
+                      </p>
+                      <p className="text-xs text-red-600 dark:text-red-400">{deduction.reason_ar || deduction.reason}</p>
+                      <p className="text-[10px] text-red-500 mt-1">{deduction.date}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Attendance Issues (Late/Absent this month) */}
+                {employeeSummary.attendance_issues?.late_count > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 rounded-xl border border-orange-200 dark:border-orange-800">
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} className="text-orange-500" />
+                      <span className="text-sm text-orange-800 dark:text-orange-300">
+                        {lang === 'ar' ? 'تأخيرات هذا الشهر' : 'Late arrivals this month'}
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-orange-600">{employeeSummary.attendance_issues.late_count}</span>
+                  </div>
+                )}
+                
+                {employeeSummary.attendance_issues?.absent_count > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-800">
+                    <div className="flex items-center gap-2">
+                      <X size={16} className="text-red-500" />
+                      <span className="text-sm text-red-800 dark:text-red-300">
+                        {lang === 'ar' ? 'أيام غياب هذا الشهر' : 'Absences this month'}
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-red-600">{employeeSummary.attendance_issues.absent_count}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
