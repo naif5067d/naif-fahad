@@ -725,3 +725,158 @@ async def get_my_finance_summary(user=Depends(get_current_user)):
             "warning_30_days": absence_pattern['reaches_30_scattered']
         }
     }
+
+
+
+# ==================== FORGOTTEN PUNCH REQUESTS ====================
+
+class ForgottenPunchRequest(BaseModel):
+    date: str  # YYYY-MM-DD
+    punch_type: str  # 'checkin' أو 'checkout'
+    claimed_time: str  # HH:MM (الوقت المدّعى)
+    reason: str
+
+
+@router.post("/forgotten-punch")
+async def request_forgotten_punch(req: ForgottenPunchRequest, user=Depends(get_current_user)):
+    """
+    طلب تسجيل نسيان بصمة
+    - الحد الأقصى: 3 طلبات مقبولة شهرياً
+    - يتم إنشاء الطلب بحالة 'pending'
+    """
+    employee_id = user.get('employee_id')
+    if not employee_id:
+        raise HTTPException(400, "لا يوجد employee_id للمستخدم")
+    
+    # التحقق من الشهر الحالي
+    date_obj = datetime.strptime(req.date, "%Y-%m-%d")
+    current_month = date_obj.month
+    current_year = date_obj.year
+    
+    # عدد الطلبات المقبولة هذا الشهر
+    approved_count = await db.forgotten_punch_requests.count_documents({
+        "employee_id": employee_id,
+        "status": "approved",
+        "$expr": {
+            "$and": [
+                {"$eq": [{"$month": {"$dateFromString": {"dateString": "$date"}}}, current_month]},
+                {"$eq": [{"$year": {"$dateFromString": {"dateString": "$date"}}}, current_year]}
+            ]
+        }
+    })
+    
+    # حد 3 طلبات شهرياً - القاعدة مخفية عن الموظف
+    if approved_count >= 3:
+        raise HTTPException(400, "تم رفض الطلب - يرجى مراجعة مديرك")
+    
+    # إنشاء الطلب
+    request_id = str(uuid.uuid4())
+    await db.forgotten_punch_requests.insert_one({
+        "id": request_id,
+        "employee_id": employee_id,
+        "date": req.date,
+        "punch_type": req.punch_type,
+        "claimed_time": req.claimed_time,
+        "reason": req.reason,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": user.get('id')
+    })
+    
+    return {"success": True, "request_id": request_id, "message_ar": "تم إرسال الطلب بنجاح"}
+
+
+@router.get("/forgotten-punch/pending")
+async def get_pending_forgotten_punch(user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """الحصول على طلبات نسيان البصمة المعلقة"""
+    requests = await db.forgotten_punch_requests.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    # إضافة بيانات الموظف
+    for req in requests:
+        emp = await db.employees.find_one(
+            {"id": req['employee_id']},
+            {"_id": 0, "full_name_ar": 1, "employee_number": 1}
+        )
+        req['employee_name_ar'] = emp.get('full_name_ar', '') if emp else ''
+        req['employee_number'] = emp.get('employee_number', '') if emp else ''
+    
+    return requests
+
+
+@router.post("/forgotten-punch/{request_id}/approve")
+async def approve_forgotten_punch(request_id: str, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """الموافقة على طلب نسيان البصمة"""
+    req = await db.forgotten_punch_requests.find_one(
+        {"id": request_id, "status": "pending"},
+        {"_id": 0}
+    )
+    
+    if not req:
+        raise HTTPException(404, "الطلب غير موجود أو تمت معالجته")
+    
+    # التحقق من الحد الشهري قبل الموافقة
+    date_obj = datetime.strptime(req['date'], "%Y-%m-%d")
+    approved_count = await db.forgotten_punch_requests.count_documents({
+        "employee_id": req['employee_id'],
+        "status": "approved",
+        "$expr": {
+            "$and": [
+                {"$eq": [{"$month": {"$dateFromString": {"dateString": "$date"}}}, date_obj.month]},
+                {"$eq": [{"$year": {"$dateFromString": {"dateString": "$date"}}}, date_obj.year]}
+            ]
+        }
+    })
+    
+    if approved_count >= 3:
+        raise HTTPException(400, "الموظف تجاوز حد الـ 3 طلبات شهرياً")
+    
+    # تحديث الحالة
+    await db.forgotten_punch_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "approved",
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "approved_by": user.get('id')
+        }}
+    )
+    
+    # إعادة معالجة اليوم
+    await resolve_and_save_v2(req['employee_id'], req['date'])
+    
+    return {"success": True, "message_ar": "تمت الموافقة وإعادة المعالجة"}
+
+
+@router.post("/forgotten-punch/{request_id}/reject")
+async def reject_forgotten_punch(request_id: str, user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """رفض طلب نسيان البصمة"""
+    result = await db.forgotten_punch_requests.update_one(
+        {"id": request_id, "status": "pending"},
+        {"$set": {
+            "status": "rejected",
+            "rejected_at": datetime.now(timezone.utc).isoformat(),
+            "rejected_by": user.get('id')
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(404, "الطلب غير موجود أو تمت معالجته")
+    
+    return {"success": True, "message_ar": "تم رفض الطلب"}
+
+
+@router.get("/forgotten-punch/my-requests")
+async def get_my_forgotten_punch_requests(user=Depends(get_current_user)):
+    """الحصول على طلبات نسيان البصمة للموظف الحالي"""
+    employee_id = user.get('employee_id')
+    if not employee_id:
+        return []
+    
+    requests = await db.forgotten_punch_requests.find(
+        {"employee_id": employee_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return requests
