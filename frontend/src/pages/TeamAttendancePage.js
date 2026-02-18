@@ -421,20 +421,31 @@ export default function TeamAttendancePage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b">
+                      <tr className="border-b bg-muted/30">
+                        <th className="text-center p-3 w-12">#</th>
                         {viewMode === 'all' && <th className="text-start p-3">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>}
                         {viewMode === 'single' && <th className="text-start p-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>}
+                        <th className="text-center p-3">{lang === 'ar' ? 'الموقع' : 'Location'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'In'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'السبب' : 'Reason'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'إجراء' : 'Action'}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(viewMode === 'all' ? dailyData : employeeRecord?.daily || []).map((emp, idx) => (
                         <tr key={emp.employee_id + '-' + (emp.date || idx)} className="border-b hover:bg-muted/50">
+                          {/* Quick Check Icon */}
+                          <td className="p-3 text-center">
+                            {['PRESENT', 'LATE', 'ON_LEAVE', 'ON_MISSION', 'HOLIDAY', 'WEEKEND', 'PERMISSION'].includes(emp.final_status) ? (
+                              <CheckCircle className="text-emerald-500 mx-auto" size={20} />
+                            ) : emp.final_status === 'ABSENT' ? (
+                              <XCircle className="text-red-500 mx-auto" size={20} />
+                            ) : (
+                              <AlertTriangle className="text-orange-400 mx-auto" size={18} />
+                            )}
+                          </td>
                           {viewMode === 'all' && (
                             <td className="p-3">
                               <div>
@@ -446,6 +457,13 @@ export default function TeamAttendancePage() {
                           {viewMode === 'single' && (
                             <td className="p-3 font-mono text-sm">{emp.date}</td>
                           )}
+                          {/* Work Location */}
+                          <td className="p-3 text-center">
+                            <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                              <MapPin size={12} />
+                              {emp.work_location_name_ar || emp.work_location_name || (lang === 'ar' ? 'المقر الرئيسي' : 'Main Office')}
+                            </span>
+                          </td>
                           <td className="p-3 text-center">
                             <Badge className={STATUS_COLORS[emp.final_status] || STATUS_COLORS.UNKNOWN}>
                               {STATUS_AR[emp.final_status] || emp.status_ar || emp.final_status}
@@ -461,9 +479,6 @@ export default function TeamAttendancePage() {
                             {emp.late_minutes > 0 && (
                               <span className="text-amber-600 font-medium">{emp.late_minutes} د</span>
                             )}
-                          </td>
-                          <td className="p-3 text-center text-xs text-muted-foreground max-w-[150px] truncate" title={emp.decision_reason_ar}>
-                            {emp.decision_reason_ar?.slice(0, 30) || '-'}
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-1">
