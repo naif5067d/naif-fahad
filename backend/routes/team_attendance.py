@@ -97,11 +97,15 @@ async def get_team_daily(
     # جلب جميع الموظفين النشطين
     employees = await db.employees.find(
         {"is_active": {"$ne": False}},
-        {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "employee_number": 1, "department": 1, "job_title": 1, "job_title_ar": 1}
+        {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "employee_number": 1, "department": 1, "job_title": 1, "job_title_ar": 1, "work_location_id": 1}
     ).to_list(500)
     
     emp_map = {e['id']: e for e in employees}
     emp_ids = list(emp_map.keys())
+    
+    # جلب مواقع العمل
+    work_locations = await db.work_locations.find({}, {"_id": 0}).to_list(100)
+    location_map = {loc.get('id', ''): loc for loc in work_locations}
     
     # جلب السجلات اليومية المحللة
     daily_statuses = await db.daily_status.find(
