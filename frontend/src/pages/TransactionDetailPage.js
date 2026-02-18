@@ -82,11 +82,11 @@ export default function TransactionDetailPage() {
     }
   };
 
-  // Handle STAS actions
-  const handleAction = async (action) => {
+  // Handle approval/rejection actions
+  const handleAction = async (action, note = '') => {
     setActionLoading(true);
     try {
-      await api.post(`/api/transactions/${tx.id}/action`, { action, note: '' });
+      await api.post(`/api/transactions/${tx.id}/action`, { action, note });
       toast.success(lang === 'ar' ? 'تم بنجاح' : 'Success');
       // Refresh transaction
       const res = await api.get(`/api/transactions/${id}`);
@@ -98,26 +98,74 @@ export default function TransactionDetailPage() {
     }
   };
 
-  // Determine what actions STAS can take
-  const getStasActions = () => {
-    if (user?.role !== 'stas' || tx?.status !== 'stas') return null;
+  // Determine what actions the current user can take
+  const getUserActions = () => {
+    if (!tx || !user) return null;
     
-    const rejectionSource = tx?.rejection_source;
-    const ceoRejected = tx?.ceo_rejected;
-    const wasRejected = rejectionSource || ceoRejected;
+    const role = user.role;
+    const status = tx.status;
+    const currentStage = tx.current_stage;
     
-    // If rejected by CEO, show return to CEO
-    // If rejected by sultan/ops, show return to sultan
-    // If not rejected (normal flow), show execute and cancel
+    // STAS actions
+    if (role === 'stas' && status === 'stas') {
+      const rejectionSource = tx.rejection_source;
+      const ceoRejected = tx.ceo_rejected;
+      const wasRejected = rejectionSource || ceoRejected;
+      
+      return {
+        canApprove: !wasRejected,
+        canReject: true,
+        canReturn: wasRejected,
+        returnTo: ceoRejected ? 'ceo' : (rejectionSource === 'ops' || rejectionSource === 'supervisor') ? 'sultan' : null,
+        stageName: 'STAS',
+        isExecute: true
+      };
+    }
     
-    return {
-      canExecute: !wasRejected,
-      canCancel: true,
-      returnTo: ceoRejected ? 'ceo' : (rejectionSource === 'ops' || rejectionSource === 'supervisor') ? 'sultan' : null
-    };
+    // Sultan/Naif - Operations Manager
+    if ((role === 'sultan' || role === 'naif') && status === 'pending_ops') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'مدير العمليات' : 'Operations Manager'
+      };
+    }
+    
+    // Mohammed - CEO
+    if (role === 'mohammed' && status === 'pending_ceo') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: 'CEO'
+      };
+    }
+    
+    // Salah - Finance
+    if (role === 'salah' && status === 'pending_finance') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'المالية' : 'Finance'
+      };
+    }
+    
+    // Supervisor
+    if (role === 'supervisor' && status === 'pending_supervisor') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'المشرف' : 'Supervisor'
+      };
+    }
+    
+    return null;
   };
 
-  const stasActions = tx ? getStasActions() : null;
+  const userActions = tx ? getUserActions() : null;
 
   const getStatusStyle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   
