@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText, DollarSign, Clock, User, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -35,10 +35,22 @@ export default function STASMirrorPage() {
   const [purging, setPurging] = useState(false);
   const [archivedUsers, setArchivedUsers] = useState([]);
 
+  // === Deductions State ===
+  const [pendingDeductions, setPendingDeductions] = useState([]);
+  const [approvedDeductions, setApprovedDeductions] = useState([]);
+  const [selectedDeduction, setSelectedDeduction] = useState(null);
+  const [deductionTrace, setDeductionTrace] = useState(null);
+  const [loadingTrace, setLoadingTrace] = useState(false);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewingDeduction, setReviewingDeduction] = useState(false);
+  const [executingDeduction, setExecutingDeduction] = useState(false);
+  const [expandedDeduction, setExpandedDeduction] = useState(null);
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
     fetchArchivedUsers();
+    fetchDeductions();
   }, []);
 
   const fetchPending = () => {
@@ -51,6 +63,73 @@ export default function STASMirrorPage() {
 
   const fetchArchivedUsers = () => {
     api.get('/api/stas/users/archived').then(r => setArchivedUsers(r.data)).catch(() => {});
+  };
+
+  // === Deductions Functions ===
+  const fetchDeductions = async () => {
+    try {
+      const [pendingRes, approvedRes] = await Promise.all([
+        api.get('/api/attendance-engine/deductions/pending'),
+        api.get('/api/attendance-engine/deductions/approved')
+      ]);
+      setPendingDeductions(pendingRes.data);
+      setApprovedDeductions(approvedRes.data);
+    } catch (err) {
+      console.error('Failed to fetch deductions:', err);
+    }
+  };
+
+  const loadDeductionTrace = async (deduction) => {
+    setSelectedDeduction(deduction);
+    setLoadingTrace(true);
+    try {
+      // Get the daily_status with trace_log
+      const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
+      setDeductionTrace(res.data);
+    } catch (err) {
+      console.error('Failed to load trace:', err);
+      setDeductionTrace(null);
+    } finally {
+      setLoadingTrace(false);
+    }
+  };
+
+  const handleReviewDeduction = async (proposalId, approved) => {
+    setReviewingDeduction(true);
+    try {
+      await api.post(`/api/attendance-engine/deductions/${proposalId}/review`, {
+        approved,
+        note: reviewNote
+      });
+      toast.success(approved 
+        ? (lang === 'ar' ? 'تمت الموافقة على مقترح الخصم' : 'Deduction proposal approved')
+        : (lang === 'ar' ? 'تم رفض مقترح الخصم' : 'Deduction proposal rejected')
+      );
+      setReviewNote('');
+      setSelectedDeduction(null);
+      fetchDeductions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to review deduction');
+    } finally {
+      setReviewingDeduction(false);
+    }
+  };
+
+  const handleExecuteDeduction = async (proposalId) => {
+    setExecutingDeduction(true);
+    try {
+      await api.post(`/api/attendance-engine/deductions/${proposalId}/execute`, {
+        note: reviewNote
+      });
+      toast.success(lang === 'ar' ? 'تم تنفيذ الخصم بنجاح' : 'Deduction executed successfully');
+      setReviewNote('');
+      setSelectedDeduction(null);
+      fetchDeductions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to execute deduction');
+    } finally {
+      setExecutingDeduction(false);
+    }
   };
 
   const loadMirror = async (txId) => {
