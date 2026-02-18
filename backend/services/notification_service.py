@@ -93,8 +93,8 @@ async def notify_transaction_submitted(transaction: dict, submitter_name: str):
         await create_notification(
             recipient_id=user['id'],
             notification_type=NotificationType.TRANSACTION_PENDING,
-            title=f"New transaction pending your approval",
-            title_ar=f"معاملة جديدة بانتظار موافقتك",
+            title="New transaction pending your approval",
+            title_ar="معاملة جديدة بانتظار موافقتك",
             message=f"{tx_type_ar} from {submitter_name} - Ref: {transaction.get('ref_no')}",
             message_ar=f"{tx_type_ar} من {submitter_name} - المرجع: {transaction.get('ref_no')}",
             priority=NotificationPriority.HIGH,
@@ -122,8 +122,8 @@ async def notify_transaction_approved(transaction: dict, employee_id: str, appro
     await create_notification(
         recipient_id=employee['user_id'],
         notification_type=NotificationType.TRANSACTION_APPROVED,
-        title=f"Your request has been approved",
-        title_ar=f"تمت الموافقة على طلبك",
+        title="Your request has been approved",
+        title_ar="تمت الموافقة على طلبك",
         message=f"{tx_type_ar} ({transaction.get('ref_no')}) approved by {approver_name}",
         message_ar=f"{tx_type_ar} ({transaction.get('ref_no')}) تمت الموافقة عليه من {approver_name}",
         priority=NotificationPriority.NORMAL,
@@ -148,8 +148,8 @@ async def notify_transaction_rejected(transaction: dict, employee_id: str, rejec
     await create_notification(
         recipient_id=employee['user_id'],
         notification_type=NotificationType.TRANSACTION_REJECTED,
-        title=f"Your request has been rejected",
-        title_ar=f"تم رفض طلبك",
+        title="Your request has been rejected",
+        title_ar="تم رفض طلبك",
         message=f"{tx_type_ar} ({transaction.get('ref_no')}) rejected. {reason}",
         message_ar=f"{tx_type_ar} ({transaction.get('ref_no')}) تم رفضه. {reason}",
         priority=NotificationPriority.HIGH,
@@ -175,8 +175,8 @@ async def notify_transaction_executed(transaction: dict, employee_id: str):
     await create_notification(
         recipient_id=employee['user_id'],
         notification_type=NotificationType.TRANSACTION_EXECUTED,
-        title=f"Your request has been executed",
-        title_ar=f"تم تنفيذ طلبك",
+        title="Your request has been executed",
+        title_ar="تم تنفيذ طلبك",
         message=f"{tx_type_ar} ({transaction.get('ref_no')}) has been executed by STAS",
         message_ar=f"{tx_type_ar} ({transaction.get('ref_no')}) تم تنفيذه من ستاس",
         priority=NotificationPriority.NORMAL,
@@ -199,15 +199,15 @@ async def notify_deduction_proposed(employee_id: str, deduction: dict):
         await create_notification(
             recipient_id=admin['id'],
             notification_type=NotificationType.DEDUCTION_PROPOSED,
-            title=f"New deduction proposal",
-            title_ar=f"مقترح خصم جديد",
+            title="New deduction proposal",
+            title_ar="مقترح خصم جديد",
             message=f"Deduction for {employee_name}: {deduction.get('amount')} SAR",
             message_ar=f"خصم على {employee_name}: {deduction.get('amount')} ر.س - {deduction.get('reason_ar', '')}",
             priority=NotificationPriority.HIGH,
             recipient_role=admin['role'],
             reference_type="deduction",
             reference_id=deduction.get('id'),
-            reference_url=f"/deductions",
+            reference_url="/deductions",
             metadata={"employee_id": employee_id, "amount": deduction.get('amount')}
         )
 
@@ -221,14 +221,14 @@ async def notify_deduction_executed(employee_id: str, deduction: dict):
     await create_notification(
         recipient_id=employee['user_id'],
         notification_type=NotificationType.DEDUCTION_EXECUTED,
-        title=f"Deduction applied",
-        title_ar=f"تم تطبيق خصم",
+        title="Deduction applied",
+        title_ar="تم تطبيق خصم",
         message=f"A deduction of {deduction.get('amount')} SAR has been applied to your account",
         message_ar=f"تم خصم {deduction.get('amount')} ر.س من حسابك - {deduction.get('reason_ar', '')}",
         priority=NotificationPriority.HIGH,
         reference_type="deduction",
         reference_id=deduction.get('id'),
-        reference_url=f"/",
+        reference_url="/",
         metadata={"amount": deduction.get('amount'), "reason": deduction.get('reason_ar')}
     )
 
