@@ -105,6 +105,11 @@ export default function DashboardPage() {
 
   const role = user?.role || 'employee';
   const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
+  const isEmployee = role === 'employee' || role === 'supervisor';
+  
+  // بيانات ملخص الموظف للبطاقة الشخصية
+  const [employeeSummary, setEmployeeSummary] = useState(null);
+  const [loadingEmployeeSummary, setLoadingEmployeeSummary] = useState(false);
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => {});
