@@ -339,6 +339,8 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     # Approve: move to next stage in workflow
     workflow = tx.get('workflow', [])
     next_stage = get_next_stage(workflow, stage)
+    emp_id = tx.get('employee_id')
+    approver_name = user.get('full_name_ar', user.get('full_name', user['username']))
 
     if next_stage:
         # For STAS stage, status is just "stas" not "pending_stas"
@@ -350,6 +352,11 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                 "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
             }
         )
+        
+        # إرسال إشعار للموظف بالموافقة
+        if emp_id:
+            await notify_transaction_approved(tx, emp_id, approver_name)
+        
         return {"message": f"Approved. Moved to {next_stage}", "status": next_status, "current_stage": next_stage}
     else:
         # Final stage is STAS - status is "stas" not "pending_stas"
@@ -360,6 +367,11 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                 "$push": {"timeline": timeline_event, "approval_chain": approval_entry}
             }
         )
+        
+        # إرسال إشعار للموظف بالموافقة
+        if emp_id:
+            await notify_transaction_approved(tx, emp_id, approver_name)
+        
         return {"message": "Approved. Ready for STAS execution", "status": "stas"}
 
 
