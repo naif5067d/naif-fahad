@@ -124,7 +124,16 @@ export default function DashboardPage() {
         .then(r => setExpiringContracts(r.data))
         .catch(() => {});
     }
-  }, [isAdmin]);
+    
+    // جلب ملخص الموظف للموظفين العاديين
+    if (isEmployee && user?.employee_id) {
+      setLoadingEmployeeSummary(true);
+      api.get(`/api/employees/${user.employee_id}/summary`)
+        .then(r => setEmployeeSummary(r.data))
+        .catch(() => {})
+        .finally(() => setLoadingEmployeeSummary(false));
+    }
+  }, [isAdmin, isEmployee, user?.employee_id]);
 
   const dismissAnnouncement = async (id) => {
     try {
