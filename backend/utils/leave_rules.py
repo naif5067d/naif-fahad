@@ -134,11 +134,22 @@ async def check_date_overlap(employee_id: str, start_date: str, end_date: str, e
 
 
 async def get_all_holidays() -> list:
-    """Get all holidays (system + manual)"""
+    """Get all holidays dates only (for backward compatibility)"""
     system_holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(500)
     manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(500)
     
     return [h['date'] for h in system_holidays] + [h['date'] for h in manual_holidays]
+
+
+async def get_all_holidays_with_names() -> tuple:
+    """Get all holidays with full details (date + name)"""
+    system_holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(500)
+    manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(500)
+    
+    all_holidays_data = system_holidays + manual_holidays
+    all_dates = [h['date'] for h in all_holidays_data]
+    
+    return all_dates, all_holidays_data
 
 
 def count_working_days(start_str: str, end_str: str, holidays: list, saturday_working: bool = False) -> int:
