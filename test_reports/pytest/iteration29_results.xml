@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="15" time="4.784" timestamp="2026-02-18T23:14:52.797129+00:00" hostname="agent-env-117ba718-2566-45aa-ac46-825df95977d9"><testcase classname="backend.tests.test_iteration29_attendance_engine.TestHealthCheck" name="test_api_health" time="0.291" /><testcase classname="backend.tests.test_iteration29_attendance_engine.TestDayResolver" name="test_resolve_day_for_employee" time="0.368"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:73: in test_resolve_day_for_employee
+    assert emp_resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestDayResolver" name="test_resolve_day_returns_trace_log" time="0.495"><failure message="TypeError: string indices must be integers, not 'str'">backend/tests/test_iteration29_attendance_engine.py:108: in test_resolve_day_returns_trace_log
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/test_iteration29_attendance_engine.py:108: in &lt;genexpr&gt;
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+                                             ^^^^^^^
+E   TypeError: string indices must be integers, not 'str'</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestProcessDaily" name="test_process_daily_endpoint" time="0.267"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:151: in test_process_daily_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestProcessDaily" name="test_process_daily_excludes_admin_users" time="0.307" /><testcase classname="backend.tests.test_iteration29_attendance_engine.TestMyFinances" name="test_my_finances_summary_endpoint" time="0.274"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:191: in test_my_finances_summary_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestMyFinances" name="test_my_finances_deductions_endpoint" time="0.260"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:222: in test_my_finances_deductions_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestMyFinances" name="test_my_finances_warnings_endpoint" time="0.251"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:232: in test_my_finances_warnings_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestDailyStatus" name="test_get_daily_status" time="0.295"><failure message="TypeError: string indices must be integers, not 'str'">backend/tests/test_iteration29_attendance_engine.py:247: in test_get_daily_status
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/test_iteration29_attendance_engine.py:247: in &lt;genexpr&gt;
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+                                             ^^^^^^^
+E   TypeError: string indices must be integers, not 'str'</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestDailyStatus" name="test_get_daily_status_range" time="0.248"><failure message="TypeError: string indices must be integers, not 'str'">backend/tests/test_iteration29_attendance_engine.py:267: in test_get_daily_status_range
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/test_iteration29_attendance_engine.py:267: in &lt;genexpr&gt;
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+                                             ^^^^^^^
+E   TypeError: string indices must be integers, not 'str'</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestTeamAttendance" name="test_team_attendance_day" time="0.225"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:295: in test_team_attendance_day
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestMonthlyHours" name="test_get_monthly_hours" time="0.307"><failure message="TypeError: string indices must be integers, not 'str'">backend/tests/test_iteration29_attendance_engine.py:310: in test_get_monthly_hours
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/test_iteration29_attendance_engine.py:310: in &lt;genexpr&gt;
+    employee = next((e for e in employees if e['id'] not in ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']), None)
+                                             ^^^^^^^
+E   TypeError: string indices must be integers, not 'str'</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestSchedulerJobs" name="test_jobs_daily_endpoint" time="0.286"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:341: in test_jobs_daily_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestSchedulerJobs" name="test_jobs_logs_endpoint" time="0.297"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:349: in test_jobs_logs_endpoint
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_iteration29_attendance_engine.TestResolveBulk" name="test_resolve_bulk" time="0.242"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_iteration29_attendance_engine.py:368: in test_resolve_bulk
+    assert resp.status_code == 200
+E   assert 403 == 200
+E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase></testsuite></testsuites>
