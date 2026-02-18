@@ -29,12 +29,18 @@ Penalty Service - نظام العقوبات
 نسيان البصمة:
 - بعد الموافقة يعتبر حضور
 - بدون موافقة يعامل كتأخير/خروج مبكر حسب الحالة
+
+الموظفون المستثنون:
+- ستاس، محمد، صلاح، نايف - ليسوا موظفين، لا عقوبات عليهم
 """
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Tuple
 from database import db
 
+
+# الموظفون المستثنون من العقوبات (ليسوا موظفين)
+EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-CEO', 'EMP-004', 'EMP-OPS2']  # stas, mohammed, salah, naif
 
 # ثوابت العقوبات
 ABSENCE_RULES = {
