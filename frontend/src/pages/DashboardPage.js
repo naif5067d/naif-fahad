@@ -337,6 +337,62 @@ export default function DashboardPage() {
                 </div>
               </div>
               
+              {/* Hours Progress Slider - متبقي الساعات */}
+              <div className="mt-4 p-4 bg-white/5 rounded-xl backdrop-blur-sm space-y-4">
+                {/* Monthly Hours Progress */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Timer size={14} className="text-emerald-400" />
+                      <span className="text-xs text-white/70">
+                        {lang === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Work Hours'}
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono text-white/90">
+                      {employeeSummary.attendance?.monthly_hours || 0} / {employeeSummary.attendance?.required_monthly_hours || 176}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={Math.min(100, ((employeeSummary.attendance?.monthly_hours || 0) / (employeeSummary.attendance?.required_monthly_hours || 176)) * 100)} 
+                    className="h-2 bg-white/10"
+                  />
+                  <p className="text-[10px] text-white/50 mt-1 text-left">
+                    {lang === 'ar' 
+                      ? `متبقي ${Math.max(0, (employeeSummary.attendance?.required_monthly_hours || 176) - (employeeSummary.attendance?.monthly_hours || 0))} ساعة`
+                      : `${Math.max(0, (employeeSummary.attendance?.required_monthly_hours || 176) - (employeeSummary.attendance?.monthly_hours || 0))} hours remaining`
+                    }
+                  </p>
+                </div>
+                
+                {/* Deficit Hours Warning - ساعات النقص قبل الخصم */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown size={14} className="text-amber-400" />
+                      <span className="text-xs text-white/70">
+                        {lang === 'ar' ? 'ساعات النقص (متبقي قبل الخصم)' : 'Deficit Hours (Before Deduction)'}
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono text-white/90">
+                      {employeeSummary.attendance?.deficit_hours || 0} / 8
+                    </span>
+                  </div>
+                  <Progress 
+                    value={Math.min(100, ((employeeSummary.attendance?.deficit_hours || 0) / 8) * 100)} 
+                    className={`h-2 ${(employeeSummary.attendance?.deficit_hours || 0) >= 6 ? 'bg-red-900/50' : 'bg-white/10'}`}
+                  />
+                  <p className="text-[10px] text-white/50 mt-1 text-left">
+                    {(employeeSummary.attendance?.deficit_hours || 0) >= 8 
+                      ? (lang === 'ar' ? '⚠️ سيتم خصم يوم!' : '⚠️ Day will be deducted!')
+                      : (lang === 'ar' 
+                          ? `متبقي ${8 - (employeeSummary.attendance?.deficit_hours || 0)} ساعات قبل خصم يوم`
+                          : `${8 - (employeeSummary.attendance?.deficit_hours || 0)} hours before day deduction`
+                        )
+                    }
+                  </p>
+                </div>
+              </div>
+              
               {/* Contract End Date */}
               {employeeSummary.contract?.end_date && (
                 <div className="mt-4 flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl">
