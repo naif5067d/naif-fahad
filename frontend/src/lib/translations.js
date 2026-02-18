@@ -166,7 +166,8 @@ export const translations = {
       contractsManagement: "إدارة العقود", settlement: "المخالصات", employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
-      companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام"
+      companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
+      myFinances: "ماليّاتي"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
