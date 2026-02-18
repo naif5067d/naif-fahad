@@ -384,6 +384,10 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             }
         }
     )
+    
+    # إرسال إشعار للموظف بتنفيذ معاملته
+    if emp_id:
+        await notify_transaction_executed(tx, emp_id)
 
     return {
         "message": "Transaction executed successfully",
