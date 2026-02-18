@@ -15,7 +15,7 @@ import os
 import io
 from PyPDF2 import PdfReader
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-engine-1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://attendance-resolver.preview.emergentagent.com').rstrip('/')
 
 class TestPDFGeneration:
     """Test PDF generation for transactions"""
