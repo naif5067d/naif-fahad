@@ -147,19 +147,33 @@ class DayResolver:
         date_obj = datetime.strptime(self.date, "%Y-%m-%d")
         day_of_week = date_obj.weekday()  # 0=Monday, 6=Sunday
         
-        # الحصول على أيام العطلة من موقع العمل أو الافتراضي
-        weekend_days = [4, 5]  # الجمعة والسبت افتراضياً
+        # تحويل اسم اليوم
+        day_names_en = {0: "monday", 1: "tuesday", 2: "wednesday", 
+                       3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"}
+        day_names_ar = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 
+                       3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
+        
+        day_name_en = day_names_en.get(day_of_week)
+        is_weekend = False
         
         if self.work_location:
-            weekend_days = self.work_location.get('weekend_days', [4, 5])
+            # فحص work_days - إذا اليوم = false فهو عطلة
+            work_days = self.work_location.get('work_days', {})
+            if work_days and day_name_en in work_days:
+                is_weekend = not work_days.get(day_name_en, True)
+            else:
+                # إذا لا يوجد work_days، نستخدم weekend_days
+                weekend_days = self.work_location.get('weekend_days', [4, 5])  # الجمعة والسبت افتراضياً
+                is_weekend = day_of_week in weekend_days
+        else:
+            # الافتراضي: الجمعة والسبت عطلة
+            is_weekend = day_of_week in [4, 5]
         
-        if day_of_week in weekend_days:
-            day_names = {0: "الإثنين", 1: "الثلاثاء", 2: "الأربعاء", 
-                        3: "الخميس", 4: "الجمعة", 5: "السبت", 6: "الأحد"}
+        if is_weekend:
             return self._create_result(
                 status=DailyStatusEnum.WEEKEND,
                 reason="عطلة نهاية أسبوع",
-                reason_ar=f"عطلة نهاية الأسبوع ({day_names.get(day_of_week, '')})",
+                reason_ar=f"عطلة نهاية الأسبوع ({day_names_ar.get(day_of_week, '')})",
                 source="weekend"
             )
         return None
