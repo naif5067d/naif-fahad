@@ -220,6 +220,12 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
                     "$push": {"timeline": {**timeline_event, "event": "cancelled"}, "approval_chain": approval_entry}
                 }
             )
+            
+            # إرسال إشعار للموظف بالرفض
+            emp_id = tx.get('employee_id')
+            if emp_id:
+                await notify_transaction_rejected(tx, emp_id, "STAS", body.note)
+            
             return {"message": "Transaction cancelled by STAS", "status": "cancelled", "reason": body.note}
         
         # CEO rejection → goes to STAS for final decision (execute rejection or return)
