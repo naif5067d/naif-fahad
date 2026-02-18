@@ -483,6 +483,89 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
+      {/* Calculation Details for STAS/Sultan - تفاصيل حساب أيام الإجازة */}
+      {tx.type === 'leave_request' && tx.data?.calculation_details && (user?.role === 'stas' || user?.role === 'sultan' || user?.role === 'naif') && (
+        <div className="bg-card rounded-2xl border-2 border-violet-500/30 p-6" data-testid="calculation-details">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-violet-500"></span>
+              {lang === 'ar' ? 'تفاصيل حساب الأيام (STAS)' : 'Days Calculation Details (STAS)'}
+            </h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+              tx.data.calculation_details.calculation_valid 
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {tx.data.calculation_details.calculation_valid 
+                ? (lang === 'ar' ? 'الحساب صحيح' : 'Valid')
+                : (lang === 'ar' ? 'يوجد خطأ' : 'Error')
+              }
+            </span>
+          </div>
+
+          {/* Summary Box */}
+          <div className="bg-violet-50 dark:bg-violet-900/20 rounded-xl p-4 mb-4 border border-violet-200 dark:border-violet-800">
+            <p className="text-violet-800 dark:text-violet-200 text-sm font-medium">
+              {tx.data.calculation_details.calculation_summary_ar || 
+                `Total ${tx.data.calculation_details.total_calendar_days} calendar days → ${tx.data.calculation_details.working_days} working days`
+              }
+            </p>
+          </div>
+
+          {/* Breakdown Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="bg-muted/50 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-foreground">{tx.data.calculation_details.total_calendar_days}</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'يوم تقويمي' : 'Calendar Days'}</p>
+            </div>
+            <div className="bg-emerald-100 dark:bg-emerald-900/30 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{tx.data.calculation_details.working_days}</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-500">{lang === 'ar' ? 'يوم عمل' : 'Working Days'}</p>
+            </div>
+            <div className="bg-amber-100 dark:bg-amber-900/30 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{tx.data.calculation_details.excluded_fridays?.length || 0}</p>
+              <p className="text-xs text-amber-600 dark:text-amber-500">{lang === 'ar' ? 'جمعة مستثناة' : 'Fridays'}</p>
+            </div>
+            <div className="bg-red-100 dark:bg-red-900/30 rounded-xl p-3 text-center">
+              <p className="text-2xl font-bold text-red-700 dark:text-red-400">{tx.data.calculation_details.excluded_holidays?.length || 0}</p>
+              <p className="text-xs text-red-600 dark:text-red-500">{lang === 'ar' ? 'إجازة رسمية' : 'Public Holidays'}</p>
+            </div>
+          </div>
+
+          {/* Excluded Holidays Details */}
+          {tx.data.calculation_details.excluded_holidays?.length > 0 && (
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800">
+              <h4 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                {lang === 'ar' ? 'الإجازات الرسمية المستثناة:' : 'Excluded Public Holidays:'}
+              </h4>
+              <div className="space-y-2">
+                {tx.data.calculation_details.excluded_holidays.map((h, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white dark:bg-red-950/30 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-red-500 font-bold">{idx + 1}.</span>
+                      <span className="font-medium text-red-700 dark:text-red-300">{h.name}</span>
+                    </div>
+                    <div className="text-sm text-red-600 dark:text-red-400 font-mono">
+                      {h.date} ({h.day})
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No holidays excluded notice */}
+          {(!tx.data.calculation_details.excluded_holidays || tx.data.calculation_details.excluded_holidays.length === 0) && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
+              <p className="text-emerald-700 dark:text-emerald-300 text-sm">
+                {lang === 'ar' ? 'لا توجد إجازات رسمية ضمن فترة الطلب' : 'No public holidays within the requested period'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Timeline */}
       {tx.timeline?.length > 0 && (
         <div className="bg-card rounded-2xl border border-border p-6">
