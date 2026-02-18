@@ -151,6 +151,18 @@ export default function NotificationBell() {
     setLoading(false);
   };
   
+  // حذف جميع الإشعارات
+  const handleDeleteAll = async () => {
+    setLoading(true);
+    try {
+      await api.delete('/api/notifications/delete-all');
+      setNotifications([]);
+      setUnreadCount(0);
+      setIsOpen(false);
+    } catch (err) {}
+    setLoading(false);
+  };
+  
   // الانتقال للرابط
   const handleNotificationClick = (notification) => {
     if (!notification.is_read) {
