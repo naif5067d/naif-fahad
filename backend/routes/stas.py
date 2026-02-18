@@ -47,6 +47,7 @@ class RamadanModeRequest(BaseModel):
     end_date: str
     work_start: Optional[str] = "09:00"
     work_end: Optional[str] = "15:00"
+    daily_hours: Optional[float] = 6.0  # ساعات العمل في رمضان (افتراضي 6)
 
 
 class ReturnRequest(BaseModel):
