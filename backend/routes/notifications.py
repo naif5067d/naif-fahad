@@ -474,7 +474,7 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         "categories": {}
     }
     
-    # 1. الإشعارات المخزنة
+    # 1. الإشعارات المخزنة (تدعم البنية القديمة والجديدة)
     stored_notifications = await db.notifications.find(
         {
             "$or": [
@@ -485,9 +485,31 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         {"_id": 0}
     ).sort("created_at", -1).to_list(30)
     
-    unread_stored = [n for n in stored_notifications if not n.get('is_read')]
-    result["notifications"].extend(stored_notifications[:20])
-    result["unread_count"] += len(unread_stored)
+    # تحويل الإشعارات القديمة للبنية الجديدة
+    for notif in stored_notifications:
+        # التحقق من حالة القراءة (البنية القديمة تستخدم 'read' والجديدة 'is_read')
+        is_read = notif.get('is_read', notif.get('read', False))
+        
+        formatted = {
+            "id": notif.get('id'),
+            "notification_type": notif.get('notification_type', notif.get('type', 'system')),
+            "title": notif.get('title', notif.get('message_en', 'Notification')),
+            "title_ar": notif.get('title_ar', notif.get('message_ar', 'إشعار')),
+            "message": notif.get('message', notif.get('message_en', '')),
+            "message_ar": notif.get('message_ar', ''),
+            "priority": notif.get('priority', 'normal'),
+            "icon": notif.get('icon', 'Bell'),
+            "color": notif.get('color', '#6B7280'),
+            "reference_type": notif.get('reference_type', ''),
+            "reference_id": notif.get('reference_id', notif.get('transaction_id', '')),
+            "reference_url": notif.get('reference_url', ''),
+            "is_read": is_read,
+            "created_at": notif.get('created_at', '')
+        }
+        result["notifications"].append(formatted)
+        
+        if not is_read:
+            result["unread_count"] += 1
     
     # 2. للإدارة: المعاملات المعلقة
     if is_admin:
