@@ -17,8 +17,12 @@ Day Resolver V2 - محرك القرار اليومي مع العروق (Trace Ev
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple, List
+from zoneinfo import ZoneInfo
 from database import db
 from models.daily_status import DailyStatusEnum, LockStatus, STATUS_AR
+
+# توقيت الرياض
+RIYADH_TZ = ZoneInfo("Asia/Riyadh")
 
 
 class TraceStep:
