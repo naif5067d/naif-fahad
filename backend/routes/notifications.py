@@ -430,6 +430,26 @@ async def mark_all_as_read(user=Depends(get_current_user)):
     }
 
 
+@router.delete("/all")
+async def delete_all_notifications(user=Depends(get_current_user)):
+    """
+    حذف جميع الإشعارات للمستخدم الحالي
+    """
+    user_id = user['user_id']
+    
+    result = await db.notifications.delete_many({
+        "$or": [
+            {"recipient_id": user_id},
+            {"recipient_role": user.get('role')}
+        ]
+    })
+    
+    return {
+        "message": "تم حذف جميع الإشعارات",
+        "count": result.deleted_count
+    }
+
+
 @router.delete("/{notification_id}")
 async def delete_notification(notification_id: str, user=Depends(get_current_user)):
     """
@@ -449,26 +469,6 @@ async def delete_notification(notification_id: str, user=Depends(get_current_use
         raise HTTPException(status_code=404, detail="الإشعار غير موجود")
     
     return {"message": "تم حذف الإشعار"}
-
-
-@router.delete("/delete-all")
-async def delete_all_notifications(user=Depends(get_current_user)):
-    """
-    حذف جميع الإشعارات للمستخدم الحالي
-    """
-    user_id = user['user_id']
-    
-    result = await db.notifications.delete_many({
-        "$or": [
-            {"recipient_id": user_id},
-            {"recipient_role": user.get('role')}
-        ]
-    })
-    
-    return {
-        "message": "تم حذف جميع الإشعارات",
-        "count": result.deleted_count
-    }
 
 
 # ============================================================
