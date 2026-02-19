@@ -726,8 +726,8 @@ export default function AttendancePage() {
                 </div>
                 <div className="text-end">
                   <p className="text-sm font-mono font-semibold">{formatSaudiTime(h.timestamp)}</p>
-                  {h.gps_status === 'valid' ? (
-                    <span className="text-[10px] text-emerald-500">● GPS</span>
+                  {(h.gps_status === 'valid' || h.gps_valid === true || h.gps_available === true) ? (
+                    <span className="text-[10px] text-emerald-500">● GPS ✓</span>
                   ) : (
                     <span className="text-[10px] text-muted-foreground">○ بدون GPS</span>
                   )}
