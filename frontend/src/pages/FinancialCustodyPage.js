@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { 
   Plus, CheckCircle, AlertCircle, ArrowLeft, Trash2, Send, Check, X, 
   Loader2, Clock, DollarSign, ChevronRight, FileText, AlertTriangle,
-  TrendingUp, TrendingDown, Wallet, Edit2, Eye
+  TrendingUp, TrendingDown, Wallet, Edit2, Save
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -68,12 +68,15 @@ export default function FinancialCustodyPage() {
   const [tab, setTab] = useState('all');
   const [auditComment, setAuditComment] = useState('');
   const [surplusAlert, setSurplusAlert] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editForm, setEditForm] = useState({ description: '', amount: '' });
   const codeInputRef = useRef(null);
 
   const role = user?.role;
   const canCreate = ['sultan', 'mohammed'].includes(role);
   const canAddExpense = ['sultan', 'mohammed'].includes(role);
   const canAudit = ['salah', 'stas'].includes(role);
+  const canEditExpense = ['salah', 'stas'].includes(role);
   const canExecute = role === 'stas';
   const canClose = ['sultan', 'mohammed', 'stas'].includes(role);
 
@@ -104,7 +107,7 @@ export default function FinancialCustodyPage() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  // ==================== CODE LOOKUP (INSTANT) ====================
+  // ==================== CODE LOOKUP (INSTANT - لا يملأ الوصف) ====================
 
   const lookupCode = useCallback(async (val) => {
     const code = parseInt(val);
@@ -116,16 +119,11 @@ export default function FinancialCustodyPage() {
     try {
       const res = await api.get(`/api/admin-custody/codes/${code}`);
       setCodeInfo(res.data);
-      
-      // تعبئة الوصف تلقائياً إذا وُجد الكود
-      if (res.data.found) {
-        const name = lang === 'ar' ? res.data.code.name_ar : res.data.code.name_en;
-        setExpForm(f => ({ ...f, description: name || '' }));
-      }
+      // لا نملأ الوصف تلقائياً - المستخدم يكتبه يدوياً
     } catch {
       setCodeInfo({ found: false, code: { code, is_new: true } });
     }
-  }, [lang]);
+  }, []);
 
   // ==================== ACTIONS ====================
 
@@ -172,7 +170,7 @@ export default function FinancialCustodyPage() {
       return;
     }
     if (!expForm.description.trim()) {
-      toast.error(lang === 'ar' ? 'أدخل الوصف' : 'Enter description');
+      toast.error(lang === 'ar' ? 'أدخل وصف المصروف (لماذا صرفت؟)' : 'Enter expense description');
       return;
     }
     
@@ -210,6 +208,47 @@ export default function FinancialCustodyPage() {
       fetchList();
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Error');
+    }
+  };
+
+  const startEditExpense = (expense) => {
+    setEditingExpense(expense.id);
+    setEditForm({ description: expense.description, amount: expense.amount.toString() });
+  };
+
+  const cancelEditExpense = () => {
+    setEditingExpense(null);
+    setEditForm({ description: '', amount: '' });
+  };
+
+  const handleEditExpense = async (expenseId) => {
+    const amount = parseFloat(editForm.amount);
+    
+    if (!editForm.description.trim()) {
+      toast.error(lang === 'ar' ? 'أدخل الوصف' : 'Enter description');
+      return;
+    }
+    if (!amount || amount <= 0) {
+      toast.error(lang === 'ar' ? 'أدخل مبلغ صحيح' : 'Enter valid amount');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await api.put(`/api/admin-custody/${selected.id}/expense/${expenseId}`, {
+        description: editForm.description,
+        amount
+      });
+      
+      toast.success(lang === 'ar' ? 'تم تعديل المصروف' : 'Expense updated');
+      setEditingExpense(null);
+      setEditForm({ description: '', amount: '' });
+      fetchDetail(selected.id);
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -294,12 +333,13 @@ export default function FinancialCustodyPage() {
     const budget = selected.budget || (selected.total_amount + (selected.surplus_amount || 0));
     const pct = budget > 0 ? Math.min((selected.spent / budget) * 100, 100) : 0;
     const isEditable = ['open', 'pending_audit'].includes(selected.status);
+    const canSalahEdit = selected.status === 'pending_audit' && canEditExpense;
 
     return (
       <div className="space-y-5 pb-10" data-testid="custody-detail">
         {/* Back Button */}
         <button 
-          onClick={() => { setView('list'); setSelected(null); }} 
+          onClick={() => { setView('list'); setSelected(null); setEditingExpense(null); }} 
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           data-testid="back-to-list"
         >
@@ -385,7 +425,7 @@ export default function FinancialCustodyPage() {
           )}
           
           {selected.status === 'pending_audit' && canAudit && (
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               <Input 
                 placeholder={lang === 'ar' ? 'ملاحظات (اختياري)' : 'Comment (optional)'}
                 value={auditComment}
@@ -450,9 +490,16 @@ export default function FinancialCustodyPage() {
               <DollarSign size={16} className="text-primary" />
               {lang === 'ar' ? 'جدول المصروفات' : 'Expense Sheet'}
             </h3>
-            <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
-              {selected.expenses?.length || 0} {lang === 'ar' ? 'بند' : 'items'}
-            </span>
+            <div className="flex items-center gap-3">
+              {canSalahEdit && (
+                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  {lang === 'ar' ? 'يمكنك التعديل' : 'You can edit'}
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+                {selected.expenses?.length || 0} {lang === 'ar' ? 'بند' : 'items'}
+              </span>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -460,14 +507,14 @@ export default function FinancialCustodyPage() {
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/70 text-xs border-b border-border">
                   <th className="px-3 py-3 text-start font-bold text-muted-foreground w-12">#</th>
-                  <th className="px-3 py-3 text-start font-bold text-muted-foreground w-20">
+                  <th className="px-3 py-3 text-start font-bold text-muted-foreground w-16">
                     {lang === 'ar' ? 'الكود' : 'Code'}
                   </th>
-                  <th className="px-3 py-3 text-start font-bold text-muted-foreground">
+                  <th className="px-3 py-3 text-start font-bold text-muted-foreground w-36">
                     {lang === 'ar' ? 'اسم الحساب' : 'Account'}
                   </th>
                   <th className="px-3 py-3 text-start font-bold text-muted-foreground">
-                    {lang === 'ar' ? 'الوصف' : 'Description'}
+                    {lang === 'ar' ? 'الوصف (لماذا صُرف؟)' : 'Description (Why?)'}
                   </th>
                   <th className="px-3 py-3 text-end font-bold text-muted-foreground w-28">
                     {lang === 'ar' ? 'المبلغ' : 'Amount'}
@@ -475,7 +522,7 @@ export default function FinancialCustodyPage() {
                   <th className="px-3 py-3 text-end font-bold text-muted-foreground w-28">
                     {lang === 'ar' ? 'الرصيد' : 'Balance'}
                   </th>
-                  {isEditable && canAddExpense && <th className="px-2 py-3 w-10"></th>}
+                  {(isEditable || canSalahEdit) && <th className="px-2 py-3 w-20"></th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -491,10 +538,12 @@ export default function FinancialCustodyPage() {
                   let runningBalance = budget;
                   return selected.expenses?.map((exp, i) => {
                     runningBalance -= exp.amount;
+                    const isEditing = editingExpense === exp.id;
+                    
                     return (
                       <tr 
                         key={exp.id} 
-                        className="hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors"
+                        className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors ${isEditing ? 'bg-amber-50 dark:bg-amber-950/20' : ''}`}
                         data-testid={`expense-row-${i}`}
                       >
                         <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
@@ -503,32 +552,91 @@ export default function FinancialCustodyPage() {
                             {exp.code}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 text-sm font-medium">
+                        <td className="px-3 py-2.5 text-sm font-medium text-muted-foreground">
                           {lang === 'ar' ? exp.code_name_ar : exp.code_name_en}
                         </td>
-                        <td className="px-3 py-2.5 text-sm text-muted-foreground">
-                          {exp.description}
-                          {exp.edited_by && (
-                            <span className="ms-1.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 rounded">
-                              {lang === 'ar' ? 'معدّل' : 'edited'}
+                        <td className="px-3 py-2.5">
+                          {isEditing ? (
+                            <Input 
+                              value={editForm.description}
+                              onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                              className="h-8 text-sm"
+                              data-testid="edit-description"
+                            />
+                          ) : (
+                            <span className="text-sm">
+                              {exp.description}
+                              {exp.edited_by && (
+                                <span className="ms-1.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 rounded">
+                                  {lang === 'ar' ? 'معدّل' : 'edited'}
+                                </span>
+                              )}
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2.5 text-end font-mono text-sm text-red-600 font-semibold">
-                          -{exp.amount.toLocaleString()}
+                        <td className="px-3 py-2.5 text-end">
+                          {isEditing ? (
+                            <Input 
+                              type="number"
+                              value={editForm.amount}
+                              onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))}
+                              className="h-8 text-sm font-mono text-end w-24"
+                              data-testid="edit-amount"
+                            />
+                          ) : (
+                            <span className="font-mono text-sm text-red-600 font-semibold">
+                              -{exp.amount.toLocaleString()}
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-end font-mono text-sm text-muted-foreground">
                           {runningBalance.toLocaleString()}
                         </td>
-                        {isEditable && canAddExpense && (
+                        {(isEditable || canSalahEdit) && (
                           <td className="px-2 py-2.5">
-                            <button 
-                              onClick={() => handleDeleteExpense(exp.id)}
-                              className="p-1.5 rounded-md text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all"
-                              title={lang === 'ar' ? 'إلغاء' : 'Cancel'}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center gap-1 justify-end">
+                              {isEditing ? (
+                                <>
+                                  <button 
+                                    onClick={() => handleEditExpense(exp.id)}
+                                    disabled={submitting}
+                                    className="p-1.5 rounded-md text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-all"
+                                    title={lang === 'ar' ? 'حفظ' : 'Save'}
+                                  >
+                                    <Save size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={cancelEditExpense}
+                                    className="p-1.5 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                    title={lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  {canSalahEdit && (
+                                    <button 
+                                      onClick={() => startEditExpense(exp)}
+                                      className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all"
+                                      title={lang === 'ar' ? 'تعديل' : 'Edit'}
+                                      data-testid={`edit-expense-${i}`}
+                                    >
+                                      <Edit2 size={14} />
+                                    </button>
+                                  )}
+                                  {isEditable && canAddExpense && (
+                                    <button 
+                                      onClick={() => handleDeleteExpense(exp.id)}
+                                      className="p-1.5 rounded-md text-red-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all"
+                                      title={lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -541,7 +649,8 @@ export default function FinancialCustodyPage() {
                   <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-t-2 border-slate-300 dark:border-slate-600">
                     <td className="px-3 py-3"></td>
                     <td className="px-3 py-3"></td>
-                    <td className="px-3 py-3" colSpan={2}>
+                    <td className="px-3 py-3"></td>
+                    <td className="px-3 py-3">
                       {lang === 'ar' ? 'إجمالي المصروفات' : 'TOTAL EXPENSES'}
                     </td>
                     <td className="px-3 py-3 text-end font-mono text-red-700 dark:text-red-400">
@@ -550,7 +659,7 @@ export default function FinancialCustodyPage() {
                     <td className="px-3 py-3 text-end font-mono text-emerald-700 dark:text-emerald-400">
                       {selected.remaining.toLocaleString()}
                     </td>
-                    {isEditable && canAddExpense && <td></td>}
+                    {(isEditable || canSalahEdit) && <td></td>}
                   </tr>
                 )}
               </tbody>
@@ -568,7 +677,7 @@ export default function FinancialCustodyPage() {
             
             <div className="flex gap-3 items-end flex-wrap">
               {/* Code */}
-              <div className="w-24">
+              <div className="w-20">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'الكود' : 'Code'}
                 </Label>
@@ -581,41 +690,44 @@ export default function FinancialCustodyPage() {
                     setExpForm(f => ({ ...f, code: e.target.value }));
                     lookupCode(e.target.value);
                   }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      document.querySelector('[data-testid="exp-amount"]')?.focus();
-                    }
-                  }}
                   className="h-10 text-center font-mono font-bold text-lg"
-                  placeholder="1-60"
+                  placeholder="5"
                   data-testid="exp-code"
                 />
               </div>
               
-              {/* Description (auto-fill) */}
-              <div className="flex-1 min-w-[200px]">
+              {/* Account Name (Auto) */}
+              <div className="w-40">
                 <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                  {lang === 'ar' ? 'البيان' : 'Description'}
+                  {lang === 'ar' ? 'اسم الحساب' : 'Account'}
                   {codeInfo?.found && <CheckCircle size={10} className="text-emerald-500" />}
-                  {codeInfo && !codeInfo.found && <AlertCircle size={10} className="text-amber-500" />}
+                </Label>
+                <div className="h-10 px-3 flex items-center bg-slate-100 dark:bg-slate-800 rounded-md text-sm font-medium">
+                  {codeInfo?.found 
+                    ? (lang === 'ar' ? codeInfo.code.name_ar : codeInfo.code.name_en)
+                    : codeInfo && !codeInfo.found
+                      ? <span className="text-amber-600">{lang === 'ar' ? 'كود جديد' : 'New code'}</span>
+                      : <span className="text-muted-foreground">-</span>
+                  }
+                </div>
+              </div>
+              
+              {/* Description (Manual) */}
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-[10px] text-muted-foreground uppercase">
+                  {lang === 'ar' ? 'الوصف (لماذا صرفت؟)' : 'Description (Why?)'}
                 </Label>
                 <Input 
                   value={expForm.description}
                   onChange={e => setExpForm(f => ({ ...f, description: e.target.value }))}
                   className="h-10"
-                  placeholder={lang === 'ar' ? 'سيُملأ تلقائياً' : 'Auto-filled'}
+                  placeholder={lang === 'ar' ? 'مثال: انتقالات لموقع العمل' : 'e.g., Transportation to site'}
                   data-testid="exp-desc"
                 />
-                {codeInfo && !codeInfo.found && (
-                  <p className="text-[10px] text-amber-600 mt-0.5">
-                    {lang === 'ar' ? 'كود جديد - أدخل الاسم' : 'New code - enter name'}
-                  </p>
-                )}
               </div>
               
               {/* Amount */}
-              <div className="w-32">
+              <div className="w-28">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'المبلغ' : 'Amount'}
                 </Label>
@@ -687,6 +799,7 @@ export default function FinancialCustodyPage() {
                         log.action === 'created' ? 'أنشأ العهدة' :
                         log.action === 'expense_added' ? `أضاف مصروف: ${log.details?.amount} ريال` :
                         log.action === 'expense_cancelled' ? 'ألغى مصروف' :
+                        log.action === 'expense_edited' ? 'عدّل مصروف' :
                         log.action === 'submitted_for_audit' ? 'أرسل للتدقيق' :
                         log.action === 'audit_approve' ? 'اعتمد التدقيق' :
                         log.action === 'audit_reject' ? 'أرجع العهدة' :
