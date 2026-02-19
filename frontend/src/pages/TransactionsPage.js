@@ -180,16 +180,32 @@ export default function TransactionsPage() {
 
       {/* البحث والفلاتر */}
       <div className="space-y-3">
-        {/* حقل البحث */}
-        <div className="relative">
-          <Search size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            data-testid="search-input"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="البحث في المعاملات..."
-            className="ps-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:border-primary text-base"
-          />
+        {/* حقل البحث + زر الكاميرا */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute start-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              data-testid="search-input"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="البحث برقم المعاملة أو الموظف..."
+              className="ps-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:border-primary text-base"
+            />
+          </div>
+          
+          {/* زر الكاميرا للبحث السريع - للإدارة فقط */}
+          {['stas', 'sultan', 'naif'].includes(user?.role) && (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setScannerOpen(true)}
+              className="h-12 px-4 rounded-xl border-primary/30 hover:bg-primary/5"
+              title={lang === 'ar' ? 'مسح باركود المعاملة' : 'Scan transaction barcode'}
+              data-testid="open-scanner-btn"
+            >
+              <Camera size={20} className="text-primary" />
+            </Button>
+          )}
         </div>
 
         {/* لوحة الفلاتر */}
