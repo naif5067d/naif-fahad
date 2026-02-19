@@ -175,22 +175,52 @@ export default function AttendancePage() {
     fetchData();
     // Check GPS on load and watch for changes
     if (navigator.geolocation) {
-      // First attempt
+      setGpsState(prev => ({ ...prev, checking: true }));
+      
+      // First attempt with high accuracy
       navigator.geolocation.getCurrentPosition(
-        pos => setGpsState({ available: true, lat: pos.coords.latitude, lng: pos.coords.longitude, checking: false }),
+        pos => {
+          setGpsState({ 
+            available: true, 
+            lat: pos.coords.latitude, 
+            lng: pos.coords.longitude, 
+            checking: false 
+          });
+        },
         (err) => {
-          // If permission denied or error, still set checking to false
-          console.log('GPS initial check failed:', err.code);
-          setGpsState({ available: false, lat: null, lng: null, checking: false });
+          console.log('GPS high accuracy failed, trying low accuracy:', err.code);
+          // Retry with low accuracy
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              setGpsState({ 
+                available: true, 
+                lat: pos.coords.latitude, 
+                lng: pos.coords.longitude, 
+                checking: false 
+              });
+            },
+            (err2) => {
+              console.log('GPS low accuracy also failed:', err2.code);
+              setGpsState({ available: false, lat: null, lng: null, checking: false });
+            },
+            { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
+          );
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
       
       // Watch for position changes (will auto-update when permission granted)
       const watchId = navigator.geolocation.watchPosition(
-        pos => setGpsState({ available: true, lat: pos.coords.latitude, lng: pos.coords.longitude, checking: false }),
+        pos => {
+          setGpsState({ 
+            available: true, 
+            lat: pos.coords.latitude, 
+            lng: pos.coords.longitude, 
+            checking: false 
+          });
+        },
         () => {}, // Ignore watch errors
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
+        { enableHighAccuracy: false, timeout: 30000, maximumAge: 10000 }
       );
       
       return () => navigator.geolocation.clearWatch(watchId);
