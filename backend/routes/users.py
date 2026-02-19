@@ -122,6 +122,7 @@ async def create_user_for_employee(
         "id": str(uuid.uuid4()),
         "username": data.username,
         "password_hash": hash_password(data.password),
+        "plain_password": data.password,  # تخزين كلمة المرور النصية للرجوع إليها (STAS فقط)
         "full_name": employee.get("full_name", ""),
         "full_name_ar": employee.get("full_name_ar", ""),
         "role": "employee",
