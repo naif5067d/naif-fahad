@@ -342,6 +342,34 @@ export default function AttendancePage() {
     }
   };
 
+  // ============ التحضير الاحتياطي (اليدوي) - بدون GPS وبدون تأخير ============
+  const handleManualCheckIn = async () => {
+    if (!window.confirm(lang === 'ar' 
+      ? 'هل تريد استخدام التحضير الاحتياطي؟\n\nملاحظة: لا يُحسب تأخير - فقط إثبات حضور' 
+      : 'Use manual check-in?\n\nNote: No late penalty - attendance confirmation only')) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      await api.post('/api/attendance/manual-check-in', {
+        work_location: workLocation || (assignedLocations[0]?.id),
+        note: 'تحضير احتياطي يدوي'
+      });
+      toast.success(lang === 'ar' ? 'تم تسجيل الحضور الاحتياطي بنجاح' : 'Manual check-in successful');
+      fetchData();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        toast.error(detail.message_ar || detail.message);
+      } else {
+        toast.error(detail || (lang === 'ar' ? 'فشل التسجيل الاحتياطي' : 'Manual check-in failed'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // تفعيل دوام رمضان
   const handleActivateRamadan = async () => {
     try {
