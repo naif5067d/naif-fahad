@@ -368,10 +368,10 @@ async def update_employee_status(
     employee_id: str,
     date: str,
     body: StatusUpdateRequest,
-    user=Depends(require_roles('sultan', 'naif'))
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """
-    تعديل حالة الموظف (سلطان/نايف فقط)
+    تعديل حالة الموظف (سلطان/نايف/STAS)
     
     مثال: تحويل موظف من غائب إلى حاضر مع تسجيل السبب
     """
