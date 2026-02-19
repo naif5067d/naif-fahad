@@ -888,6 +888,7 @@ export default function AttendancePage() {
                   <th>التاريخ</th>
                   <th>الدخول</th>
                   <th>الخروج</th>
+                  <th>موقع البصمة</th>
                   <th>الحالة</th>
                   <th>GPS</th>
                   {isStas && <th>إجراء</th>}
@@ -896,7 +897,7 @@ export default function AttendancePage() {
               <tbody>
                 {adminData.length === 0 ? (
                   <tr>
-                    <td colSpan={isStas ? 7 : 6} className="text-center py-8 text-muted-foreground">لا توجد بيانات</td>
+                    <td colSpan={isStas ? 8 : 7} className="text-center py-8 text-muted-foreground">لا توجد بيانات</td>
                   </tr>
                 ) : (
                   adminData.map((r, i) => (
@@ -912,6 +913,16 @@ export default function AttendancePage() {
                       <td className="font-mono text-muted-foreground">{formatSaudiDate(r.date)}</td>
                       <td className="font-mono">{r.check_in_time || (r.check_in ? formatSaudiTime(r.check_in) : '-')}</td>
                       <td className="font-mono">{r.check_out_time || (r.check_out ? formatSaudiTime(r.check_out) : '-')}</td>
+                      <td>
+                        {r.location_name_ar || r.location_name || r.work_location_name || (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
+                        {r.checkout_location_name && r.checkout_location_name !== r.location_name && (
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            خروج: {r.checkout_location_name}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         {r.on_leave ? (
                           <span className="badge bg-blue-100 text-blue-700">إجازة</span>
