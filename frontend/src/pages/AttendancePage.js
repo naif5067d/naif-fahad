@@ -193,30 +193,66 @@ export default function AttendancePage() {
   }, [user?.employee_id]);
 
   const handleCheckIn = async () => {
+    // التحقق من GPS قبل السماح بالبصمة
+    if (!gpsState.available || gpsState.lat === null || gpsState.lng === null) {
+      toast.error(lang === 'ar' 
+        ? 'يجب تفعيل الموقع (GPS) للتبصيم. يرجى السماح بالوصول للموقع وتحديث الصفحة.'
+        : 'GPS location is required. Please enable location access and refresh.');
+      return;
+    }
+    
+    // التحقق من اختيار موقع العمل
+    if (!workLocation && assignedLocations.length > 0) {
+      toast.error(lang === 'ar' ? 'يرجى اختيار موقع العمل' : 'Please select work location');
+      return;
+    }
+    
     setLoading(true);
     try {
       await api.post('/api/attendance/check-in', { 
         location: workLocation, 
         lat: gpsState.lat, 
-        lng: gpsState.lng 
+        lng: gpsState.lng,
+        gps_available: gpsState.available
       });
-      toast.success('تم تسجيل الدخول بنجاح');
+      toast.success(lang === 'ar' ? 'تم تسجيل الدخول بنجاح' : 'Check-in successful');
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'حدث خطأ');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        toast.error(lang === 'ar' ? detail.message_ar : detail.message);
+      } else {
+        toast.error(detail || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleCheckOut = async () => {
+    // التحقق من GPS قبل السماح بالبصمة
+    if (!gpsState.available || gpsState.lat === null || gpsState.lng === null) {
+      toast.error(lang === 'ar' 
+        ? 'يجب تفعيل الموقع (GPS) للتبصيم. يرجى السماح بالوصول للموقع وتحديث الصفحة.'
+        : 'GPS location is required. Please enable location access and refresh.');
+      return;
+    }
+    
+    // تأكيد قبل تسجيل الخروج
+    if (!window.confirm(lang === 'ar' 
+      ? 'هل أنت متأكد من تسجيل الخروج؟' 
+      : 'Are you sure you want to check out?')) {
+      return;
+    }
+    
     setLoading(true);
     try {
       await api.post('/api/attendance/check-out', { 
         lat: gpsState.lat, 
-        lng: gpsState.lng 
+        lng: gpsState.lng,
+        gps_available: gpsState.available
       });
-      toast.success('تم تسجيل الخروج بنجاح');
+      toast.success(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Check-out successful');
       fetchData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'حدث خطأ');
