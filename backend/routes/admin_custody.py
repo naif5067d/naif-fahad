@@ -306,10 +306,11 @@ async def get_all_custodies(
 
 @router.get("/summary")
 async def get_summary(user=Depends(get_current_user)):
-    """إحصائيات العهد"""
+    """إحصائيات العهد (بدون المحذوفة)"""
     check_role(user, ALLOWED_ROLES)
     
-    all_custodies = await db.admin_custodies.find({}, {"_id": 0}).to_list(500)
+    # استثناء المحذوفة
+    all_custodies = await db.admin_custodies.find({"status": {"$ne": "deleted"}}, {"_id": 0}).to_list(500)
     
     open_custodies = [c for c in all_custodies if c['status'] == 'open']
     pending_audit = [c for c in all_custodies if c['status'] == 'pending_audit']
