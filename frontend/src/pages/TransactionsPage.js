@@ -12,17 +12,25 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 
 // تكوين الحالات بالعربية - ألوان حسب نوع القرار
+// أخضر = منفذ/موافق | أصفر = معلق | أحمر = مرفوض/ملغي
 const STATUS_CONFIG = {
-  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20', label: 'منفذة ✓' },
-  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'مرفوضة ✗' },
-  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'ملغاة' },
-  returned: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', label: 'معادة' },
-  pending_supervisor: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار المشرف' },
-  pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20', label: 'بانتظار العمليات' },
-  pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20', label: 'بانتظار المالية' },
-  pending_ceo: { bg: 'bg-purple-600/10', text: 'text-purple-700', border: 'border-purple-600/20', label: 'بانتظار المدير التنفيذي' },
-  stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20', label: 'بانتظار التنفيذ' },
-  pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20', label: 'بانتظار قبول الموظف' },
+  // منفذة - أخضر
+  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20', label: 'منفذة ✓', color: 'green' },
+  
+  // مرفوضة/ملغاة - أحمر
+  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'مرفوضة ✗', color: 'red' },
+  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'ملغاة ✗', color: 'red' },
+  
+  // معادة - أزرق
+  returned: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', label: 'معادة ⟲', color: 'blue' },
+  
+  // معلقة - أصفر/برتقالي
+  pending_supervisor: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار المشرف ⏳', color: 'yellow' },
+  pending_ops: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار العمليات ⏳', color: 'yellow' },
+  pending_finance: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار المالية ⏳', color: 'yellow' },
+  pending_ceo: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار CEO ⏳', color: 'yellow' },
+  stas: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار التنفيذ ⏳', color: 'yellow' },
+  pending_employee_accept: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار قبول الموظف ⏳', color: 'yellow' },
 };
 
 // تكوين أنواع المعاملات بالعربية
