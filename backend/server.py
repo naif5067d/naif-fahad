@@ -71,6 +71,7 @@ app.include_router(penalties_router)
 app.include_router(devices_router)
 app.include_router(tasks_router)
 app.include_router(maintenance_tracking_router)
+app.include_router(admin_custody_router)
 
 app.add_middleware(
     CORSMiddleware,
