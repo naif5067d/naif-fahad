@@ -308,7 +308,7 @@ async def calculate_daily_attendance(date: str = None) -> dict:
     # 4. جلب سجلات الحضور لهذا اليوم
     attendance = await db.attendance_ledger.find(
         {"date": date}, 
-        {"_id": 0}
+        {"_id": 0, "employee_id": 1, "type": 1}
     ).to_list(10000)
     
     checked_in_ids = {a['employee_id'] for a in attendance if a['type'] == 'check_in'}
