@@ -225,30 +225,31 @@ export default function NotificationBell() {
       {/* القائمة المنسدلة */}
       {isOpen && (
         <div 
-          className="absolute top-full mt-2 end-0 w-96 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50"
+          className="absolute top-full mt-2 end-0 w-[340px] sm:w-96 max-w-[calc(100vw-1rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50"
+          style={{ right: 'auto', left: lang === 'ar' ? 'auto' : '0' }}
           data-testid="notification-dropdown"
         >
           {/* Header */}
-          <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-primary/5 to-transparent flex items-center justify-between">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border bg-gradient-to-r from-primary/5 to-transparent flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Bell size={18} className="text-primary" />
+              <Bell size={16} className="text-primary flex-shrink-0" />
               <h3 className="font-semibold text-sm">
                 {lang === 'ar' ? 'الإشعارات' : 'Notifications'}
               </h3>
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                   {unreadCount}
                 </span>
               )}
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {/* زر اختبار الصوت */}
               <button
                 onClick={() => {
                   playNotificationSound();
                 }}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground p-1"
                 title={lang === 'ar' ? 'اختبار الصوت' : 'Test sound'}
                 data-testid="test-sound-btn"
               >
@@ -262,7 +263,7 @@ export default function NotificationBell() {
                   data-testid="mark-all-read-btn"
                 >
                   <CheckCheck size={14} />
-                  {lang === 'ar' ? 'رؤية الكل' : 'Read all'}
+                  <span className="hidden sm:inline">{lang === 'ar' ? 'رؤية الكل' : 'Read all'}</span>
                 </button>
               )}
               {notifications.length > 0 && (
@@ -273,7 +274,7 @@ export default function NotificationBell() {
                   data-testid="delete-all-btn"
                 >
                   <X size={14} />
-                  {lang === 'ar' ? 'حذف الكل' : 'Delete all'}
+                  <span className="hidden sm:inline">{lang === 'ar' ? 'حذف الكل' : 'Delete all'}</span>
                 </button>
               )}
             </div>
