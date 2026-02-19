@@ -12,7 +12,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://stas-admin-hub-1.preview.emergentagent.com")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://location-tracking-1.preview.emergentagent.com")
 
 # Test user IDs
 STAS_USER_ID = "fedffe24-ec69-5c65-809d-5d24f8a16b9d"
