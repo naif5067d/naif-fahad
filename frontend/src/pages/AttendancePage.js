@@ -329,8 +329,8 @@ export default function AttendancePage() {
     setLoading(true);
     try {
       await api.post('/api/attendance/check-out', { 
-        lat: gpsState.lat, 
-        lng: gpsState.lng,
+        latitude: gpsState.lat, 
+        longitude: gpsState.lng,
         gps_available: gpsState.available
       });
       toast.success(lang === 'ar' ? 'تم تسجيل الخروج بنجاح' : 'Check-out successful');
