@@ -37,6 +37,7 @@ from routes.devices import router as devices_router
 from routes.tasks import router as tasks_router
 from routes.maintenance_tracking import router as maintenance_tracking_router
 from routes.admin_custody import router as admin_custody_router
+from routes.analytics import router as analytics_router
 from seed import seed_database
 
 # App Version
