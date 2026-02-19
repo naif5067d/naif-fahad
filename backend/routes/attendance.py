@@ -204,112 +204,6 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     return entry
 
 
-# ==================== التحضير الاحتياطي (اليدوي) ====================
-
-class ManualCheckInRequest(BaseModel):
-    """طلب تحضير احتياطي - بدون GPS"""
-    work_location: Optional[str] = None
-    note: Optional[str] = None
-
-
-@router.post("/manual-check-in")
-async def manual_check_in(req: ManualCheckInRequest, user=Depends(get_current_user)):
-    """
-    تسجيل حضور احتياطي (يدوي) - بدون GPS وبدون حساب تأخير
-    
-    الشروط:
-    - يعمل في أي وقت من اليوم
-    - لا يُسجل إذا كان هناك تسجيل ذاتي (GPS) موجود
-    - لا يحسب تأخير (فقط إثبات حضور)
-    - يُستخدم كاحتياطي للنظام الذاتي
-    """
-    employee_id = user.get('employee_id')
-    if not employee_id:
-        raise HTTPException(400, "لا يوجد حساب موظف مرتبط")
-    
-    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
-    if not emp:
-        raise HTTPException(404, "الموظف غير موجود")
-    
-    now = datetime.now(timezone.utc)
-    today = now.strftime("%Y-%m-%d")
-    
-    # التحقق من عدم وجود تسجيل ذاتي (GPS) مسبق
-    existing_auto = await db.attendance_ledger.find_one({
-        "employee_id": emp['id'],
-        "date": today,
-        "type": "check_in",
-        "source": "self_checkin"  # التسجيل الذاتي
-    })
-    
-    if existing_auto:
-        raise HTTPException(
-            400, 
-            {
-                "code": "AUTO_CHECKIN_EXISTS",
-                "message_ar": "يوجد تسجيل حضور ذاتي (GPS) لهذا اليوم - الذاتي هو الأصل",
-                "message_en": "Auto check-in (GPS) already exists for today"
-            }
-        )
-    
-    # التحقق من عدم وجود تسجيل احتياطي مسبق
-    existing_manual = await db.attendance_ledger.find_one({
-        "employee_id": emp['id'],
-        "date": today,
-        "type": "check_in",
-        "source": "manual_checkin"
-    })
-    
-    if existing_manual:
-        raise HTTPException(
-            400,
-            {
-                "code": "MANUAL_CHECKIN_EXISTS", 
-                "message_ar": "تم تسجيل الحضور الاحتياطي مسبقاً لهذا اليوم",
-                "message_en": "Manual check-in already exists for today"
-            }
-        )
-    
-    # جلب موقع العمل إن وجد
-    work_location_name = "تحضير احتياطي"
-    work_location_id = None
-    
-    if req.work_location:
-        loc = await db.work_locations.find_one({"id": req.work_location}, {"_id": 0})
-        if loc:
-            work_location_name = loc.get('name_ar', loc.get('name', 'تحضير احتياطي'))
-            work_location_id = loc.get('id')
-    
-    entry = {
-        "id": str(uuid.uuid4()),
-        "employee_id": emp['id'],
-        "transaction_id": None,
-        "type": "check_in",
-        "timestamp": now.isoformat(),
-        "date": today,
-        "location": None,  # لا يوجد GPS
-        "gps_available": False,
-        "gps_valid": False,
-        "distance_km": None,
-        "work_location": work_location_name,
-        "work_location_id": work_location_id,
-        "warnings": [],  # لا تحذيرات - لا تأخير
-        "late_minutes": 0,  # صفر تأخير
-        "created_at": now.isoformat(),
-        "source": "manual_checkin",  # تحضير احتياطي
-        "note": req.note or "تحضير احتياطي يدوي"
-    }
-    
-    await db.attendance_ledger.insert_one(entry)
-    entry.pop('_id', None)
-    
-    return {
-        **entry,
-        "message_ar": "تم تسجيل الحضور الاحتياطي بنجاح",
-        "message_en": "Manual check-in recorded successfully"
-    }
-
-
 @router.get("/today")
 async def get_today_attendance(user=Depends(get_current_user)):
     emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
@@ -324,10 +218,10 @@ async def get_today_attendance(user=Depends(get_current_user)):
         {"_id": 0}
     )
     
-    # إذا لم يوجد ذاتي، نبحث عن الاحتياطي
+    # إذا لم يوجد ذاتي، نبحث عن التحضير الإداري
     if not checkin:
         checkin = await db.attendance_ledger.find_one(
-            {"employee_id": emp['id'], "date": today, "type": "check_in", "source": "manual_checkin"}, 
+            {"employee_id": emp['id'], "date": today, "type": "check_in", "source": "admin_checkin"}, 
             {"_id": 0}
         )
     
