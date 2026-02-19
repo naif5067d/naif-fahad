@@ -1205,6 +1205,37 @@ available_balance = earned_to_date - used_executed
 
 ---
 
+### Phase 31: Bug Fixes & Ramadan Per-Location ✅ (2026-02-19)
+
+**الإصلاحات المُنفذة:**
+
+1. **إصلاح خطأ "Access denied for your role" لـ STAS:**
+   - تم إضافة `'stas'` إلى `require_roles` في `team_attendance.py` (Line 371)
+   - الآن STAS يمكنه تعديل حالة الموظفين
+
+2. **إصلاح عرض كلمة المرور:**
+   - تم إضافة حقل `plain_password` يُخزن عند إنشاء/تحديث كلمة المرور
+   - STAS فقط يمكنه رؤية `plain_password` عبر `GET /api/users/{employee_id}`
+   - الواجهة تعرض كلمة المرور المُخزنة عند فتح حوار بيانات الدخول
+
+3. **دعم رمضان لكل موقع (Per-Location Ramadan):**
+   - API جديد: `PUT /api/work-locations/{id}/ramadan/activate`
+   - API جديد: `PUT /api/work-locations/{id}/ramadan/deactivate`
+   - زر تفعيل/إلغاء رمضان ظاهر في كارت كل موقع لـ STAS فقط
+   - يحفظ الأوقات الأصلية ويستعيدها عند الإلغاء
+
+**الملفات المُعدلة:**
+- `/app/backend/routes/team_attendance.py` - Added 'stas' to require_roles
+- `/app/backend/routes/users.py` - plain_password storage and retrieval
+- `/app/backend/routes/work_locations.py` - Ramadan per-location APIs
+- `/app/frontend/src/pages/WorkLocationsPage.js` - Ramadan UI for STAS
+- `/app/frontend/src/pages/EmployeesPage.js` - Display stored password
+
+**الاختبارات:** 100% pass rate (18/18 backend tests)
+- `/app/backend/tests/test_iteration31_features.py`
+
+---
+
 ## Backlog (P1/P2)
 
 ### P1 Tasks:
