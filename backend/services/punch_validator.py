@@ -51,8 +51,7 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 async def get_employee_work_location(employee_id: str) -> Optional[dict]:
-    """الحصول على موقع عمل الموظف"""
-    # البحث في work_locations عن الموقع المُعيّن للموظف
+    """الحصول على موقع عمل الموظف - يرجع الموقع الأول"""
     location = await db.work_locations.find_one(
         {
             "assigned_employees": employee_id,
@@ -61,6 +60,18 @@ async def get_employee_work_location(employee_id: str) -> Optional[dict]:
         {"_id": 0}
     )
     return location
+
+
+async def get_all_employee_work_locations(employee_id: str) -> list:
+    """الحصول على جميع مواقع العمل المعينة للموظف"""
+    locations = await db.work_locations.find(
+        {
+            "assigned_employees": employee_id,
+            "is_active": True
+        },
+        {"_id": 0}
+    ).to_list(100)
+    return locations
 
 
 async def validate_punch_time(
