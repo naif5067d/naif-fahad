@@ -25,6 +25,7 @@ import SettlementPage from "@/pages/SettlementPage";
 import MyFinancesPage from "@/pages/MyFinancesPage";
 import TeamAttendancePage from "@/pages/TeamAttendancePage";
 import PenaltiesPage from "@/pages/PenaltiesPage";
+import LoginSessionsPage from "@/pages/LoginSessionsPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
