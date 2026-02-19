@@ -623,6 +623,23 @@ export default function STASMirrorPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {devices.length === 0 ? (
+                  <div className="text-center py-8 space-y-3">
+                    <Settings size={40} className="mx-auto text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">
+                      {lang === 'ar' ? 'لا توجد أجهزة مسجلة حالياً' : 'No devices registered yet'}
+                    </p>
+                    <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                      {lang === 'ar' 
+                        ? 'يتم تسجيل الأجهزة تلقائياً عند أول تسجيل دخول لكل موظف. المدراء (سلطان، نايف، ستاس) معفون من فحص الأجهزة.'
+                        : 'Devices are registered automatically on first login. Admins are exempt from device checks.'}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => api.get('/api/devices/all').then(r => setDevices(r.data)).catch(() => {})}>
+                      <RefreshCw size={14} className="mr-2" />
+                      {lang === 'ar' ? 'تحديث' : 'Refresh'}
+                    </Button>
+                  </div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -681,6 +698,7 @@ export default function STASMirrorPage() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </CardContent>
             </Card>
 
