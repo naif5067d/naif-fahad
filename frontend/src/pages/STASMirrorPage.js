@@ -420,10 +420,232 @@ export default function STASMirrorPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="devices" data-testid="tab-devices" className="flex items-center gap-2">
+            <Settings size={16} />
+            {lang === 'ar' ? 'الأجهزة' : 'Devices'}
+            {pendingDevices.length > 0 && (
+              <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {pendingDevices.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="mirror" data-testid="tab-mirror">{t('stas.mirror')}</TabsTrigger>
           <TabsTrigger value="holidays" data-testid="tab-holidays">{t('stas.holidayManagement')}</TabsTrigger>
           <TabsTrigger value="maintenance" data-testid="tab-maintenance">{t('stas.maintenance')}</TabsTrigger>
         </TabsList>
+
+        {/* === Devices Tab === */}
+        <TabsContent value="devices" className="mt-4">
+          <div className="space-y-6">
+            {/* Pending Devices Alert */}
+            {pendingDevices.length > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h3 className="font-semibold text-orange-700 flex items-center gap-2 mb-3">
+                  <AlertTriangle size={18} />
+                  {lang === 'ar' ? 'أجهزة بانتظار الاعتماد' : 'Devices Pending Approval'}
+                </h3>
+                <div className="space-y-2">
+                  {pendingDevices.map(device => (
+                    <div key={device.id} className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                      <div>
+                        <p className="font-medium">{device.employee_name_ar || device.employee_id}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {device.browser} - {device.os} | {device.device_type}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(device.registered_at).toLocaleString('ar-SA')}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveDevice(device.id)}
+                          disabled={deviceAction}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle size={14} className="mr-1" />
+                          {lang === 'ar' ? 'اعتماد' : 'Approve'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleBlockDevice(device.id)}
+                          disabled={deviceAction}
+                        >
+                          <XCircle size={14} className="mr-1" />
+                          {lang === 'ar' ? 'رفض' : 'Reject'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Employee Filter & Block Controls */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserX size={20} />
+                  {lang === 'ar' ? 'إدارة حسابات الموظفين' : 'Employee Account Management'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>{lang === 'ar' ? 'اختر موظف' : 'Select Employee'}</Label>
+                    <select
+                      className="w-full mt-1 p-2 border rounded-lg"
+                      value={selectedEmployeeFilter}
+                      onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+                    >
+                      <option value="all">{lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>{emp.full_name_ar || emp.full_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label>{lang === 'ar' ? 'سبب الإيقاف (اختياري)' : 'Block Reason (optional)'}</Label>
+                    <Input
+                      value={blockReason}
+                      onChange={(e) => setBlockReason(e.target.value)}
+                      placeholder={lang === 'ar' ? 'أدخل السبب...' : 'Enter reason...'}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <Button
+                      variant="destructive"
+                      onClick={() => selectedEmployeeFilter !== 'all' && handleBlockAccount(selectedEmployeeFilter)}
+                      disabled={selectedEmployeeFilter === 'all' || deviceAction}
+                      className="flex-1"
+                    >
+                      <UserX size={16} className="mr-2" />
+                      {lang === 'ar' ? 'إيقاف الحساب' : 'Block Account'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => selectedEmployeeFilter !== 'all' && handleUnblockAccount(selectedEmployeeFilter)}
+                      disabled={selectedEmployeeFilter === 'all' || deviceAction}
+                      className="flex-1"
+                    >
+                      <RotateCcw size={16} className="mr-2" />
+                      {lang === 'ar' ? 'إلغاء الإيقاف' : 'Unblock'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Devices Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Settings size={20} />
+                    {lang === 'ar' ? 'سجل الأجهزة' : 'Device Registry'}
+                  </span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {devices.length} {lang === 'ar' ? 'جهاز' : 'devices'}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-slate-50">
+                        <th className="p-3 text-right">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'الجهاز' : 'Device'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'المتصفح' : 'Browser'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'النظام' : 'OS'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'آخر استخدام' : 'Last Used'}</th>
+                        <th className="p-3 text-center">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {devices
+                        .filter(d => selectedEmployeeFilter === 'all' || d.employee_id === selectedEmployeeFilter)
+                        .map(device => (
+                          <tr key={device.id} className="border-b hover:bg-slate-50">
+                            <td className="p-3">{device.employee_name_ar || device.employee_id}</td>
+                            <td className="p-3">{device.device_type}</td>
+                            <td className="p-3">{device.browser}</td>
+                            <td className="p-3">{device.os}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                device.status === 'trusted' ? 'bg-green-100 text-green-700' :
+                                device.status === 'pending' ? 'bg-orange-100 text-orange-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {device.status === 'trusted' ? (lang === 'ar' ? 'موثوق' : 'Trusted') :
+                                 device.status === 'pending' ? (lang === 'ar' ? 'معلق' : 'Pending') :
+                                 (lang === 'ar' ? 'محظور' : 'Blocked')}
+                              </span>
+                            </td>
+                            <td className="p-3 text-xs text-muted-foreground">
+                              {new Date(device.last_used_at).toLocaleString('ar-SA')}
+                            </td>
+                            <td className="p-3 text-center">
+                              <div className="flex justify-center gap-1">
+                                {device.status === 'pending' && (
+                                  <Button size="sm" variant="ghost" onClick={() => handleApproveDevice(device.id)}>
+                                    <CheckCircle size={14} className="text-green-600" />
+                                  </Button>
+                                )}
+                                {device.status !== 'blocked' && (
+                                  <Button size="sm" variant="ghost" onClick={() => handleBlockDevice(device.id)}>
+                                    <XCircle size={14} className="text-orange-600" />
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="ghost" onClick={() => handleDeleteDevice(device.id)}>
+                                  <Trash2 size={14} className="text-red-600" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security Audit Log */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText size={20} />
+                  {lang === 'ar' ? 'سجل الأمان' : 'Security Audit Log'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-h-[300px] overflow-y-auto space-y-2">
+                  {securityLogs.map(log => (
+                    <div key={log.id} className="p-3 bg-slate-50 rounded-lg text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-medium ${
+                          log.action.includes('block') ? 'text-red-600' :
+                          log.action.includes('approve') ? 'text-green-600' :
+                          'text-blue-600'
+                        }`}>
+                          {log.action.replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(log.timestamp).toLocaleString('ar-SA')}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground">
+                        {lang === 'ar' ? 'الموظف:' : 'Employee:'} {log.employee_id} | 
+                        {lang === 'ar' ? ' بواسطة:' : ' By:'} {log.performed_by}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* === Deductions Tab === */}
         <TabsContent value="deductions" className="mt-4">
