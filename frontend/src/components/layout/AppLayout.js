@@ -28,7 +28,7 @@ const NAV_ITEMS = {
 const MOBILE_NAV_ITEMS = ['dashboard', 'transactions', 'leave', 'attendance'];
 
 const ICONS = {
-  dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
+  executive: Activity, dashboard: LayoutDashboard, transactions: FileText, leave: CalendarDays,
   attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
