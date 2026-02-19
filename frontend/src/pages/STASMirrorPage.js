@@ -809,145 +809,220 @@ export default function STASMirrorPage() {
 
         {/* === Deductions Tab === */}
         <TabsContent value="deductions" className="mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Pending & Approved Lists */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Pending Deductions - للمراجعة */}
-              <div>
-                <h2 className="text-sm font-semibold text-orange-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Clock size={16} />
-                  {lang === 'ar' ? 'بانتظار المراجعة' : 'Pending Review'}
-                  <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-xs">{pendingDeductions.length}</span>
-                </h2>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {pendingDeductions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">{lang === 'ar' ? 'لا يوجد مقترحات معلقة' : 'No pending proposals'}</p>
-                  ) : pendingDeductions.map(d => (
-                    <button
-                      key={d.id}
-                      onClick={() => loadDeductionTrace(d)}
-                      className={`w-full text-right p-3 rounded-lg border transition-all ${
-                        selectedDeduction?.id === d.id 
-                          ? 'border-orange-500 bg-orange-50' 
-                          : 'border-border hover:border-orange-300 hover:bg-orange-50/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-orange-600 font-medium">{d.deduction_type_ar}</span>
-                        <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
-                      </div>
-                      <p className="text-sm font-medium mt-1">{d.employee_name || d.employee_name_ar || d.employee_id}</p>
-                      <p className="text-xs text-muted-foreground">{d.period_start}</p>
-                    </button>
-                  ))}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign size={20} className="text-red-500" />
+                  {lang === 'ar' ? 'الخصومات المقترحة' : 'Deduction Proposals'}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                    {lang === 'ar' ? 'معلقة' : 'Pending'}: {pendingDeductions.length}
+                  </span>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                    {lang === 'ar' ? 'موافق عليها' : 'Approved'}: {approvedDeductions.length}
+                  </span>
                 </div>
               </div>
-
-              {/* Approved Deductions - للتنفيذ */}
-              <div>
-                <h2 className="text-sm font-semibold text-green-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <CheckCircle size={16} />
-                  {lang === 'ar' ? 'موافق عليها - للتنفيذ' : 'Approved - Ready to Execute'}
-                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">{approvedDeductions.length}</span>
-                </h2>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {approvedDeductions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">{lang === 'ar' ? 'لا يوجد مقترحات موافق عليها' : 'No approved proposals'}</p>
-                  ) : approvedDeductions.map(d => (
-                    <button
-                      key={d.id}
-                      onClick={() => loadDeductionTrace(d)}
-                      className={`w-full text-right p-3 rounded-lg border transition-all ${
-                        selectedDeduction?.id === d.id 
-                          ? 'border-green-500 bg-green-50' 
-                          : 'border-border hover:border-green-300 hover:bg-green-50/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-green-600 font-medium">{d.deduction_type_ar}</span>
-                        <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
-                      </div>
-                      <p className="text-sm font-medium mt-1">{d.employee_name || d.employee_name_ar || d.employee_id}</p>
-                      <p className="text-xs text-muted-foreground">{d.period_start}</p>
-                    </button>
-                  ))}
-                </div>
+            </CardHeader>
+            <CardContent>
+              {/* Deductions Table */}
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-100">
+                    <tr>
+                      <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
+                      <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'النوع' : 'Type'}</th>
+                      <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
+                      <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                      <th className="p-3 text-center font-semibold">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                      <th className="p-3 text-center font-semibold">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...pendingDeductions, ...approvedDeductions].length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                          <DollarSign size={40} className="mx-auto mb-2 opacity-30" />
+                          {lang === 'ar' ? 'لا توجد خصومات مقترحة' : 'No deduction proposals'}
+                        </td>
+                      </tr>
+                    ) : (
+                      [...pendingDeductions, ...approvedDeductions].map(d => (
+                        <tr 
+                          key={d.id} 
+                          className={`border-b hover:bg-slate-50 cursor-pointer transition-colors ${
+                            selectedDeduction?.id === d.id ? 'bg-blue-50' : ''
+                          }`}
+                          onClick={() => loadDeductionTrace(d)}
+                        >
+                          <td className="p-3">
+                            <div className="font-medium">{d.employee_name || d.employee_name_ar || d.employee_id}</div>
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs">
+                              {d.deduction_type_ar || d.deduction_type}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
+                          </td>
+                          <td className="p-3 text-muted-foreground text-xs">{d.period_start}</td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              d.status === 'pending' 
+                                ? 'bg-orange-100 text-orange-700' 
+                                : 'bg-green-100 text-green-700'
+                            }`}>
+                              {d.status === 'pending' 
+                                ? (lang === 'ar' ? 'معلق' : 'Pending')
+                                : (lang === 'ar' ? 'موافق' : 'Approved')}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex justify-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => { e.stopPropagation(); loadDeductionTrace(d); }}
+                                className="h-8 w-8 p-0"
+                                title={lang === 'ar' ? 'عرض التفاصيل' : 'View Details'}
+                              >
+                                <Eye size={14} />
+                              </Button>
+                              {d.status === 'approved' && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={(e) => { e.stopPropagation(); executeDeduction(d); }}
+                                  disabled={executingDeduction === d.id}
+                                  className="h-8 bg-green-600 hover:bg-green-700"
+                                  title={lang === 'ar' ? 'تنفيذ' : 'Execute'}
+                                >
+                                  {executingDeduction === d.id ? (
+                                    <Loader2 size={14} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle size={14} />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-            </div>
 
-            {/* Deduction Details & Trace */}
-            <div className="lg:col-span-2">
-              {selectedDeduction ? (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <DollarSign className="text-red-500" size={20} />
-                        {lang === 'ar' ? 'تفاصيل مقترح الخصم' : 'Deduction Proposal Details'}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        selectedDeduction.status === 'pending' 
-                          ? 'bg-orange-100 text-orange-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
-                        {selectedDeduction.status === 'pending' 
-                          ? (lang === 'ar' ? 'بانتظار المراجعة' : 'Pending')
-                          : (lang === 'ar' ? 'موافق عليه' : 'Approved')}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Basic Info */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الموظف' : 'Employee'}</p>
-                        <p className="font-medium">{selectedDeduction.employee_name || selectedDeduction.employee_name_ar || selectedDeduction.employee_id}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'نوع الخصم' : 'Type'}</p>
-                        <p className="font-medium">{selectedDeduction.deduction_type_ar}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'المبلغ' : 'Amount'}</p>
-                        <p className="font-bold text-red-600 text-lg">{selectedDeduction.amount?.toFixed(2)} ر.س</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'التاريخ' : 'Date'}</p>
-                        <p className="font-medium">{selectedDeduction.period_start}</p>
-                      </div>
+              {/* Selected Deduction Details Panel */}
+              {selectedDeduction && (
+                <div className="mt-6 p-4 bg-slate-50 rounded-lg border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <DollarSign size={18} className="text-red-500" />
+                      {lang === 'ar' ? 'تفاصيل الخصم' : 'Deduction Details'}
+                    </h3>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedDeduction(null)}>
+                      <XCircle size={16} />
+                    </Button>
+                  </div>
+                  
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="p-3 bg-white rounded border">
+                      <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الموظف' : 'Employee'}</p>
+                      <p className="font-medium">{selectedDeduction.employee_name || selectedDeduction.employee_name_ar}</p>
                     </div>
+                    <div className="p-3 bg-white rounded border">
+                      <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'النوع' : 'Type'}</p>
+                      <p className="font-medium">{selectedDeduction.deduction_type_ar}</p>
+                    </div>
+                    <div className="p-3 bg-white rounded border">
+                      <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'المبلغ' : 'Amount'}</p>
+                      <p className="font-bold text-red-600 text-lg">{selectedDeduction.amount?.toFixed(2)} ر.س</p>
+                    </div>
+                    <div className="p-3 bg-white rounded border">
+                      <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الفترة' : 'Period'}</p>
+                      <p className="font-medium">{selectedDeduction.period_start}</p>
+                    </div>
+                  </div>
 
-                    {/* Reason & Explanation */}
-                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                      <p className="text-sm font-semibold text-red-700 mb-2">{lang === 'ar' ? 'سبب الخصم' : 'Reason'}</p>
-                      <p className="text-sm">{selectedDeduction.reason_ar || selectedDeduction.reason}</p>
-                      
-                      {selectedDeduction.explanation && (
-                        <div className="mt-3 pt-3 border-t border-red-200">
-                          <p className="text-xs font-semibold text-red-600 mb-2">{lang === 'ar' ? 'التفسير' : 'Explanation'}</p>
-                          <div className="text-xs space-y-1">
-                            {Object.entries(selectedDeduction.explanation).map(([key, value]) => (
-                              <div key={key} className="flex justify-between">
-                                <span className="text-muted-foreground">{key}:</span>
-                                <span className="font-medium">{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
-                              </div>
-                            ))}
+                  {/* Reason */}
+                  <div className="p-3 bg-red-50 rounded border border-red-200 mb-4">
+                    <p className="text-xs font-semibold text-red-700 mb-1">{lang === 'ar' ? 'السبب' : 'Reason'}</p>
+                    <p className="text-sm">{selectedDeduction.reason_ar || selectedDeduction.reason}</p>
+                  </div>
+
+                  {/* Trace Log Toggle */}
+                  <button
+                    onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
+                    className="w-full p-3 bg-violet-50 rounded flex items-center justify-between hover:bg-violet-100 transition-colors"
+                  >
+                    <span className="font-semibold text-violet-700 flex items-center gap-2">
+                      <Eye size={16} />
+                      {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log'}
+                    </span>
+                    {expandedDeduction === selectedDeduction.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  {expandedDeduction === selectedDeduction.id && deductionTrace.length > 0 && (
+                    <div className="mt-3 space-y-2 max-h-[300px] overflow-y-auto">
+                      {deductionTrace.map((check, i) => (
+                        <div 
+                          key={i} 
+                          className={`p-3 rounded border-r-4 ${
+                            check.status === 'FAIL' 
+                              ? 'bg-red-50 border-red-500' 
+                              : check.status === 'WARNING' 
+                                ? 'bg-amber-50 border-amber-500' 
+                                : 'bg-green-50 border-green-500'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-bold ${
+                              check.status === 'FAIL' ? 'text-red-600' :
+                              check.status === 'WARNING' ? 'text-amber-600' : 'text-green-600'
+                            }`}>
+                              {check.status}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{check.check_name_ar || check.check_name}</span>
                           </div>
+                          <p className="text-sm mt-1">{check.message_ar || check.message}</p>
+                          {check.data && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              {Object.entries(check.data).map(([k, v]) => (
+                                <span key={k} className="mr-3">{k}: <strong>{String(v)}</strong></span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
+                  )}
 
-                    {/* Trace Log - العروق */}
-                    <div className="border rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
-                        className="w-full p-3 bg-violet-50 flex items-center justify-between hover:bg-violet-100 transition-colors"
+                  {/* Execute Button for Approved */}
+                  {selectedDeduction.status === 'approved' && (
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={() => executeDeduction(selectedDeduction)}
+                        disabled={executingDeduction === selectedDeduction.id}
+                        className="bg-green-600 hover:bg-green-700"
                       >
-                        <span className="font-semibold text-violet-700 flex items-center gap-2">
-                          <Eye size={16} />
-                          {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log - Verification Steps'}
-                        </span>
-                        {expandedDeduction === selectedDeduction.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {executingDeduction === selectedDeduction.id ? (
+                          <><Loader2 size={16} className="animate-spin mr-2" /> {lang === 'ar' ? 'جاري التنفيذ...' : 'Executing...'}</>
+                        ) : (
+                          <><CheckCircle size={16} className="mr-2" /> {lang === 'ar' ? 'تنفيذ الخصم' : 'Execute Deduction'}</>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
                       </button>
                       
                       {expandedDeduction === selectedDeduction.id && (
