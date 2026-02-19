@@ -8,19 +8,19 @@ import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = {
-  // الموظفون العاديون فقط يرون الحضور والمالياتي
-  employee: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
-  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
-  // سلطان موظف + إداري (يرى الحضور الشخصي + حضور الفريق)
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
-  // نايف إداري فقط (لا يُعامل كموظف)
-  naif: ['dashboard', 'transactions', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
-  // صلاح مالي فقط (لا يُعامل كموظف)
+  // الموظفون العاديون يرون الحضور والماليات والمهام
+  employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
+  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
+  // سلطان موظف + إداري
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // نايف إداري فقط
+  naif: ['dashboard', 'transactions', 'tasks', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // صلاح مالي فقط
   salah: ['dashboard', 'transactions', 'financialCustody'],
-  // محمد CEO فقط (لا يُعامل كموظف)
-  mohammed: ['dashboard', 'transactions', 'financialCustody'],
-  // ستاس إداري + صلاحيات كاملة (لا يُعامل كموظف)
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // محمد CEO
+  mohammed: ['dashboard', 'transactions', 'tasks', 'financialCustody'],
+  // ستاس إداري + صلاحيات كاملة
+  stas: ['dashboard', 'transactions', 'tasks', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
