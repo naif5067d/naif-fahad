@@ -138,6 +138,85 @@ async def register_device(
     }
 
 
+async def check_device_for_login(
+    employee_id: str,
+    device_signature: str,
+    fingerprint_data: dict
+) -> dict:
+    """
+    التحقق من الجهاز عند تسجيل الدخول
+    
+    Returns:
+        {
+            "allowed": bool,
+            "error": str,
+            "message_ar": str,
+            "message_en": str
+        }
+    """
+    # التحقق من وجود أجهزة مسجلة
+    devices_count = await db.employee_devices.count_documents({
+        "employee_id": employee_id
+    })
+    
+    if devices_count == 0:
+        # أول جهاز - تسجيله تلقائياً
+        await register_device(employee_id, fingerprint_data, is_first_device=True)
+        return {"allowed": True}
+    
+    # البحث عن الجهاز
+    device = await db.employee_devices.find_one({
+        "employee_id": employee_id,
+        "device_signature": device_signature
+    })
+    
+    if not device:
+        # جهاز جديد غير مسجل - تسجيله بحالة pending
+        await register_device(employee_id, fingerprint_data, is_first_device=False)
+        
+        return {
+            "allowed": False,
+            "error": "NEW_DEVICE",
+            "message_ar": "تم اكتشاف جهاز جديد. بانتظار اعتماد STAS. يرجى مراجعة الإدارة.",
+            "message_en": "New device detected. Waiting for STAS approval."
+        }
+    
+    # الجهاز موجود - التحقق من حالته
+    if device['status'] == 'trusted':
+        # تحديث آخر استخدام
+        await db.employee_devices.update_one(
+            {"id": device['id']},
+            {"$set": {
+                "last_used_at": datetime.now(timezone.utc).isoformat(),
+                "usage_count": device.get('usage_count', 0) + 1
+            }}
+        )
+        return {"allowed": True}
+    
+    elif device['status'] == 'pending':
+        return {
+            "allowed": False,
+            "error": "DEVICE_PENDING",
+            "message_ar": "الجهاز بانتظار اعتماد STAS. يرجى مراجعة الإدارة.",
+            "message_en": "Device pending STAS approval."
+        }
+    
+    elif device['status'] == 'blocked':
+        return {
+            "allowed": False,
+            "error": "DEVICE_BLOCKED",
+            "message_ar": "الجهاز محظور. يرجى مراجعة الإدارة.",
+            "message_en": "Device blocked. Please contact administration."
+        }
+    
+    return {
+        "allowed": False,
+        "error": "UNKNOWN_DEVICE_STATUS",
+        "message_ar": "حالة الجهاز غير معروفة.",
+        "message_en": "Unknown device status."
+    }
+
+
 async def validate_device(employee_id: str, fingerprint_data: dict) -> dict:
     """
     التحقق من صلاحية الجهاز للتبصيم
