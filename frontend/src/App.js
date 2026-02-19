@@ -28,6 +28,7 @@ import PenaltiesPage from "@/pages/PenaltiesPage";
 import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
+import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
