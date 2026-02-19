@@ -120,7 +120,7 @@ async def calculate_financial_score(employee_id: str = None, month: str = None) 
         start_date, end_date = get_month_range(year, mon)
         query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
     
-    custodies = await db.admin_custodies.find(query, {"_id": 0}).to_list(500)
+    custodies = await db.admin_custodies.find(query, {"_id": 0, "audit_status": 1, "returned_count": 1, "spent": 1, "created_by": 1, "created_at": 1}).to_list(500)
     
     if not custodies:
         return {"score": 100, "total_custodies": 0, "approved_first_time": 0, "returned": 0, "total_spent": 0}
@@ -155,7 +155,7 @@ async def calculate_request_score(employee_id: str = None, month: str = None) ->
         start_date, end_date = get_month_range(year, mon)
         query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
     
-    transactions = await db.transactions.find(query, {"_id": 0}).to_list(2000)
+    transactions = await db.transactions.find(query, {"_id": 0, "status": 1, "employee_id": 1, "created_at": 1}).to_list(2000)
     
     if not transactions:
         return {"score": 100, "total_requests": 0, "approved": 0, "rejected": 0, "pending": 0}
