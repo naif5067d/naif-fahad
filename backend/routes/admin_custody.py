@@ -803,3 +803,154 @@ async def close_custody(custody_id: str, user=Depends(get_current_user)):
         "status": "closed",
         "surplus": custody['remaining']
     }
+
+
+
+# ==================== PDF & DELETE ====================
+
+class BulkDeleteRequest(BaseModel):
+    custody_ids: List[str] = Field(..., min_length=1)
+
+
+@router.get("/{custody_id}/pdf")
+async def generate_custody_pdf(custody_id: str, lang: str = 'ar', user=Depends(get_current_user)):
+    """توليد PDF للعهدة"""
+    from fastapi.responses import Response
+    from utils.custody_pdf import generate_custody_pdf as gen_pdf
+    
+    check_role(user, ALLOWED_ROLES)
+    
+    custody = await db.admin_custodies.find_one({"id": custody_id}, {"_id": 0})
+    if not custody:
+        raise HTTPException(status_code=404, detail="العهدة غير موجودة")
+    
+    expenses = await db.custody_expenses.find(
+        {"custody_id": custody_id, "status": "active"},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
+    
+    # Company branding
+    branding = await db.company_settings.find_one({}, {"_id": 0})
+    
+    try:
+        pdf_bytes = gen_pdf(custody, expenses, branding, lang)
+        
+        filename = f"custody_{custody['custody_number']}_{lang}.pdf"
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        logger.error(f"PDF generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"خطأ في إنشاء PDF: {str(e)}")
+
+
+@router.delete("/bulk")
+async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_current_user)):
+    """حذف متعدد للعهد (STAS فقط)"""
+    check_role(user, ['stas'])
+    
+    now = datetime.now(timezone.utc).isoformat()
+    deleted_count = 0
+    failed_ids = []
+    
+    for custody_id in data.custody_ids:
+        custody = await db.admin_custodies.find_one({"id": custody_id})
+        
+        if not custody:
+            failed_ids.append({"id": custody_id, "reason": "غير موجودة"})
+            continue
+        
+        # لا يمكن حذف العهد المنفذة أو المغلقة
+        if custody['status'] in ['executed', 'closed']:
+            failed_ids.append({"id": custody_id, "reason": f"لا يمكن حذف عهدة {custody['status']}"})
+            continue
+        
+        # حذف ناعم (soft delete)
+        await db.admin_custodies.update_one(
+            {"id": custody_id},
+            {"$set": {
+                "status": "deleted",
+                "deleted_by": user.get('user_id'),
+                "deleted_at": now,
+                "updated_at": now
+            }}
+        )
+        
+        # إلغاء كل المصروفات
+        await db.custody_expenses.update_many(
+            {"custody_id": custody_id},
+            {"$set": {"status": "deleted", "deleted_at": now}}
+        )
+        
+        # سجل
+        await db.custody_logs.insert_one({
+            "id": str(uuid.uuid4()),
+            "custody_id": custody_id,
+            "action": "deleted",
+            "details": {"custody_number": custody['custody_number']},
+            "performed_by": user.get('user_id'),
+            "performed_by_name": user.get('full_name', ''),
+            "performed_at": now
+        })
+        
+        deleted_count += 1
+    
+    return {
+        "success": True,
+        "message_ar": f"تم حذف {deleted_count} عهدة",
+        "deleted_count": deleted_count,
+        "failed": failed_ids
+    }
+
+
+@router.delete("/{custody_id}")
+async def delete_single_custody(custody_id: str, user=Depends(get_current_user)):
+    """حذف عهدة واحدة (STAS فقط)"""
+    check_role(user, ['stas'])
+    
+    custody = await db.admin_custodies.find_one({"id": custody_id})
+    if not custody:
+        raise HTTPException(status_code=404, detail="العهدة غير موجودة")
+    
+    if custody['status'] in ['executed', 'closed']:
+        raise HTTPException(status_code=400, detail="لا يمكن حذف عهدة منفذة أو مغلقة")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # حذف ناعم
+    await db.admin_custodies.update_one(
+        {"id": custody_id},
+        {"$set": {
+            "status": "deleted",
+            "deleted_by": user.get('user_id'),
+            "deleted_at": now,
+            "updated_at": now
+        }}
+    )
+    
+    # إلغاء المصروفات
+    await db.custody_expenses.update_many(
+        {"custody_id": custody_id},
+        {"$set": {"status": "deleted", "deleted_at": now}}
+    )
+    
+    # سجل
+    await db.custody_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "custody_id": custody_id,
+        "action": "deleted",
+        "details": {"custody_number": custody['custody_number']},
+        "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
+        "performed_at": now
+    })
+    
+    return {
+        "success": True,
+        "message_ar": f"تم حذف العهدة رقم {custody['custody_number']}"
+    }
