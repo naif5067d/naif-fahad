@@ -1518,3 +1518,94 @@ available_balance = earned_to_date - used_executed
 2. **تغيير المتصفح فقط لا يُعتبر جهاز جديد**
 3. **التواريخ ميلادية** (ar-EG بدلاً من ar-SA)
 
+
+---
+
+### Phase 20: Admin Financial Custody System (نظام العهدة المالية الإدارية) ✅ (2026-02-19)
+
+**بناء من الصفر - نظام إداري داخلي فقط (ليس HR أو رواتب)**
+
+**المستخدمون المصرح لهم:**
+- سلطان: إنشاء عهد + إضافة مصروفات
+- محمد: إنشاء عهد + إضافة مصروفات  
+- صلاح (المحاسب): تدقيق واعتماد/إرجاع
+- STAS: تنفيذ + إغلاق + تجاوز التدقيق بعد 24 ساعة
+
+**الميزات المُنفذة:**
+
+1. **إنشاء عهدة جديدة:**
+   - رقم تلقائي (001, 002, ...)
+   - مبلغ العهدة
+   - ترحيل الفائض من العهدة السابقة تلقائياً
+   - الميزانية = المبلغ + الفائض المُرحّل
+
+2. **جدول المصروفات (Excel-like):**
+   - 60 كود ثابت للمصروفات
+   - عند كتابة الكود → يظهر الاسم تلقائياً (بدون قوائم منسدلة)
+   - أكواد 61+ تُحفظ تلقائياً
+   - حساب لحظي: المصروف والمتبقي
+   - لا يُسمح بتجاوز المتبقي
+
+3. **دورة حياة العهدة:**
+   ```
+   open → pending_audit → approved → executed → closed
+   ```
+   - سلطان/محمد: إنشاء + صرف + إرسال للتدقيق
+   - صلاح: تدقيق (اعتماد/إرجاع) + تعديل المصروفات
+   - STAS: تنفيذ (بعد اعتماد صلاح) أو اعتماد مباشر بعد 24 ساعة
+   - إغلاق: ترحيل الفائض للعهدة القادمة
+
+4. **القواعد المهمة:**
+   - لا تعديل بعد التنفيذ
+   - كل تعديل يُسجّل في log
+   - لا حذف فعلي - فقط إلغاء
+   - لا صرف يتجاوز المتبقي
+
+5. **لوحة الإجماليات:**
+   - إجمالي العهد
+   - إجمالي المصروف
+   - إجمالي المتبقي
+   - عدد العهد: مفتوحة/معلقة/منفذة/مغلقة
+   - الفائض المتاح للترحيل
+
+**الملفات الجديدة/المُحدثة:**
+- `/app/backend/routes/admin_custody.py` - APIs الكاملة + 60 كود ثابت
+- `/app/frontend/src/pages/FinancialCustodyPage.js` - واجهة Excel-like
+
+**APIs الجديدة:**
+- `GET /api/admin-custody/codes` - جميع الأكواد الـ60+
+- `GET /api/admin-custody/codes/{code}` - بحث فوري عن كود
+- `POST /api/admin-custody/codes` - إضافة كود جديد (61+)
+- `POST /api/admin-custody/create` - إنشاء عهدة
+- `GET /api/admin-custody/all` - قائمة العهد
+- `GET /api/admin-custody/{id}` - تفاصيل عهدة + مصروفاتها
+- `POST /api/admin-custody/{id}/expense` - إضافة مصروف
+- `DELETE /api/admin-custody/{id}/expense/{exp_id}` - إلغاء مصروف
+- `PUT /api/admin-custody/{id}/expense/{exp_id}` - تعديل مصروف (صلاح)
+- `POST /api/admin-custody/{id}/submit-audit` - إرسال للتدقيق
+- `POST /api/admin-custody/{id}/audit` - تدقيق (approve/reject)
+- `POST /api/admin-custody/{id}/execute` - تنفيذ (STAS)
+- `POST /api/admin-custody/{id}/close` - إغلاق
+- `GET /api/admin-custody/summary` - إحصائيات
+- `GET /api/admin-custody/surplus-available` - الفائض المتاح
+
+**الأكواد الثابتة (1-60):**
+| الكود | الاسم |
+|-------|-------|
+| 1 | اثاث الامانة |
+| 5 | انتقالات |
+| 11 | ضيافة |
+| 15 | محروقات |
+| 42 | محروقات وصيانه سيارات |
+| ... | (60 كود) |
+
+**Testing:** 100% pass rate (17/17 backend tests, all UI flows verified)
+- `/app/test_reports/iteration_35.json`
+- `/app/backend/tests/test_admin_custody_system.py`
+
+**Collections:**
+- `admin_custodies` - العهد
+- `custody_expenses` - المصروفات
+- `custody_logs` - سجل الأحداث
+- `expense_codes` - الأكواد المضافة (61+)
+
