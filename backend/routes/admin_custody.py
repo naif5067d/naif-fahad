@@ -287,10 +287,10 @@ async def get_all_custodies(
     status: Optional[str] = None,
     user=Depends(get_current_user)
 ):
-    """جلب جميع العهد"""
+    """جلب جميع العهد (ما عدا المحذوفة)"""
     check_role(user, ALLOWED_ROLES)
     
-    query = {}
+    query = {"status": {"$ne": "deleted"}}
     if status:
         query["status"] = status
     
