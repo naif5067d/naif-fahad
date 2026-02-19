@@ -1236,6 +1236,52 @@ available_balance = earned_to_date - used_executed
 
 ---
 
+### Phase 32: P0 Authentication & Security Fixes ✅ (2026-02-19)
+
+**الإصلاحات المُنفذة:**
+
+1. **إصلاح ثغرة كلمة المرور النصية (Critical Security Fix):**
+   - تم إزالة تخزين `plain_password` من جميع نقاط النهاية
+   - كلمة المرور الآن تُخزن مُشفرة فقط (bcrypt)
+   - لا يمكن عرض كلمة المرور الحالية - فقط تحديثها
+   - **ملفات:** `users.py`, `auth.py`
+
+2. **تفعيل صفحة تسجيل الدخول الاحترافية:**
+   - صفحة الدخول هي الآن نقطة الدخول الرئيسية للتطبيق
+   - تصميم ثنائي اللغة (عربي/إنجليزي) مع شعار الشركة
+   - دعم "تذكرني" مع حفظ اسم المستخدم
+   - إزالة التسجيل التلقائي كأول مستخدم
+   - دعم Device Fingerprinting في تسجيل الدخول
+   - **ملفات:** `App.js`, `AuthContext.js`, `LoginPage.js`
+
+3. **تقييد User Switcher لـ STAS فقط:**
+   - زر تبديل المستخدمين يظهر فقط لـ STAS بعد تسجيل الدخول
+   - المستخدمون العاديون يرون اسمهم فقط (بدون dropdown)
+   - حماية Backend: `/api/auth/users` و `/api/auth/switch` محميان لـ STAS فقط
+   - **ملف:** `AppLayout.js`
+
+4. **إضافة زر تسجيل الخروج:**
+   - زر خروج واضح في Header لجميع المستخدمين
+   - يمسح الـ token ويعود لصفحة الدخول
+   - **ملف:** `AppLayout.js`
+
+5. **إصلاح صلاحيات STAS:**
+   - إضافة `'stas'` لـ 3 endpoints كانت محصورة في sultan/naif:
+     - `POST /api/attendance-engine/proposals/{id}/review`
+     - `POST /api/attendance-engine/warnings/{id}/review`
+     - `POST /api/contracts/settlement`
+   - **ملفات:** `attendance_engine.py`, `contracts.py`
+
+**بيانات الاعتماد الافتراضية:**
+- **جميع المستخدمين:** كلمة المرور = `DarAlCode2026!`
+- **أسماء المستخدمين:** stas, sultan, naif, salah, mohammed, supervisor1
+
+**الاختبارات:** 100% pass rate (13/13 backend, 100% frontend)
+- `/app/backend/tests/test_iteration32_auth.py`
+- `/app/test_reports/iteration_32.json`
+
+---
+
 ## Backlog (P1/P2)
 
 ### P1 Tasks:
