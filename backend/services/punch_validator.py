@@ -155,26 +155,10 @@ async def validate_punch_time(
                     "work_location": work_location
                 }
         
-        # === رفض التبصيم المتأخر جداً ===
-        # حد التسجيل = وقت البداية + السماح + الحد الأقصى
-        max_checkin_time = work_start + timedelta(minutes=grace_checkin + MAX_LATE_MINUTES_AFTER_GRACE)
-        
-        if local_time > max_checkin_time:
-            return {
-                "valid": False,
-                "error": {
-                    "code": "error.checkin_closed",
-                    "message": f"Check-in closed. Maximum allowed time was {max_checkin_time.strftime('%H:%M')}",
-                    "message_ar": f"انتهى وقت تسجيل الدخول. الحد الأقصى كان {max_checkin_time.strftime('%H:%M')}",
-                    "work_start": work_start_str,
-                    "grace_minutes": grace_checkin,
-                    "max_late_minutes": MAX_LATE_MINUTES_AFTER_GRACE
-                },
-                "work_location": work_location
-            }
-        
-        # تحذير إذا متأخر (بعد وقت البداية + السماح)
+        # === تسجيل التأخير بدون رفض ===
+        # الموظف يستطيع التبصيم في أي وقت لكن يُسجل التأخير
         grace_deadline = work_start + timedelta(minutes=grace_checkin)
+        
         if local_time > grace_deadline:
             late_minutes = int((local_time - work_start).total_seconds() / 60)
             return {
