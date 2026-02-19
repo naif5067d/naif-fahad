@@ -69,7 +69,7 @@ def register_fonts():
                 ARABIC_FONT = font_name
                 ARABIC_FONT_BOLD = f'{font_name}Bold'
                 return True
-        except:
+        except Exception:
             continue
     return False
 
@@ -86,7 +86,7 @@ def reshape_arabic(text):
     try:
         reshaped = arabic_reshaper.reshape(str(text))
         return get_display(reshaped)
-    except:
+    except Exception:
         return str(text)
 
 
@@ -98,7 +98,7 @@ def format_date(date_str):
         if isinstance(date_str, str):
             return date_str.split('T')[0] if 'T' in date_str else date_str[:10]
         return str(date_str)[:10]
-    except:
+    except Exception:
         return str(date_str)
 
 
@@ -113,7 +113,7 @@ def create_qr_image(data: str, size: int = 20):
         img.save(buffer, format='PNG')
         buffer.seek(0)
         return RLImage(buffer, width=size*mm, height=size*mm)
-    except:
+    except Exception:
         return None
 
 
@@ -124,7 +124,7 @@ def create_barcode_image(code: str, width: int = 45, height: int = 10):
         d = Drawing(width*mm, (height+2)*mm)
         d.add(barcode)
         return d
-    except:
+    except Exception:
         return None
 
 
@@ -138,7 +138,7 @@ def create_logo_image(logo_data: str, max_width: int = 28, max_height: int = 18)
         img_bytes = base64.b64decode(logo_data)
         buffer = io.BytesIO(img_bytes)
         return RLImage(buffer, width=max_width*mm, height=max_height*mm)
-    except:
+    except Exception:
         return None
 
 
