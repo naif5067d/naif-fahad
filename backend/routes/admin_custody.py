@@ -855,7 +855,6 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
     """حذف متعدد للعهد (STAS فقط)"""
     check_role(user, ['stas'])
     
-    now = datetime.now(timezone.utc).isoformat()
     deleted_count = 0
     failed_ids = []
     
