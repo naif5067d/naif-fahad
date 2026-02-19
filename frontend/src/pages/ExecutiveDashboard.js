@@ -579,7 +579,7 @@ export default function ExecutiveDashboard() {
           </div>
 
           {/* KPI Cards Grid */}
-          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="lg:col-span-8 xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 order-last lg:order-first">
             <MetricCard
               title="الحضور والانضباط"
               titleEn="Attendance"
