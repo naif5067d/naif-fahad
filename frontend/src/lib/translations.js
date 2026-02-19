@@ -169,7 +169,7 @@ export const translations = {
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "حضور الفريق", penalties: "العقوبات",
-      attendancePenalties: "الحضور والعقوبات"
+      attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
