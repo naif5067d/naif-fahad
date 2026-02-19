@@ -183,7 +183,7 @@ export default function AttendancePage() {
       
       // جلب بيانات الإدارة
       if (isAdmin) {
-        const adminRes = await api.get('/api/attendance/admin-all');
+        const adminRes = await api.get('/api/attendance/admin');
         setAdminData(adminRes.data || []);
       }
     } catch (err) {
