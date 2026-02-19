@@ -1143,6 +1143,68 @@ available_balance = earned_to_date - used_executed
 
 ---
 
+### Phase 30: Device Security System & STAS Transaction Delete ✅ (2026-02-19)
+
+**الميزات المُنفذة:**
+
+1. **نظام التعرف على الأجهزة (Device Fingerprinting):**
+   - توليد بصمة فريدة للجهاز من: User Agent, Platform, Screen Resolution, Timezone, Language, WebGL, Canvas, Device Memory, Hardware Concurrency
+   - تسجيل الأجهزة: أول جهاز يُعتمد تلقائياً، الأجهزة الجديدة تحتاج اعتماد STAS
+   - حالات الجهاز: `trusted` | `pending` | `blocked`
+   - **ملف:** `backend/services/device_service.py`
+
+2. **إدارة حسابات الموظفين (Account Block/Unblock):**
+   - STAS يمكنه إيقاف حساب موظف للتحقيق
+   - حماية حسابات المدراء (EMP-STAS, EMP-MOHAMMED, etc.) من الحظر
+   - إلغاء الإيقاف مع تسجيل العملية
+   - **APIs:** `POST /api/devices/account/{id}/block`, `POST /api/devices/account/{id}/unblock`
+
+3. **سجل الأمان (Security Audit Log):**
+   - تسجيل جميع الأحداث الأمنية: تسجيل جهاز، اعتماد، حظر، إيقاف حساب
+   - **Collection:** `security_audit_log`
+   - **API:** `GET /api/devices/security-logs`
+
+4. **حذف معاملات STAS الخاصة:**
+   - STAS فقط يمكنه حذف معاملاته الخاصة
+   - التحقق من الملكية قبل الحذف
+   - تسجيل المعاملات المحذوفة في `deleted_transactions_log`
+   - **API:** `DELETE /api/transactions/{id}`
+
+5. **تبويب "الأجهزة" في صفحة STAS Mirror:**
+   - إدارة حسابات الموظفين (إيقاف/إلغاء الإيقاف)
+   - سجل الأجهزة المسجلة مع إجراءات (اعتماد/حظر/حذف)
+   - سجل الأمان
+
+6. **تبويب "معاملاتي" في صفحة STAS Mirror:**
+   - عرض معاملات STAS الخاصة
+   - زر عرض التفاصيل
+   - زر حذف المعاملة
+
+**الملفات الجديدة/المُحدثة:**
+- `/app/backend/routes/devices.py` - Device management APIs
+- `/app/backend/services/device_service.py` - Device service logic
+- `/app/backend/routes/transactions.py` - Added DELETE endpoint
+- `/app/frontend/src/pages/STASMirrorPage.js` - Added Devices & My Transactions tabs
+
+**APIs جديدة:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/devices/all` | جميع الأجهزة (STAS) |
+| GET | `/api/devices/pending` | الأجهزة المعلقة |
+| POST | `/api/devices/{id}/approve` | اعتماد جهاز |
+| POST | `/api/devices/{id}/block` | حظر جهاز |
+| DELETE | `/api/devices/{id}` | حذف جهاز |
+| GET | `/api/devices/account/{id}/status` | حالة الحساب |
+| POST | `/api/devices/account/{id}/block` | إيقاف حساب |
+| POST | `/api/devices/account/{id}/unblock` | إلغاء إيقاف |
+| GET | `/api/devices/security-logs` | سجل الأمان |
+| DELETE | `/api/transactions/{id}` | حذف معاملة (STAS) |
+
+**الاختبارات:** 100% pass rate (16/16 backend tests)
+- `/app/backend/tests/test_iteration30_devices_transactions.py`
+
+---
+
 ## Backlog (P1/P2)
 
 ### P1 Tasks:
