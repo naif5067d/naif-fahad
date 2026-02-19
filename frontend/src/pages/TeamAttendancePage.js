@@ -124,6 +124,15 @@ export default function TeamAttendancePage() {
   const [penaltiesReport, setPenaltiesReport] = useState(null);
   const [expandedPenaltyEmployee, setExpandedPenaltyEmployee] = useState(null);
   
+  // Deduction Review (Sultan/Naif only)
+  const [pendingDeductions, setPendingDeductions] = useState([]);
+  const [selectedDeduction, setSelectedDeduction] = useState(null);
+  const [deductionTrace, setDeductionTrace] = useState([]);
+  const [loadingTrace, setLoadingTrace] = useState(false);
+  const [reviewingDeduction, setReviewingDeduction] = useState(false);
+  const [reviewNote, setReviewNote] = useState('');
+  const [expandedDeduction, setExpandedDeduction] = useState(null);
+  
   // Edit Dialog
   const [editDialog, setEditDialog] = useState(null);
   const [editForm, setEditForm] = useState({
