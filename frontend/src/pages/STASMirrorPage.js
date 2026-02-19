@@ -214,6 +214,22 @@ export default function STASMirrorPage() {
     }
   };
 
+  const handleResetDevices = async (employeeId) => {
+    if (!confirm(lang === 'ar' 
+      ? 'هل أنت متأكد؟ سيتم حذف جميع أجهزة هذا الموظف وسيحتاج للتسجيل من جديد' 
+      : 'Are you sure? All devices for this employee will be deleted')) return;
+    setDeviceAction(true);
+    try {
+      const res = await api.post(`/api/devices/employee/${employeeId}/reset-devices`);
+      toast.success(res.data.message_ar || 'Devices reset successfully');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to reset devices');
+    } finally {
+      setDeviceAction(false);
+    }
+  };
+
   // === Deductions Functions ===
   const fetchDeductions = async () => {
     try {
