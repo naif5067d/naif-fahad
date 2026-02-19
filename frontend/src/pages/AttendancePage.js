@@ -555,7 +555,7 @@ export default function AttendancePage() {
               )}
 
               {/* حالة اليوم */}
-              {todayRecord && (
+              {todayRecord && (todayRecord.check_in || todayRecord.check_out) && (
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border">
                   <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <Calendar size={16} />
@@ -566,9 +566,13 @@ export default function AttendancePage() {
                       <LogIn size={20} className="text-emerald-600" />
                       <div>
                         <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الدخول' : 'In'}</p>
-                        <p className="font-mono font-semibold">{todayRecord.check_in_time || '-'}</p>
-                        {todayRecord.work_location && (
-                          <p className="text-xs text-muted-foreground">{todayRecord.work_location}</p>
+                        <p className="font-mono font-semibold">
+                          {todayRecord.check_in?.timestamp 
+                            ? new Date(todayRecord.check_in.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})
+                            : '-'}
+                        </p>
+                        {todayRecord.check_in?.work_location && (
+                          <p className="text-xs text-muted-foreground">{todayRecord.check_in.work_location}</p>
                         )}
                       </div>
                     </div>
@@ -576,7 +580,11 @@ export default function AttendancePage() {
                       <LogOut size={20} className="text-red-600" />
                       <div>
                         <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الخروج' : 'Out'}</p>
-                        <p className="font-mono font-semibold">{todayRecord.check_out_time || '-'}</p>
+                        <p className="font-mono font-semibold">
+                          {todayRecord.check_out?.timestamp 
+                            ? new Date(todayRecord.check_out.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})
+                            : '-'}
+                        </p>
                       </div>
                     </div>
                   </div>
