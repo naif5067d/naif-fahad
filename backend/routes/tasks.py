@@ -10,7 +10,7 @@ from database import db
 from utils.auth import get_current_user, require_roles
 import uuid
 
-router = APIRouter(prefix="/tasks", tags=["Tasks"])
+router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
 # ==================== MODELS ====================
 
