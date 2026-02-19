@@ -77,6 +77,44 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerStream, setScannerStream] = useState(null);
+  const videoRef = useRef(null);
+
+  // فتح الكاميرا
+  const startScanner = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setScannerStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'لا يمكن الوصول للكاميرا' : 'Cannot access camera');
+      setScannerOpen(false);
+    }
+  };
+
+  // إغلاق الكاميرا
+  const stopScanner = () => {
+    if (scannerStream) {
+      scannerStream.getTracks().forEach(track => track.stop());
+      setScannerStream(null);
+    }
+    setScannerOpen(false);
+  };
+
+  // البحث برقم المعاملة المدخل يدوياً
+  const handleManualBarcodeSearch = (code) => {
+    const cleanCode = code.trim().toUpperCase();
+    if (cleanCode) {
+      setSearch(cleanCode);
+      stopScanner();
+      toast.success(lang === 'ar' ? `جاري البحث عن: ${cleanCode}` : `Searching for: ${cleanCode}`);
+    }
+  };
 
   const fetchTxs = async () => {
     setFetchLoading(true);
