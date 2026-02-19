@@ -217,65 +217,78 @@ export default function AppLayout({ children }) {
               {/* Notification Bell - For ALL users */}
               <NotificationBell />
 
-              {/* User Switcher */}
-              <div className="relative" ref={switcherRef}>
-                <button
-                  data-testid="user-switcher-btn"
-                  onClick={() => setSwitcherOpen(!switcherOpen)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
-                >
+              {/* User Switcher - STAS ONLY */}
+              {role === 'stas' ? (
+                <div className="relative" ref={switcherRef}>
+                  <button
+                    data-testid="user-switcher-btn"
+                    onClick={() => setSwitcherOpen(!switcherOpen)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
+                  >
+                    <div 
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: colors.bg }}
+                    >
+                      {lang === 'ar' ? 'س' : 'S'}
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{displayName}</span>
+                    <ChevronDown size={14} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {switcherOpen && (
+                    <div className="absolute top-full mt-2 end-0 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
+                      <div className="px-4 py-3 border-b border-border bg-muted/30">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
+                        </p>
+                      </div>
+                      <div className="max-h-80 overflow-y-auto py-2">
+                        {allUsers.filter(u => u.is_active !== false).map(u => {
+                          const isActive = u.id === user?.id;
+                          const uRole = u.role;
+                          const uColors = ROLE_COLORS[uRole] || ROLE_COLORS.employee;
+                          const uName = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
+                          const uRoleLabel = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
+                          return (
+                            <button
+                              key={u.id}
+                              data-testid={`switch-to-${u.username}`}
+                              onClick={() => handleSwitch(u)}
+                              disabled={switching}
+                              className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors ${
+                                isActive ? 'bg-primary/5' : 'hover:bg-muted/60'
+                              }`}
+                            >
+                              <div 
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                                style={{ background: uColors.bg }}
+                              >
+                                {uRole === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (u.full_name || 'U')[0]}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm truncate ${isActive ? 'font-bold text-primary' : 'font-medium'}`}>{uName}</p>
+                                <p className="text-xs text-muted-foreground">{uRoleLabel}</p>
+                              </div>
+                              {isActive && <Check size={18} className="text-primary flex-shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Regular user profile indicator (non-STAS) */
+                <div className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl border border-border">
                   <div 
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                     style={{ background: colors.bg }}
                   >
-                    {role === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (user?.full_name || 'U')[0]}
+                    {(user?.full_name || 'U')[0]}
                   </div>
                   <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{displayName}</span>
-                  <ChevronDown size={14} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {switcherOpen && (
-                  <div className="absolute top-full mt-2 end-0 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
-                    <div className="px-4 py-3 border-b border-border bg-muted/30">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
-                      </p>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto py-2">
-                      {allUsers.filter(u => u.is_active !== false).map(u => {
-                        const isActive = u.id === user?.id;
-                        const uRole = u.role;
-                        const uColors = ROLE_COLORS[uRole] || ROLE_COLORS.employee;
-                        const uName = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? (u.full_name_ar || u.full_name) : u.full_name);
-                        const uRoleLabel = uRole === 'stas' ? (lang === 'ar' ? 'ستاس' : 'STAS') : (lang === 'ar' ? ROLE_LABELS_AR[uRole] : ROLE_LABELS[uRole]);
-                        return (
-                          <button
-                            key={u.id}
-                            data-testid={`switch-to-${u.username}`}
-                            onClick={() => handleSwitch(u)}
-                            disabled={switching}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-start transition-colors ${
-                              isActive ? 'bg-primary/5' : 'hover:bg-muted/60'
-                            }`}
-                          >
-                            <div 
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                              style={{ background: uColors.bg }}
-                            >
-                              {uRole === 'stas' ? (lang === 'ar' ? 'س' : 'S') : (u.full_name || 'U')[0]}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-sm truncate ${isActive ? 'font-bold text-primary' : 'font-medium'}`}>{uName}</p>
-                              <p className="text-xs text-muted-foreground">{uRoleLabel}</p>
-                            </div>
-                            {isActive && <Check size={18} className="text-primary flex-shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Language toggle */}
               <button 
