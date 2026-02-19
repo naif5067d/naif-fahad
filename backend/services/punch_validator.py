@@ -352,6 +352,22 @@ async def validate_full_punch(
     gps_valid = False
     distance_km = None
     
+    # === فحص الإعفاء - المستخدمين المُعفَين يمكنهم التبصيم في أي وقت ومكان ===
+    if employee_id in EXEMPT_EMPLOYEE_IDS:
+        return {
+            "valid": True,
+            "errors": [],
+            "warnings": [{
+                "code": "info.exempt_employee",
+                "message": "Admin user - exempt from attendance rules",
+                "message_ar": "مستخدم إداري - مُعفى من قواعد الحضور"
+            }],
+            "work_location": None,
+            "gps_valid": True,
+            "distance_km": None,
+            "is_exempt": True
+        }
+    
     # 1. التحقق من الوقت
     time_result = await validate_punch_time(employee_id, punch_type, current_time)
     work_location = time_result.get('work_location')
