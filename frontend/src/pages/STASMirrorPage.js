@@ -551,7 +551,7 @@ export default function STASMirrorPage() {
                               {device.friendly_name || `${device.browser} - ${device.os}`}
                             </p>
                             <p className="text-sm text-slate-500 mt-1">
-                              📅 {new Date(device.registered_at).toLocaleString('ar-SA')}
+                              📅 {new Date(device.registered_at).toLocaleString('ar-EG')}
                             </p>
                           </div>
                         </div>
@@ -761,7 +761,7 @@ export default function STASMirrorPage() {
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                               <Clock size={12} />
                               <span>{lang === 'ar' ? 'آخر استخدام:' : 'Last used:'}</span>
-                              <span className="font-medium">{new Date(device.last_used_at).toLocaleDateString('ar-SA')}</span>
+                              <span className="font-medium">{new Date(device.last_used_at).toLocaleDateString('ar-EG')}</span>
                             </div>
                           </div>
                           
@@ -862,7 +862,7 @@ export default function STASMirrorPage() {
                                log.action.replace(/_/g, ' ')}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(log.timestamp).toLocaleString('ar-SA')}
+                              {new Date(log.timestamp).toLocaleString('ar-EG')}
                             </span>
                           </div>
                           <p className="text-muted-foreground mt-1">
@@ -930,7 +930,7 @@ export default function STASMirrorPage() {
                             </span>
                           </td>
                           <td className="p-3 text-xs text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString('ar-SA')}
+                            {new Date(tx.created_at).toLocaleDateString('ar-EG')}
                           </td>
                           <td className="p-3 text-center">
                             <div className="flex justify-center gap-2">
