@@ -1053,18 +1053,15 @@ export default function ContractsManagementPage() {
                           <FileText className="w-4 h-4" />
                         </Button>
                         
-                        {/* Edit - draft/pending_stas OR active for strategic roles */}
-                        {(
-                          ['draft', 'pending_stas'].includes(contract.status) ||
-                          (contract.status === 'active' && ['sultan', 'naif', 'stas'].includes(user?.role))
-                        ) && canCreate && (
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(contract)}>
+                        {/* Edit - للمسؤولين (سلطان/نايف/STAS) يمكنهم تعديل أي عقد */}
+                        {isAdmin && (
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(contract)} data-testid={`edit-contract-${contract.id}`}>
                             <Edit className="w-4 h-4" />
                           </Button>
                         )}
                         
                         {/* Submit to STAS - only draft */}
-                        {contract.status === 'draft' && canCreate && (
+                        {contract.status === 'draft' && isAdmin && (
                           <Button 
                             variant="outline" 
                             size="sm" 
