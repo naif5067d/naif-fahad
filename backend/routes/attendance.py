@@ -123,6 +123,8 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
 async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     """
     Check-out with server-side validation:
+    - Account not blocked
+    - Device validated
     - Must have checked in today
     - Cannot checkout twice
     - GPS location validated
@@ -132,10 +134,23 @@ async def check_out(req: CheckOutRequest, user=Depends(get_current_user)):
     if not employee_id:
         raise HTTPException(400, "لا يوجد حساب موظف مرتبط")
     
-    # هل المستخدم مدير يمكنه تجاوز GPS؟
-    bypass_gps = user.get('role') in BYPASS_GPS_ROLES
+    # هل المستخدم مدير يمكنه تجاوز القيود؟
+    bypass_all = user.get('role') in BYPASS_ROLES
+    bypass_gps = bypass_all
     
-    # التحقق الكامل من التبصيم
+    # 1. التحقق من أن الحساب غير محجوب
+    if not bypass_all:
+        block_status = await check_account_blocked(employee_id)
+        if block_status['is_blocked']:
+            raise HTTPException(403, block_status['message_ar'])
+    
+    # 2. التحقق من الجهاز
+    if req.fingerprint and not bypass_all:
+        device_result = await validate_device(employee_id, req.fingerprint)
+        if not device_result['valid']:
+            raise HTTPException(403, device_result['error']['message_ar'])
+    
+    # 3. التحقق الكامل من التبصيم
     punch_validation = await validate_full_punch(
         employee_id=employee_id,
         punch_type='checkout',
