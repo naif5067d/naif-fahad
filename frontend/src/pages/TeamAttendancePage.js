@@ -542,6 +542,18 @@ export default function TeamAttendancePage() {
             <AlertTriangle size={16} />
             {lang === 'ar' ? 'العقوبات' : 'Penalties'}
           </TabsTrigger>
+          {/* تبويب مراجعة الخصومات - sultan/naif فقط */}
+          {['sultan', 'naif'].includes(user?.role) && (
+            <TabsTrigger value="deductions-review" className="flex-1 md:flex-none gap-2">
+              <FileWarning size={16} />
+              {lang === 'ar' ? 'مراجعة الخصومات' : 'Review Deductions'}
+              {pendingDeductions.length > 0 && (
+                <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {pendingDeductions.length}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Attendance Tab Content */}
