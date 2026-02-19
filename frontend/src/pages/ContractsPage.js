@@ -120,31 +120,96 @@ export default function ContractsPage() {
             </Dialog>
           )}
           {canSettle && (
-            <Dialog open={settlementDialog} onOpenChange={setSettlementDialog}>
+            <Dialog open={settlementDialog} onOpenChange={(open) => { setSettlementDialog(open); if (!open) setSettlementPreview(null); }}>
               <DialogTrigger asChild>
                 <Button data-testid="create-settlement-btn" variant="destructive"><FileSignature size={16} className="me-1" /> {t('contracts.settlement')}</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader><DialogTitle>{t('contracts.settlement')}</DialogTitle></DialogHeader>
-                <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                  <div>
-                    <Label>Employee</Label>
-                    <Select value={sForm.employee_id} onValueChange={v => setSForm(f => ({ ...f, employee_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>{employees.filter(e => e.is_active).map(e => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
-                    </Select>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader><DialogTitle>{lang === 'ar' ? 'إنهاء خدمات / مخالصة' : 'Settlement / Final Clearance'}</DialogTitle></DialogHeader>
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                  {/* اختيار الموظف مع زر الحساب التلقائي */}
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label>{lang === 'ar' ? 'الموظف' : 'Employee'}</Label>
+                      <Select value={sForm.employee_id} onValueChange={v => { setSForm(f => ({ ...f, employee_id: v })); calculateSettlement(v); }}>
+                        <SelectTrigger><SelectValue placeholder={lang === 'ar' ? 'اختر الموظف' : 'Select Employee'} /></SelectTrigger>
+                        <SelectContent>{employees.filter(e => e.is_active).map(e => <SelectItem key={e.id} value={e.id}>{lang === 'ar' ? e.full_name_ar : e.full_name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    {sForm.employee_id && (
+                      <Button variant="outline" onClick={() => calculateSettlement(sForm.employee_id)} disabled={calculatingSettlement} className="mt-6">
+                        {calculatingSettlement ? <Loader2 size={16} className="animate-spin" /> : <Calculator size={16} />}
+                      </Button>
+                    )}
                   </div>
-                  <div><Label>Reason</Label><Input value={sForm.reason} onChange={e => setSForm(f => ({ ...f, reason: e.target.value }))} /></div>
-                  <div><Label>Settlement Text (verbatim)</Label><Input value={sForm.settlement_text} onChange={e => setSForm(f => ({ ...f, settlement_text: e.target.value }))} /></div>
+
+                  {/* معاينة الحساب التلقائي */}
+                  {settlementPreview && (
+                    <div className="p-4 bg-slate-50 rounded-lg border space-y-3">
+                      <h3 className="font-semibold text-sm flex items-center gap-2">
+                        <Calculator size={16} />
+                        {lang === 'ar' ? 'الحساب التلقائي' : 'Auto Calculation'}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>{lang === 'ar' ? 'سنوات الخدمة:' : 'Years of Service:'}</div>
+                        <div className="font-medium">{settlementPreview.years_of_service} {lang === 'ar' ? 'سنة' : 'years'}</div>
+                        <div>{lang === 'ar' ? 'رصيد الإجازات:' : 'Leave Balance:'}</div>
+                        <div className="font-medium">{settlementPreview.leave_balance_days} {lang === 'ar' ? 'يوم' : 'days'}</div>
+                      </div>
+                      {settlementPreview.deduction_details?.length > 0 && (
+                        <div className="border-t pt-2 mt-2">
+                          <p className="text-xs font-semibold text-red-600 mb-1">{lang === 'ar' ? 'الخصومات المسجلة:' : 'Recorded Deductions:'}</p>
+                          {settlementPreview.deduction_details.map((d, i) => (
+                            <div key={i} className="text-xs flex justify-between text-muted-foreground">
+                              <span>{d.reason || d.date}</span>
+                              <span className="text-red-600">-{d.amount} SAR</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="border-t pt-2 flex justify-between font-bold">
+                        <span>{lang === 'ar' ? 'صافي المخالصة:' : 'Net Settlement:'}</span>
+                        <span className="text-green-600">{settlementPreview.net_settlement?.toLocaleString()} SAR</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div><Label>{lang === 'ar' ? 'السبب' : 'Reason'}</Label><Input value={sForm.reason} onChange={e => setSForm(f => ({ ...f, reason: e.target.value }))} /></div>
+                  <div><Label>{lang === 'ar' ? 'نص المخالصة' : 'Settlement Text'}</Label><Input value={sForm.settlement_text} onChange={e => setSForm(f => ({ ...f, settlement_text: e.target.value }))} /></div>
+                  
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Final Salary</Label><Input type="number" value={sForm.final_salary} onChange={e => setSForm(f => ({ ...f, final_salary: e.target.value }))} /></div>
-                    <div><Label>Leave Encashment</Label><Input type="number" value={sForm.leave_encashment} onChange={e => setSForm(f => ({ ...f, leave_encashment: e.target.value }))} /></div>
-                    <div><Label>EOS Amount</Label><Input type="number" value={sForm.eos_amount} onChange={e => setSForm(f => ({ ...f, eos_amount: e.target.value }))} /></div>
-                    <div><Label>Other Payments</Label><Input type="number" value={sForm.other_payments} onChange={e => setSForm(f => ({ ...f, other_payments: e.target.value }))} /></div>
-                    <div><Label>Deductions</Label><Input type="number" value={sForm.deductions} onChange={e => setSForm(f => ({ ...f, deductions: e.target.value }))} /></div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'الراتب النهائي' : 'Final Salary'}</Label>
+                      <Input type="number" value={sForm.final_salary} onChange={e => setSForm(f => ({ ...f, final_salary: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'بدل الإجازات' : 'Leave Encashment'}</Label>
+                      <Input type="number" value={sForm.leave_encashment} onChange={e => setSForm(f => ({ ...f, leave_encashment: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'EOS Amount'}</Label>
+                      <Input type="number" value={sForm.eos_amount} onChange={e => setSForm(f => ({ ...f, eos_amount: e.target.value }))} />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'مدفوعات أخرى' : 'Other Payments'}</Label>
+                      <Input type="number" value={sForm.other_payments} onChange={e => setSForm(f => ({ ...f, other_payments: e.target.value }))} />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-red-600">{lang === 'ar' ? 'الخصومات' : 'Deductions'}</Label>
+                      <Input type="number" value={sForm.deductions} onChange={e => setSForm(f => ({ ...f, deductions: e.target.value }))} className="border-red-200" />
+                    </div>
                   </div>
-                  <Button data-testid="submit-settlement" onClick={handleSettlement} variant="destructive" className="w-full" disabled={submitting}>
-                    {submitting ? t('common.loading') : t('common.submit')}
+
+                  {/* صافي المخالصة */}
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex justify-between items-center">
+                    <span className="font-semibold">{lang === 'ar' ? 'الإجمالي:' : 'Total:'}</span>
+                    <span className="text-xl font-bold text-green-700">
+                      {(parseFloat(sForm.final_salary || 0) + parseFloat(sForm.leave_encashment || 0) + parseFloat(sForm.eos_amount || 0) + parseFloat(sForm.other_payments || 0) - parseFloat(sForm.deductions || 0)).toLocaleString()} SAR
+                    </span>
+                  </div>
+
+                  <Button data-testid="submit-settlement" onClick={handleSettlement} variant="destructive" className="w-full" disabled={submitting || !sForm.employee_id}>
+                    {submitting ? t('common.loading') : (lang === 'ar' ? 'إنشاء طلب المخالصة' : 'Create Settlement Request')}
                   </Button>
                 </div>
               </DialogContent>
