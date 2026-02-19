@@ -1,166 +1,324 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, TrendingDown, Users, Clock, FileText, Wallet,
-  AlertTriangle, CheckCircle, Activity, BarChart3, Target,
-  Maximize2, Minimize2, RefreshCw, Bell
+  AlertTriangle, Activity, BarChart3, Target, ArrowLeft,
+  Maximize2, Minimize2, RefreshCw, Bell, Zap, Award,
+  ChevronUp, ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 import api from '@/lib/api';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-// ==================== PREMIUM COLORS ====================
-const COLORS = {
-  bg: '#0a0a0b',
-  bgCard: '#111113',
-  bgHover: '#1a1a1d',
-  border: '#222225',
-  borderLight: '#2a2a2d',
-  text: '#fafafa',
-  textMuted: '#71717a',
-  textDim: '#52525b',
-  accent: '#3b82f6',
-  accentLight: '#60a5fa',
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  purple: '#8b5cf6',
+// ==================== EXECUTIVE DESIGN SYSTEM ====================
+const THEME = {
+  // Core palette - Luxurious & Minimal
+  bg: {
+    primary: '#0A0A0B',      // Deep black
+    secondary: '#111113',    // Elevated surface
+    tertiary: '#18181B',     // Cards
+    hover: '#1F1F23',        // Hover state
+  },
+  border: {
+    subtle: 'rgba(255,255,255,0.06)',
+    light: 'rgba(255,255,255,0.1)',
+  },
+  text: {
+    primary: '#FAFAFA',      // White
+    secondary: '#A1A1AA',    // Muted
+    tertiary: '#71717A',     // Dim
+    accent: '#E4E4E7',       // Subtle emphasis
+  },
+  accent: {
+    blue: '#3B82F6',
+    green: '#10B981',
+    amber: '#F59E0B',
+    red: '#EF4444',
+    purple: '#8B5CF6',
+    cyan: '#06B6D4',
+  }
 };
 
-const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'];
+
+// ==================== HELPER FUNCTIONS ====================
+const getScoreColor = (score) => {
+  if (score >= 85) return THEME.accent.green;
+  if (score >= 70) return THEME.accent.blue;
+  if (score >= 50) return THEME.accent.amber;
+  return THEME.accent.red;
+};
+
+const getScoreLabel = (score) => {
+  if (score >= 85) return 'ممتاز';
+  if (score >= 70) return 'جيد';
+  if (score >= 50) return 'مقبول';
+  return 'يحتاج تحسين';
+};
 
 // ==================== COMPONENTS ====================
 
-const ScoreRing = ({ score, size = 200, strokeWidth = 12 }) => {
-  const radius = (size - strokeWidth) / 2;
+// Premium Score Ring - Clean & Elegant
+const ScoreRing = ({ score, size = 240 }) => {
+  const strokeWidth = size * 0.05;
+  const radius = (size - strokeWidth * 2) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (score / 100) * circumference;
-  
-  const getColor = (s) => {
-    if (s >= 85) return COLORS.success;
-    if (s >= 70) return COLORS.accent;
-    if (s >= 50) return COLORS.warning;
-    return COLORS.danger;
-  };
+  const color = getScoreColor(score);
   
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      {/* Background glow */}
+      <div 
+        className="absolute inset-0 rounded-full blur-3xl opacity-20"
+        style={{ background: color }}
+      />
+      
       <svg width={size} height={size} className="transform -rotate-90">
+        {/* Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={COLORS.border}
+          stroke={THEME.border.subtle}
           strokeWidth={strokeWidth}
         />
+        {/* Progress */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={getColor(score)}
+          stroke={color}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
+          className="transition-all duration-[2000ms] ease-out"
+          style={{ filter: `drop-shadow(0 0 12px ${color}40)` }}
         />
       </svg>
+      
+      {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-6xl font-light tracking-tight" style={{ color: COLORS.text }}>
-          {score}
+        <span 
+          className="font-extralight tracking-tight leading-none"
+          style={{ 
+            fontSize: size * 0.3,
+            color: THEME.text.primary,
+          }}
+        >
+          {Math.round(score)}
         </span>
-        <span className="text-sm uppercase tracking-widest mt-1" style={{ color: COLORS.textMuted }}>
+        <span 
+          className="text-xs uppercase tracking-[0.2em] mt-2"
+          style={{ color: THEME.text.tertiary }}
+        >
           من 100
+        </span>
+        <span 
+          className="text-sm mt-3 px-3 py-1 rounded-full"
+          style={{ 
+            color: color,
+            background: `${color}15`,
+          }}
+        >
+          {getScoreLabel(score)}
         </span>
       </div>
     </div>
   );
 };
 
-const MetricCard = ({ title, score, icon: Icon, details, trend }) => {
-  const getColor = (s) => {
-    if (s >= 85) return COLORS.success;
-    if (s >= 70) return COLORS.accent;
-    if (s >= 50) return COLORS.warning;
-    return COLORS.danger;
-  };
+// KPI Metric Card - Clean & Minimal
+const MetricCard = ({ title, titleEn, score, icon: Icon, details }) => {
+  const color = getScoreColor(score);
   
   return (
     <div 
-      className="p-6 rounded-2xl border transition-all duration-300 hover:border-opacity-50"
+      className="group relative p-5 sm:p-6 rounded-2xl transition-all duration-500 hover:translate-y-[-2px]"
       style={{ 
-        backgroundColor: COLORS.bgCard, 
-        borderColor: COLORS.border,
+        background: THEME.bg.secondary,
+        border: `1px solid ${THEME.border.subtle}`,
       }}
+      data-testid={`metric-card-${titleEn?.toLowerCase().replace(/\s/g, '-')}`}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${getColor(score)}15` }}
-        >
-          <Icon size={20} style={{ color: getColor(score) }} />
+      {/* Glow effect on hover */}
+      <div 
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+        style={{ background: `${color}08` }}
+      />
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div 
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+            style={{ background: `${color}12` }}
+          >
+            <Icon size={20} style={{ color }} />
+          </div>
         </div>
-        {trend !== undefined && (
-          <div className="flex items-center gap-1 text-xs" style={{ color: trend >= 0 ? COLORS.success : COLORS.danger }}>
-            {trend >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            {Math.abs(trend)}%
+        
+        {/* Score */}
+        <div className="mb-3">
+          <div className="flex items-baseline gap-1">
+            <span 
+              className="text-3xl sm:text-4xl lg:text-5xl font-extralight"
+              style={{ color }}
+            >
+              {Math.round(score)}
+            </span>
+            <span className="text-lg sm:text-xl" style={{ color: THEME.text.tertiary }}>%</span>
+          </div>
+          <p className="text-sm mt-1" style={{ color: THEME.text.secondary }}>
+            {title}
+          </p>
+        </div>
+        
+        {/* Details */}
+        {details && (
+          <div 
+            className="pt-4 border-t space-y-2"
+            style={{ borderColor: THEME.border.subtle }}
+          >
+            {details}
           </div>
         )}
       </div>
-      
-      <div className="mb-3">
-        <div className="text-4xl font-light mb-1" style={{ color: getColor(score) }}>
-          {score}<span className="text-lg">%</span>
-        </div>
-        <div className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
-          {title}
-        </div>
-      </div>
-      
-      {details && (
-        <div className="pt-3 border-t" style={{ borderColor: COLORS.border }}>
-          <div className="text-xs space-y-1" style={{ color: COLORS.textDim }}>
-            {details}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-const AlertBadge = ({ type, children }) => {
-  const colors = {
-    warning: { bg: `${COLORS.warning}15`, text: COLORS.warning },
-    danger: { bg: `${COLORS.danger}15`, text: COLORS.danger },
-    info: { bg: `${COLORS.accent}15`, text: COLORS.accent },
-  };
-  const c = colors[type] || colors.info;
+// Quick Stat Badge
+const QuickStat = ({ icon: Icon, label, value, color }) => (
+  <div 
+    className="flex items-center gap-3 px-4 py-3 rounded-xl"
+    style={{ 
+      background: THEME.bg.secondary,
+      border: `1px solid ${THEME.border.subtle}`,
+    }}
+  >
+    <div 
+      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+      style={{ background: `${color}12` }}
+    >
+      <Icon size={18} style={{ color }} />
+    </div>
+    <div className="min-w-0">
+      <p className="text-lg sm:text-xl font-light" style={{ color: THEME.text.primary }}>
+        {value}
+      </p>
+      <p className="text-xs" style={{ color: THEME.text.tertiary }}>
+        {label}
+      </p>
+    </div>
+  </div>
+);
+
+// Employee Rank Card
+const RankCard = ({ employee, rank, type = 'top' }) => {
+  const isTop = type === 'top';
+  const color = isTop ? THEME.accent.green : THEME.accent.amber;
+  const scoreColor = employee.score >= 70 ? THEME.accent.green : 
+                     employee.score >= 50 ? THEME.accent.amber : THEME.accent.red;
   
   return (
-    <span 
-      className="px-2 py-1 rounded-md text-xs font-medium"
-      style={{ backgroundColor: c.bg, color: c.text }}
+    <div 
+      className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 hover:scale-[1.02]"
+      style={{ background: THEME.bg.primary }}
     >
-      {children}
-    </span>
+      <div 
+        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
+        style={{ 
+          background: `${color}15`,
+          color: color,
+        }}
+      >
+        {rank}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm truncate" style={{ color: THEME.text.primary }}>
+          {employee.name}
+        </p>
+        <p className="text-xs" style={{ color: THEME.text.tertiary }}>
+          {employee.department || 'غير محدد'}
+        </p>
+      </div>
+      <div 
+        className="text-lg font-light"
+        style={{ color: scoreColor }}
+      >
+        {Math.round(employee.score)}%
+      </div>
+    </div>
   );
 };
 
-// ==================== MAIN DASHBOARD ====================
+// Alert Badge
+const AlertItem = ({ alert }) => {
+  const colors = {
+    warning: THEME.accent.amber,
+    danger: THEME.accent.red,
+    info: THEME.accent.blue,
+    alert: THEME.accent.amber,
+  };
+  const color = colors[alert.type] || colors.info;
+  
+  return (
+    <div 
+      className="flex items-start gap-3 p-4 rounded-xl"
+      style={{ background: THEME.bg.primary }}
+    >
+      <div 
+        className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
+        style={{ background: color }}
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium" style={{ color: THEME.text.primary }}>
+          {alert.title}
+        </p>
+        <p className="text-xs mt-1" style={{ color: THEME.text.tertiary }}>
+          {alert.message}
+        </p>
+      </div>
+      <span 
+        className="px-2 py-0.5 rounded text-[10px] uppercase tracking-wider flex-shrink-0"
+        style={{ 
+          background: `${color}15`,
+          color: color,
+        }}
+      >
+        {alert.priority === 'high' ? 'عاجل' : 'متوسط'}
+      </span>
+    </div>
+  );
+};
 
+// Detail Row
+const DetailRow = ({ label, value }) => (
+  <div className="flex items-center justify-between text-xs">
+    <span style={{ color: THEME.text.tertiary }}>{label}</span>
+    <span style={{ color: THEME.text.secondary }}>{value}</span>
+  </div>
+);
+
+// ==================== MAIN DASHBOARD ====================
 export default function ExecutiveDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [fullscreen, setFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  
+  const [showAlerts, setShowAlerts] = useState(false);
+
   const fetchData = useCallback(async () => {
     try {
       const [dashboardRes, alertsRes] = await Promise.all([
@@ -171,503 +329,609 @@ export default function ExecutiveDashboard() {
       setAlerts(alertsRes.data.alerts || []);
       setLastUpdate(new Date());
     } catch (e) {
-      console.error('Error fetching dashboard:', e);
+      console.error('Dashboard fetch error:', e);
     } finally {
       setLoading(false);
     }
   }, []);
-  
+
   useEffect(() => {
     fetchData();
-    
-    // Auto refresh every 60 seconds
     const interval = setInterval(() => {
       if (autoRefresh) fetchData();
     }, 60000);
-    
     return () => clearInterval(interval);
   }, [fetchData, autoRefresh]);
-  
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setFullscreen(false);
+
+  // Fullscreen handlers
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err);
     }
   };
-  
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  // Loading state
   if (loading) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: COLORS.bg }}
+        className="fixed inset-0 flex items-center justify-center"
+        style={{ background: THEME.bg.primary }}
       >
         <div className="text-center">
-          <div 
-            className="w-16 h-16 rounded-full border-2 border-t-transparent animate-spin mx-auto mb-4"
-            style={{ borderColor: COLORS.accent, borderTopColor: 'transparent' }}
-          />
-          <p style={{ color: COLORS.textMuted }}>جاري تحميل لوحة الحوكمة...</p>
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div 
+              className="absolute inset-0 rounded-full animate-ping opacity-20"
+              style={{ background: THEME.accent.blue }}
+            />
+            <div 
+              className="absolute inset-2 rounded-full animate-spin"
+              style={{ 
+                border: `2px solid ${THEME.border.subtle}`,
+                borderTopColor: THEME.accent.blue,
+              }}
+            />
+          </div>
+          <p className="text-sm" style={{ color: THEME.text.tertiary }}>
+            جاري تحميل لوحة الحوكمة...
+          </p>
         </div>
       </div>
     );
   }
-  
-  const { metrics, top_performers, needs_attention, monthly_trend, executive_summary, quick_stats, health_score } = data || {};
-  
-  // Prepare chart data
-  const trendData = monthly_trend?.map(m => ({
-    name: m.month_name,
+
+  const { 
+    metrics, 
+    top_performers = [], 
+    needs_attention = [], 
+    monthly_trend = [], 
+    executive_summary, 
+    quick_stats, 
+    health_score = 0 
+  } = data || {};
+
+  // Chart data
+  const trendData = monthly_trend.map(m => ({
+    name: m.month_name?.split(' ')[0] || m.month,
     score: m.health_score,
     attendance: m.attendance,
     tasks: m.tasks,
-  })) || [];
-  
-  const performerData = top_performers?.slice(0, 5).map(p => ({
-    name: p.name?.split(' ')[0] || 'N/A',
-    score: p.score,
-  })) || [];
-  
+  }));
+
   const pieData = [
-    { name: 'الحضور', value: metrics?.attendance?.score || 0, color: COLORS.accent },
-    { name: 'المهام', value: metrics?.tasks?.score || 0, color: COLORS.success },
-    { name: 'المالية', value: metrics?.financial?.score || 0, color: COLORS.purple },
-    { name: 'الطلبات', value: metrics?.requests?.score || 0, color: COLORS.warning },
+    { name: 'الحضور', value: metrics?.attendance?.score || 0, color: THEME.accent.blue },
+    { name: 'المهام', value: metrics?.tasks?.score || 0, color: THEME.accent.green },
+    { name: 'المالية', value: metrics?.financial?.score || 0, color: THEME.accent.purple },
+    { name: 'الطلبات', value: metrics?.requests?.score || 0, color: THEME.accent.amber },
   ];
-  
+
   return (
     <div 
-      className="min-h-screen p-6 lg:p-8"
-      style={{ backgroundColor: COLORS.bg }}
+      className={`min-h-screen transition-all duration-500 ${isFullscreen ? 'overflow-hidden' : ''}`}
+      style={{ background: THEME.bg.primary }}
       data-testid="executive-dashboard"
     >
-      {/* Header */}
-      <header className="flex items-center justify-between mb-8">
-        <div>
-          <h1 
-            className="text-2xl lg:text-3xl font-light tracking-tight mb-1"
-            style={{ color: COLORS.text }}
-          >
-            لوحة الحوكمة التنفيذية
-          </h1>
-          <p className="text-sm" style={{ color: COLORS.textMuted }}>
-            {data?.month} • آخر تحديث: {lastUpdate?.toLocaleTimeString('ar-EG')}
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {alerts.length > 0 && (
-            <div 
-              className="flex items-center gap-2 px-3 py-2 rounded-lg"
-              style={{ backgroundColor: `${COLORS.warning}15` }}
-            >
-              <Bell size={16} style={{ color: COLORS.warning }} />
-              <span className="text-sm" style={{ color: COLORS.warning }}>
-                {alerts.length} تنبيه
-              </span>
+      {/* ==================== HEADER ==================== */}
+      <header 
+        className="sticky top-0 z-50 backdrop-blur-xl"
+        style={{ 
+          background: `${THEME.bg.primary}E6`,
+          borderBottom: `1px solid ${THEME.border.subtle}`,
+        }}
+      >
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Left - Title & Back */}
+          <div className="flex items-center gap-4">
+            {!isFullscreen && (
+              <button
+                onClick={() => navigate('/')}
+                className="p-2 rounded-lg transition-colors"
+                style={{ color: THEME.text.tertiary }}
+                data-testid="back-btn"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div>
+              <h1 
+                className="text-lg sm:text-xl font-light tracking-tight"
+                style={{ color: THEME.text.primary }}
+              >
+                لوحة الحوكمة التنفيذية
+              </h1>
+              <p className="text-xs hidden sm:block" style={{ color: THEME.text.tertiary }}>
+                آخر تحديث: {lastUpdate?.toLocaleTimeString('ar-EG')}
+              </p>
             </div>
-          )}
-          
-          <button
-            onClick={() => { setAutoRefresh(!autoRefresh); fetchData(); }}
-            className="p-2 rounded-lg transition-colors"
-            style={{ 
-              backgroundColor: autoRefresh ? `${COLORS.accent}15` : COLORS.bgCard,
-              color: autoRefresh ? COLORS.accent : COLORS.textMuted
-            }}
-            title={autoRefresh ? 'إيقاف التحديث التلقائي' : 'تفعيل التحديث التلقائي'}
-          >
-            <RefreshCw size={18} className={autoRefresh ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
-          </button>
-          
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-lg transition-colors"
-            style={{ backgroundColor: COLORS.bgCard, color: COLORS.textMuted }}
-            title="وضع ملء الشاشة"
-          >
-            {fullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
+          </div>
+
+          {/* Right - Controls */}
+          <div className="flex items-center gap-2">
+            {/* Alerts */}
+            {alerts.length > 0 && (
+              <button
+                onClick={() => setShowAlerts(!showAlerts)}
+                className="relative flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                style={{ 
+                  background: `${THEME.accent.amber}15`,
+                  color: THEME.accent.amber,
+                }}
+                data-testid="alerts-toggle"
+              >
+                <Bell size={16} />
+                <span className="text-sm hidden sm:inline">{alerts.length}</span>
+                <span 
+                  className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse"
+                  style={{ background: THEME.accent.amber }}
+                />
+              </button>
+            )}
+
+            {/* Auto Refresh */}
+            <button
+              onClick={() => { setAutoRefresh(!autoRefresh); if (!autoRefresh) fetchData(); }}
+              className="p-2 rounded-lg transition-all"
+              style={{ 
+                background: autoRefresh ? `${THEME.accent.blue}15` : THEME.bg.secondary,
+                color: autoRefresh ? THEME.accent.blue : THEME.text.tertiary,
+              }}
+              title={autoRefresh ? 'إيقاف التحديث التلقائي' : 'تفعيل التحديث التلقائي'}
+              data-testid="refresh-toggle"
+            >
+              <RefreshCw 
+                size={18} 
+                className={autoRefresh ? 'animate-spin' : ''} 
+                style={{ animationDuration: '3s' }} 
+              />
+            </button>
+
+            {/* Fullscreen */}
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-lg transition-colors"
+              style={{ 
+                background: THEME.bg.secondary,
+                color: THEME.text.tertiary,
+              }}
+              title="وضع العرض الكامل"
+              data-testid="fullscreen-toggle"
+            >
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
+          </div>
         </div>
       </header>
-      
-      {/* Main Grid */}
-      <div className="grid grid-cols-12 gap-6">
-        
-        {/* Health Score - Center */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col items-center justify-center">
-          <div 
-            className="p-8 rounded-3xl border text-center"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
-          >
-            <p 
-              className="text-sm uppercase tracking-widest mb-6"
-              style={{ color: COLORS.textMuted }}
-            >
-              مؤشر صحة الشركة
-            </p>
-            <ScoreRing score={health_score || 0} size={220} />
-            <p 
-              className="mt-6 text-sm"
-              style={{ color: COLORS.textDim }}
-            >
-              Company Health Score
-            </p>
+
+      {/* ==================== ALERTS PANEL ==================== */}
+      {showAlerts && alerts.length > 0 && (
+        <div 
+          className="fixed inset-x-0 top-16 z-40 p-4 max-h-[50vh] overflow-y-auto"
+          style={{ 
+            background: `${THEME.bg.secondary}F5`,
+            backdropFilter: 'blur(20px)',
+            borderBottom: `1px solid ${THEME.border.subtle}`,
+          }}
+        >
+          <div className="max-w-[1800px] mx-auto space-y-2">
+            {alerts.map((alert, i) => (
+              <AlertItem key={i} alert={alert} />
+            ))}
           </div>
         </div>
+      )}
+
+      {/* ==================== MAIN CONTENT ==================== */}
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         
-        {/* Metrics Grid */}
-        <div className="col-span-12 lg:col-span-8 grid grid-cols-2 gap-4">
-          <MetricCard
-            title="الحضور والانضباط"
-            score={metrics?.attendance?.score || 0}
-            icon={Clock}
-            details={
-              <>
-                <div className="flex justify-between">
-                  <span>أيام الحضور</span>
-                  <span>{metrics?.attendance?.present_days || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>دقائق التأخير</span>
-                  <span>{metrics?.attendance?.late_minutes || 0}</span>
-                </div>
-              </>
-            }
-          />
+        {/* ========== TOP SECTION: Health Score + KPIs ========== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8">
           
-          <MetricCard
-            title="أداء المهام"
-            score={metrics?.tasks?.score || 0}
-            icon={Target}
-            details={
-              <>
-                <div className="flex justify-between">
-                  <span>المهام المنجزة</span>
-                  <span>{metrics?.tasks?.total_tasks || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>متوسط التقييم</span>
-                  <span>{metrics?.tasks?.average_rating || 0}/5</span>
-                </div>
-              </>
-            }
-          />
-          
-          <MetricCard
-            title="الانضباط المالي"
-            score={metrics?.financial?.score || 0}
-            icon={Wallet}
-            details={
-              <>
-                <div className="flex justify-between">
-                  <span>إجمالي المصروف</span>
-                  <span>{(metrics?.financial?.total_spent || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>المُعاد للتدقيق</span>
-                  <span>{metrics?.financial?.returned || 0}</span>
-                </div>
-              </>
-            }
-          />
-          
-          <MetricCard
-            title="انضباط الطلبات"
-            score={metrics?.requests?.score || 0}
-            icon={FileText}
-            details={
-              <>
-                <div className="flex justify-between">
-                  <span>الطلبات المقبولة</span>
-                  <span>{metrics?.requests?.approved || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>المعلقة</span>
-                  <span>{metrics?.requests?.pending || 0}</span>
-                </div>
-              </>
-            }
-          />
+          {/* Health Score - Hero */}
+          <div className="lg:col-span-4 flex items-center justify-center">
+            <div 
+              className="w-full p-6 sm:p-8 rounded-3xl text-center"
+              style={{ 
+                background: THEME.bg.secondary,
+                border: `1px solid ${THEME.border.subtle}`,
+              }}
+              data-testid="health-score-card"
+            >
+              <p 
+                className="text-xs uppercase tracking-[0.2em] mb-6"
+                style={{ color: THEME.text.tertiary }}
+              >
+                مؤشر صحة الشركة
+              </p>
+              
+              <div className="flex justify-center mb-6">
+                <ScoreRing score={health_score} size={200} />
+              </div>
+              
+              <p 
+                className="text-[10px] uppercase tracking-[0.15em]"
+                style={{ color: THEME.text.tertiary }}
+              >
+                Company Health Score
+              </p>
+            </div>
+          </div>
+
+          {/* KPI Cards Grid */}
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <MetricCard
+              title="الحضور والانضباط"
+              titleEn="Attendance"
+              score={metrics?.attendance?.score || 0}
+              icon={Clock}
+              details={
+                <>
+                  <DetailRow label="أيام الحضور" value={metrics?.attendance?.present_days || 0} />
+                  <DetailRow label="دقائق التأخير" value={metrics?.attendance?.late_minutes || 0} />
+                  <DetailRow label="أيام الغياب" value={metrics?.attendance?.absent_days || 0} />
+                </>
+              }
+            />
+            
+            <MetricCard
+              title="أداء المهام"
+              titleEn="Tasks"
+              score={metrics?.tasks?.score || 0}
+              icon={Target}
+              details={
+                <>
+                  <DetailRow label="المهام المنجزة" value={metrics?.tasks?.total_tasks || 0} />
+                  <DetailRow label="في الموعد" value={metrics?.tasks?.completed_on_time || 0} />
+                  <DetailRow label="متوسط التقييم" value={`${metrics?.tasks?.average_rating || 0}/5`} />
+                </>
+              }
+            />
+            
+            <MetricCard
+              title="الانضباط المالي"
+              titleEn="Financial"
+              score={metrics?.financial?.score || 0}
+              icon={Wallet}
+              details={
+                <>
+                  <DetailRow label="العهد" value={metrics?.financial?.total_custodies || 0} />
+                  <DetailRow label="إجمالي المصروف" value={(metrics?.financial?.total_spent || 0).toLocaleString()} />
+                  <DetailRow label="المُعاد" value={metrics?.financial?.returned || 0} />
+                </>
+              }
+            />
+            
+            <MetricCard
+              title="انضباط الطلبات"
+              titleEn="Requests"
+              score={metrics?.requests?.score || 0}
+              icon={FileText}
+              details={
+                <>
+                  <DetailRow label="الطلبات المقبولة" value={metrics?.requests?.approved || 0} />
+                  <DetailRow label="المرفوضة" value={metrics?.requests?.rejected || 0} />
+                  <DetailRow label="المعلقة" value={metrics?.requests?.pending || 0} />
+                </>
+              }
+            />
+          </div>
         </div>
-        
-        {/* Executive Summary */}
-        <div className="col-span-12">
-          <div 
-            className="p-6 rounded-2xl border"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
+
+        {/* ========== EXECUTIVE SUMMARY ========== */}
+        <div 
+          className="p-5 sm:p-6 rounded-2xl mb-8"
+          style={{ 
+            background: THEME.bg.secondary,
+            border: `1px solid ${THEME.border.subtle}`,
+          }}
+          data-testid="executive-summary"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: `${THEME.accent.cyan}12` }}
+            >
+              <Zap size={16} style={{ color: THEME.accent.cyan }} />
+            </div>
+            <span 
+              className="text-xs uppercase tracking-[0.15em]"
+              style={{ color: THEME.text.tertiary }}
+            >
+              الملخص التنفيذي
+            </span>
+          </div>
+          <p 
+            className="text-base sm:text-lg font-light leading-relaxed"
+            style={{ color: THEME.text.primary }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <Activity size={20} style={{ color: COLORS.accent }} />
-              <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
-                الملخص التنفيذي
+            {executive_summary || 'جاري تحليل البيانات...'}
+          </p>
+        </div>
+
+        {/* ========== CHARTS SECTION ========== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+          
+          {/* Trend Chart */}
+          <div 
+            className="lg:col-span-8 p-5 sm:p-6 rounded-2xl"
+            style={{ 
+              background: THEME.bg.secondary,
+              border: `1px solid ${THEME.border.subtle}`,
+            }}
+            data-testid="trend-chart"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: `${THEME.accent.blue}12` }}
+              >
+                <BarChart3 size={16} style={{ color: THEME.accent.blue }} />
+              </div>
+              <span 
+                className="text-xs uppercase tracking-[0.15em]"
+                style={{ color: THEME.text.tertiary }}
+              >
+                اتجاه الأداء الشهري
               </span>
             </div>
-            <p 
-              className="text-lg font-light leading-relaxed"
-              style={{ color: COLORS.text }}
-            >
-              {executive_summary || 'جاري تحليل البيانات...'}
-            </p>
-          </div>
-        </div>
-        
-        {/* Charts Row */}
-        <div className="col-span-12 lg:col-span-8">
-          <div 
-            className="p-6 rounded-2xl border h-full"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <BarChart3 size={20} style={{ color: COLORS.accent }} />
-                <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
-                  اتجاه الأداء الشهري
-                </span>
-              </div>
-            </div>
-            <div style={{ height: 280 }}>
+            
+            <div className="h-[250px] sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData}>
                   <defs>
-                    <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0}/>
+                    <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={THEME.accent.blue} stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor={THEME.accent.blue} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.border} />
-                  <XAxis dataKey="name" stroke={COLORS.textDim} fontSize={12} />
-                  <YAxis stroke={COLORS.textDim} fontSize={12} domain={[0, 100]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={THEME.border.subtle} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={THEME.text.tertiary} 
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    stroke={THEME.text.tertiary} 
+                    fontSize={11} 
+                    domain={[0, 100]}
+                    tickLine={false}
+                    axisLine={false}
+                  />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: COLORS.bgCard, 
-                      border: `1px solid ${COLORS.border}`,
-                      borderRadius: 8,
-                      color: COLORS.text
+                      background: THEME.bg.tertiary,
+                      border: `1px solid ${THEME.border.light}`,
+                      borderRadius: 12,
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
                     }}
+                    labelStyle={{ color: THEME.text.primary }}
+                    itemStyle={{ color: THEME.text.secondary }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="score" 
-                    stroke={COLORS.accent} 
-                    strokeWidth={2}
-                    fill="url(#scoreGradient)" 
+                    stroke={THEME.accent.blue} 
+                    strokeWidth={2.5}
+                    fill="url(#scoreGrad)"
                     name="الدرجة"
+                    dot={{ fill: THEME.accent.blue, strokeWidth: 0, r: 4 }}
+                    activeDot={{ r: 6, fill: THEME.accent.blue }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
-        
-        {/* Distribution Pie */}
-        <div className="col-span-12 lg:col-span-4">
+
+          {/* Pie Chart */}
           <div 
-            className="p-6 rounded-2xl border h-full"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
+            className="lg:col-span-4 p-5 sm:p-6 rounded-2xl"
+            style={{ 
+              background: THEME.bg.secondary,
+              border: `1px solid ${THEME.border.subtle}`,
+            }}
+            data-testid="distribution-chart"
           >
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+              <span 
+                className="text-xs uppercase tracking-[0.15em]"
+                style={{ color: THEME.text.tertiary }}
+              >
                 توزيع المؤشرات
               </span>
             </div>
-            <div style={{ height: 200 }}>
+            
+            <div className="h-[180px] sm:h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={2}
+                    innerRadius="45%"
+                    outerRadius="75%"
+                    paddingAngle={3}
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.color}
+                        stroke="none"
+                      />
                     ))}
                   </Pie>
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: COLORS.bgCard, 
-                      border: `1px solid ${COLORS.border}`,
-                      borderRadius: 8,
-                      color: COLORS.text
+                      background: THEME.bg.tertiary,
+                      border: `1px solid ${THEME.border.light}`,
+                      borderRadius: 12,
                     }}
                     formatter={(value) => [`${value}%`, '']}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            
+            {/* Legend */}
             <div className="grid grid-cols-2 gap-2 mt-4">
               {pieData.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span style={{ color: COLORS.textMuted }}>{item.name}</span>
+                <div key={i} className="flex items-center gap-2">
+                  <div 
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: item.color }}
+                  />
+                  <span 
+                    className="text-xs"
+                    style={{ color: THEME.text.tertiary }}
+                  >
+                    {item.name}
+                  </span>
+                  <span 
+                    className="text-xs mr-auto"
+                    style={{ color: THEME.text.secondary }}
+                  >
+                    {item.value}%
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        
-        {/* Top Performers */}
-        <div className="col-span-12 lg:col-span-6">
+
+        {/* ========== PERFORMERS SECTION ========== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          
+          {/* Top Performers */}
           <div 
-            className="p-6 rounded-2xl border"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
+            className="p-5 sm:p-6 rounded-2xl"
+            style={{ 
+              background: THEME.bg.secondary,
+              border: `1px solid ${THEME.border.subtle}`,
+            }}
+            data-testid="top-performers"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <TrendingUp size={20} style={{ color: COLORS.success }} />
-              <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: `${THEME.accent.green}12` }}
+              >
+                <Award size={16} style={{ color: THEME.accent.green }} />
+              </div>
+              <span 
+                className="text-xs uppercase tracking-[0.15em]"
+                style={{ color: THEME.text.tertiary }}
+              >
                 الأعلى أداءً
               </span>
             </div>
-            <div className="space-y-3">
-              {top_performers?.slice(0, 5).map((emp, i) => (
-                <div 
-                  key={i}
-                  className="flex items-center justify-between p-3 rounded-lg"
-                  style={{ backgroundColor: COLORS.bg }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
-                      style={{ backgroundColor: `${COLORS.success}20`, color: COLORS.success }}
-                    >
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm" style={{ color: COLORS.text }}>{emp.name}</div>
-                      <div className="text-xs" style={{ color: COLORS.textDim }}>{emp.department}</div>
-                    </div>
-                  </div>
-                  <div 
-                    className="text-lg font-light"
-                    style={{ color: COLORS.success }}
-                  >
-                    {emp.score}%
-                  </div>
-                </div>
-              ))}
+            
+            <div className="space-y-2">
+              {top_performers.length > 0 ? (
+                top_performers.slice(0, 5).map((emp, i) => (
+                  <RankCard key={i} employee={emp} rank={i + 1} type="top" />
+                ))
+              ) : (
+                <p className="text-center py-8 text-sm" style={{ color: THEME.text.tertiary }}>
+                  لا توجد بيانات كافية
+                </p>
+              )}
             </div>
           </div>
-        </div>
-        
-        {/* Needs Attention */}
-        <div className="col-span-12 lg:col-span-6">
+
+          {/* Needs Attention */}
           <div 
-            className="p-6 rounded-2xl border"
-            style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
+            className="p-5 sm:p-6 rounded-2xl"
+            style={{ 
+              background: THEME.bg.secondary,
+              border: `1px solid ${THEME.border.subtle}`,
+            }}
+            data-testid="needs-attention"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <AlertTriangle size={20} style={{ color: COLORS.warning }} />
-              <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: `${THEME.accent.amber}12` }}
+              >
+                <AlertTriangle size={16} style={{ color: THEME.accent.amber }} />
+              </div>
+              <span 
+                className="text-xs uppercase tracking-[0.15em]"
+                style={{ color: THEME.text.tertiary }}
+              >
                 يحتاج متابعة
               </span>
             </div>
-            <div className="space-y-3">
-              {needs_attention?.slice(0, 5).map((emp, i) => (
-                <div 
-                  key={i}
-                  className="flex items-center justify-between p-3 rounded-lg"
-                  style={{ backgroundColor: COLORS.bg }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
-                      style={{ backgroundColor: `${COLORS.warning}20`, color: COLORS.warning }}
-                    >
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm" style={{ color: COLORS.text }}>{emp.name}</div>
-                      <div className="text-xs" style={{ color: COLORS.textDim }}>{emp.department}</div>
-                    </div>
-                  </div>
-                  <div 
-                    className="text-lg font-light"
-                    style={{ color: emp.score < 50 ? COLORS.danger : COLORS.warning }}
-                  >
-                    {emp.score}%
-                  </div>
-                </div>
-              ))}
+            
+            <div className="space-y-2">
+              {needs_attention.length > 0 ? (
+                needs_attention.slice(0, 5).map((emp, i) => (
+                  <RankCard key={i} employee={emp} rank={i + 1} type="bottom" />
+                ))
+              ) : (
+                <p className="text-center py-8 text-sm" style={{ color: THEME.text.tertiary }}>
+                  جميع الموظفين بأداء جيد
+                </p>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* Quick Stats */}
-        <div className="col-span-12">
-          <div className="grid grid-cols-4 gap-4">
-            {[
-              { label: 'الموظفين النشطين', value: quick_stats?.total_employees, icon: Users, color: COLORS.accent },
-              { label: 'الطلبات المعلقة', value: quick_stats?.pending_requests, icon: FileText, color: COLORS.warning },
-              { label: 'العهد المفتوحة', value: quick_stats?.open_custodies, icon: Wallet, color: COLORS.purple },
-              { label: 'المهام الجارية', value: quick_stats?.active_tasks, icon: Target, color: COLORS.success },
-            ].map((stat, i) => (
-              <div 
-                key={i}
-                className="p-4 rounded-xl border flex items-center gap-4"
-                style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
-              >
-                <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: `${stat.color}10` }}
-                >
-                  <stat.icon size={22} style={{ color: stat.color }} />
-                </div>
-                <div>
-                  <div className="text-2xl font-light" style={{ color: COLORS.text }}>
-                    {stat.value || 0}
-                  </div>
-                  <div className="text-xs" style={{ color: COLORS.textMuted }}>
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+
+        {/* ========== QUICK STATS FOOTER ========== */}
+        <div 
+          className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4"
+          data-testid="quick-stats"
+        >
+          <QuickStat 
+            icon={Users} 
+            label="الموظفين النشطين" 
+            value={quick_stats?.total_employees || 0}
+            color={THEME.accent.blue}
+          />
+          <QuickStat 
+            icon={FileText} 
+            label="الطلبات المعلقة" 
+            value={quick_stats?.pending_requests || 0}
+            color={THEME.accent.amber}
+          />
+          <QuickStat 
+            icon={Wallet} 
+            label="العهد المفتوحة" 
+            value={quick_stats?.open_custodies || 0}
+            color={THEME.accent.purple}
+          />
+          <QuickStat 
+            icon={Target} 
+            label="المهام الجارية" 
+            value={quick_stats?.active_tasks || 0}
+            color={THEME.accent.green}
+          />
         </div>
-        
-        {/* Alerts Section */}
-        {alerts.length > 0 && (
-          <div className="col-span-12">
-            <div 
-              className="p-6 rounded-2xl border"
-              style={{ backgroundColor: COLORS.bgCard, borderColor: COLORS.border }}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <Bell size={20} style={{ color: COLORS.warning }} />
-                <span className="text-sm uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
-                  التنبيهات
-                </span>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {alerts.map((alert, i) => (
-                  <div 
-                    key={i}
-                    className="flex items-center gap-4 p-4 rounded-lg"
-                    style={{ backgroundColor: COLORS.bg }}
-                  >
-                    <AlertBadge type={alert.type}>{alert.priority === 'high' ? 'عاجل' : 'متوسط'}</AlertBadge>
-                    <div>
-                      <div className="text-sm font-medium" style={{ color: COLORS.text }}>{alert.title}</div>
-                      <div className="text-xs" style={{ color: COLORS.textDim }}>{alert.message}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        
-      </div>
-      
-      {/* Footer */}
-      <footer className="mt-8 text-center">
-        <p className="text-xs" style={{ color: COLORS.textDim }}>
+
+      </main>
+
+      {/* ==================== FOOTER ==================== */}
+      <footer 
+        className="text-center py-6 mt-8"
+        style={{ borderTop: `1px solid ${THEME.border.subtle}` }}
+      >
+        <p 
+          className="text-[10px] uppercase tracking-[0.2em]"
+          style={{ color: THEME.text.tertiary }}
+        >
           DAR AL CODE • نظام الحوكمة الذكية • {new Date().getFullYear()}
         </p>
       </footer>
