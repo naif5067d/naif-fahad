@@ -413,6 +413,90 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
     )
 
 
+# ==================== STAS DELETE OWN TRANSACTION ====================
+
+@router.delete("/{transaction_id}")
+async def delete_transaction(transaction_id: str, user=Depends(get_current_user)):
+    """
+    حذف معاملة - STAS فقط يمكنه حذف معاملاته الخاصة
+    
+    القواعد:
+    - STAS فقط يمكنه الحذف
+    - يمكن حذف معاملاته الخاصة فقط (التي أنشأها أو طلبها)
+    - لا يمكن حذف معاملات في حالة 'executed'
+    """
+    role = user.get('role')
+    user_id = user.get('user_id')
+    employee_id = user.get('employee_id')
+    
+    # التحقق من أن المستخدم هو STAS
+    if role != 'stas':
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "NOT_AUTHORIZED",
+                "message_en": "Only STAS can delete transactions",
+                "message_ar": "فقط STAS يمكنه حذف المعاملات"
+            }
+        )
+    
+    # جلب المعاملة
+    tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "NOT_FOUND",
+                "message_en": "Transaction not found",
+                "message_ar": "المعاملة غير موجودة"
+            }
+        )
+    
+    # التحقق من ملكية المعاملة (STAS طلب المعاملة أو أنشأها)
+    tx_employee_id = tx.get('employee_id')
+    tx_created_by = tx.get('created_by')
+    tx_requester_id = tx.get('requester_id')
+    
+    is_own_transaction = (
+        tx_employee_id == employee_id or  # المعاملة تخص حساب STAS
+        tx_employee_id == 'EMP-STAS' or  # المعاملة لموظف STAS
+        tx_created_by == user_id or  # STAS أنشأ المعاملة
+        tx_requester_id == user_id  # STAS طلب المعاملة
+    )
+    
+    if not is_own_transaction:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "NOT_YOUR_TRANSACTION",
+                "message_en": "You can only delete your own transactions",
+                "message_ar": "يمكنك حذف معاملاتك الخاصة فقط"
+            }
+        )
+    
+    # تسجيل الحذف في audit log
+    await db.deleted_transactions_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "transaction_id": transaction_id,
+        "ref_no": tx.get('ref_no'),
+        "type": tx.get('type'),
+        "deleted_by": user_id,
+        "deleted_by_name": user.get('full_name', user.get('username')),
+        "deleted_at": datetime.now(timezone.utc).isoformat(),
+        "original_transaction": tx
+    })
+    
+    # حذف المعاملة
+    await db.transactions.delete_one({"id": transaction_id})
+    
+    return {
+        "success": True,
+        "message_ar": f"تم حذف المعاملة {tx.get('ref_no')} بنجاح",
+        "message_en": f"Transaction {tx.get('ref_no')} deleted successfully",
+        "ref_no": tx.get('ref_no')
+    }
+
+
 __all__ = ['get_next_ref_no', 'WORKFLOW_MAP', 'STAGE_ROLES']
 
 
