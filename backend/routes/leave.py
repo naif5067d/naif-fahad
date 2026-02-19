@@ -189,7 +189,10 @@ async def get_my_leave_balance(user=Depends(get_current_user)):
                 "policy_source": policy['source'],
                 "policy_source_ar": policy['source_ar'],
                 "formula": pro_rata.get('formula', ''),
-                "message_ar": pro_rata.get('message_ar', '')
+                "message_ar": pro_rata.get('message_ar', ''),
+                # إضافة معلومات العقد المُهاجر
+                "is_migrated": pro_rata.get('is_migrated', False),
+                "opening_balance": pro_rata.get('opening_balance', 0)
             }
         }
         
