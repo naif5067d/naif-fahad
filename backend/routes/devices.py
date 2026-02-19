@@ -212,3 +212,35 @@ async def get_employee_security_logs(
     """جلب سجلات أمان موظف معين"""
     logs = await get_security_logs(employee_id, 100)
     return logs
+
+
+# ==================== STAS DEVICE CONTROL ====================
+
+@router.post("/employee/{employee_id}/reset-devices")
+async def reset_all_employee_devices(
+    employee_id: str,
+    user=Depends(require_roles('stas'))
+):
+    """
+    إعادة تعيين جميع أجهزة الموظف (STAS فقط)
+    يُستخدم عند تغيير جهاز الموظف
+    الجهاز القادم سيُعتمد تلقائياً
+    """
+    result = await reset_employee_devices(employee_id, user['user_id'])
+    return result
+
+
+@router.post("/employee/{employee_id}/set-primary/{device_id}")
+async def set_primary_device(
+    employee_id: str,
+    device_id: str,
+    user=Depends(require_roles('stas'))
+):
+    """
+    تعيين جهاز كجهاز رئيسي للموظف (STAS فقط)
+    يتم حظر باقي الأجهزة تلقائياً
+    """
+    result = await set_device_as_primary(employee_id, device_id, user['user_id'])
+    if not result['success']:
+        raise HTTPException(400, result.get('error', 'فشل في تعيين الجهاز'))
+    return result
