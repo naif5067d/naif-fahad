@@ -243,6 +243,17 @@ export default function NotificationBell() {
             </div>
             
             <div className="flex items-center gap-3">
+              {/* زر اختبار الصوت */}
+              <button
+                onClick={() => {
+                  playNotificationSound();
+                }}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                title={lang === 'ar' ? 'اختبار الصوت' : 'Test sound'}
+                data-testid="test-sound-btn"
+              >
+                🔔
+              </button>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
