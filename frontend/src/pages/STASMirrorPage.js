@@ -229,15 +229,42 @@ export default function STASMirrorPage() {
   const loadDeductionTrace = async (deduction) => {
     setSelectedDeduction(deduction);
     setLoadingTrace(true);
+    setDeductionTrace([]);
     try {
-      // Get the daily_status with trace_log
-      const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
-      setDeductionTrace(res.data);
+      // جلب العروق من مقترح الخصم نفسه أو من daily_status
+      if (deduction.trace_log && Array.isArray(deduction.trace_log)) {
+        setDeductionTrace(deduction.trace_log);
+      } else {
+        // محاولة جلب من daily_status
+        const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
+        if (res.data?.trace_log && Array.isArray(res.data.trace_log)) {
+          setDeductionTrace(res.data.trace_log);
+        } else if (res.data?.checks && Array.isArray(res.data.checks)) {
+          setDeductionTrace(res.data.checks);
+        }
+      }
     } catch (err) {
       console.error('Failed to load trace:', err);
-      setDeductionTrace(null);
+      setDeductionTrace([]);
     } finally {
       setLoadingTrace(false);
+    }
+  };
+
+  const executeDeduction = async (deduction) => {
+    setExecutingDeduction(deduction.id);
+    try {
+      await api.post(`/api/attendance-engine/deductions/${deduction.id}/execute`, {
+        note: reviewNote
+      });
+      toast.success(lang === 'ar' ? 'تم تنفيذ الخصم بنجاح' : 'Deduction executed successfully');
+      setReviewNote('');
+      setSelectedDeduction(null);
+      fetchDeductions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to execute deduction');
+    } finally {
+      setExecutingDeduction(null);
     }
   };
 
