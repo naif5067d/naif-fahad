@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Check, X as XIcon, Search, Eye, Loader2, Filter, Clock, User } from 'lucide-react';
+import { FileText, Check, X as XIcon, Search, Eye, Loader2, Filter, Clock, User, Camera, QrCode } from 'lucide-react';
 import { formatSaudiDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
