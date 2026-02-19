@@ -475,7 +475,7 @@ export default function ExecutiveDashboard() {
                 <Bell size={16} />
                 <span className="text-sm hidden sm:inline">{alerts.length}</span>
                 <span 
-                  className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse"
+                  className="absolute -top-1 -left-1 w-2 h-2 rounded-full animate-pulse"
                   style={{ background: THEME.accent.amber }}
                 />
               </button>
