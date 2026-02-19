@@ -97,6 +97,13 @@ async def shutdown():
     logger.info("🛑 Scheduler stopped")
 
 
+# Health endpoint for Kubernetes liveness/readiness probes (without /api prefix)
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": APP_VERSION}
+
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "DAR AL CODE HR OS", "version": APP_VERSION}
+
