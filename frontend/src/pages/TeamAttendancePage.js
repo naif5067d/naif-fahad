@@ -1045,6 +1045,169 @@ export default function TeamAttendancePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Deductions Review Tab - Sultan/Naif only */}
+        {['sultan', 'naif'].includes(user?.role) && (
+          <TabsContent value="deductions-review">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileWarning size={20} className="text-orange-500" />
+                  {lang === 'ar' ? 'مراجعة الخصومات المقترحة' : 'Review Deduction Proposals'}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({pendingDeductions.length} {lang === 'ar' ? 'بانتظار المراجعة' : 'pending'})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingDeductions.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <CheckCircle size={48} className="mx-auto mb-3 text-green-500" />
+                    <p className="text-lg font-medium">{lang === 'ar' ? 'لا توجد خصومات معلقة' : 'No pending deductions'}</p>
+                    <p className="text-sm">{lang === 'ar' ? 'تمت مراجعة جميع الخصومات' : 'All deductions have been reviewed'}</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Deductions List */}
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-sm text-muted-foreground uppercase">
+                        {lang === 'ar' ? 'قائمة الخصومات المعلقة' : 'Pending Deductions'}
+                      </h3>
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                        {pendingDeductions.map(d => (
+                          <button
+                            key={d.id}
+                            onClick={() => loadDeductionTrace(d)}
+                            className={`w-full text-right p-4 rounded-lg border transition-all ${
+                              selectedDeduction?.id === d.id 
+                                ? 'border-orange-500 bg-orange-50' 
+                                : 'border-border hover:border-orange-300 hover:bg-orange-50/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">
+                                {d.deduction_type_ar || d.deduction_type}
+                              </span>
+                              <span className="font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
+                            </div>
+                            <p className="font-medium">{d.employee_name || d.employee_name_ar}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{d.period_start}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Selected Deduction Details */}
+                    <div>
+                      {selectedDeduction ? (
+                        <div className="p-4 bg-slate-50 rounded-lg border space-y-4">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <Eye size={18} />
+                            {lang === 'ar' ? 'تفاصيل الخصم' : 'Deduction Details'}
+                          </h3>
+
+                          {/* Basic Info */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 bg-white rounded border">
+                              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الموظف' : 'Employee'}</p>
+                              <p className="font-medium">{selectedDeduction.employee_name || selectedDeduction.employee_name_ar}</p>
+                            </div>
+                            <div className="p-3 bg-white rounded border">
+                              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'المبلغ' : 'Amount'}</p>
+                              <p className="font-bold text-red-600 text-lg">{selectedDeduction.amount?.toFixed(2)} ر.س</p>
+                            </div>
+                          </div>
+
+                          {/* Reason */}
+                          <div className="p-3 bg-red-50 rounded border border-red-200">
+                            <p className="text-xs font-semibold text-red-700 mb-1">{lang === 'ar' ? 'السبب' : 'Reason'}</p>
+                            <p className="text-sm">{selectedDeduction.reason_ar || selectedDeduction.reason}</p>
+                          </div>
+
+                          {/* Trace Log */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
+                              className="w-full p-3 bg-violet-50 flex items-center justify-between hover:bg-violet-100"
+                            >
+                              <span className="font-semibold text-violet-700 flex items-center gap-2">
+                                <Eye size={16} />
+                                {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log'}
+                                {deductionTrace.length > 0 && <span className="text-xs">({deductionTrace.length})</span>}
+                              </span>
+                              {expandedDeduction === selectedDeduction.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                            
+                            {expandedDeduction === selectedDeduction.id && (
+                              <div className="p-3 space-y-2 max-h-[200px] overflow-y-auto">
+                                {loadingTrace ? (
+                                  <div className="flex justify-center py-4"><Loader2 className="animate-spin" /></div>
+                                ) : deductionTrace.length === 0 ? (
+                                  <p className="text-sm text-center text-muted-foreground py-4">
+                                    {lang === 'ar' ? 'لا يوجد سجل' : 'No trace log'}
+                                  </p>
+                                ) : (
+                                  deductionTrace.map((check, i) => (
+                                    <div key={i} className={`p-2 rounded text-sm ${check.found ? 'bg-green-50' : 'bg-slate-100'}`}>
+                                      <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-1">
+                                          {check.found ? <CheckCircle size={12} className="text-green-600" /> : <XCircle size={12} className="text-slate-400" />}
+                                          {check.step_ar || check.step}
+                                        </span>
+                                        <span className={`text-xs ${check.found ? 'text-green-600' : 'text-slate-500'}`}>
+                                          {check.found ? (lang === 'ar' ? 'وُجد' : 'Found') : (lang === 'ar' ? 'لم يُوجد' : 'Not found')}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Review Actions */}
+                          <div className="space-y-3 pt-3 border-t">
+                            <Input
+                              value={reviewNote}
+                              onChange={(e) => setReviewNote(e.target.value)}
+                              placeholder={lang === 'ar' ? 'ملاحظة (اختياري)...' : 'Note (optional)...'}
+                            />
+                            <div className="flex gap-3">
+                              <Button
+                                onClick={() => handleReviewDeduction(selectedDeduction.id, true)}
+                                disabled={reviewingDeduction}
+                                className="flex-1 bg-green-600 hover:bg-green-700"
+                              >
+                                {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <CheckCircle size={16} className="mr-2" />}
+                                {lang === 'ar' ? 'موافقة' : 'Approve'}
+                              </Button>
+                              <Button
+                                onClick={() => handleReviewDeduction(selectedDeduction.id, false)}
+                                disabled={reviewingDeduction}
+                                variant="destructive"
+                                className="flex-1"
+                              >
+                                {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <XCircle size={16} className="mr-2" />}
+                                {lang === 'ar' ? 'رفض' : 'Reject'}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                          <div className="text-center text-muted-foreground">
+                            <FileWarning size={48} className="mx-auto mb-3 opacity-30" />
+                            <p>{lang === 'ar' ? 'اختر خصم للمراجعة' : 'Select a deduction to review'}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Edit Dialog */}
