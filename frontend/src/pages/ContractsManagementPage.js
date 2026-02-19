@@ -135,9 +135,12 @@ export default function ContractsManagementPage() {
   
   const [actionLoading, setActionLoading] = useState(false);
   
-  const canCreate = ['sultan', 'naif', 'stas'].includes(user?.role);
-  const canExecute = user?.role === 'stas';
-  const canTerminate = user?.role === 'stas';
+  // صلاحيات كاملة لسلطان و STAS
+  const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
+  const canCreate = isAdmin;
+  const canEdit = isAdmin;
+  const canExecute = isAdmin;  // سلطان و STAS يستطيعون تنفيذ العقود
+  const canTerminate = isAdmin;  // سلطان و STAS يستطيعون إنهاء العقود
 
   useEffect(() => {
     loadData();
