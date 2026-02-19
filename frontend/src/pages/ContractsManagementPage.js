@@ -902,7 +902,7 @@ export default function ContractsManagementPage() {
             <div className="flex-1 relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="بحث برقم العقد، كود الموظف، أو الاسم..."
+                placeholder="بحث: رقم العقد (001) أو رقم الموظف (40) أو الاسم (مؤمن)..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
