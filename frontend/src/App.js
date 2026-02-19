@@ -27,6 +27,7 @@ import TeamAttendancePage from "@/pages/TeamAttendancePage";
 import PenaltiesPage from "@/pages/PenaltiesPage";
 import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import TasksPage from "@/pages/TasksPage";
+import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
