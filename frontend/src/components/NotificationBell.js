@@ -30,27 +30,42 @@ const ICON_MAP = {
   'Settings': Settings,
 };
 
-// صوت الإشعار
+// صوت الإشعار - يحتاج تفاعل المستخدم أولاً في المتصفحات الحديثة
+let audioContext = null;
+
+const getAudioContext = () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // Resume if suspended (Chrome autoplay policy)
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  return audioContext;
+};
+
 const playNotificationSound = () => {
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
     
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(ctx.destination);
     
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
-    oscillator.frequency.exponentialRampToValueAtTime(900, audioContext.currentTime + 0.2);
+    // نغمة إشعار مميزة
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1); // C#6
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
     
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.4);
   } catch (e) {
-    console.log('Audio not supported');
+    console.log('Audio not supported:', e);
   }
 };
 
