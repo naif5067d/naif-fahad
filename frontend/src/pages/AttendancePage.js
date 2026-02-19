@@ -250,8 +250,9 @@ export default function AttendancePage() {
       }
     }
     
-    const hasCheckedIn = todayRecord?.check_in;
-    const hasCheckedOut = todayRecord?.check_out;
+    // التحقق من بيانات اليوم الصحيحة
+    const hasCheckedIn = todayRecord?.check_in !== null && todayRecord?.check_in !== undefined;
+    const hasCheckedOut = todayRecord?.check_out !== null && todayRecord?.check_out !== undefined;
     
     setWorkTimeStatus({
       canCheckIn: canCheckInNow && !hasCheckedIn,
