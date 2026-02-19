@@ -277,9 +277,9 @@ export default function AttendancePage() {
     setLoading(true);
     try {
       await api.post('/api/attendance/check-in', { 
-        location: workLocation, 
-        lat: gpsState.lat, 
-        lng: gpsState.lng,
+        work_location: workLocation, 
+        latitude: gpsState.lat, 
+        longitude: gpsState.lng,
         gps_available: gpsState.available
       });
       toast.success(lang === 'ar' ? 'تم تسجيل الدخول بنجاح' : 'Check-in successful');
