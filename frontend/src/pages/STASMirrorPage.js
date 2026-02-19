@@ -990,61 +990,102 @@ export default function STASMirrorPage() {
                     <span className="font-semibold text-violet-700 flex items-center gap-2">
                       <Eye size={16} />
                       {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log'}
+                      {deductionTrace.length > 0 && <span className="text-xs">({deductionTrace.length})</span>}
                     </span>
                     {expandedDeduction === selectedDeduction.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </button>
                   
-                  {expandedDeduction === selectedDeduction.id && deductionTrace.length > 0 && (
+                  {expandedDeduction === selectedDeduction.id && (
                     <div className="mt-3 space-y-2 max-h-[300px] overflow-y-auto">
-                      {deductionTrace.map((check, i) => (
-                        <div 
-                          key={i} 
-                          className={`p-3 rounded border-r-4 ${
-                            check.status === 'FAIL' 
-                              ? 'bg-red-50 border-red-500' 
-                              : check.status === 'WARNING' 
-                                ? 'bg-amber-50 border-amber-500' 
-                                : 'bg-green-50 border-green-500'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-bold ${
-                              check.status === 'FAIL' ? 'text-red-600' :
-                              check.status === 'WARNING' ? 'text-amber-600' : 'text-green-600'
-                            }`}>
-                              {check.status}
-                            </span>
-                            <span className="text-xs text-muted-foreground">{check.check_name_ar || check.check_name}</span>
-                          </div>
-                          <p className="text-sm mt-1">{check.message_ar || check.message}</p>
-                          {check.data && (
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              {Object.entries(check.data).map(([k, v]) => (
-                                <span key={k} className="mr-3">{k}: <strong>{String(v)}</strong></span>
-                              ))}
-                            </div>
-                          )}
+                      {loadingTrace ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="animate-spin" size={20} />
                         </div>
-                      ))}
+                      ) : deductionTrace.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          {lang === 'ar' ? 'لا يوجد سجل فحوصات' : 'No trace log available'}
+                        </p>
+                      ) : (
+                        deductionTrace.map((check, i) => (
+                          <div 
+                            key={i} 
+                            className={`p-3 rounded border-r-4 ${
+                              check.status === 'FAIL' || check.found === false
+                                ? 'bg-red-50 border-red-500' 
+                                : check.status === 'WARNING' 
+                                  ? 'bg-amber-50 border-amber-500' 
+                                  : 'bg-green-50 border-green-500'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className={`text-xs font-bold ${
+                                check.status === 'FAIL' || check.found === false ? 'text-red-600' :
+                                check.status === 'WARNING' ? 'text-amber-600' : 'text-green-600'
+                              }`}>
+                                {check.status || (check.found ? 'PASS' : 'FAIL')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">{check.check_name_ar || check.check_name || check.step_ar || check.step}</span>
+                            </div>
+                            <p className="text-sm mt-1">{check.message_ar || check.message || check.details}</p>
+                            {check.data && (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                {Object.entries(check.data).map(([k, v]) => (
+                                  <span key={k} className="mr-3">{k}: <strong>{String(v)}</strong></span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   )}
 
-                  {/* Execute Button for Approved */}
-                  {selectedDeduction.status === 'approved' && (
-                    <div className="mt-4 flex justify-end">
+                  {/* Action Buttons */}
+                  <div className="mt-4 pt-4 border-t space-y-3">
+                    <div>
+                      <Label>{lang === 'ar' ? 'ملاحظة (اختياري)' : 'Note (optional)'}</Label>
+                      <Input
+                        value={reviewNote}
+                        onChange={(e) => setReviewNote(e.target.value)}
+                        placeholder={lang === 'ar' ? 'أضف ملاحظة...' : 'Add a note...'}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    {selectedDeduction.status === 'pending' ? (
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={() => handleReviewDeduction(selectedDeduction.id, true)}
+                          disabled={reviewingDeduction}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <CheckCircle size={16} className="mr-2" />}
+                          {lang === 'ar' ? 'موافقة' : 'Approve'}
+                        </Button>
+                        <Button
+                          onClick={() => handleReviewDeduction(selectedDeduction.id, false)}
+                          disabled={reviewingDeduction}
+                          variant="destructive"
+                          className="flex-1"
+                        >
+                          {reviewingDeduction ? <Loader2 className="animate-spin mr-2" size={16} /> : <XCircle size={16} className="mr-2" />}
+                          {lang === 'ar' ? 'رفض' : 'Reject'}
+                        </Button>
+                      </div>
+                    ) : selectedDeduction.status === 'approved' ? (
                       <Button
                         onClick={() => executeDeduction(selectedDeduction)}
                         disabled={executingDeduction === selectedDeduction.id}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="w-full bg-violet-600 hover:bg-violet-700"
                       >
                         {executingDeduction === selectedDeduction.id ? (
-                          <><Loader2 size={16} className="animate-spin mr-2" /> {lang === 'ar' ? 'جاري التنفيذ...' : 'Executing...'}</>
+                          <><Loader2 className="animate-spin mr-2" size={16} /> {lang === 'ar' ? 'جاري التنفيذ...' : 'Executing...'}</>
                         ) : (
                           <><CheckCircle size={16} className="mr-2" /> {lang === 'ar' ? 'تنفيذ الخصم' : 'Execute Deduction'}</>
                         )}
                       </Button>
-                    </div>
-                  )}
+                    ) : null}
+                  </div>
                 </div>
               )}
             </CardContent>
