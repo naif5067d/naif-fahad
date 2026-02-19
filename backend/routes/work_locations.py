@@ -195,3 +195,114 @@ async def get_employee_locations(employee_id: str, user=Depends(get_current_user
         {"_id": 0}
     ).to_list(100)
     return locations
+
+
+# ==================== RAMADAN PER-LOCATION (STAS only) ====================
+
+class RamadanLocationRequest(BaseModel):
+    ramadan_work_start: str = "09:00"
+    ramadan_work_end: str = "15:00"
+    ramadan_daily_hours: float = 6.0
+
+
+@router.put("/{location_id}/ramadan/activate")
+async def activate_location_ramadan(
+    location_id: str,
+    req: RamadanLocationRequest,
+    user=Depends(get_current_user)
+):
+    """
+    تفعيل دوام رمضان لموقع محدد - STAS فقط
+    
+    يحفظ الأوقات الأصلية ويطبق أوقات رمضان
+    """
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه تفعيل دوام رمضان")
+    
+    location = await db.work_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="الموقع غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    update_data = {
+        "ramadan_hours_active": True,
+        "ramadan_work_start": req.ramadan_work_start,
+        "ramadan_work_end": req.ramadan_work_end,
+        "ramadan_daily_hours": req.ramadan_daily_hours,
+        "ramadan_activated_at": now,
+        "ramadan_activated_by": user['user_id'],
+        # تطبيق أوقات رمضان كأوقات العمل الحالية
+        "work_start": req.ramadan_work_start,
+        "work_end": req.ramadan_work_end,
+        "daily_hours": req.ramadan_daily_hours
+    }
+    
+    # حفظ الأوقات الأصلية إذا لم تكن محفوظة
+    if not location.get('original_work_start_saved'):
+        update_data["original_work_start_saved"] = location.get('work_start', '08:00')
+        update_data["original_work_end_saved"] = location.get('work_end', '17:00')
+        update_data["original_daily_hours_saved"] = location.get('daily_hours', 8.0)
+    
+    await db.work_locations.update_one(
+        {"id": location_id},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "message_ar": f"تم تفعيل دوام رمضان للموقع: {req.ramadan_work_start} - {req.ramadan_work_end}",
+        "message_en": f"Ramadan hours activated: {req.ramadan_work_start} - {req.ramadan_work_end}",
+        "location_id": location_id
+    }
+
+
+@router.put("/{location_id}/ramadan/deactivate")
+async def deactivate_location_ramadan(
+    location_id: str,
+    user=Depends(get_current_user)
+):
+    """
+    إلغاء دوام رمضان لموقع محدد - STAS فقط
+    
+    يستعيد الأوقات الأصلية
+    """
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه إلغاء دوام رمضان")
+    
+    location = await db.work_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="الموقع غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # استعادة الأوقات الأصلية
+    original_start = location.get('original_work_start_saved', '08:00')
+    original_end = location.get('original_work_end_saved', '17:00')
+    original_hours = location.get('original_daily_hours_saved', 8.0)
+    
+    await db.work_locations.update_one(
+        {"id": location_id},
+        {
+            "$set": {
+                "ramadan_hours_active": False,
+                "work_start": original_start,
+                "work_end": original_end,
+                "daily_hours": original_hours,
+                "ramadan_deactivated_at": now,
+                "ramadan_deactivated_by": user['user_id']
+            },
+            "$unset": {
+                "original_work_start_saved": "",
+                "original_work_end_saved": "",
+                "original_daily_hours_saved": ""
+            }
+        }
+    )
+    
+    return {
+        "success": True,
+        "message_ar": "تم إلغاء دوام رمضان واستعادة الأوقات الأصلية",
+        "message_en": "Ramadan hours deactivated, original hours restored",
+        "location_id": location_id
+    }
