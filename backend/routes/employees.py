@@ -241,6 +241,31 @@ async def remove_supervisor(employee_id: str, user=Depends(require_roles('stas',
     return {"message": "تم إزالة المشرف بنجاح"}
 
 
+# ==================== ASSIGNED LOCATIONS ====================
+
+@router.get("/{employee_id}/assigned-locations")
+async def get_employee_assigned_locations(employee_id: str, user=Depends(get_current_user)):
+    """
+    جلب جميع مواقع العمل المعينة للموظف
+    يُستخدم في صفحة الحضور لاختيار موقع التبصيم
+    """
+    # التحقق من الصلاحيات
+    role = user.get('role')
+    is_admin = role in ['stas', 'sultan', 'naif']
+    is_self = user.get('employee_id') == employee_id
+    
+    if not is_admin and not is_self:
+        raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
+    
+    # جلب المواقع المعينة للموظف
+    locations = await db.work_locations.find(
+        {"assigned_employees": employee_id, "is_active": True},
+        {"_id": 0}
+    ).to_list(100)
+    
+    return locations
+
+
 # ==================== DELETE EMPLOYEE ====================
 
 @router.delete("/{employee_id}")
