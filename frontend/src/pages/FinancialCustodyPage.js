@@ -455,7 +455,7 @@ export default function FinancialCustodyPage() {
     const pct = budget > 0 ? Math.min((selected.spent / budget) * 100, 100) : 0;
     const isEditable = ['open', 'pending_audit'].includes(selected.status);
     const canSalahEdit = selected.status === 'pending_audit' && canEditExpense;
-    const canDeleteThis = canDelete && !['executed', 'closed'].includes(selected.status);
+    const canDeleteThis = canDelete; // STAS يستطيع حذف جميع العهد
 
     return (
       <div className="space-y-5 pb-10" data-testid="custody-detail">
