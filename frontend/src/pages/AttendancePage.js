@@ -192,18 +192,70 @@ export default function AttendancePage() {
     }
   }, [user?.employee_id]);
 
+  // دالة طلب إذن GPS
+  const requestGPSPermission = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('GPS not supported'));
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          setGpsState({ 
+            available: true, 
+            lat: pos.coords.latitude, 
+            lng: pos.coords.longitude, 
+            checking: false 
+          });
+          resolve(pos);
+        },
+        err => {
+          setGpsState({ available: false, lat: null, lng: null, checking: false });
+          reject(err);
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 15000, 
+          maximumAge: 0 
+        }
+      );
+    });
+  };
+
   const handleCheckIn = async () => {
-    // التحقق من GPS قبل السماح بالبصمة
+    // طلب إذن GPS من المتصفح إذا لم يكن متاحاً
     if (!gpsState.available || gpsState.lat === null || gpsState.lng === null) {
-      toast.error(lang === 'ar' 
-        ? 'يجب تفعيل الموقع (GPS) للتبصيم. يرجى السماح بالوصول للموقع وتحديث الصفحة.'
-        : 'GPS location is required. Please enable location access and refresh.');
-      return;
+      setLoading(true);
+      try {
+        toast.info(lang === 'ar' ? 'جاري طلب إذن الموقع...' : 'Requesting location permission...');
+        await requestGPSPermission();
+        toast.success(lang === 'ar' ? 'تم تفعيل الموقع!' : 'Location enabled!');
+      } catch (err) {
+        setLoading(false);
+        if (err.code === 1) {
+          // Permission denied
+          toast.error(lang === 'ar' 
+            ? 'تم رفض إذن الموقع. يرجى السماح بالوصول للموقع من إعدادات المتصفح ثم تحديث الصفحة.'
+            : 'Location permission denied. Please allow location access in browser settings and refresh.');
+        } else if (err.code === 2) {
+          // Position unavailable
+          toast.error(lang === 'ar' 
+            ? 'لا يمكن تحديد موقعك. تأكد من تفعيل GPS في جهازك.'
+            : 'Cannot determine your location. Make sure GPS is enabled on your device.');
+        } else {
+          toast.error(lang === 'ar' 
+            ? 'انتهت مهلة تحديد الموقع. حاول مرة أخرى.'
+            : 'Location request timed out. Please try again.');
+        }
+        return;
+      }
     }
     
     // التحقق من اختيار موقع العمل
     if (!workLocation && assignedLocations.length > 0) {
       toast.error(lang === 'ar' ? 'يرجى اختيار موقع العمل' : 'Please select work location');
+      setLoading(false);
       return;
     }
     
@@ -230,12 +282,26 @@ export default function AttendancePage() {
   };
 
   const handleCheckOut = async () => {
-    // التحقق من GPS قبل السماح بالبصمة
+    // طلب إذن GPS من المتصفح إذا لم يكن متاحاً
     if (!gpsState.available || gpsState.lat === null || gpsState.lng === null) {
-      toast.error(lang === 'ar' 
-        ? 'يجب تفعيل الموقع (GPS) للتبصيم. يرجى السماح بالوصول للموقع وتحديث الصفحة.'
-        : 'GPS location is required. Please enable location access and refresh.');
-      return;
+      setLoading(true);
+      try {
+        toast.info(lang === 'ar' ? 'جاري طلب إذن الموقع...' : 'Requesting location permission...');
+        await requestGPSPermission();
+        toast.success(lang === 'ar' ? 'تم تفعيل الموقع!' : 'Location enabled!');
+      } catch (err) {
+        setLoading(false);
+        if (err.code === 1) {
+          toast.error(lang === 'ar' 
+            ? 'تم رفض إذن الموقع. يرجى السماح بالوصول للموقع من إعدادات المتصفح ثم تحديث الصفحة.'
+            : 'Location permission denied. Please allow location access in browser settings and refresh.');
+        } else {
+          toast.error(lang === 'ar' 
+            ? 'لا يمكن تحديد موقعك. حاول مرة أخرى.'
+            : 'Cannot determine your location. Please try again.');
+        }
+        return;
+      }
     }
     
     // تأكيد قبل تسجيل الخروج
