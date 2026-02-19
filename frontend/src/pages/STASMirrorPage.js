@@ -414,7 +414,7 @@ export default function STASMirrorPage() {
                     <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
                       <div>
                         <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الموظف' : 'Employee'}</p>
-                        <p className="font-medium">{selectedDeduction.employee_name_ar || selectedDeduction.employee_id}</p>
+                        <p className="font-medium">{selectedDeduction.employee_name || selectedDeduction.employee_name_ar || selectedDeduction.employee_id}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'نوع الخصم' : 'Type'}</p>
