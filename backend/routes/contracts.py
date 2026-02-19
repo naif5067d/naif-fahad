@@ -188,7 +188,7 @@ async def calculate_settlement_data(employee_id: str, user=Depends(require_roles
 
 
 @router.post("/settlement")
-async def create_settlement(req: SettlementRequest, user=Depends(require_roles('sultan', 'naif'))):
+async def create_settlement(req: SettlementRequest, user=Depends(require_roles('sultan', 'naif', 'stas'))):
     """
     Settlement workflow:
     - Only Sultan (Ops Admin) can initiate

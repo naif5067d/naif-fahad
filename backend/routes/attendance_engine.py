@@ -325,7 +325,7 @@ async def get_approved(user=Depends(require_roles('stas'))):
 async def api_review_proposal(
     proposal_id: str, 
     req: ReviewRequest,
-    user=Depends(require_roles('sultan', 'naif'))
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """مراجعة مقترح الخصم (سلطان/نايف)"""
     result = await review_proposal(proposal_id, req.approved, user['user_id'], req.note)
@@ -591,7 +591,7 @@ async def api_get_absence_pattern(employee_id: str, year: Optional[str] = None, 
 async def api_review_warning(
     warning_id: str,
     req: WarningReviewRequest,
-    user=Depends(require_roles('sultan', 'naif'))
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """مراجعة الإنذار (سلطان/نايف)"""
     result = await review_warning(warning_id, req.approved, user['user_id'], req.note)
