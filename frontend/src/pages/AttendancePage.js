@@ -2,16 +2,30 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Clock, LogIn, LogOut, Loader2, AlertTriangle, CheckCircle, User, Calendar, Building2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { 
+  MapPin, Clock, LogIn, LogOut, Loader2, AlertTriangle, CheckCircle, 
+  User, Calendar, Building2, RefreshCw, FileText, Send, History,
+  Navigation, Wifi, WifiOff, MapPinOff, Timer
+} from 'lucide-react';
 import { formatSaudiDate, formatSaudiTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+
+// أنواع طلبات الحضور
+const REQUEST_TYPES = [
+  { value: 'forget_checkin', label_ar: 'نسيان بصمة', label_en: 'Forgot Punch', icon: '🔔' },
+  { value: 'field_work', label_ar: 'مهمة خارجية', label_en: 'Field Work', icon: '🚗' },
+  { value: 'early_leave_request', label_ar: 'طلب خروج مبكر', label_en: 'Early Leave', icon: '🚪' },
+  { value: 'late_excuse', label_ar: 'تبرير تأخير', label_en: 'Late Excuse', icon: '⏰' },
+];
 
 // أكواد الأخطاء المفصلة
 const ERROR_CODES = {
@@ -31,18 +45,20 @@ export default function AttendancePage() {
   const { user } = useAuth();
   const { lang } = useLanguage();
   
-  // الحالات
+  // الحالات الأساسية
   const [loading, setLoading] = useState(false);
   const [todayRecord, setTodayRecord] = useState(null);
   const [assignedLocations, setAssignedLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [adminData, setAdminData] = useState([]);
+  const [activeTab, setActiveTab] = useState('punch');
   
   // حالة GPS
   const [gps, setGps] = useState({
     status: 'checking', // checking, ready, error
     lat: null,
     lng: null,
+    accuracy: null,
     errorCode: null,
     errorMessage: null
   });
@@ -57,6 +73,18 @@ export default function AttendancePage() {
   
   // حوار التأكيد
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: null });
+  
+  // حالة الطلبات
+  const [requestForm, setRequestForm] = useState({
+    request_type: '',
+    date: new Date().toISOString().split('T')[0],
+    reason: '',
+    from_time: '',
+    to_time: ''
+  });
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
   
   const isEmployee = user?.role === 'employee';
   const isAdmin = ['sultan', 'naif', 'stas'].includes(user?.role);
@@ -98,6 +126,7 @@ export default function AttendancePage() {
         status: 'ready',
         lat: position.lat,
         lng: position.lng,
+        accuracy: position.accuracy,
         errorCode: null,
         errorMessage: null
       });
@@ -121,6 +150,7 @@ export default function AttendancePage() {
         status: 'error',
         lat: null,
         lng: null,
+        accuracy: null,
         errorCode: errorInfo.code,
         errorMessage: lang === 'ar' ? errorInfo.ar : errorInfo.en
       });
@@ -138,10 +168,16 @@ export default function AttendancePage() {
       
       // جلب مواقع العمل المعينة للموظف
       if (user?.employee_id) {
-        const locRes = await api.get(`/api/employees/${user.employee_id}/assigned-locations`);
-        setAssignedLocations(locRes.data || []);
-        if (locRes.data?.length === 1) {
-          setSelectedLocation(locRes.data[0].id);
+        try {
+          const locRes = await api.get(`/api/employees/${user.employee_id}/assigned-locations`);
+          const locs = locRes.data || [];
+          setAssignedLocations(locs);
+          if (locs.length === 1) {
+            setSelectedLocation(locs[0].id);
+          }
+        } catch (err) {
+          console.error('Error fetching locations:', err);
+          setAssignedLocations([]);
         }
       }
       
@@ -155,13 +191,28 @@ export default function AttendancePage() {
     }
   }, [user?.employee_id, isAdmin]);
 
+  // جلب طلبات الموظف
+  const fetchMyRequests = useCallback(async () => {
+    try {
+      const res = await api.get('/api/transactions', {
+        params: { 
+          category: 'attendance',
+          employee_id: user?.employee_id 
+        }
+      });
+      setMyRequests(res.data?.transactions || res.data || []);
+    } catch (err) {
+      console.error('Error fetching requests:', err);
+    }
+  }, [user?.employee_id]);
+
   // ============ التحقق من أوقات العمل ============
   const checkWorkTime = useCallback(() => {
     if (assignedLocations.length === 0) {
       setWorkTimeStatus({
         canCheckIn: false,
         canCheckOut: false,
-        message: ERROR_CODES.NO_ASSIGNED_LOCATIONS[lang === 'ar' ? 'ar' : 'en'],
+        message: lang === 'ar' ? 'لا توجد مواقع عمل معينة' : 'No assigned locations',
         currentLocation: null
       });
       return;
@@ -170,7 +221,6 @@ export default function AttendancePage() {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
     
-    // البحث عن موقع يسمح بالبصمة الآن
     let canCheckInNow = false;
     let canCheckOutNow = false;
     let activeLocation = null;
@@ -182,17 +232,12 @@ export default function AttendancePage() {
       const workEnd = endH * 60 + endM;
       
       const earlyMinutes = loc.allow_early_checkin_minutes || 30;
-      const graceMinutes = loc.grace_checkin_minutes || 15;
       const graceCheckoutMinutes = loc.grace_checkout_minutes || 15;
       
-      // وقت بداية التسجيل = وقت البداية - السماح المبكر
       const checkInStart = workStart - earlyMinutes;
-      // نهاية وقت التسجيل = نهاية الدوام + السماح
       const checkInEnd = workEnd + graceCheckoutMinutes;
-      
-      // وقت الخروج = من بداية الدوام حتى نهايته + السماح
       const checkOutStart = workStart;
-      const checkOutEnd = workEnd + graceCheckoutMinutes;
+      const checkOutEnd = workEnd + graceCheckoutMinutes + 60;
       
       if (currentTime >= checkInStart && currentTime <= checkInEnd) {
         canCheckInNow = true;
@@ -205,7 +250,6 @@ export default function AttendancePage() {
       }
     }
     
-    // التحقق من حالة البصمة اليوم
     const hasCheckedIn = todayRecord?.check_in;
     const hasCheckedOut = todayRecord?.check_out;
     
@@ -230,7 +274,6 @@ export default function AttendancePage() {
     
     setLoading(true);
     try {
-      // التأكد من GPS
       let currentGps = gps;
       if (gps.status !== 'ready') {
         const position = await initGPS();
@@ -244,8 +287,8 @@ export default function AttendancePage() {
       
       const response = await api.post('/api/attendance/check-in', {
         work_location: locationId,
-        lat: currentGps.lat,
-        lng: currentGps.lng,
+        latitude: currentGps.lat,
+        longitude: currentGps.lng,
         gps_available: true
       });
       
@@ -274,7 +317,6 @@ export default function AttendancePage() {
   const handleCheckOut = async () => {
     setLoading(true);
     try {
-      // التأكد من GPS
       let currentGps = gps;
       if (gps.status !== 'ready') {
         const position = await initGPS();
@@ -287,8 +329,8 @@ export default function AttendancePage() {
       }
       
       await api.post('/api/attendance/check-out', {
-        lat: currentGps.lat,
-        lng: currentGps.lng,
+        latitude: currentGps.lat,
+        longitude: currentGps.lng,
         gps_available: true
       });
       
@@ -307,9 +349,46 @@ export default function AttendancePage() {
     }
   };
 
+  // ============ إرسال طلب حضور ============
+  const handleSubmitRequest = async () => {
+    if (!requestForm.request_type) {
+      toast.error(lang === 'ar' ? 'اختر نوع الطلب' : 'Select request type');
+      return;
+    }
+    if (!requestForm.date) {
+      toast.error(lang === 'ar' ? 'حدد التاريخ' : 'Select date');
+      return;
+    }
+    if (!requestForm.reason.trim()) {
+      toast.error(lang === 'ar' ? 'اكتب السبب' : 'Enter reason');
+      return;
+    }
+    
+    setSubmittingRequest(true);
+    try {
+      await api.post('/api/attendance/request', requestForm);
+      toast.success(lang === 'ar' ? 'تم إرسال الطلب بنجاح' : 'Request submitted');
+      setRequestDialogOpen(false);
+      setRequestForm({
+        request_type: '',
+        date: new Date().toISOString().split('T')[0],
+        reason: '',
+        from_time: '',
+        to_time: ''
+      });
+      fetchMyRequests();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      toast.error(detail || (lang === 'ar' ? 'فشل إرسال الطلب' : 'Failed to submit'));
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   // ============ التهيئة ============
   useEffect(() => {
     fetchData();
+    fetchMyRequests();
     initGPS();
   }, []);
 
@@ -317,165 +396,378 @@ export default function AttendancePage() {
     checkWorkTime();
   }, [assignedLocations, todayRecord]);
 
+  // ============ مكون حالة GPS ============
+  const GPSStatusCard = () => (
+    <div className={`p-4 rounded-xl border-2 transition-all ${
+      gps.status === 'checking' ? 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800' :
+      gps.status === 'ready' ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800' :
+      'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800'
+    }`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            gps.status === 'checking' ? 'bg-blue-100 dark:bg-blue-900' :
+            gps.status === 'ready' ? 'bg-emerald-100 dark:bg-emerald-900' :
+            'bg-red-100 dark:bg-red-900'
+          }`}>
+            {gps.status === 'checking' && <Loader2 size={24} className="animate-spin text-blue-600" />}
+            {gps.status === 'ready' && <Navigation size={24} className="text-emerald-600" />}
+            {gps.status === 'error' && <MapPinOff size={24} className="text-red-600" />}
+          </div>
+          <div>
+            <p className={`font-semibold ${
+              gps.status === 'checking' ? 'text-blue-700 dark:text-blue-300' :
+              gps.status === 'ready' ? 'text-emerald-700 dark:text-emerald-300' :
+              'text-red-700 dark:text-red-300'
+            }`}>
+              {gps.status === 'checking' && (lang === 'ar' ? 'جاري تحديد الموقع...' : 'Getting location...')}
+              {gps.status === 'ready' && (lang === 'ar' ? 'تم تحديد الموقع بنجاح' : 'Location ready')}
+              {gps.status === 'error' && `[${gps.errorCode}] ${gps.errorMessage}`}
+            </p>
+            {gps.status === 'ready' && gps.accuracy && (
+              <p className="text-sm text-muted-foreground">
+                {lang === 'ar' ? `الدقة: ${Math.round(gps.accuracy)} متر` : `Accuracy: ${Math.round(gps.accuracy)}m`}
+              </p>
+            )}
+          </div>
+        </div>
+        {gps.status === 'error' && (
+          <Button size="sm" variant="outline" onClick={initGPS} className="shrink-0">
+            <RefreshCw size={16} className="me-1" />
+            {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+          </Button>
+        )}
+        {gps.status === 'ready' && (
+          <CheckCircle size={28} className="text-emerald-500 shrink-0" />
+        )}
+      </div>
+    </div>
+  );
+
   // ============ العرض ============
   return (
-    <div className="space-y-6" data-testid="attendance-page">
-      <h1 className="text-2xl font-bold">{lang === 'ar' ? 'الحضور والانصراف' : 'Attendance'}</h1>
+    <div className="space-y-6 max-w-7xl mx-auto" data-testid="attendance-page">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <Clock className="text-primary" />
+          {lang === 'ar' ? 'الحضور والانصراف' : 'Attendance'}
+        </h1>
+        <Button variant="outline" size="sm" onClick={() => { fetchData(); initGPS(); }}>
+          <RefreshCw size={16} className="me-1" />
+          {lang === 'ar' ? 'تحديث' : 'Refresh'}
+        </Button>
+      </div>
 
-      {/* بطاقة البصمة للموظف */}
-      {(isEmployee || isAdmin) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock size={20} />
-              {lang === 'ar' ? 'تسجيل الحضور' : 'Attendance Record'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            
-            {/* حالة GPS */}
-            <div className={`p-3 rounded-lg border ${
-              gps.status === 'checking' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-              gps.status === 'ready' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-              'bg-red-50 border-red-200 text-red-700'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {gps.status === 'checking' && <Loader2 size={18} className="animate-spin" />}
-                  {gps.status === 'ready' && <CheckCircle size={18} />}
-                  {gps.status === 'error' && <AlertTriangle size={18} />}
-                  <span className="text-sm font-medium">
-                    {gps.status === 'checking' && (lang === 'ar' ? 'جاري تحديد الموقع...' : 'Getting location...')}
-                    {gps.status === 'ready' && (lang === 'ar' ? 'تم تحديد الموقع ✓' : 'Location ready ✓')}
-                    {gps.status === 'error' && `[${gps.errorCode}] ${gps.errorMessage}`}
-                  </span>
+      {/* التبويبات */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 mb-4">
+          <TabsTrigger value="punch" className="flex items-center gap-2">
+            <LogIn size={16} />
+            {lang === 'ar' ? 'تسجيل الحضور' : 'Punch'}
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center gap-2">
+            <FileText size={16} />
+            {lang === 'ar' ? 'طلبات الموظفين' : 'Requests'}
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <User size={16} />
+              {lang === 'ar' ? 'سجل الكل' : 'All Records'}
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        {/* =============== تبويب التبصيم =============== */}
+        <TabsContent value="punch" className="space-y-4">
+          <Card className="border-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MapPin className="text-primary" size={20} />
+                {lang === 'ar' ? 'تسجيل الحضور اليومي' : 'Daily Attendance'}
+              </CardTitle>
+              <CardDescription>
+                {lang === 'ar' 
+                  ? 'تأكد من تفعيل الموقع وأنك داخل نطاق موقع العمل'
+                  : 'Ensure GPS is enabled and you are within work location'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* حالة GPS */}
+              <GPSStatusCard />
+
+              {/* مواقع العمل المعينة */}
+              {assignedLocations.length > 0 ? (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20">
+                  <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Building2 size={18} className="text-primary" />
+                    {lang === 'ar' ? 'مواقع العمل المعينة لك:' : 'Your assigned locations:'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {assignedLocations.map(loc => (
+                      <Badge key={loc.id} variant="secondary" className="px-3 py-1.5 text-sm">
+                        {loc.name_ar || loc.name}
+                        <span className="text-xs text-muted-foreground ms-2">
+                          ({loc.work_start} - {loc.work_end})
+                        </span>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                {gps.status === 'error' && (
-                  <Button size="sm" variant="outline" onClick={initGPS}>
-                    {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
-                  </Button>
-                )}
-              </div>
-            </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle size={24} className="text-amber-600" />
+                    <div>
+                      <p className="font-semibold text-amber-700 dark:text-amber-300">
+                        [E005] {lang === 'ar' ? 'لا توجد مواقع عمل معينة لك' : 'No locations assigned'}
+                      </p>
+                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                        {lang === 'ar' ? 'راجع الإدارة لتعيين موقع عمل' : 'Contact admin to assign a location'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            {/* مواقع العمل المعينة */}
-            {assignedLocations.length > 0 && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Building2 size={16} />
-                  {lang === 'ar' ? 'مواقع العمل المعينة لك:' : 'Your assigned locations:'}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {assignedLocations.map(loc => (
-                    <span key={loc.id} className="px-2 py-1 bg-background rounded border text-sm">
-                      {loc.name_ar || loc.name} ({loc.work_start} - {loc.work_end})
-                    </span>
+              {/* اختيار الموقع */}
+              {assignedLocations.length > 1 && !todayRecord?.check_in && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <MapPin size={16} />
+                    {lang === 'ar' ? 'اختر موقع التبصيم:' : 'Select punch location:'}
+                  </Label>
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder={lang === 'ar' ? 'اختر الموقع' : 'Select location'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assignedLocations.map(loc => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          <div className="flex items-center gap-2">
+                            <Building2 size={16} />
+                            {loc.name_ar || loc.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* حالة اليوم */}
+              {todayRecord && (
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border">
+                  <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Calendar size={16} />
+                    {lang === 'ar' ? 'سجل اليوم:' : "Today's record:"}
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                      <LogIn size={20} className="text-emerald-600" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الدخول' : 'In'}</p>
+                        <p className="font-mono font-semibold">{todayRecord.check_in_time || '-'}</p>
+                        {todayRecord.work_location && (
+                          <p className="text-xs text-muted-foreground">{todayRecord.work_location}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+                      <LogOut size={20} className="text-red-600" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'الخروج' : 'Out'}</p>
+                        <p className="font-mono font-semibold">{todayRecord.check_out_time || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* أزرار التبصيم */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <Button
+                  onClick={handleCheckIn}
+                  disabled={loading || !workTimeStatus.canCheckIn || gps.status === 'checking' || assignedLocations.length === 0}
+                  className={`h-16 text-lg font-bold transition-all ${
+                    workTimeStatus.canCheckIn && gps.status === 'ready'
+                      ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/30'
+                      : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+                  }`}
+                  data-testid="check-in-btn"
+                >
+                  {loading ? (
+                    <Loader2 size={24} className="animate-spin me-2" />
+                  ) : (
+                    <LogIn size={24} className="me-2" />
+                  )}
+                  {lang === 'ar' ? 'تسجيل الدخول' : 'Check In'}
+                </Button>
+                
+                <Button
+                  onClick={() => setConfirmDialog({ open: true, type: 'checkout' })}
+                  disabled={loading || !workTimeStatus.canCheckOut || gps.status === 'checking'}
+                  className={`h-16 text-lg font-bold transition-all ${
+                    workTimeStatus.canCheckOut && gps.status === 'ready'
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-500/30'
+                      : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
+                  }`}
+                  data-testid="check-out-btn"
+                >
+                  {loading ? (
+                    <Loader2 size={24} className="animate-spin me-2" />
+                  ) : (
+                    <LogOut size={24} className="me-2" />
+                  )}
+                  {lang === 'ar' ? 'تسجيل الخروج' : 'Check Out'}
+                </Button>
+              </div>
+
+              {/* رسالة خارج أوقات العمل */}
+              {workTimeStatus.message && (
+                <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 text-sm text-center flex items-center justify-center gap-2">
+                  <Timer size={18} />
+                  [E006] {workTimeStatus.message}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* =============== تبويب طلبات الموظفين =============== */}
+        <TabsContent value="requests" className="space-y-4">
+          <Card className="border-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="text-primary" size={20} />
+                    {lang === 'ar' ? 'طلبات الحضور' : 'Attendance Requests'}
+                  </CardTitle>
+                  <CardDescription>
+                    {lang === 'ar' 
+                      ? 'نسيان بصمة - مهمة خارجية - خروج مبكر - تبرير تأخير'
+                      : 'Forgot punch, field work, early leave, late excuse'}
+                  </CardDescription>
+                </div>
+                <Button onClick={() => setRequestDialogOpen(true)} className="gap-2">
+                  <Send size={16} />
+                  {lang === 'ar' ? 'طلب جديد' : 'New Request'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* قائمة الطلبات */}
+              {myRequests.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <History size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>{lang === 'ar' ? 'لا توجد طلبات سابقة' : 'No previous requests'}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myRequests.slice(0, 10).map((req) => (
+                    <div key={req.id} className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                            {REQUEST_TYPES.find(t => t.value === req.type)?.icon || '📋'}
+                          </div>
+                          <div>
+                            <p className="font-semibold">
+                              {req.data?.request_type_ar || REQUEST_TYPES.find(t => t.value === req.type)?.label_ar || req.type}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {req.data?.date} {req.data?.from_time && `(${req.data.from_time} - ${req.data.to_time})`}
+                            </p>
+                            <p className="text-sm mt-1">{req.data?.reason}</p>
+                          </div>
+                        </div>
+                        <Badge variant={
+                          req.status === 'executed' ? 'default' :
+                          req.status?.includes('pending') ? 'secondary' :
+                          req.status === 'rejected' ? 'destructive' : 'outline'
+                        }>
+                          {req.status === 'executed' ? (lang === 'ar' ? 'منفذ' : 'Executed') :
+                           req.status?.includes('pending') ? (lang === 'ar' ? 'قيد الانتظار' : 'Pending') :
+                           req.status === 'rejected' ? (lang === 'ar' ? 'مرفوض' : 'Rejected') :
+                           req.status}
+                        </Badge>
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* اختيار الموقع إذا كان أكثر من واحد */}
-            {assignedLocations.length > 1 && !todayRecord?.check_in && (
-              <div>
-                <Label>{lang === 'ar' ? 'اختر موقع البصمة:' : 'Select location:'}</Label>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={lang === 'ar' ? 'اختر الموقع' : 'Select location'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignedLocations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name_ar || loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* لا توجد مواقع معينة */}
-            {assignedLocations.length === 0 && (
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-700">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle size={18} />
-                  <span className="text-sm">[E005] {lang === 'ar' ? 'لا توجد مواقع عمل معينة لك - راجع الإدارة' : 'No locations assigned'}</span>
+        {/* =============== تبويب الإدارة =============== */}
+        {isAdmin && (
+          <TabsContent value="admin">
+            <Card>
+              <CardHeader>
+                <CardTitle>{lang === 'ar' ? 'سجل حضور الموظفين' : 'Employee Attendance'}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
+                        <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                        <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'الدخول' : 'In'}</th>
+                        <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
+                        <th className="p-3 text-right font-semibold">{lang === 'ar' ? 'موقع البصمة' : 'Location'}</th>
+                        <th className="p-3 text-center font-semibold">GPS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminData.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-12 text-center text-muted-foreground">
+                            {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
+                          </td>
+                        </tr>
+                      ) : (
+                        adminData.map((record, i) => (
+                          <tr key={i} className="border-b hover:bg-muted/30 transition-colors">
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <User size={14} className="text-primary" />
+                                </div>
+                                <span className="font-medium">{record.employee_name_ar || record.employee_name}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 font-mono text-muted-foreground">{record.date}</td>
+                            <td className="p-3 font-mono">{record.check_in_time || '-'}</td>
+                            <td className="p-3 font-mono">{record.check_out_time || '-'}</td>
+                            <td className="p-3">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                {record.location_name_ar || record.location_name || record.work_location || '-'}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center">
+                              {record.gps_valid_in ? (
+                                <CheckCircle size={18} className="text-emerald-500 mx-auto" />
+                              ) : record.check_in ? (
+                                <AlertTriangle size={18} className="text-amber-500 mx-auto" />
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+      </Tabs>
 
-            {/* حالة اليوم */}
-            {todayRecord && (
-              <div className="p-3 rounded-lg bg-slate-50 border">
-                <p className="text-sm font-medium mb-2">{lang === 'ar' ? 'سجل اليوم:' : "Today's record:"}</p>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{lang === 'ar' ? 'الدخول:' : 'Check-in:'}</span>
-                    <span className="font-mono ms-2">{todayRecord.check_in_time || '-'}</span>
-                    {todayRecord.work_location && (
-                      <span className="text-xs text-muted-foreground ms-1">({todayRecord.work_location})</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{lang === 'ar' ? 'الخروج:' : 'Check-out:'}</span>
-                    <span className="font-mono ms-2">{todayRecord.check_out_time || '-'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* أزرار البصمة */}
-            <div className="flex gap-3">
-              {/* زر تسجيل الدخول */}
-              <Button
-                onClick={handleCheckIn}
-                disabled={loading || !workTimeStatus.canCheckIn || gps.status === 'checking' || assignedLocations.length === 0}
-                className={`flex-1 h-14 text-lg ${
-                  workTimeStatus.canCheckIn && gps.status === 'ready'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
-                data-testid="check-in-btn"
-              >
-                {loading ? (
-                  <Loader2 size={20} className="animate-spin me-2" />
-                ) : (
-                  <LogIn size={20} className="me-2" />
-                )}
-                {lang === 'ar' ? 'تسجيل الدخول' : 'Check In'}
-              </Button>
-              
-              {/* زر تسجيل الخروج */}
-              <Button
-                onClick={() => setConfirmDialog({ open: true, type: 'checkout' })}
-                disabled={loading || !workTimeStatus.canCheckOut || gps.status === 'checking'}
-                className={`flex-1 h-14 text-lg ${
-                  workTimeStatus.canCheckOut && gps.status === 'ready'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
-                data-testid="check-out-btn"
-              >
-                {loading ? (
-                  <Loader2 size={20} className="animate-spin me-2" />
-                ) : (
-                  <LogOut size={20} className="me-2" />
-                )}
-                {lang === 'ar' ? 'تسجيل الخروج' : 'Check Out'}
-              </Button>
-            </div>
-
-            {/* رسالة خارج أوقات العمل */}
-            {workTimeStatus.message && (
-              <div className="p-2 rounded bg-amber-100 text-amber-700 text-sm text-center">
-                [E006] {workTimeStatus.message}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* حوار تأكيد الخروج */}
+      {/* =============== حوار تأكيد الخروج =============== */}
       <Dialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ open, type: null })}>
         <DialogContent>
           <DialogHeader>
@@ -484,7 +776,7 @@ export default function AttendancePage() {
               {lang === 'ar' ? 'تأكيد تسجيل الخروج' : 'Confirm Check-out'}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground py-4">
             {lang === 'ar' 
               ? 'هل أنت متأكد من تسجيل الخروج؟ لا يمكن التراجع عن هذا الإجراء.'
               : 'Are you sure you want to check out? This action cannot be undone.'}
@@ -505,74 +797,94 @@ export default function AttendancePage() {
         </DialogContent>
       </Dialog>
 
-      {/* جدول الحضور للإدارة */}
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{lang === 'ar' ? 'سجل حضور الموظفين' : 'Employee Attendance'}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-slate-50">
-                    <th className="p-3 text-right">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
-                    <th className="p-3 text-right">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                    <th className="p-3 text-right">{lang === 'ar' ? 'الدخول' : 'In'}</th>
-                    <th className="p-3 text-right">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
-                    <th className="p-3 text-right">{lang === 'ar' ? 'موقع البصمة' : 'Location'}</th>
-                    <th className="p-3 text-right">{lang === 'ar' ? 'GPS' : 'GPS'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {adminData.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
-                      </td>
-                    </tr>
-                  ) : (
-                    adminData.map((record, i) => (
-                      <tr key={i} className="border-b hover:bg-slate-50">
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <User size={14} className="text-primary" />
-                            </div>
-                            <span className="font-medium">{record.employee_name_ar || record.employee_name}</span>
-                          </div>
-                        </td>
-                        <td className="p-3 font-mono text-muted-foreground">{record.date}</td>
-                        <td className="p-3 font-mono">{record.check_in_time || '-'}</td>
-                        <td className="p-3 font-mono">{record.check_out_time || '-'}</td>
-                        <td className="p-3">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            {record.location_name_ar || record.location_name || record.work_location || '-'}
-                          </span>
-                          {record.checkout_location_name && record.checkout_location_name !== record.location_name && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              خروج: {record.checkout_location_name}
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-3">
-                          {record.gps_valid_in ? (
-                            <span className="text-emerald-600">✓</span>
-                          ) : record.check_in ? (
-                            <span className="text-red-600">✗</span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+      {/* =============== حوار طلب جديد =============== */}
+      <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText size={20} className="text-primary" />
+              {lang === 'ar' ? 'طلب حضور جديد' : 'New Attendance Request'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* نوع الطلب */}
+            <div className="space-y-2">
+              <Label>{lang === 'ar' ? 'نوع الطلب' : 'Request Type'}</Label>
+              <Select 
+                value={requestForm.request_type} 
+                onValueChange={(v) => setRequestForm(prev => ({ ...prev, request_type: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={lang === 'ar' ? 'اختر نوع الطلب' : 'Select type'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {REQUEST_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <span className="flex items-center gap-2">
+                        <span>{type.icon}</span>
+                        {lang === 'ar' ? type.label_ar : type.label_en}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            {/* التاريخ */}
+            <div className="space-y-2">
+              <Label>{lang === 'ar' ? 'التاريخ' : 'Date'}</Label>
+              <Input 
+                type="date"
+                value={requestForm.date}
+                onChange={(e) => setRequestForm(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+
+            {/* الوقت (للمهمة الخارجية والخروج المبكر) */}
+            {['field_work', 'early_leave_request'].includes(requestForm.request_type) && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>{lang === 'ar' ? 'من الساعة' : 'From'}</Label>
+                  <Input 
+                    type="time"
+                    value={requestForm.from_time}
+                    onChange={(e) => setRequestForm(prev => ({ ...prev, from_time: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{lang === 'ar' ? 'إلى الساعة' : 'To'}</Label>
+                  <Input 
+                    type="time"
+                    value={requestForm.to_time}
+                    onChange={(e) => setRequestForm(prev => ({ ...prev, to_time: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* السبب */}
+            <div className="space-y-2">
+              <Label>{lang === 'ar' ? 'السبب / التفاصيل' : 'Reason / Details'}</Label>
+              <Textarea 
+                placeholder={lang === 'ar' ? 'اكتب السبب هنا...' : 'Enter reason...'}
+                value={requestForm.reason}
+                onChange={(e) => setRequestForm(prev => ({ ...prev, reason: e.target.value }))}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRequestDialogOpen(false)}>
+              {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button onClick={handleSubmitRequest} disabled={submittingRequest}>
+              {submittingRequest && <Loader2 size={16} className="animate-spin me-2" />}
+              <Send size={16} className="me-1" />
+              {lang === 'ar' ? 'إرسال الطلب' : 'Submit'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
