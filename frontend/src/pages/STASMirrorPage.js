@@ -699,6 +699,94 @@ export default function STASMirrorPage() {
           </div>
         </TabsContent>
 
+        {/* === My Transactions Tab - معاملاتي === */}
+        <TabsContent value="my-transactions" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <FileText size={20} />
+                  {lang === 'ar' ? 'معاملاتي الخاصة' : 'My Transactions'}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {myTransactions.length} {lang === 'ar' ? 'معاملة' : 'transactions'}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myTransactions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText size={48} className="mx-auto mb-3 opacity-30" />
+                  <p>{lang === 'ar' ? 'لا توجد معاملات خاصة بك' : 'No transactions found'}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-slate-50">
+                        <th className="p-3 text-right">{lang === 'ar' ? 'الرقم المرجعي' : 'Ref No'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'النوع' : 'Type'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                        <th className="p-3 text-right">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                        <th className="p-3 text-center">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {myTransactions.map(tx => (
+                        <tr key={tx.id} className="border-b hover:bg-slate-50">
+                          <td className="p-3 font-mono text-xs">{tx.ref_no}</td>
+                          <td className="p-3 capitalize">{tx.type?.replace(/_/g, ' ')}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              tx.status === 'executed' ? 'bg-green-100 text-green-700' :
+                              tx.status === 'rejected' || tx.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {tx.status === 'executed' ? (lang === 'ar' ? 'منفذة' : 'Executed') :
+                               tx.status === 'rejected' ? (lang === 'ar' ? 'مرفوضة' : 'Rejected') :
+                               tx.status === 'cancelled' ? (lang === 'ar' ? 'ملغاة' : 'Cancelled') :
+                               (lang === 'ar' ? 'معلقة' : 'Pending')}
+                            </span>
+                          </td>
+                          <td className="p-3 text-xs text-muted-foreground">
+                            {new Date(tx.created_at).toLocaleDateString('ar-SA')}
+                          </td>
+                          <td className="p-3 text-center">
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => navigate(`/transactions/${tx.id}`)}
+                                data-testid={`view-tx-${tx.ref_no}`}
+                              >
+                                <Eye size={14} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteTransaction(tx.id)}
+                                disabled={deletingTransaction === tx.id}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                data-testid={`delete-tx-${tx.ref_no}`}
+                              >
+                                {deletingTransaction === tx.id ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* === Deductions Tab === */}
         <TabsContent value="deductions" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
