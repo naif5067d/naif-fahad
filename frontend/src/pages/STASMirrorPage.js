@@ -410,7 +410,7 @@ export default function STASMirrorPage() {
       </div>
 
       <Tabs defaultValue="deductions" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="deductions" data-testid="tab-deductions" className="flex items-center gap-2">
             <DollarSign size={16} />
             {lang === 'ar' ? 'الخصومات' : 'Deductions'}
