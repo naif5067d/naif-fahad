@@ -12,15 +12,16 @@ const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
   // سلطان موظف + إداري
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  // سلطان مدير إداري
+  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // نايف إداري فقط
-  naif: ['dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // صلاح مالي فقط
   salah: ['dashboard', 'transactions', 'financialCustody'],
   // محمد CEO
-  mohammed: ['dashboard', 'transactions', 'tasks', 'financialCustody'],
+  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody'],
   // ستاس إداري + صلاحيات كاملة
-  stas: ['dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
