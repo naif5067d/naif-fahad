@@ -1073,38 +1073,41 @@ export default function ContractsManagementPage() {
                           </Button>
                         )}
                         
-                        {/* Execute - only pending_stas & STAS role */}
-                        {contract.status === 'pending_stas' && canExecute && (
+                        {/* Execute - للمسؤولين فقط عند انتظار STAS */}
+                        {contract.status === 'pending_stas' && isAdmin && (
                           <Button 
                             variant="default" 
                             size="sm" 
                             onClick={() => handleExecuteContract(contract.id)}
                             className="bg-emerald-600 hover:bg-emerald-700"
+                            data-testid={`execute-contract-${contract.id}`}
                           >
                             <Play className="w-4 h-4 ml-1" />
                             تنفيذ
                           </Button>
                         )}
                         
-                        {/* Terminate - only active & STAS role */}
-                        {contract.status === 'active' && canTerminate && (
+                        {/* Terminate - للمسؤولين فقط للعقود النشطة */}
+                        {contract.status === 'active' && isAdmin && (
                           <Button 
                             variant="destructive" 
                             size="sm" 
                             onClick={() => setTerminateContract(contract)}
+                            data-testid={`terminate-contract-${contract.id}`}
                           >
                             <Ban className="w-4 h-4 ml-1" />
                             إنهاء
                           </Button>
                         )}
                         
-                        {/* Delete - only draft/pending_stas */}
-                        {['draft', 'pending_stas'].includes(contract.status) && canCreate && (
+                        {/* Delete - للمسؤولين فقط للمسودات */}
+                        {['draft', 'pending_stas'].includes(contract.status) && isAdmin && (
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => handleDeleteContract(contract.id)}
+                            data-testid={`delete-contract-${contract.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
