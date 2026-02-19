@@ -541,28 +541,36 @@ export default function ExecutiveDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8">
           
           {/* Health Score - Hero */}
-          <div className="lg:col-span-4 flex items-center justify-center">
+          <div className="lg:col-span-4 xl:col-span-4 flex items-center justify-center order-first lg:order-last">
             <div 
-              className="w-full p-6 sm:p-8 rounded-3xl text-center"
+              className="w-full p-6 sm:p-8 lg:p-10 rounded-3xl text-center relative overflow-hidden"
               style={{ 
                 background: THEME.bg.secondary,
                 border: `1px solid ${THEME.border.subtle}`,
               }}
               data-testid="health-score-card"
             >
+              {/* Subtle background gradient */}
+              <div 
+                className="absolute inset-0 opacity-5"
+                style={{ 
+                  background: `radial-gradient(circle at 50% 30%, ${getScoreColor(health_score)}, transparent 70%)`
+                }}
+              />
+              
               <p 
-                className="text-xs uppercase tracking-[0.2em] mb-6"
+                className="relative text-xs uppercase tracking-[0.2em] mb-6"
                 style={{ color: THEME.text.tertiary }}
               >
                 مؤشر صحة الشركة
               </p>
               
-              <div className="flex justify-center mb-6">
-                <ScoreRing score={health_score} size={200} />
+              <div className="relative flex justify-center mb-6">
+                <ScoreRing score={health_score} size={isFullscreen ? 260 : 200} />
               </div>
               
               <p 
-                className="text-[10px] uppercase tracking-[0.15em]"
+                className="relative text-[10px] uppercase tracking-[0.15em]"
                 style={{ color: THEME.text.tertiary }}
               >
                 Company Health Score
