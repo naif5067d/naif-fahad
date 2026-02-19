@@ -173,12 +173,27 @@ export default function AttendancePage() {
 
   useEffect(() => { 
     fetchData();
-    // Check GPS
+    // Check GPS on load and watch for changes
     if (navigator.geolocation) {
+      // First attempt
       navigator.geolocation.getCurrentPosition(
         pos => setGpsState({ available: true, lat: pos.coords.latitude, lng: pos.coords.longitude, checking: false }),
-        () => setGpsState({ available: false, lat: null, lng: null, checking: false })
+        (err) => {
+          // If permission denied or error, still set checking to false
+          console.log('GPS initial check failed:', err.code);
+          setGpsState({ available: false, lat: null, lng: null, checking: false });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+      
+      // Watch for position changes (will auto-update when permission granted)
+      const watchId = navigator.geolocation.watchPosition(
+        pos => setGpsState({ available: true, lat: pos.coords.latitude, lng: pos.coords.longitude, checking: false }),
+        () => {}, // Ignore watch errors
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
+      );
+      
+      return () => navigator.geolocation.clearWatch(watchId);
     } else {
       setGpsState({ available: false, lat: null, lng: null, checking: false });
     }
