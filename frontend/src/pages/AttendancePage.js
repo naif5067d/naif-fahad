@@ -696,36 +696,6 @@ export default function AttendancePage() {
               </Button>
             </div>
             
-            {/* زر التحضير الاحتياطي - يظهر فقط إذا لم يسجل دخول */}
-            {!today.check_in && (
-              <div className="mt-3 pt-3 border-t border-dashed">
-                <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 text-center">
-                  ⚠️ في حال عدم عمل النظام الذاتي (GPS)، استخدم التحضير الاحتياطي
-                </p>
-                <Button
-                  data-testid="manual-check-in-btn"
-                  onClick={handleManualCheckIn}
-                  disabled={loading}
-                  variant="outline"
-                  className="w-full h-11 border-dashed border-2 border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                >
-                  ✋ تحضير احتياطي (بدون GPS)
-                </Button>
-                <p className="text-xs text-muted-foreground mt-1 text-center">
-                  لا يُحسب تأخير - فقط إثبات حضور
-                </p>
-              </div>
-            )}
-            
-            {/* عرض نوع التسجيل إذا كان احتياطي */}
-            {today.check_in?.source === 'manual_checkin' && (
-              <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-950/30 rounded-lg text-center">
-                <span className="text-sm text-amber-700 dark:text-amber-300">
-                  ✋ تم التسجيل عبر التحضير الاحتياطي
-                </span>
-              </div>
-            )}
-            
             {/* زر طلب حضور جديد */}
             <Button 
               variant="outline" 
