@@ -865,11 +865,7 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
             failed_ids.append({"id": custody_id, "reason": "غير موجودة"})
             continue
         
-        # لا يمكن حذف العهد المنفذة أو المغلقة
-        if custody['status'] in ['executed', 'closed']:
-            failed_ids.append({"id": custody_id, "reason": f"لا يمكن حذف عهدة {custody['status']}"})
-            continue
-        
+        # STAS يستطيع حذف جميع العهد بلا استثناء
         # حذف ناعم (soft delete)
         await db.admin_custodies.update_one(
             {"id": custody_id},
