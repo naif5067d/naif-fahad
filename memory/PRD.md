@@ -1609,3 +1609,92 @@ available_balance = earned_to_date - used_executed
 - `custody_logs` - سجل الأحداث
 - `expense_codes` - الأكواد المضافة (61+)
 
+
+---
+
+### Phase 36: Executive Dashboard (لوحة الحوكمة التنفيذية) ✅ (2026-02-19)
+
+**المتطلبات المُنفذة:**
+
+لوحة تحكم تنفيذية رسمية عالية المستوى مخصصة للمدير التنفيذي والإدارة العليا، قابلة للعرض على شاشات كبيرة (TV Mode).
+
+**1. التصميم الفاخر (Modern Minimal Executive Style):**
+   - ألوان حيادية راقية: أسود داكن (#0A0A0B)، رمادي عميق، أبيض مكسور
+   - خلفية داكنة مع borders خفيفة
+   - تأثيرات glow احترافية
+   - animations سلسة
+   - RTL كامل للغة العربية
+
+**2. المكونات الأساسية:**
+
+   **أ) مؤشر صحة الشركة (Company Health Score):**
+   - رقم رئيسي كبير في المنتصف (من 100)
+   - مؤشر دائري احترافي مع glow effect
+   - ألوان ديناميكية حسب النتيجة (أحمر/برتقالي/أزرق/أخضر)
+   - تصنيف: ممتاز (85+) / جيد (70+) / مقبول (50+) / يحتاج تحسين
+
+   **ب) المؤشرات الأربعة الرئيسية (KPI Cards):**
+   - الحضور والانضباط: نسبة + أيام الحضور + دقائق التأخير
+   - أداء المهام: نسبة + المهام المنجزة + متوسط التقييم
+   - الانضباط المالي: نسبة + العهد + المصروف + المُعاد
+   - انضباط الطلبات: نسبة + المقبولة + المرفوضة + المعلقة
+
+   **ج) الملخص التنفيذي (Executive Summary):**
+   - فقرة نصية ذكية تُولّد تلقائياً
+   - مثال: "مستوى الأداء العام يتطلب تدخل عاجل."
+
+   **د) الرسوم البيانية الديناميكية:**
+   - Area Chart: اتجاه الأداء الشهري (6 أشهر)
+   - Pie Chart: توزيع المؤشرات الأربعة
+
+   **هـ) قوائم الأداء:**
+   - الأعلى أداءً (Top 5 Performers)
+   - يحتاج متابعة (Bottom 5 - Needs Attention)
+
+   **و) الإحصائيات السريعة (Quick Stats):**
+   - الموظفين النشطين
+   - الطلبات المعلقة
+   - العهد المفتوحة
+   - المهام الجارية
+
+**3. الخصائص التقنية:**
+
+   - **TV Mode:** يفتح بدون Sidebar (noLayout=true)
+   - **وضع العرض الكامل:** زر Fullscreen
+   - **التحديث التلقائي:** كل 60 ثانية (قابل للإيقاف)
+   - **التنبيهات:** لوحة منسدلة للتنبيهات العاجلة
+   - **زر العودة:** للرجوع إلى Dashboard الرئيسي
+   - **متوافق مع جميع الأجهزة:** جوال، تابلت، حاسب، شاشات كبيرة
+
+**4. الصلاحيات:**
+   - mohammed (CEO) ✓
+   - sultan (Ops Admin) ✓
+   - naif (Ops Strategic) ✓
+   - stas (System Admin) ✓
+   - salah (Accountant) ✗ - مرفوض (403)
+
+**5. حساب الدرجات (Weighted Score):**
+   ```
+   Health Score = (Attendance × 30%) + (Tasks × 35%) + (Financial × 20%) + (Requests × 15%)
+   ```
+
+**الملفات الجديدة/المُحدثة:**
+- `/app/backend/routes/analytics.py` - Analytics API كامل
+- `/app/frontend/src/pages/ExecutiveDashboard.js` - واجهة فاخرة مع charts
+- `/app/frontend/src/App.js` - TV Mode routing (noLayout)
+- `/app/frontend/src/components/layout/AppLayout.js` - Activity icon
+
+**APIs الجديدة:**
+- `GET /api/analytics/executive/dashboard` - بيانات اللوحة الكاملة
+- `GET /api/analytics/alerts` - التنبيهات التنفيذية
+- `GET /api/analytics/employee/{id}/score` - درجة موظف محدد
+
+**Testing:** 100% pass rate
+- Backend: 17/17 tests passed
+- Frontend: 14/14 UI components verified
+- `/app/test_reports/iteration_36.json`
+- `/app/backend/tests/test_executive_dashboard.py`
+
+---
+
+Version: 36.0 (2026-02-19)
