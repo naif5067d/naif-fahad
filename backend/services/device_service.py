@@ -605,7 +605,7 @@ async def get_employee_devices(employee_id: str) -> List[dict]:
 
 
 async def get_all_devices(status_filter: str = None) -> List[dict]:
-    """جلب جميع الأجهزة (للـ STAS)"""
+    """جلب جميع الأجهزة (للـ STAS) مع معلومات محسّنة"""
     query = {}
     if status_filter:
         query["status"] = status_filter
@@ -615,7 +615,7 @@ async def get_all_devices(status_filter: str = None) -> List[dict]:
         {"_id": 0}
     ).sort("registered_at", -1).to_list(500)
     
-    # إضافة بيانات الموظف
+    # إضافة بيانات الموظف ومعلومات الجهاز المحسّنة
     for device in devices:
         emp = await db.employees.find_one(
             {"id": device['employee_id']},
@@ -623,6 +623,25 @@ async def get_all_devices(status_filter: str = None) -> List[dict]:
         )
         device['employee_name_ar'] = emp.get('full_name_ar', '') if emp else ''
         device['employee_number'] = emp.get('employee_number', '') if emp else ''
+        
+        # تحليل User-Agent للحصول على معلومات سهلة
+        fingerprint = device.get('fingerprint_data', {})
+        ua_string = fingerprint.get('userAgent', '')
+        if ua_string:
+            parsed = _parse_user_agent(ua_string)
+            device['friendly_name'] = parsed.get('friendly_name', 'جهاز غير معروف')
+            device['device_brand'] = parsed.get('device_brand', '')
+            device['device_model'] = parsed.get('device_model', '')
+            device['os_display'] = parsed.get('os_display', device.get('os', ''))
+            device['is_mobile'] = parsed.get('is_mobile', False)
+            device['is_tablet'] = parsed.get('is_tablet', False)
+            device['is_pc'] = parsed.get('is_pc', True)
+        else:
+            device['friendly_name'] = device.get('device_type', 'جهاز')
+            device['os_display'] = device.get('os', '')
+            device['is_mobile'] = device.get('device_type') == 'mobile'
+            device['is_tablet'] = device.get('device_type') == 'tablet'
+            device['is_pc'] = device.get('device_type') == 'desktop'
     
     return devices
 
