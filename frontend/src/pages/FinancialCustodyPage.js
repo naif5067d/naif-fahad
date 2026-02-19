@@ -1206,17 +1206,15 @@ export default function FinancialCustodyPage() {
                 </tr>
               )}
               {filtered.map(c => {
-                const canSelectThis = !['executed', 'closed'].includes(c.status);
-                
                 return (
                   <tr 
                     key={c.id}
                     className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
                     onClick={(e) => {
-                      if (selectMode && canSelectThis) {
+                      if (selectMode) {
                         e.stopPropagation();
-                        toggleSelectOne(c.id, c.status);
-                      } else if (!selectMode) {
+                        toggleSelectOne(c.id);
+                      } else {
                         fetchDetail(c.id);
                       }
                     }}
@@ -1226,8 +1224,7 @@ export default function FinancialCustodyPage() {
                       <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
                         <Checkbox 
                           checked={selectedIds.includes(c.id)}
-                          disabled={!canSelectThis}
-                          onCheckedChange={() => toggleSelectOne(c.id, c.status)}
+                          onCheckedChange={() => toggleSelectOne(c.id)}
                         />
                       </td>
                     )}
