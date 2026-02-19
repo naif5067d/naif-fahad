@@ -154,6 +154,16 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
     
     used_executed = sum(e.get('days', 0) for e in used_entries)
     
+    # 7.1 للعقود المهاجرة: إضافة الرصيد الافتتاحي
+    opening_balance = 0
+    is_migrated = contract.get('is_migrated', False)
+    
+    if is_migrated and contract.get('leave_opening_balance'):
+        opening_balance = contract['leave_opening_balance'].get('annual', 0)
+        # للعقود المهاجرة، الرصيد المتاح = الرصيد الافتتاحي - المستخدم
+        # بدلاً من حساب Pro-Rata من بداية السنة
+        earned_to_date = opening_balance
+    
     # 8. حساب الرصيد المتاح
     available_balance = round(earned_to_date - used_executed, 2)
     
@@ -162,15 +172,17 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
         "year": year,
         "annual_policy_days": policy_days,
         "days_in_year": days_in_year,
-        "daily_accrual": daily_accrual,
+        "daily_accrual": daily_accrual if not is_migrated else 0,
         "contract_start": contract_start,
         "calc_start_date": calc_start_date,
         "days_worked": days_worked,
         "earned_to_date": earned_to_date,
         "used_executed": used_executed,
         "available_balance": max(0, available_balance),
-        "formula": f"{policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
-        "message_ar": f"مكتسب: {earned_to_date:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم"
+        "is_migrated": is_migrated,
+        "opening_balance": opening_balance if is_migrated else 0,
+        "formula": f"رصيد افتتاحي: {opening_balance} - مستخدم: {used_executed} = {available_balance}" if is_migrated else f"{policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
+        "message_ar": f"رصيد افتتاحي: {opening_balance:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم" if is_migrated else f"مكتسب: {earned_to_date:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم"
     }
 
 
