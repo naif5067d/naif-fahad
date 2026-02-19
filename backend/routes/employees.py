@@ -96,8 +96,18 @@ async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends
     await db.employees.update_one({"id": employee_id}, {"$set": updates})
     if 'full_name' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"full_name": updates['full_name']}})
+        # تحديث الاسم في العقود أيضاً
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"employee_name": updates['full_name']}}
+        )
     if 'full_name_ar' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"full_name_ar": updates['full_name_ar']}})
+        # تحديث الاسم العربي في العقود أيضاً
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"employee_name_ar": updates['full_name_ar']}}
+        )
     if 'is_active' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"is_active": updates['is_active']}})
     updated = await db.employees.find_one({"id": employee_id}, {"_id": 0})
