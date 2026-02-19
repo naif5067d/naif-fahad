@@ -200,12 +200,14 @@ async def validate_stage_actor(transaction: dict, actor_user_id: str, actor_role
         }
 
     # Prevent self-approval: actor cannot approve their own transaction
+    # Exception: stas and sultan can approve their own transactions (admin privilege)
     if transaction.get('created_by') == actor_user_id:
-        return {
-            "valid": False,
-            "error": "error.self_approval",
-            "error_detail": "You cannot approve your own transaction"
-        }
+        if actor_role not in ['stas', 'sultan']:
+            return {
+                "valid": False,
+                "error": "error.self_approval",
+                "error_detail": "You cannot approve your own transaction"
+            }
 
     # For supervisor stage: verify actor is actually the supervisor
     if current_stage == 'supervisor':
