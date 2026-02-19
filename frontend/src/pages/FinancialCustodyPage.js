@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, CheckCircle, AlertCircle, ArrowLeft, Trash2, Send, Check, X, 
   Loader2, Clock, DollarSign, ChevronRight, FileText, AlertTriangle,
-  TrendingUp, TrendingDown, Wallet, Edit2, Save
+  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -42,7 +43,6 @@ const STATUS_STYLES = {
   closed: 'bg-slate-100 text-slate-600 ring-slate-300 dark:bg-slate-800 dark:text-slate-400',
 };
 
-// تنسيق التاريخ بصيغة ميلادية
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
   try {
@@ -70,6 +70,8 @@ export default function FinancialCustodyPage() {
   const [surplusAlert, setSurplusAlert] = useState(null);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editForm, setEditForm] = useState({ description: '', amount: '' });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectMode, setSelectMode] = useState(false);
   const codeInputRef = useRef(null);
 
   const role = user?.role;
@@ -79,6 +81,7 @@ export default function FinancialCustodyPage() {
   const canEditExpense = ['salah', 'stas'].includes(role);
   const canExecute = role === 'stas';
   const canClose = ['sultan', 'mohammed', 'stas'].includes(role);
+  const canDelete = role === 'stas';
 
   // ==================== DATA FETCHING ====================
 
@@ -88,7 +91,7 @@ export default function FinancialCustodyPage() {
         api.get('/api/admin-custody/all'),
         api.get('/api/admin-custody/summary')
       ]);
-      setCustodies(custodiesRes.data);
+      setCustodies(custodiesRes.data.filter(c => c.status !== 'deleted'));
       setSummary(summaryRes.data);
     } catch (e) {
       console.error('Error fetching custodies:', e);
@@ -107,7 +110,7 @@ export default function FinancialCustodyPage() {
 
   useEffect(() => { fetchList(); }, [fetchList]);
 
-  // ==================== CODE LOOKUP (INSTANT - لا يملأ الوصف) ====================
+  // ==================== CODE LOOKUP ====================
 
   const lookupCode = useCallback(async (val) => {
     const code = parseInt(val);
@@ -119,11 +122,130 @@ export default function FinancialCustodyPage() {
     try {
       const res = await api.get(`/api/admin-custody/codes/${code}`);
       setCodeInfo(res.data);
-      // لا نملأ الوصف تلقائياً - المستخدم يكتبه يدوياً
     } catch {
       setCodeInfo({ found: false, code: { code, is_new: true } });
     }
   }, []);
+
+  // ==================== PDF / PRINT ====================
+
+  const handlePrintPdf = async (custodyId, custodyNumber) => {
+    setSubmitting(true);
+    try {
+      const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab for printing
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+      
+      toast.success(lang === 'ar' ? 'جاري فتح الطباعة...' : 'Opening print...');
+    } catch (e) {
+      toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDownloadPdf = async (custodyId, custodyNumber) => {
+    setSubmitting(true);
+    try {
+      const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `custody_${custodyNumber}_${lang}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
+    } catch (e) {
+      toast.error(lang === 'ar' ? 'خطأ في التحميل' : 'Download error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ==================== DELETE ====================
+
+  const handleDeleteSingle = async (custodyId, custodyNumber) => {
+    if (!confirm(lang === 'ar' ? `هل تريد حذف العهدة رقم ${custodyNumber}؟` : `Delete custody ${custodyNumber}?`)) return;
+    
+    setSubmitting(true);
+    try {
+      await api.delete(`/api/admin-custody/${custodyId}`);
+      toast.success(lang === 'ar' ? 'تم الحذف' : 'Deleted');
+      fetchList();
+      if (selected?.id === custodyId) {
+        setView('list');
+        setSelected(null);
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      toast.error(lang === 'ar' ? 'اختر عهد للحذف' : 'Select custodies to delete');
+      return;
+    }
+    
+    if (!confirm(lang === 'ar' ? `هل تريد حذف ${selectedIds.length} عهدة؟` : `Delete ${selectedIds.length} custodies?`)) return;
+    
+    setSubmitting(true);
+    try {
+      const res = await api.delete('/api/admin-custody/bulk', { data: { custody_ids: selectedIds } });
+      toast.success(res.data.message_ar || `Deleted ${res.data.deleted_count}`);
+      
+      if (res.data.failed?.length > 0) {
+        toast.warning(`${res.data.failed.length} ${lang === 'ar' ? 'لم يتم حذفها' : 'could not be deleted'}`);
+      }
+      
+      setSelectedIds([]);
+      setSelectMode(false);
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    const deletable = filtered.filter(c => !['executed', 'closed'].includes(c.status));
+    if (selectedIds.length === deletable.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(deletable.map(c => c.id));
+    }
+  };
+
+  const toggleSelectOne = (id, status) => {
+    if (['executed', 'closed'].includes(status)) return;
+    
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(i => i !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
 
   // ==================== ACTIONS ====================
 
@@ -189,7 +311,6 @@ export default function FinancialCustodyPage() {
       fetchDetail(selected.id);
       fetchList();
       
-      // التركيز على حقل الكود مرة أخرى
       setTimeout(() => codeInputRef.current?.focus(), 100);
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Error');
@@ -334,6 +455,7 @@ export default function FinancialCustodyPage() {
     const pct = budget > 0 ? Math.min((selected.spent / budget) * 100, 100) : 0;
     const isEditable = ['open', 'pending_audit'].includes(selected.status);
     const canSalahEdit = selected.status === 'pending_audit' && canEditExpense;
+    const canDeleteThis = canDelete && !['executed', 'closed'].includes(selected.status);
 
     return (
       <div className="space-y-5 pb-10" data-testid="custody-detail">
@@ -363,25 +485,65 @@ export default function FinancialCustodyPage() {
               </p>
             </div>
             
-            <div className="flex items-center gap-6 lg:gap-10">
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                  {lang === 'ar' ? 'الميزانية' : 'Budget'}
-                </p>
-                <p className="text-2xl font-bold font-mono">{budget.toLocaleString()}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                  {lang === 'ar' ? 'المصروف' : 'Spent'}
-                </p>
-                <p className="text-2xl font-bold font-mono text-red-600">{selected.spent.toLocaleString()}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                  {lang === 'ar' ? 'المتبقي' : 'Remaining'}
-                </p>
-                <p className="text-2xl font-bold font-mono text-emerald-600">{selected.remaining.toLocaleString()}</p>
-              </div>
+            <div className="flex items-center gap-3">
+              {/* Print/Download Buttons */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePrintPdf(selected.id, selected.custody_number)}
+                disabled={submitting}
+                className="gap-1.5"
+                data-testid="print-btn"
+              >
+                <Printer size={14} />
+                {lang === 'ar' ? 'طباعة' : 'Print'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleDownloadPdf(selected.id, selected.custody_number)}
+                disabled={submitting}
+                className="gap-1.5"
+                data-testid="download-btn"
+              >
+                <Download size={14} />
+                PDF
+              </Button>
+              
+              {canDeleteThis && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => handleDeleteSingle(selected.id, selected.custody_number)}
+                  disabled={submitting}
+                  className="gap-1.5"
+                  data-testid="delete-btn"
+                >
+                  <Trash2 size={14} />
+                  {lang === 'ar' ? 'حذف' : 'Delete'}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 lg:gap-10 mt-4">
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                {lang === 'ar' ? 'الميزانية' : 'Budget'}
+              </p>
+              <p className="text-2xl font-bold font-mono">{budget.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                {lang === 'ar' ? 'المصروف' : 'Spent'}
+              </p>
+              <p className="text-2xl font-bold font-mono text-red-600">{selected.spent.toLocaleString()}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                {lang === 'ar' ? 'المتبقي' : 'Remaining'}
+              </p>
+              <p className="text-2xl font-bold font-mono text-emerald-600">{selected.remaining.toLocaleString()}</p>
             </div>
           </div>
 
@@ -483,7 +645,7 @@ export default function FinancialCustodyPage() {
           )}
         </div>
 
-        {/* EXPENSE TABLE - Excel Style */}
+        {/* EXPENSE TABLE */}
         <div className="border border-border rounded-xl overflow-hidden shadow-sm bg-background">
           <div className="bg-slate-100 dark:bg-slate-800 px-4 py-3 border-b border-border flex items-center justify-between">
             <h3 className="text-sm font-bold flex items-center gap-2">
@@ -667,7 +829,7 @@ export default function FinancialCustodyPage() {
           </div>
         </div>
 
-        {/* ADD EXPENSE - Excel-like Input */}
+        {/* ADD EXPENSE */}
         {isEditable && canAddExpense && (
           <div className="border-2 border-dashed border-primary/30 rounded-xl p-5 bg-primary/5">
             <p className="text-xs font-bold text-primary mb-3 flex items-center gap-2">
@@ -676,7 +838,6 @@ export default function FinancialCustodyPage() {
             </p>
             
             <div className="flex gap-3 items-end flex-wrap">
-              {/* Code */}
               <div className="w-20">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'الكود' : 'Code'}
@@ -696,7 +857,6 @@ export default function FinancialCustodyPage() {
                 />
               </div>
               
-              {/* Account Name (Auto) */}
               <div className="w-40">
                 <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                   {lang === 'ar' ? 'اسم الحساب' : 'Account'}
@@ -712,7 +872,6 @@ export default function FinancialCustodyPage() {
                 </div>
               </div>
               
-              {/* Description (Manual) */}
               <div className="flex-1 min-w-[200px]">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'الوصف (لماذا صرفت؟)' : 'Description (Why?)'}
@@ -726,7 +885,6 @@ export default function FinancialCustodyPage() {
                 />
               </div>
               
-              {/* Amount */}
               <div className="w-28">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'المبلغ' : 'Amount'}
@@ -749,7 +907,6 @@ export default function FinancialCustodyPage() {
                 />
               </div>
               
-              {/* Add Button */}
               <Button 
                 onClick={handleAddExpense} 
                 disabled={submitting}
@@ -761,7 +918,6 @@ export default function FinancialCustodyPage() {
               </Button>
             </div>
             
-            {/* Remaining Display */}
             <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4">
               <span>{lang === 'ar' ? 'المتبقي:' : 'Remaining:'} <strong className="text-emerald-600">{selected.remaining.toLocaleString()}</strong></span>
               {expForm.amount && (
@@ -805,6 +961,7 @@ export default function FinancialCustodyPage() {
                         log.action === 'audit_reject' ? 'أرجع العهدة' :
                         log.action === 'executed' ? 'نفّذ العهدة' :
                         log.action === 'closed' ? 'أغلق العهدة' :
+                        log.action === 'deleted' ? 'حذف العهدة' :
                         log.action
                       ) : log.action}
                     </p>
@@ -844,55 +1001,84 @@ export default function FinancialCustodyPage() {
           </p>
         </div>
         
-        {canCreate && (
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="create-custody-btn" className="gap-1.5">
-                <Plus size={16} />
-                {lang === 'ar' ? 'عهدة جديدة' : 'New Custody'}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {lang === 'ar' ? 'إنشاء عهدة مالية جديدة' : 'Create New Financial Custody'}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div>
-                  <Label>{lang === 'ar' ? 'مبلغ العهدة (ريال)' : 'Amount (SAR)'}</Label>
-                  <Input 
-                    type="number"
-                    min="1"
-                    value={form.amount}
-                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                    className="font-mono text-lg"
-                    placeholder="500"
-                    data-testid="custody-amount"
-                  />
-                </div>
-                <div>
-                  <Label>{lang === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (optional)'}</Label>
-                  <Textarea 
-                    value={form.notes}
-                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                    rows={2}
-                    data-testid="custody-notes"
-                  />
-                </div>
-                <Button 
-                  onClick={handleCreate} 
-                  disabled={submitting || !form.amount}
-                  className="w-full"
-                  data-testid="submit-create"
-                >
-                  {submitting && <Loader2 size={14} className="me-1.5 animate-spin" />}
-                  {lang === 'ar' ? 'إنشاء العهدة' : 'Create Custody'}
+        <div className="flex items-center gap-2">
+          {canDelete && (
+            <Button 
+              variant={selectMode ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => { setSelectMode(!selectMode); setSelectedIds([]); }}
+              data-testid="select-mode-btn"
+            >
+              {selectMode 
+                ? (lang === 'ar' ? 'إلغاء التحديد' : 'Cancel') 
+                : (lang === 'ar' ? 'تحديد للحذف' : 'Select')}
+            </Button>
+          )}
+          
+          {selectMode && selectedIds.length > 0 && (
+            <Button 
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={submitting}
+              className="gap-1.5"
+              data-testid="bulk-delete-btn"
+            >
+              <Trash2 size={14} />
+              {lang === 'ar' ? `حذف (${selectedIds.length})` : `Delete (${selectedIds.length})`}
+            </Button>
+          )}
+          
+          {canCreate && !selectMode && (
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="create-custody-btn" className="gap-1.5">
+                  <Plus size={16} />
+                  {lang === 'ar' ? 'عهدة جديدة' : 'New Custody'}
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {lang === 'ar' ? 'إنشاء عهدة مالية جديدة' : 'Create New Financial Custody'}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div>
+                    <Label>{lang === 'ar' ? 'مبلغ العهدة (ريال)' : 'Amount (SAR)'}</Label>
+                    <Input 
+                      type="number"
+                      min="1"
+                      value={form.amount}
+                      onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                      className="font-mono text-lg"
+                      placeholder="500"
+                      data-testid="custody-amount"
+                    />
+                  </div>
+                  <div>
+                    <Label>{lang === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (optional)'}</Label>
+                    <Textarea 
+                      value={form.notes}
+                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                      rows={2}
+                      data-testid="custody-notes"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleCreate} 
+                    disabled={submitting || !form.amount}
+                    className="w-full"
+                    data-testid="submit-create"
+                  >
+                    {submitting && <Loader2 size={14} className="me-1.5 animate-spin" />}
+                    {lang === 'ar' ? 'إنشاء العهدة' : 'Create Custody'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -981,6 +1167,15 @@ export default function FinancialCustodyPage() {
           <table className="w-full text-sm" data-testid="custody-table">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-xs border-b border-border">
+                {selectMode && (
+                  <th className="px-3 py-3 w-10">
+                    <Checkbox 
+                      checked={selectedIds.length === filtered.filter(c => !['executed', 'closed'].includes(c.status)).length && selectedIds.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      data-testid="select-all"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-3 text-start font-bold text-muted-foreground">#</th>
                 <th className="px-4 py-3 text-start font-bold text-muted-foreground">
                   {lang === 'ar' ? 'التاريخ' : 'Date'}
@@ -1006,52 +1201,72 @@ export default function FinancialCustodyPage() {
             <tbody className="divide-y divide-border">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-16 text-muted-foreground">
+                  <td colSpan={selectMode ? 9 : 8} className="text-center py-16 text-muted-foreground">
                     <Wallet size={40} className="mx-auto mb-3 opacity-20" />
                     <p>{lang === 'ar' ? 'لا توجد عهد' : 'No custodies found'}</p>
                   </td>
                 </tr>
               )}
-              {filtered.map(c => (
-                <tr 
-                  key={c.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
-                  onClick={() => fetchDetail(c.id)}
-                  data-testid={`custody-row-${c.custody_number}`}
-                >
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center justify-center w-10 h-8 font-mono text-sm font-bold bg-primary/10 text-primary rounded-lg">
-                      {c.custody_number}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {formatDate(c.created_at).split(' ')[0]}
-                  </td>
-                  <td className="px-4 py-3 text-end font-mono text-sm font-medium">
-                    {(c.budget || c.total_amount).toLocaleString()}
-                    {c.surplus_amount > 0 && (
-                      <span className="text-[10px] text-blue-600 ms-1">+{c.surplus_amount}</span>
+              {filtered.map(c => {
+                const canSelectThis = !['executed', 'closed'].includes(c.status);
+                
+                return (
+                  <tr 
+                    key={c.id}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      if (selectMode && canSelectThis) {
+                        e.stopPropagation();
+                        toggleSelectOne(c.id, c.status);
+                      } else if (!selectMode) {
+                        fetchDetail(c.id);
+                      }
+                    }}
+                    data-testid={`custody-row-${c.custody_number}`}
+                  >
+                    {selectMode && (
+                      <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={selectedIds.includes(c.id)}
+                          disabled={!canSelectThis}
+                          onCheckedChange={() => toggleSelectOne(c.id, c.status)}
+                        />
+                      </td>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-end font-mono text-sm text-red-600">
-                    {c.spent.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-end font-mono text-sm font-semibold text-emerald-600">
-                    {c.remaining.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLES[c.status]}`}>
-                      {STATUS_MAP[lang]?.[c.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center text-xs text-muted-foreground">
-                    {c.expense_count || 0}
-                  </td>
-                  <td className="px-3 py-3">
-                    <ChevronRight size={16} className="text-muted-foreground" />
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center justify-center w-10 h-8 font-mono text-sm font-bold bg-primary/10 text-primary rounded-lg">
+                        {c.custody_number}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      {formatDate(c.created_at).split(' ')[0]}
+                    </td>
+                    <td className="px-4 py-3 text-end font-mono text-sm font-medium">
+                      {(c.budget || c.total_amount).toLocaleString()}
+                      {c.surplus_amount > 0 && (
+                        <span className="text-[10px] text-blue-600 ms-1">+{c.surplus_amount}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-end font-mono text-sm text-red-600">
+                      {c.spent.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-end font-mono text-sm font-semibold text-emerald-600">
+                      {c.remaining.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ring-1 ring-inset ${STATUS_STYLES[c.status]}`}>
+                        {STATUS_MAP[lang]?.[c.status]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                      {c.expense_count || 0}
+                    </td>
+                    <td className="px-3 py-3">
+                      <ChevronRight size={16} className="text-muted-foreground" />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
