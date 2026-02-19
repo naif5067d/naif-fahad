@@ -557,11 +557,11 @@ async def return_to_draft(
 @router.post("/{contract_id}/execute")
 async def execute_contract(
     contract_id: str,
-    user=Depends(require_roles('stas'))
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
 ):
     """
     Execute and activate a contract.
-    STAS exclusive operation.
+    سلطان و STAS يستطيعون التنفيذ.
     
     This will:
     1. Validate all conditions
@@ -575,7 +575,7 @@ async def execute_contract(
     success, error, contract = await activate_contract(
         contract_id=contract_id,
         executor_id=user["user_id"],
-        executor_name=user.get("full_name", "STAS")
+        executor_name=user.get("full_name", user.get("username", "Admin"))
     )
     
     if not success:
@@ -588,14 +588,14 @@ async def execute_contract(
 
 
 # ============================================================
-# TERMINATE CONTRACT (STAS ONLY)
+# TERMINATE CONTRACT (Sultan, Naif, STAS)
 # ============================================================
 
 @router.post("/{contract_id}/terminate")
 async def terminate_contract_endpoint(
     contract_id: str,
     req: TerminateContract,
-    user=Depends(require_roles('stas'))
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
 ):
     """
     Terminate an active contract.
