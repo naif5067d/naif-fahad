@@ -906,16 +906,14 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
 
 @router.delete("/{custody_id}")
 async def delete_single_custody(custody_id: str, user=Depends(get_current_user)):
-    """حذف عهدة واحدة (STAS فقط)"""
+    """حذف عهدة واحدة (STAS فقط) - يستطيع حذف جميع العهد"""
     check_role(user, ['stas'])
     
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
-    if custody['status'] in ['executed', 'closed']:
-        raise HTTPException(status_code=400, detail="لا يمكن حذف عهدة منفذة أو مغلقة")
-    
+    # STAS يستطيع حذف جميع العهد بلا استثناء
     now = datetime.now(timezone.utc).isoformat()
     
     # حذف ناعم
