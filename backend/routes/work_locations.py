@@ -130,6 +130,8 @@ async def update_work_location(location_id: str, req: WorkLocationUpdate, user=D
         update_data["grace_checkin_minutes"] = max(0, min(15, req.grace_checkin_minutes))
     if req.grace_checkout_minutes is not None:
         update_data["grace_checkout_minutes"] = max(0, min(15, req.grace_checkout_minutes))
+    if req.allow_early_checkin_minutes is not None:
+        update_data["allow_early_checkin_minutes"] = max(0, min(120, req.allow_early_checkin_minutes))
     if req.work_days is not None:
         update_data["work_days"] = req.work_days.model_dump()
     if req.assigned_employees is not None:
