@@ -68,7 +68,7 @@ export default function MyFinancesPage() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('ar-SA');
+    return new Date(dateStr).toLocaleDateString('ar-EG');
   };
 
   const getDeductionTypeLabel = (type) => {
