@@ -1168,7 +1168,7 @@ export default function FinancialCustodyPage() {
                 {selectMode && (
                   <th className="px-3 py-3 w-10">
                     <Checkbox 
-                      checked={selectedIds.length === filtered.filter(c => !['executed', 'closed'].includes(c.status)).length && selectedIds.length > 0}
+                      checked={selectedIds.length === filtered.length && selectedIds.length > 0}
                       onCheckedChange={toggleSelectAll}
                       data-testid="select-all"
                     />
