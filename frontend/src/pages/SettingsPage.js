@@ -1,14 +1,50 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Globe } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Sun, Moon, Globe, Pencil, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import api from '@/lib/api';
 
 export default function SettingsPage() {
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
+  
+  const [editNameOpen, setEditNameOpen] = useState(false);
+  const [nameForm, setNameForm] = useState({
+    full_name: user?.full_name || '',
+    full_name_ar: user?.full_name_ar || ''
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveName = async () => {
+    if (!nameForm.full_name && !nameForm.full_name_ar) {
+      toast.error(lang === 'ar' ? 'أدخل الاسم' : 'Enter name');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await api.patch(`/api/employees/${user.employee_id}`, {
+        full_name: nameForm.full_name,
+        full_name_ar: nameForm.full_name_ar
+      });
+      toast.success(lang === 'ar' ? 'تم تحديث الاسم بنجاح' : 'Name updated successfully');
+      setEditNameOpen(false);
+      // Refresh page to update user context
+      window.location.reload();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل تحديث الاسم' : 'Failed to update name'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl" data-testid="settings-page">
@@ -46,9 +82,57 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="border border-border shadow-none">
-        <CardHeader><CardTitle className="text-base">{t('settings.profile')}</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">{t('settings.profile')}</CardTitle>
+            {user?.employee_id && (
+              <Dialog open={editNameOpen} onOpenChange={setEditNameOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8">
+                    <Pencil size={14} className="me-1" />
+                    {lang === 'ar' ? 'تعديل الاسم' : 'Edit Name'}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{lang === 'ar' ? 'تعديل الاسم' : 'Edit Name'}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    <div>
+                      <Label>{lang === 'ar' ? 'الاسم (إنجليزي)' : 'Name (English)'}</Label>
+                      <Input 
+                        value={nameForm.full_name}
+                        onChange={e => setNameForm(p => ({ ...p, full_name: e.target.value }))}
+                        placeholder="Sultan Al-Zamil"
+                        data-testid="edit-name-en"
+                      />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label>
+                      <Input 
+                        value={nameForm.full_name_ar}
+                        onChange={e => setNameForm(p => ({ ...p, full_name_ar: e.target.value }))}
+                        placeholder="سلطان الزامل"
+                        dir="rtl"
+                        data-testid="edit-name-ar"
+                      />
+                    </div>
+                    <Button onClick={handleSaveName} disabled={saving} className="w-full" data-testid="save-name-btn">
+                      {saving && <Loader2 size={14} className="me-2 animate-spin" />}
+                      {lang === 'ar' ? 'حفظ' : 'Save'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{lang === 'ar' ? 'الاسم' : 'Name'}</span>
+              <span className="font-medium">{lang === 'ar' ? user?.full_name_ar : user?.full_name}</span>
+            </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('settings.username')}</span>
               <span className="font-medium">{user?.username}</span>
