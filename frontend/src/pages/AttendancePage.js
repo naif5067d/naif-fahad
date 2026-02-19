@@ -511,10 +511,39 @@ export default function AttendancePage() {
       {(isEmployee || isAdmin) && (
         <div className="card-premium p-5 space-y-4">
           {/* حالة GPS */}
+          {gpsState.checking && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600">
+              <Loader2 size={18} className="animate-spin" />
+              <span className="text-sm font-medium">{lang === 'ar' ? 'جاري تحديد موقعك...' : 'Detecting your location...'}</span>
+            </div>
+          )}
+          
           {!gpsState.checking && !gpsState.available && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600">
-              <AlertTriangle size={18} />
-              <span className="text-sm font-medium">تحديد الموقع غير متاح</span>
+            <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={18} />
+                <span className="text-sm font-medium">{lang === 'ar' ? 'تحديد الموقع غير متاح' : 'Location not available'}</span>
+              </div>
+              <button 
+                onClick={async () => {
+                  setGpsState(prev => ({ ...prev, checking: true }));
+                  try {
+                    await requestGPSPermission();
+                  } catch (err) {
+                    setGpsState(prev => ({ ...prev, checking: false }));
+                  }
+                }}
+                className="px-3 py-1 text-xs bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                {lang === 'ar' ? 'تفعيل الموقع' : 'Enable Location'}
+              </button>
+            </div>
+          )}
+          
+          {!gpsState.checking && gpsState.available && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">
+              <MapPin size={18} />
+              <span className="text-sm font-medium">{lang === 'ar' ? 'تم تحديد موقعك بنجاح' : 'Location detected successfully'}</span>
             </div>
           )}
 
