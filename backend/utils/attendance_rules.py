@@ -257,6 +257,17 @@ async def validate_employee_for_attendance(user_id: str) -> dict:
         }
     
     # Check for active contract - search by both employee_id and status
+    # المستخدمين المُعفَين - تجاوز فحص العقد
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN']
+    if emp['id'] in EXEMPT_EMPLOYEE_IDS:
+        return {
+            "valid": True,
+            "employee": emp,
+            "contract": {"id": "EXEMPT", "status": "exempt"},
+            "error": None,
+            "is_exempt": True
+        }
+    
     contract = await db.contracts.find_one({
         "employee_id": emp['id'],
         "status": "active",
