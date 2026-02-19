@@ -632,7 +632,7 @@ async def terminate_contract_endpoint(
 async def close_contract_endpoint(
     contract_id: str,
     settlement_ref: Optional[str] = None,
-    user=Depends(require_roles('stas'))
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
 ):
     """
     Close a terminated contract after settlement.
