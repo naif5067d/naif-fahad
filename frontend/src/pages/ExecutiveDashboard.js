@@ -422,6 +422,7 @@ export default function ExecutiveDashboard() {
     <div 
       className={`min-h-screen transition-all duration-500 ${isFullscreen ? 'overflow-hidden' : ''}`}
       style={{ background: THEME.bg.primary }}
+      dir="rtl"
       data-testid="executive-dashboard"
     >
       {/* ==================== HEADER ==================== */}
