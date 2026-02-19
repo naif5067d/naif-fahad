@@ -36,8 +36,15 @@ async def list_users(user=Depends(require_roles('stas', 'sultan', 'naif'))):
 async def get_user_by_employee(employee_id: str, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     """
     الحصول على بيانات المستخدم بناءً على employee_id
+    STAS فقط يمكنه رؤية كلمة المرور النصية
     """
-    user_data = await db.users.find_one({"employee_id": employee_id}, {"_id": 0, "password_hash": 0})
+    # للـ STAS: إظهار كلمة المرور النصية
+    if user.get('role') == 'stas':
+        user_data = await db.users.find_one({"employee_id": employee_id}, {"_id": 0, "password_hash": 0})
+    else:
+        # للآخرين: إخفاء كلمة المرور
+        user_data = await db.users.find_one({"employee_id": employee_id}, {"_id": 0, "password_hash": 0, "plain_password": 0})
+    
     if not user_data:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     return user_data
@@ -73,6 +80,8 @@ async def update_user_credentials(
         if len(update.password) < 6:
             raise HTTPException(status_code=400, detail="كلمة المرور يجب أن تكون 6 أحرف على الأقل")
         updates["password_hash"] = hash_password(update.password)
+        # تخزين كلمة المرور النصية للرجوع إليها (STAS فقط)
+        updates["plain_password"] = update.password
     
     await db.users.update_one({"employee_id": employee_id}, {"$set": updates})
     
