@@ -889,45 +889,26 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
 
 @router.delete("/{custody_id}")
 async def delete_single_custody(custody_id: str, user=Depends(get_current_user)):
-    """حذف عهدة واحدة (STAS فقط) - يستطيع حذف جميع العهد"""
+    """حذف عهدة واحدة (STAS فقط) - حذف فعلي"""
     check_role(user, ['stas'])
     
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
-    # STAS يستطيع حذف جميع العهد بلا استثناء
-    now = datetime.now(timezone.utc).isoformat()
+    custody_number = custody['custody_number']
     
-    # حذف ناعم
-    await db.admin_custodies.update_one(
-        {"id": custody_id},
-        {"$set": {
-            "status": "deleted",
-            "deleted_by": user.get('user_id'),
-            "deleted_at": now,
-            "updated_at": now
-        }}
-    )
+    # STAS يستطيع حذف جميع العهد - حذف فعلي
+    # حذف المصروفات
+    await db.custody_expenses.delete_many({"custody_id": custody_id})
     
-    # إلغاء المصروفات
-    await db.custody_expenses.update_many(
-        {"custody_id": custody_id},
-        {"$set": {"status": "deleted", "deleted_at": now}}
-    )
+    # حذف السجلات
+    await db.custody_logs.delete_many({"custody_id": custody_id})
     
-    # سجل
-    await db.custody_logs.insert_one({
-        "id": str(uuid.uuid4()),
-        "custody_id": custody_id,
-        "action": "deleted",
-        "details": {"custody_number": custody['custody_number']},
-        "performed_by": user.get('user_id'),
-        "performed_by_name": user.get('full_name', ''),
-        "performed_at": now
-    })
+    # حذف العهدة
+    await db.admin_custodies.delete_one({"id": custody_id})
     
     return {
         "success": True,
-        "message_ar": f"تم حذف العهدة رقم {custody['custody_number']}"
+        "message_ar": f"تم حذف العهدة رقم {custody_number} نهائياً"
     }
