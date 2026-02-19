@@ -1423,14 +1423,18 @@ export default function ContractsManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>كود الموظف</Label>
-                  <Input value={formData.employee_code} disabled className="bg-muted" />
+                  <Input 
+                    value={formData.employee_code} 
+                    onChange={e => setFormData(p => ({ ...p, employee_code: e.target.value }))}
+                    className={['stas', 'sultan'].includes(user?.role) ? '' : 'bg-muted'}
+                    disabled={!['stas', 'sultan'].includes(user?.role)}
+                  />
                 </div>
                 <div>
                   <Label>الاسم بالعربي</Label>
                   <Input 
                     value={formData.employee_name_ar} 
                     onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
-                    disabled={editContract?.status === 'active'}
                   />
                 </div>
                 <div>
@@ -1438,7 +1442,6 @@ export default function ContractsManagementPage() {
                   <Input 
                     value={formData.employee_name} 
                     onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
-                    disabled={editContract?.status === 'active'}
                   />
                 </div>
               </div>
@@ -1495,7 +1498,6 @@ export default function ContractsManagementPage() {
                     type="date" 
                     value={formData.start_date}
                     onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
-                    disabled={editContract?.status === 'active'}
                   />
                 </div>
                 <div>
