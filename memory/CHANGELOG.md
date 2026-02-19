@@ -1,5 +1,24 @@
 # DAR AL CODE HR OS - Changelog
 
+## [2026-02-19] Phase 33: Bug Fixes & Deployment Readiness
+
+### Fixed
+1. **Deployment Health Check**: Added `/health` endpoint without `/api` prefix for Kubernetes liveness/readiness probes
+2. **GPS Validation**: Frontend now strictly validates GPS availability before allowing check-in/check-out
+3. **Checkout Confirmation**: Added confirmation dialog "هل أنت متأكد من تسجيل الخروج؟" before check-out
+4. **Leave Balance for Migrated Contracts**: Fixed calculation to use `leave_opening_balance` instead of Pro-Rata for migrated employees
+5. **Work Location Updates**: Added `allow_early_checkin_minutes` to update endpoint
+6. **Holiday Management UI**: Changed from individual days to date ranges (from-to) with automatic day grouping
+
+### Files Modified
+- `backend/server.py`: Added `/health` endpoint
+- `backend/services/hr_policy.py`: Fixed migrated contract leave balance calculation
+- `backend/routes/work_locations.py`: Added `allow_early_checkin_minutes` to update
+- `frontend/src/pages/AttendancePage.js`: GPS validation & checkout confirmation
+- `frontend/src/pages/LeavePage.js`: Holiday date range support & grouped display
+
+---
+
 ## [2026-02-17] Phase 16.1: Settlement PDF Enhancements
 
 ### Fixed
