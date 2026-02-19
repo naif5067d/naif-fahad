@@ -17,7 +17,9 @@ from services.device_service import (
     get_employee_devices,
     get_all_devices,
     get_security_logs,
-    generate_device_signature
+    generate_device_signature,
+    reset_employee_devices,
+    set_device_as_primary
 )
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
