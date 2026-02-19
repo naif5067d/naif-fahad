@@ -244,3 +244,99 @@ async def set_primary_device(
     if not result['success']:
         raise HTTPException(400, result.get('error', 'فشل في تعيين الجهاز'))
     return result
+
+
+# ==================== LOGIN SESSIONS - سجل الدخول والخروج ====================
+
+@router.get("/login-sessions")
+async def get_all_login_sessions(
+    employee_id: Optional[str] = None,
+    period: str = "daily",  # daily, weekly, monthly, yearly
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    جلب سجل جلسات الدخول/الخروج
+    - period: daily (اليوم), weekly (الأسبوع), monthly (الشهر), yearly (السنة)
+    """
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    
+    # تحديد الفترة
+    if period == "daily":
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "weekly":
+        start_date = now - timedelta(days=7)
+    elif period == "monthly":
+        start_date = now - timedelta(days=30)
+    elif period == "yearly":
+        start_date = now - timedelta(days=365)
+    else:
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    query = {"login_at": {"$gte": start_date.isoformat()}}
+    if employee_id:
+        query["employee_id"] = employee_id
+    
+    sessions = await db.login_sessions.find(
+        query,
+        {"_id": 0}
+    ).sort("login_at", -1).to_list(500)
+    
+    # إضافة اسم الموظف
+    for session in sessions:
+        emp = await db.employees.find_one(
+            {"id": session['employee_id']},
+            {"_id": 0, "full_name_ar": 1, "employee_number": 1}
+        )
+        session['employee_name_ar'] = emp.get('full_name_ar', '') if emp else ''
+        session['employee_number'] = emp.get('employee_number', '') if emp else ''
+    
+    return sessions
+
+
+@router.get("/login-sessions/{employee_id}")
+async def get_employee_login_sessions(
+    employee_id: str,
+    period: str = "monthly",
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """جلب سجل جلسات موظف معين"""
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    
+    if period == "daily":
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "weekly":
+        start_date = now - timedelta(days=7)
+    elif period == "monthly":
+        start_date = now - timedelta(days=30)
+    elif period == "yearly":
+        start_date = now - timedelta(days=365)
+    else:
+        start_date = now - timedelta(days=30)
+    
+    sessions = await db.login_sessions.find(
+        {
+            "employee_id": employee_id,
+            "login_at": {"$gte": start_date.isoformat()}
+        },
+        {"_id": 0}
+    ).sort("login_at", -1).to_list(500)
+    
+    # إضافة اسم الموظف
+    emp = await db.employees.find_one(
+        {"id": employee_id},
+        {"_id": 0, "full_name_ar": 1, "employee_number": 1}
+    )
+    emp_name = emp.get('full_name_ar', '') if emp else ''
+    emp_number = emp.get('employee_number', '') if emp else ''
+    
+    for session in sessions:
+        session['employee_name_ar'] = emp_name
+        session['employee_number'] = emp_number
+    
+    return sessions
+
+
