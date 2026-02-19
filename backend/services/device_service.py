@@ -104,28 +104,91 @@ async def register_login_session(
     role: str
 ) -> dict:
     """
-    تسجيل جلسة دخول للموظف (للمراقبة فقط - بدون منع)
-    يُسجّل كل دخول مع معلومات الجهاز
+    تسجيل جلسة دخول للموظف مع كشف الجهاز الذكي
+    
+    المنطق:
+    1. توليد Core Hardware Signature (لا يتغير بتغيير المتصفح)
+    2. البحث عن جهاز موجود بنفس البصمة الأساسية
+    3. إذا وُجد = تحديث المتصفح فقط (Same Device – Different Browser)
+    4. إذا لم يُوجد = جهاز جديد
     """
     now = datetime.now(timezone.utc).isoformat()
     
-    # تحليل معلومات الجهاز
-    user_agent = fingerprint_data.get('userAgent', '')
-    device_info = _parse_user_agent(user_agent)
+    # 1️⃣ توليد البصمة الأساسية (Hardware Core)
+    core_signature = generate_core_hardware_signature(fingerprint_data)
     
+    # 2️⃣ استخراج معلومات المتصفح (Soft Data)
+    browser_info = extract_browser_info(fingerprint_data)
+    device_info = _parse_user_agent(fingerprint_data.get('userAgent', ''))
+    
+    # 3️⃣ البحث عن جهاز موجود بنفس البصمة الأساسية
+    existing_device = await db.employee_devices.find_one({
+        "employee_id": employee_id,
+        "core_signature": core_signature
+    })
+    
+    device_status = "existing"
+    device_id = None
+    
+    if existing_device:
+        # ✅ نفس الجهاز - تحديث المتصفح فقط
+        device_id = existing_device['id']
+        await db.employee_devices.update_one(
+            {"id": device_id},
+            {"$set": {
+                "browser": browser_info['browser'],
+                "browser_version": browser_info['browser_version'],
+                "last_browser_change": now,
+                "last_used_at": now,
+                "fingerprint_data": fingerprint_data
+            }}
+        )
+        device_status = "same_device_browser_changed" if existing_device.get('browser') != browser_info['browser'] else "existing"
+    else:
+        # 🆕 جهاز جديد - تسجيله
+        device_id = str(uuid.uuid4())
+        new_device = {
+            "id": device_id,
+            "employee_id": employee_id,
+            "core_signature": core_signature,  # البصمة الأساسية
+            "device_type": device_info['device_type'],
+            "device_name": device_info.get('friendly_name', 'جهاز غير معروف'),
+            "device_brand": device_info.get('device_brand', ''),
+            "device_model": device_info.get('device_model', ''),
+            "browser": browser_info['browser'],
+            "browser_version": browser_info['browser_version'],
+            "os": device_info['os'],
+            "os_display": device_info.get('os_display', ''),
+            "is_mobile": device_info.get('is_mobile', False),
+            "is_tablet": device_info.get('is_tablet', False),
+            "is_pc": device_info.get('is_pc', True),
+            "platform": fingerprint_data.get('platform', ''),
+            "screen_resolution": fingerprint_data.get('screenResolution', ''),
+            "fingerprint_data": fingerprint_data,
+            "status": "trusted",  # موثوق تلقائياً
+            "registered_at": now,
+            "last_used_at": now
+        }
+        await db.employee_devices.insert_one(new_device)
+        device_status = "new_device"
+    
+    # 4️⃣ تسجيل الجلسة
     session = {
         "id": str(uuid.uuid4()),
         "employee_id": employee_id,
         "username": username,
         "role": role,
+        "device_id": device_id,
+        "core_signature": core_signature,
         "login_at": now,
         "logout_at": None,
         "device_type": device_info['device_type'],
         "device_name": device_info.get('friendly_name', 'جهاز غير معروف'),
-        "browser": device_info['browser'],
+        "browser": browser_info['browser'],
         "os": device_info['os'],
         "os_display": device_info.get('os_display', ''),
         "is_mobile": device_info.get('is_mobile', False),
+        "device_status": device_status,  # existing / new_device / same_device_browser_changed
         "fingerprint_data": fingerprint_data,
         "status": "active"
     }
