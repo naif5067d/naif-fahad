@@ -46,11 +46,23 @@ export default function STASMirrorPage() {
   const [executingDeduction, setExecutingDeduction] = useState(false);
   const [expandedDeduction, setExpandedDeduction] = useState(null);
 
+  // === Devices State ===
+  const [devices, setDevices] = useState([]);
+  const [pendingDevices, setPendingDevices] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [deviceAction, setDeviceAction] = useState(false);
+  const [securityLogs, setSecurityLogs] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState('all');
+  const [blockReason, setBlockReason] = useState('');
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
     fetchArchivedUsers();
     fetchDeductions();
+    fetchDevices();
+    fetchEmployees();
   }, []);
 
   const fetchPending = () => {
@@ -63,6 +75,99 @@ export default function STASMirrorPage() {
 
   const fetchArchivedUsers = () => {
     api.get('/api/stas/users/archived').then(r => setArchivedUsers(r.data)).catch(() => {});
+  };
+
+  const fetchEmployees = () => {
+    api.get('/api/employees').then(r => {
+      // استثناء المدراء
+      const filtered = r.data.filter(e => !['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN'].includes(e.id));
+      setEmployees(filtered);
+    }).catch(() => {});
+  };
+
+  // === Devices Functions ===
+  const fetchDevices = async () => {
+    try {
+      const [allRes, pendingRes, logsRes] = await Promise.all([
+        api.get('/api/devices/all'),
+        api.get('/api/devices/pending'),
+        api.get('/api/devices/security-logs?limit=50')
+      ]);
+      setDevices(allRes.data);
+      setPendingDevices(pendingRes.data);
+      setSecurityLogs(logsRes.data);
+    } catch (err) {
+      console.error('Failed to fetch devices:', err);
+    }
+  };
+
+  const handleApproveDevice = async (deviceId) => {
+    setDeviceAction(true);
+    try {
+      await api.post(`/api/devices/${deviceId}/approve`);
+      toast.success(lang === 'ar' ? 'تم اعتماد الجهاز' : 'Device approved');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to approve device');
+    } finally {
+      setDeviceAction(false);
+    }
+  };
+
+  const handleBlockDevice = async (deviceId) => {
+    setDeviceAction(true);
+    try {
+      await api.post(`/api/devices/${deviceId}/block`, { reason: blockReason });
+      toast.success(lang === 'ar' ? 'تم حظر الجهاز' : 'Device blocked');
+      setBlockReason('');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to block device');
+    } finally {
+      setDeviceAction(false);
+    }
+  };
+
+  const handleDeleteDevice = async (deviceId) => {
+    if (!confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذا الجهاز؟' : 'Are you sure you want to delete this device?')) return;
+    setDeviceAction(true);
+    try {
+      await api.delete(`/api/devices/${deviceId}`);
+      toast.success(lang === 'ar' ? 'تم حذف الجهاز' : 'Device deleted');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to delete device');
+    } finally {
+      setDeviceAction(false);
+    }
+  };
+
+  const handleBlockAccount = async (employeeId) => {
+    if (!confirm(lang === 'ar' ? 'هل أنت متأكد من إيقاف هذا الحساب؟' : 'Are you sure you want to block this account?')) return;
+    setDeviceAction(true);
+    try {
+      await api.post(`/api/devices/account/${employeeId}/block`, { reason: blockReason });
+      toast.success(lang === 'ar' ? 'تم إيقاف الحساب' : 'Account blocked');
+      setBlockReason('');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to block account');
+    } finally {
+      setDeviceAction(false);
+    }
+  };
+
+  const handleUnblockAccount = async (employeeId) => {
+    setDeviceAction(true);
+    try {
+      await api.post(`/api/devices/account/${employeeId}/unblock`);
+      toast.success(lang === 'ar' ? 'تم إلغاء إيقاف الحساب' : 'Account unblocked');
+      fetchDevices();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to unblock account');
+    } finally {
+      setDeviceAction(false);
+    }
   };
 
   // === Deductions Functions ===
