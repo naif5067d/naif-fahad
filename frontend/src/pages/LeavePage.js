@@ -446,17 +446,36 @@ export default function LeavePage() {
                           </td>
                           {canEditHolidays && (
                             <td className="px-2 py-2">
-                              <button 
-                                onClick={() => {
-                                  // Delete all days of this holiday
-                                  if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
-                                    days.forEach(d => handleDeleteHoliday(d.id));
-                                  }
-                                }} 
-                                className="text-red-400 hover:text-red-600"
-                              >
-                                <Trash2 size={13} />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  onClick={() => {
+                                    // Open edit dialog with first day's data
+                                    setEditHoliday(days[0]);
+                                    setHolidayForm({ 
+                                      name: nameEn, 
+                                      name_ar: nameAr, 
+                                      start_date: startDate,
+                                      end_date: endDate
+                                    });
+                                    setAddHolidayOpen(true);
+                                  }} 
+                                  className="text-blue-400 hover:text-blue-600 p-1"
+                                  title={lang === 'ar' ? 'تعديل' : 'Edit'}
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
+                                      days.forEach(d => handleDeleteHoliday(d.id));
+                                    }
+                                  }} 
+                                  className="text-red-400 hover:text-red-600 p-1"
+                                  title={lang === 'ar' ? 'حذف' : 'Delete'}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
                             </td>
                           )}
                         </tr>
