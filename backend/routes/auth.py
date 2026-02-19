@@ -23,7 +23,7 @@ class ChangePasswordRequest(BaseModel):
 ROLE_ORDER = {"stas": 0, "mohammed": 1, "sultan": 2, "naif": 3, "salah": 4, "supervisor": 5, "employee": 6}
 
 # الأدوار المُعفاة من فحص الأجهزة
-EXEMPT_ROLES = ['stas', 'mohammed', 'sultan', 'naif', 'salah']
+EXEMPT_ROLES = ['stas']  # فقط STAS معفي من فحص الجهاز
 
 
 @router.get("/users")
