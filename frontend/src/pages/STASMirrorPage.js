@@ -56,6 +56,10 @@ export default function STASMirrorPage() {
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState('all');
   const [blockReason, setBlockReason] = useState('');
 
+  // === My Transactions State ===
+  const [myTransactions, setMyTransactions] = useState([]);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
@@ -63,6 +67,7 @@ export default function STASMirrorPage() {
     fetchDeductions();
     fetchDevices();
     fetchEmployees();
+    fetchMyTransactions();
   }, []);
 
   const fetchPending = () => {
