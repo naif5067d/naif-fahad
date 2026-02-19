@@ -499,13 +499,17 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     audit_qr = create_qr_image(f"AUDIT-{custody.get('audited_by', 'pending')}", size=18)
     barcode = create_barcode_image(f"CST-{custody_number}", width=40, height=10)
     
-    audited_by = custody.get('audited_by_name', 'بانتظار التدقيق' if is_ar else 'Pending')
-    executed_by = custody.get('executed_by_name', 'بانتظار التنفيذ' if is_ar else 'Pending')
+    # أسماء المدقق والمنفذ - نستخدم النص مباشرة بدون تحويل
+    audited_by_raw = custody.get('audited_by_name') or ('بانتظار التدقيق' if is_ar else 'Pending')
+    executed_by_raw = custody.get('executed_by_name') or ('بانتظار التنفيذ' if is_ar else 'Pending')
+    
+    # Style للأسماء (بدون reshape لأن الأسماء قد تكون إنجليزية)
+    style_name = ParagraphStyle('Name', fontName='Helvetica', fontSize=9, alignment=TA_CENTER, textColor=TEXT_DARK, leading=12)
     
     if is_ar:
         sig_data = [
             [
-                ar_para('STAS', style_ar_bold),
+                Paragraph('STAS', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_CENTER, textColor=NAVY)),
                 ar_para('المدقق', style_ar_bold),
                 ar_para('رقم العهدة', style_ar_bold),
             ],
@@ -515,8 +519,8 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
                 barcode or '',
             ],
             [
-                ar_para(executed_by, style_ar_small),
-                ar_para(audited_by, style_ar_small),
+                Paragraph(executed_by_raw, style_name),
+                Paragraph(audited_by_raw, style_name),
                 ltr_para(custody_number, style_ltr),
             ],
         ]
