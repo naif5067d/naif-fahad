@@ -1064,7 +1064,8 @@ export default function STASMirrorPage() {
                       />
                     </div>
                     
-                    {selectedDeduction.status === 'pending' ? (
+                    {/* أزرار المراجعة - sultan/naif فقط */}
+                    {selectedDeduction.status === 'pending' && ['sultan', 'naif'].includes(user?.role) && (
                       <div className="flex gap-3">
                         <Button
                           onClick={() => handleReviewDeduction(selectedDeduction.id, true)}
@@ -1084,7 +1085,19 @@ export default function STASMirrorPage() {
                           {lang === 'ar' ? 'رفض' : 'Reject'}
                         </Button>
                       </div>
-                    ) : selectedDeduction.status === 'approved' ? (
+                    )}
+                    
+                    {/* رسالة للـ STAS عندما يكون الخصم معلق */}
+                    {selectedDeduction.status === 'pending' && user?.role === 'stas' && (
+                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-center">
+                        <p className="text-sm text-amber-700">
+                          {lang === 'ar' ? 'بانتظار مراجعة المدير (سلطان/نايف)' : 'Waiting for manager review (Sultan/Naif)'}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* زر التنفيذ - STAS فقط للموافق عليها */}
+                    {selectedDeduction.status === 'approved' && user?.role === 'stas' && (
                       <Button
                         onClick={() => executeDeduction(selectedDeduction)}
                         disabled={executingDeduction === selectedDeduction.id}
@@ -1096,7 +1109,7 @@ export default function STASMirrorPage() {
                           <><CheckCircle size={16} className="mr-2" /> {lang === 'ar' ? 'تنفيذ الخصم' : 'Execute Deduction'}</>
                         )}
                       </Button>
-                    ) : null}
+                    )}
                   </div>
                 </div>
               )}
