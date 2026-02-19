@@ -4,6 +4,7 @@ Device Management Routes - إدارة الأجهزة
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
+from datetime import datetime, timezone
 from database import db
 from utils.auth import get_current_user, require_roles
 from services.device_service import (
