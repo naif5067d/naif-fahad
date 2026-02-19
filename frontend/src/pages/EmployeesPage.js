@@ -144,7 +144,11 @@ export default function EmployeesPage() {
     try {
       const res = await api.get(`/api/users/${emp.id}`);
       setUserInfo(res.data);
-      setCredentialsForm(f => ({ ...f, username: res.data.username || '' }));
+      setCredentialsForm(f => ({ 
+        ...f, 
+        username: res.data.username || '',
+        password: res.data.plain_password || ''  // عرض كلمة المرور المُخزنة
+      }));
     } catch (err) {
       // لا يوجد مستخدم - سيتم إنشاؤه
       setUserInfo(null);
