@@ -98,13 +98,7 @@ export function AuthProvider({ children }) {
   // Real login function with device fingerprint
   const login = useCallback(async (username, password) => {
     const deviceSignature = generateDeviceSignature();
-    const fingerprintData = {
-      userAgent: navigator.userAgent,
-      language: navigator.language,
-      screen: `${screen.width}x${screen.height}`,
-      timezone: new Date().getTimezoneOffset(),
-      platform: navigator.platform
-    };
+    const fingerprintData = generateDeviceFingerprint();
 
     const res = await api.post('/api/auth/login', {
       username,
