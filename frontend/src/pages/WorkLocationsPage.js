@@ -786,6 +786,76 @@ export default function WorkLocationsPage() {
           ))}
         </div>
       )}
+
+      {/* Ramadan Settings Dialog (STAS only) */}
+      <Dialog open={!!ramadanDialog} onOpenChange={() => setRamadanDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              🌙 {lang === 'ar' ? 'تفعيل دوام رمضان' : 'Activate Ramadan Hours'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-sm font-medium text-amber-800">
+                {lang === 'ar' ? 'الموقع:' : 'Location:'} {ramadanDialog && (lang === 'ar' ? ramadanDialog.name_ar : ramadanDialog.name)}
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                {lang === 'ar' ? 'الدوام الحالي:' : 'Current hours:'} {ramadanDialog?.work_start} - {ramadanDialog?.work_end}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{lang === 'ar' ? 'بداية الدوام (رمضان)' : 'Ramadan Start'}</Label>
+                <Input
+                  type="time"
+                  value={ramadanForm.ramadan_work_start}
+                  onChange={e => setRamadanForm(f => ({ ...f, ramadan_work_start: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>{lang === 'ar' ? 'نهاية الدوام (رمضان)' : 'Ramadan End'}</Label>
+                <Input
+                  type="time"
+                  value={ramadanForm.ramadan_work_end}
+                  onChange={e => setRamadanForm(f => ({ ...f, ramadan_work_end: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>{lang === 'ar' ? 'ساعات العمل اليومية (رمضان)' : 'Daily Hours (Ramadan)'}</Label>
+              <Input
+                type="number"
+                value={ramadanForm.ramadan_daily_hours}
+                onChange={e => setRamadanForm(f => ({ ...f, ramadan_daily_hours: parseFloat(e.target.value) || 6 }))}
+                min={4}
+                max={8}
+                step={0.5}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {lang === 'ar' ? 'عادةً 6 ساعات في رمضان' : 'Usually 6 hours during Ramadan'}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setRamadanDialog(null)} className="flex-1">
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button 
+                onClick={handleActivateRamadan} 
+                disabled={savingRamadan}
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+              >
+                {savingRamadan 
+                  ? (lang === 'ar' ? 'جاري التفعيل...' : 'Activating...') 
+                  : (lang === 'ar' ? 'تفعيل' : 'Activate')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
