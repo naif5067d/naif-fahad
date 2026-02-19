@@ -435,14 +435,24 @@ async def update_employee_status(
     )
     
     # إرسال إشعار للموظف
-    from services.notification_service import create_notification
-    await create_notification(
-        recipient_id=employee_id,
-        recipient_role="employee",
-        title="تحديث حالة الحضور",
-        message=f"تم تعديل حالتك ليوم {date} إلى: {status_ar_map.get(body.new_status, body.new_status)}",
-        link="/attendance"
-    )
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        await create_notification(
+            recipient_id=employee_id,
+            notification_type=NotificationType.INFO,
+            title="Attendance Status Updated",
+            title_ar="تحديث حالة الحضور",
+            message=f"Your attendance status for {date} has been updated",
+            message_ar=f"تم تعديل حالتك ليوم {date} إلى: {status_ar_map.get(body.new_status, body.new_status)}",
+            priority=NotificationPriority.NORMAL,
+            recipient_role="employee",
+            reference_type="daily_status",
+            reference_url="/attendance"
+        )
+    except Exception as e:
+        # Don't fail if notification fails
+        pass
     
     return {
         "success": True,
