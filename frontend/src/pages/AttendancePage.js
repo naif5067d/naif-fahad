@@ -314,6 +314,31 @@ export default function AttendancePage() {
     }
   };
 
+  // ============ التحضير الاحتياطي (اليدوي) ============
+  const handleManualCheckIn = async () => {
+    setLoading(true);
+    try {
+      const locationId = selectedLocation || assignedLocations[0]?.id;
+      
+      await api.post('/api/attendance/manual-check-in', {
+        work_location: locationId,
+        note: 'تحضير احتياطي يدوي'
+      });
+      
+      toast.success(lang === 'ar' ? 'تم تسجيل الحضور الاحتياطي بنجاح' : 'Manual check-in successful');
+      fetchData();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        toast.error(detail.message_ar || detail.message);
+      } else {
+        toast.error(detail || (lang === 'ar' ? 'فشل التسجيل الاحتياطي' : 'Manual check-in failed'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ============ تسجيل الخروج ============
   const handleCheckOut = async () => {
     setLoading(true);
