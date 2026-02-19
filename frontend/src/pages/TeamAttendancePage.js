@@ -164,6 +164,59 @@ export default function TeamAttendancePage() {
     fetchEmployees();
   }, []);
 
+  // Fetch pending deductions for review (Sultan/Naif only)
+  useEffect(() => {
+    if (['sultan', 'naif'].includes(user?.role)) {
+      fetchPendingDeductions();
+    }
+  }, [user?.role]);
+
+  const fetchPendingDeductions = async () => {
+    try {
+      const res = await api.get('/api/attendance-engine/deductions/pending');
+      setPendingDeductions(res.data || []);
+    } catch (err) {
+      console.error('Error fetching pending deductions:', err);
+    }
+  };
+
+  const loadDeductionTrace = async (deduction) => {
+    setSelectedDeduction(deduction);
+    setLoadingTrace(true);
+    setDeductionTrace([]);
+    try {
+      const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
+      if (res.data?.trace_log && Array.isArray(res.data.trace_log)) {
+        setDeductionTrace(res.data.trace_log);
+      }
+    } catch (err) {
+      console.error('Failed to load trace:', err);
+    } finally {
+      setLoadingTrace(false);
+    }
+  };
+
+  const handleReviewDeduction = async (proposalId, approved) => {
+    setReviewingDeduction(true);
+    try {
+      await api.post(`/api/attendance-engine/deductions/${proposalId}/review`, {
+        approved,
+        note: reviewNote
+      });
+      toast.success(approved 
+        ? (lang === 'ar' ? 'تمت الموافقة على الخصم' : 'Deduction approved')
+        : (lang === 'ar' ? 'تم رفض الخصم' : 'Deduction rejected')
+      );
+      setSelectedDeduction(null);
+      setReviewNote('');
+      fetchPendingDeductions();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to review deduction');
+    } finally {
+      setReviewingDeduction(false);
+    }
+  };
+
   // Fetch data based on view mode and tab
   useEffect(() => {
     if (viewMode === 'all') {
