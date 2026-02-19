@@ -5,6 +5,7 @@ from database import db
 from utils.auth import get_current_user, require_roles
 from utils.attendance_rules import validate_check_in, validate_check_out
 from services.punch_validator import validate_full_punch, haversine_distance
+from services.device_service import check_account_blocked, validate_device
 from datetime import datetime, timezone
 import uuid
 
@@ -15,7 +16,9 @@ class CheckInRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     gps_available: bool = False
-    work_location: str = "HQ"  # HQ or Project
+    work_location: str = "HQ"
+    # Device fingerprint
+    fingerprint: Optional[dict] = None
 
 
 class CheckOutRequest(BaseModel):
@@ -23,16 +26,20 @@ class CheckOutRequest(BaseModel):
     longitude: Optional[float] = None
     gps_available: bool = False
     work_location: Optional[str] = None
+    fingerprint: Optional[dict] = None
 
 
-# المستخدمين المسموح لهم تجاوز قيود GPS
-BYPASS_GPS_ROLES = ['stas', 'sultan', 'naif']
+# المستخدمين المسموح لهم تجاوز قيود GPS والجهاز
+BYPASS_ROLES = ['stas', 'sultan', 'naif']
+BYPASS_GPS_ROLES = BYPASS_ROLES
 
 
 @router.post("/check-in")
 async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     """
     Check-in with server-side validation:
+    - Account not blocked
+    - Device validated (or first device)
     - Employee must be active with contract
     - GPS location validated (must be within geofence)
     - Working hours validated (cannot check-in after grace + max late)
@@ -42,10 +49,23 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     if not employee_id:
         raise HTTPException(400, "لا يوجد حساب موظف مرتبط")
     
-    # هل المستخدم مدير يمكنه تجاوز GPS؟
-    bypass_gps = user.get('role') in BYPASS_GPS_ROLES
+    # هل المستخدم مدير يمكنه تجاوز القيود؟
+    bypass_all = user.get('role') in BYPASS_ROLES
+    bypass_gps = bypass_all
     
-    # التحقق الكامل من التبصيم (الوقت + الموقع)
+    # 1. التحقق من أن الحساب غير محجوب
+    if not bypass_all:
+        block_status = await check_account_blocked(employee_id)
+        if block_status['is_blocked']:
+            raise HTTPException(403, block_status['message_ar'])
+    
+    # 2. التحقق من الجهاز (إذا تم إرسال fingerprint)
+    if req.fingerprint and not bypass_all:
+        device_result = await validate_device(employee_id, req.fingerprint)
+        if not device_result['valid']:
+            raise HTTPException(403, device_result['error']['message_ar'])
+    
+    # 3. التحقق الكامل من التبصيم (الوقت + الموقع)
     punch_validation = await validate_full_punch(
         employee_id=employee_id,
         punch_type='checkin',
