@@ -703,15 +703,38 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         outer.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
         elements.append(outer)
     
-    # ============ FOOTER ============
+    # ============ FOOTER WITH SEARCH BARCODE ============
     elements.append(Spacer(1, 4*mm))
     footer_line = Table([['']], colWidths=[CONTENT_WIDTH], rowHeights=[0.5])
     footer_line.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, 0), 0.5, BORDER_GRAY)]))
     elements.append(footer_line)
     
-    footer_text = f"DAR AL CODE HR OS | {integrity_id} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
-    elements.append(Spacer(1, 1*mm))
-    elements.append(make_ltr_para(footer_text, styles['small']))
+    # باركود للبحث السريع (للمسح بالكاميرا)
+    search_barcode = create_barcode_image(ref_no, width=45, height=10)
+    if search_barcode:
+        barcode_table = Table([
+            [search_barcode],
+            [make_ltr_para(ref_no, styles['small'])]
+        ], colWidths=[50*mm])
+        barcode_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        footer_content = Table([
+            [barcode_table, make_ltr_para(f"DAR AL CODE HR OS | {format_saudi_time(datetime.now(timezone.utc).isoformat())}", styles['small'])]
+        ], colWidths=[55*mm, CONTENT_WIDTH - 55*mm])
+        footer_content.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(Spacer(1, 1*mm))
+        elements.append(footer_content)
+    else:
+        footer_text = f"DAR AL CODE HR OS | {integrity_id} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
+        elements.append(Spacer(1, 1*mm))
+        elements.append(make_ltr_para(footer_text, styles['small']))
     
     # Build PDF
     doc.build(elements)
