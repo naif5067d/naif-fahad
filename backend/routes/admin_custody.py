@@ -866,39 +866,22 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
             continue
         
         # STAS يستطيع حذف جميع العهد بلا استثناء
-        # حذف ناعم (soft delete)
-        await db.admin_custodies.update_one(
-            {"id": custody_id},
-            {"$set": {
-                "status": "deleted",
-                "deleted_by": user.get('user_id'),
-                "deleted_at": now,
-                "updated_at": now
-            }}
-        )
+        # حذف فعلي من قاعدة البيانات
         
-        # إلغاء كل المصروفات
-        await db.custody_expenses.update_many(
-            {"custody_id": custody_id},
-            {"$set": {"status": "deleted", "deleted_at": now}}
-        )
+        # حذف كل المصروفات
+        await db.custody_expenses.delete_many({"custody_id": custody_id})
         
-        # سجل
-        await db.custody_logs.insert_one({
-            "id": str(uuid.uuid4()),
-            "custody_id": custody_id,
-            "action": "deleted",
-            "details": {"custody_number": custody['custody_number']},
-            "performed_by": user.get('user_id'),
-            "performed_by_name": user.get('full_name', ''),
-            "performed_at": now
-        })
+        # حذف السجلات
+        await db.custody_logs.delete_many({"custody_id": custody_id})
+        
+        # حذف العهدة نفسها
+        await db.admin_custodies.delete_one({"id": custody_id})
         
         deleted_count += 1
     
     return {
         "success": True,
-        "message_ar": f"تم حذف {deleted_count} عهدة",
+        "message_ar": f"تم حذف {deleted_count} عهدة نهائياً",
         "deleted_count": deleted_count,
         "failed": failed_ids
     }
