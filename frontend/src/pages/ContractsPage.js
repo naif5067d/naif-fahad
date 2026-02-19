@@ -22,6 +22,8 @@ export default function ContractsPage() {
   const [cForm, setCForm] = useState({ employee_id: '', contract_type: 'full_time', start_date: '', end_date: '', salary: '', housing_allowance: '0', transport_allowance: '0', other_allowances: '0', probation_months: '3', notice_period_days: '30', notes: '' });
   const [sForm, setSForm] = useState({ employee_id: '', reason: '', settlement_text: '', final_salary: '', leave_encashment: '0', eos_amount: '0', other_payments: '0', deductions: '0' });
   const [submitting, setSubmitting] = useState(false);
+  const [calculatingSettlement, setCalculatingSettlement] = useState(false);
+  const [settlementPreview, setSettlementPreview] = useState(null);
 
   const canManage = ['stas', 'sultan', 'naif'].includes(user?.role);
   const canSettle = ['sultan', 'naif'].includes(user?.role);
@@ -30,6 +32,29 @@ export default function ContractsPage() {
     api.get('/api/contracts').then(r => setContracts(r.data)).catch(() => {});
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
   }, []);
+
+  // حساب بيانات المخالصة تلقائياً عند اختيار الموظف
+  const calculateSettlement = async (employeeId) => {
+    if (!employeeId) return;
+    setCalculatingSettlement(true);
+    setSettlementPreview(null);
+    try {
+      const res = await api.get(`/api/contracts/settlement/calculate/${employeeId}`);
+      setSettlementPreview(res.data);
+      setSForm(f => ({
+        ...f,
+        employee_id: employeeId,
+        final_salary: res.data.basic_salary?.toString() || '0',
+        leave_encashment: res.data.leave_encashment?.toString() || '0',
+        eos_amount: res.data.eos_amount?.toString() || '0',
+        deductions: res.data.total_deductions?.toString() || '0'
+      }));
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل حساب المخالصة' : 'Failed to calculate settlement');
+    } finally {
+      setCalculatingSettlement(false);
+    }
+  };
 
   const handleCreateContract = async () => {
     setSubmitting(true);
