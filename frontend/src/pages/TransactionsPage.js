@@ -470,6 +470,76 @@ export default function TransactionsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* نافذة الكاميرا للبحث السريع */}
+      <Dialog open={scannerOpen} onOpenChange={(open) => { if (!open) stopScanner(); setScannerOpen(open); }}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode size={20} className="text-primary" />
+              {lang === 'ar' ? 'مسح باركود المعاملة' : 'Scan Transaction Barcode'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              {lang === 'ar' 
+                ? 'وجّه الكاميرا على باركود المعاملة أو أدخل رقم المعاملة يدوياً'
+                : 'Point camera at transaction barcode or enter number manually'}
+            </p>
+            
+            {/* عرض الكاميرا */}
+            <div className="relative bg-black rounded-xl overflow-hidden aspect-video">
+              {scannerOpen && !scannerStream && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button onClick={startScanner} variant="secondary">
+                    <Camera size={18} className="me-2" />
+                    {lang === 'ar' ? 'تشغيل الكاميرا' : 'Start Camera'}
+                  </Button>
+                </div>
+              )}
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                className="w-full h-full object-cover"
+                style={{ display: scannerStream ? 'block' : 'none' }}
+              />
+              {scannerStream && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-48 h-24 border-2 border-primary rounded-lg animate-pulse" />
+                </div>
+              )}
+            </div>
+            
+            {/* إدخال يدوي */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="TXN-2026-001 أو رقم المعاملة..."
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleManualBarcodeSearch(e.target.value);
+                  }
+                }}
+                data-testid="manual-barcode-input"
+              />
+              <Button 
+                onClick={(e) => {
+                  const input = e.target.closest('.flex').querySelector('input');
+                  handleManualBarcodeSearch(input.value);
+                }}
+                data-testid="search-barcode-btn"
+              >
+                <Search size={18} />
+              </Button>
+            </div>
+            
+            <Button variant="outline" onClick={stopScanner} className="w-full">
+              {lang === 'ar' ? 'إغلاق' : 'Close'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
