@@ -510,45 +510,61 @@ export default function STASMirrorPage() {
         {/* === Devices Tab === */}
         <TabsContent value="devices" className="mt-4">
           <div className="space-y-6">
-            {/* Pending Devices Alert */}
+            {/* Pending Devices Alert - تنبيه الأجهزة المعلقة */}
             {pendingDevices.length > 0 && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <h3 className="font-semibold text-orange-700 flex items-center gap-2 mb-3">
-                  <AlertTriangle size={18} />
-                  {lang === 'ar' ? 'أجهزة بانتظار الاعتماد' : 'Devices Pending Approval'}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl p-5 shadow-sm">
+                <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-4 text-lg">
+                  <AlertTriangle size={22} className="text-orange-600" />
+                  {lang === 'ar' ? '⚠️ أجهزة تحتاج موافقتك' : '⚠️ Devices Need Your Approval'}
+                  <span className="bg-orange-500 text-white text-sm px-2 py-0.5 rounded-full mr-2">
+                    {pendingDevices.length}
+                  </span>
                 </h3>
-                <div className="space-y-2">
-                  {pendingDevices.map(device => (
-                    <div key={device.id} className="flex items-center justify-between bg-white p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{device.employee_name_ar || device.employee_id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {device.browser} - {device.os} | {device.device_type}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{new Date(device.registered_at).toLocaleString('ar-SA')}</p>
+                <div className="grid gap-3">
+                  {pendingDevices.map(device => {
+                    const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
+                    return (
+                      <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 transition-all shadow-sm">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-xl bg-orange-100 flex items-center justify-center">
+                            <DeviceIcon size={28} className="text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-lg text-slate-800">{device.employee_name_ar || device.employee_id}</p>
+                            <p className="text-base font-medium text-orange-700">
+                              {device.friendly_name || `${device.browser} - ${device.os}`}
+                            </p>
+                            <p className="text-sm text-slate-500 mt-1">
+                              📅 {new Date(device.registered_at).toLocaleString('ar-SA')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <Button
+                            size="lg"
+                            onClick={() => handleApproveDevice(device.id)}
+                            disabled={deviceAction}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all"
+                            data-testid={`approve-device-${device.id}`}
+                          >
+                            <CheckCircle size={20} className="ml-2" />
+                            {lang === 'ar' ? 'موافقة' : 'Approve'}
+                          </Button>
+                          <Button
+                            size="lg"
+                            variant="destructive"
+                            onClick={() => handleBlockDevice(device.id)}
+                            disabled={deviceAction}
+                            className="px-6 py-3 text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all"
+                            data-testid={`reject-device-${device.id}`}
+                          >
+                            <XCircle size={20} className="ml-2" />
+                            {lang === 'ar' ? 'رفض' : 'Reject'}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleApproveDevice(device.id)}
-                          disabled={deviceAction}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle size={14} className="mr-1" />
-                          {lang === 'ar' ? 'اعتماد' : 'Approve'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleBlockDevice(device.id)}
-                          disabled={deviceAction}
-                        >
-                          <XCircle size={14} className="mr-1" />
-                          {lang === 'ar' ? 'رفض' : 'Reject'}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
