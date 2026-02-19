@@ -248,11 +248,18 @@ export default function LeavePage() {
                   {balance.annual?.available ?? balance.annual?.balance ?? 0}
                   <span className="text-base font-normal ms-1">{lang === 'ar' ? 'يوم' : 'days'}</span>
                 </p>
-                {balance.annual?.earned_to_date && (
+                {/* عرض مصدر الرصيد */}
+                {balance.annual?.is_migrated ? (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                    {lang === 'ar' 
+                      ? `رصيد افتتاحي: ${balance.annual.opening_balance || balance.annual.earned_to_date} يوم` 
+                      : `Opening balance: ${balance.annual.opening_balance || balance.annual.earned_to_date} days`}
+                  </p>
+                ) : balance.annual?.earned_to_date ? (
                   <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                     {lang === 'ar' ? `المكتسب: ${balance.annual.earned_to_date} يوم` : `Earned: ${balance.annual.earned_to_date} days`}
                   </p>
-                )}
+                ) : null}
               </div>
 
               {/* ساعات الاستئذان المستهلكة */}
