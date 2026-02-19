@@ -10,6 +10,7 @@ Punch Validator Service - التحقق من البصمة
 - لا يُقبل تسجيل الدخول بعد (وقت_البداية + فترة_السماح + 30 دقيقة إضافية كحد أقصى)
 - لا يُقبل التبصيم إذا كان الموظف خارج دائرة الموقع
 - يجب أن يكون الموظف مُعيّن في موقع العمل
+- المستخدمين المُعفَين يمكنهم التبصيم في أي وقت
 """
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
@@ -29,6 +30,9 @@ DEFAULT_GEOFENCE_RADIUS_KM = 0.5  # 500 متر
 # الحد الأقصى للتبصيم المبكر قبل بداية الدوام (دقائق) - افتراضي 0 = لا تبصيم قبل الدوام
 DEFAULT_EARLY_CHECKIN_MINUTES = 0  # لا يُسمح بالتبصيم المبكر افتراضياً
 MAX_ALLOWED_EARLY_CHECKIN_MINUTES = 120  # الحد الأقصى ساعتين للمخولين
+
+# المستخدمين المُعفَين من قواعد التبصيم
+EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN']
 
 
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
