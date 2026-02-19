@@ -9,7 +9,7 @@ export const translations = {
       custody: "Tangible Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Team Attendance", penalties: "Penalties",
-      attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks"
+      attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
