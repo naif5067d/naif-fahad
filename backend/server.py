@@ -69,6 +69,7 @@ app.include_router(team_attendance_router)
 app.include_router(penalties_router)
 app.include_router(devices_router)
 app.include_router(tasks_router)
+app.include_router(maintenance_tracking_router)
 
 app.add_middleware(
     CORSMiddleware,
