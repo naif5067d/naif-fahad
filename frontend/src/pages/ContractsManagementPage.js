@@ -1060,6 +1060,20 @@ export default function ContractsManagementPage() {
                           </Button>
                         )}
                         
+                        {/* إعادة للمسودة - للسماح بالتعديل الكامل */}
+                        {['pending_stas', 'active'].includes(contract.status) && ['stas', 'sultan'].includes(user?.role) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleRevertToDraft(contract.id)}
+                            className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                            data-testid={`revert-draft-${contract.id}`}
+                          >
+                            <RotateCcw className="w-4 h-4 ml-1" />
+                            إعادة للمسودة
+                          </Button>
+                        )}
+                        
                         {/* Submit to STAS - only draft */}
                         {contract.status === 'draft' && isAdmin && (
                           <Button 
