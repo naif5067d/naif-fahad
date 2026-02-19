@@ -583,10 +583,20 @@ export default function AttendancePage() {
               {/* حالة اليوم */}
               {todayRecord && (todayRecord.check_in || todayRecord.check_out) && (
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border">
-                  <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <Calendar size={16} />
-                    {lang === 'ar' ? 'سجل اليوم:' : "Today's record:"}
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                      <Calendar size={16} />
+                      {lang === 'ar' ? 'سجل اليوم:' : "Today's record:"}
+                    </p>
+                    {/* عرض نوع التسجيل */}
+                    {todayRecord.check_in_source && (
+                      <Badge variant={todayRecord.check_in_source === 'self_checkin' ? 'default' : 'secondary'}>
+                        {todayRecord.check_in_source === 'self_checkin' 
+                          ? (lang === 'ar' ? '📍 تسجيل ذاتي GPS' : '📍 Auto GPS')
+                          : (lang === 'ar' ? '✋ تحضير احتياطي' : '✋ Manual')}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                       <LogIn size={20} className="text-emerald-600" />
@@ -655,6 +665,36 @@ export default function AttendancePage() {
                   {lang === 'ar' ? 'تسجيل الخروج' : 'Check Out'}
                 </Button>
               </div>
+
+              {/* زر التحضير الاحتياطي */}
+              {!todayRecord?.check_in && (
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2 text-center">
+                    {lang === 'ar' 
+                      ? '⚠️ في حال عدم عمل النظام الذاتي (GPS)، استخدم التحضير الاحتياطي'
+                      : '⚠️ If GPS auto-check fails, use manual check-in'}
+                  </p>
+                  <Button
+                    onClick={handleManualCheckIn}
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full h-12 border-dashed border-2 hover:bg-amber-50 hover:border-amber-400 dark:hover:bg-amber-950/30"
+                    data-testid="manual-check-in-btn"
+                  >
+                    {loading ? (
+                      <Loader2 size={20} className="animate-spin me-2" />
+                    ) : (
+                      <span className="me-2">✋</span>
+                    )}
+                    {lang === 'ar' ? 'تحضير احتياطي (بدون GPS)' : 'Manual Check-in (No GPS)'}
+                  </Button>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 text-center">
+                    {lang === 'ar' 
+                      ? 'لا يُحسب تأخير - فقط إثبات حضور'
+                      : 'No late penalty - attendance confirmation only'}
+                  </p>
+                </div>
+              )}
 
               {/* رسالة خارج أوقات العمل */}
               {workTimeStatus.message && (
