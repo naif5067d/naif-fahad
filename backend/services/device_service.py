@@ -11,8 +11,54 @@ from typing import Optional, Dict, List
 from database import db
 
 
+def generate_core_hardware_signature(fingerprint_data: dict) -> str:
+    """
+    توليد بصمة الجهاز الأساسية (Hardware Core)
+    
+    هذه البصمة لا تتغير بتغيير المتصفح!
+    تعتمد على:
+    - WebGL Vendor + Renderer (كرت الشاشة)
+    - Canvas Hash
+    - Hardware Concurrency (عدد أنوية المعالج)
+    - Device Memory (الذاكرة)
+    - Platform (نظام التشغيل)
+    - Screen Resolution (دقة الشاشة)
+    """
+    core_values = [
+        str(fingerprint_data.get('webglVendor', '')),
+        str(fingerprint_data.get('webglRenderer', '')),
+        str(fingerprint_data.get('canvasFingerprint', '')),
+        str(fingerprint_data.get('hardwareConcurrency', '')),
+        str(fingerprint_data.get('deviceMemory', '')),
+        str(fingerprint_data.get('platform', '')),
+        str(fingerprint_data.get('screenResolution', '')),
+    ]
+    
+    combined = '|'.join(core_values)
+    return hashlib.sha256(combined.encode()).hexdigest()
+
+
+def extract_browser_info(fingerprint_data: dict) -> dict:
+    """
+    استخراج معلومات المتصفح (Soft Data)
+    
+    هذه البيانات للتسجيل فقط - لا تُستخدم للمطابقة!
+    """
+    user_agent = fingerprint_data.get('userAgent', '')
+    device_info = _parse_user_agent(user_agent)
+    
+    return {
+        "browser": device_info.get('browser', 'Unknown'),
+        "browser_version": device_info.get('browser_version', ''),
+        "language": fingerprint_data.get('language', ''),
+        "timezone": fingerprint_data.get('timezone', ''),
+        "user_agent": user_agent
+    }
+
+
 async def generate_device_signature(fingerprint_data: dict) -> str:
     """
+    [DEPRECATED - استخدم generate_core_hardware_signature]
     توليد بصمة فريدة للجهاز من مجموعة البيانات
     
     يستخدم:
