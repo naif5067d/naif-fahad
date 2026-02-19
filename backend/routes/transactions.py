@@ -100,7 +100,7 @@ async def list_transactions(
         type_list = [t.strip() for t in types.split(',')]
         query["type"] = {"$in": type_list}
 
-    txs = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    txs = await db.transactions.find(query, {"_id": 0, "id": 1, "ref_no": 1, "type": 1, "status": 1, "employee_id": 1, "current_stage": 1, "created_at": 1, "timeline": 1, "data": 1, "employee_name": 1, "workflow": 1, "return_count": 1}).sort("created_at", -1).to_list(500)
     return txs
 
 
