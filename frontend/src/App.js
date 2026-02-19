@@ -30,7 +30,7 @@ import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
 
-function ProtectedRoute({ children, allowedRoles }) {
+function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -50,6 +50,12 @@ function ProtectedRoute({ children, allowedRoles }) {
   }
   
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
+  
+  // TV Mode - No layout for executive dashboard
+  if (noLayout) {
+    return children;
+  }
+  
   return <AppLayout>{children}</AppLayout>;
 }
 
