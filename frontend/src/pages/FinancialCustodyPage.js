@@ -229,7 +229,7 @@ export default function FinancialCustodyPage() {
   };
 
   const toggleSelectAll = () => {
-    const deletable = filtered.filter(c => !['executed', 'closed'].includes(c.status));
+    const deletable = filtered; // STAS يستطيع حذف جميع العهد
     if (selectedIds.length === deletable.length) {
       setSelectedIds([]);
     } else {
