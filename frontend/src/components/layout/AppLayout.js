@@ -63,7 +63,7 @@ const ROLE_LABELS_AR = {
 };
 
 export default function AppLayout({ children }) {
-  const { user, allUsers, switchUser, fetchAllUsers } = useAuth();
+  const { user, allUsers, switchUser, fetchAllUsers, logout } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
