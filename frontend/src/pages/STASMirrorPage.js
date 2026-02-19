@@ -668,31 +668,52 @@ export default function STASMirrorPage() {
                 <CardTitle className="flex items-center gap-2">
                   <FileText size={20} />
                   {lang === 'ar' ? 'سجل الأمان' : 'Security Audit Log'}
+                  <span className="text-sm font-normal text-muted-foreground">({securityLogs.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[300px] overflow-y-auto space-y-2">
-                  {securityLogs.map(log => (
-                    <div key={log.id} className="p-3 bg-slate-50 rounded-lg text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className={`font-medium ${
-                          log.action.includes('block') ? 'text-red-600' :
-                          log.action.includes('approve') ? 'text-green-600' :
-                          'text-blue-600'
-                        }`}>
-                          {log.action.replace(/_/g, ' ')}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(log.timestamp).toLocaleString('ar-SA')}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground">
-                        {lang === 'ar' ? 'الموظف:' : 'Employee:'} {log.employee_id} | 
-                        {lang === 'ar' ? ' بواسطة:' : ' By:'} {log.performed_by}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {securityLogs.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    {lang === 'ar' ? 'لا توجد سجلات أمان' : 'No security logs'}
+                  </p>
+                ) : (
+                  <div className="max-h-[400px] overflow-y-auto space-y-2">
+                    {securityLogs.map(log => {
+                      const emp = employees.find(e => e.id === log.employee_id);
+                      const empName = emp ? (emp.full_name_ar || emp.full_name) : log.employee_id;
+                      return (
+                        <div key={log.id} className="p-3 bg-slate-50 rounded-lg text-sm border-r-4" style={{
+                          borderRightColor: log.action.includes('block') ? '#dc2626' : 
+                                           log.action.includes('unblock') ? '#16a34a' :
+                                           log.action.includes('approve') ? '#2563eb' : '#9ca3af'
+                        }}>
+                          <div className="flex items-center justify-between">
+                            <span className={`font-medium ${
+                              log.action.includes('block') && !log.action.includes('unblock') ? 'text-red-600' :
+                              log.action.includes('unblock') ? 'text-green-600' :
+                              log.action.includes('approve') ? 'text-blue-600' :
+                              'text-gray-600'
+                            }`}>
+                              {log.action === 'account_blocked' ? (lang === 'ar' ? '🔒 إيقاف حساب' : '🔒 Account Blocked') :
+                               log.action === 'account_unblocked' ? (lang === 'ar' ? '🔓 إلغاء إيقاف' : '🔓 Account Unblocked') :
+                               log.action === 'device_approved' ? (lang === 'ar' ? '✅ اعتماد جهاز' : '✅ Device Approved') :
+                               log.action === 'device_blocked' ? (lang === 'ar' ? '🚫 حظر جهاز' : '🚫 Device Blocked') :
+                               log.action.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(log.timestamp).toLocaleString('ar-SA')}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground mt-1">
+                            <span className="font-medium">{empName}</span>
+                            {log.details?.reason && <span className="mx-2">|</span>}
+                            {log.details?.reason && <span className="text-xs">{log.details.reason}</span>}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
