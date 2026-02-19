@@ -231,17 +231,10 @@ export default function STASMirrorPage() {
     setLoadingTrace(true);
     setDeductionTrace([]);
     try {
-      // جلب العروق من مقترح الخصم نفسه أو من daily_status
-      if (deduction.trace_log && Array.isArray(deduction.trace_log)) {
-        setDeductionTrace(deduction.trace_log);
-      } else {
-        // محاولة جلب من daily_status
-        const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
-        if (res.data?.trace_log && Array.isArray(res.data.trace_log)) {
-          setDeductionTrace(res.data.trace_log);
-        } else if (res.data?.checks && Array.isArray(res.data.checks)) {
-          setDeductionTrace(res.data.checks);
-        }
+      // جلب العروق من daily_status
+      const res = await api.get(`/api/attendance-engine/daily-status/${deduction.employee_id}/${deduction.period_start}`);
+      if (res.data?.trace_log && Array.isArray(res.data.trace_log)) {
+        setDeductionTrace(res.data.trace_log);
       }
     } catch (err) {
       console.error('Failed to load trace:', err);
