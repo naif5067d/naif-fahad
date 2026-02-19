@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, CalendarDays, Clock, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt, AlertTriangle, UsersRound, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, CalendarDays, Clock, FileSignature, Users, Settings, Shield, Menu, X, Sun, Moon, Globe, ChevronDown, Check, MapPin, Package, Wallet, Wrench, FileCheck, Receipt, AlertTriangle, UsersRound, LogOut, History } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
@@ -12,15 +12,15 @@ const NAV_ITEMS = {
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'myFinances'],
   // سلطان موظف + إداري (يرى الحضور الشخصي + حضور الفريق)
-  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  sultan: ['dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // نايف إداري فقط (لا يُعامل كموظف)
-  naif: ['dashboard', 'transactions', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  naif: ['dashboard', 'transactions', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // صلاح مالي فقط (لا يُعامل كموظف)
   salah: ['dashboard', 'transactions', 'financialCustody'],
   // محمد CEO فقط (لا يُعامل كموظف)
   mohammed: ['dashboard', 'transactions', 'financialCustody'],
   // ستاس إداري + صلاحيات كاملة (لا يُعامل كموظف)
-  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  stas: ['dashboard', 'transactions', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
@@ -31,7 +31,7 @@ const ICONS = {
   attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
-  attendancePenalties: UsersRound,  // الحضور والعقوبات
+  attendancePenalties: UsersRound, loginSessions: History,
 };
 
 const PATHS = {
