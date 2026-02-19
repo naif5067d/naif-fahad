@@ -122,9 +122,8 @@ export default function STASMirrorPage() {
 
   const fetchEmployees = () => {
     api.get('/api/employees').then(r => {
-      // استثناء المدراء
-      const filtered = r.data.filter(e => !['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN'].includes(e.id));
-      setEmployees(filtered);
+      // عرض جميع الموظفين بما فيهم المدراء
+      setEmployees(r.data);
     }).catch(() => {});
   };
 
