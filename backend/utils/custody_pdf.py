@@ -1,6 +1,6 @@
 """
 PDF Generator for Financial Custody (العهدة المالية)
-Professional bilingual PDF with company branding
+تصميم رسمي فخم مع ترويسة الشركة واللوقو
 """
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -18,24 +18,27 @@ import qrcode
 import io
 import os
 import base64
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
-# Constants
+# ==================== PAGE SETUP ====================
 PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 12 * mm
+MARGIN = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 
-# Company Colors (DAR AL CODE)
-PRIMARY_NAVY = colors.Color(0.12, 0.23, 0.37)  # #1E3A5F
-ACCENT_PURPLE = colors.Color(0.65, 0.55, 0.98)  # #A78BFA
-LIGHT_BG = colors.Color(0.97, 0.97, 0.98)
-BORDER_COLOR = colors.Color(0.85, 0.85, 0.87)
-TEXT_DARK = colors.Color(0.04, 0.04, 0.04)
-TEXT_MUTED = colors.Color(0.42, 0.45, 0.50)
-SUCCESS_GREEN = colors.Color(0.05, 0.65, 0.45)
-DANGER_RED = colors.Color(0.85, 0.20, 0.20)
+# ==================== PREMIUM COLORS ====================
+# الألوان الرسمية للشركة
+NAVY = colors.Color(0.08, 0.16, 0.28)          # #142840 - كحلي داكن فخم
+GOLD = colors.Color(0.75, 0.62, 0.35)          # #BF9E59 - ذهبي
+LIGHT_GOLD = colors.Color(0.92, 0.88, 0.78)    # #EBE0C7 - ذهبي فاتح
+WHITE = colors.white
+LIGHT_BG = colors.Color(0.98, 0.98, 0.99)      # #FAFAFE
+BORDER = colors.Color(0.88, 0.88, 0.90)
+TEXT_DARK = colors.Color(0.12, 0.12, 0.14)
+TEXT_MUTED = colors.Color(0.45, 0.45, 0.50)
+SUCCESS = colors.Color(0.10, 0.55, 0.35)       # أخضر
+DANGER = colors.Color(0.75, 0.15, 0.15)        # أحمر
 
-# Font Registration
+# ==================== FONTS ====================
 FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
 ARABIC_FONT = 'NotoNaskhArabic'
 ARABIC_FONT_BOLD = 'NotoNaskhArabicBold'
@@ -74,13 +77,14 @@ def register_fonts():
 register_fonts()
 
 
+# ==================== HELPERS ====================
+
 def reshape_arabic(text):
     """Reshape Arabic text for proper RTL display"""
     if not text:
         return ''
     try:
-        text_str = str(text)
-        reshaped = arabic_reshaper.reshape(text_str)
+        reshaped = arabic_reshaper.reshape(str(text))
         return get_display(reshaped)
     except:
         return str(text)
@@ -98,13 +102,13 @@ def format_date(date_str):
         return str(date_str)
 
 
-def create_qr_image(data: str, size: int = 18):
-    """Create QR code image"""
+def create_qr_image(data: str, size: int = 20):
+    """Create QR code with navy color"""
     try:
         qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=2, border=1)
         qr.add_data(data)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
+        img = qr.make_image(fill_color="#142840", back_color="white")
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
         buffer.seek(0)
@@ -113,10 +117,10 @@ def create_qr_image(data: str, size: int = 18):
         return None
 
 
-def create_barcode_image(code: str, width: int = 40, height: int = 8):
+def create_barcode_image(code: str, width: int = 45, height: int = 10):
     """Create Code128 barcode"""
     try:
-        barcode = code128.Code128(code, barWidth=0.35*mm, barHeight=height*mm)
+        barcode = code128.Code128(code, barWidth=0.4*mm, barHeight=height*mm)
         d = Drawing(width*mm, (height+2)*mm)
         d.add(barcode)
         return d
@@ -124,7 +128,7 @@ def create_barcode_image(code: str, width: int = 40, height: int = 8):
         return None
 
 
-def create_logo_image(logo_data: str, max_width: int = 20, max_height: int = 12):
+def create_logo_image(logo_data: str, max_width: int = 28, max_height: int = 18):
     """Create image from base64 logo"""
     if not logo_data:
         return None
@@ -138,24 +142,26 @@ def create_logo_image(logo_data: str, max_width: int = 20, max_height: int = 12)
         return None
 
 
-def make_arabic_para(text, style):
-    """Create paragraph with proper Arabic reshaping"""
+def ar_para(text, style):
+    """Create Arabic paragraph"""
     return Paragraph(reshape_arabic(text), style)
 
 
-def make_ltr_para(text, style):
-    """Create LTR paragraph (for numbers, dates, English)"""
+def ltr_para(text, style):
+    """Create LTR paragraph"""
     return Paragraph(str(text), style)
 
 
+# ==================== MAIN GENERATOR ====================
+
 def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, lang: str = 'ar') -> bytes:
     """
-    Generate professional PDF for financial custody
+    Generate premium PDF for financial custody
     
     Args:
         custody: Custody document with all details
         expenses: List of expense items
-        branding: Company branding (logo_data, company_name, etc.)
+        branding: Company branding from settings (logo_data, company_name, etc.)
         lang: Language ('ar' or 'en')
     
     Returns:
@@ -174,14 +180,18 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     elements = []
     is_ar = lang == 'ar'
     
-    # Styles
+    # ==================== STYLES ====================
     style_ar_title = ParagraphStyle(
-        'ArTitle', fontName=ARABIC_FONT_BOLD, fontSize=16, alignment=TA_CENTER,
-        textColor=PRIMARY_NAVY, wordWrap='RTL', leading=22
+        'ArTitle', fontName=ARABIC_FONT_BOLD, fontSize=18, alignment=TA_CENTER,
+        textColor=NAVY, wordWrap='RTL', leading=24
     )
     style_ar_subtitle = ParagraphStyle(
-        'ArSubtitle', fontName=ARABIC_FONT, fontSize=10, alignment=TA_CENTER,
-        textColor=TEXT_MUTED, wordWrap='RTL', leading=14
+        'ArSubtitle', fontName=ARABIC_FONT, fontSize=11, alignment=TA_CENTER,
+        textColor=GOLD, wordWrap='RTL', leading=15
+    )
+    style_ar_heading = ParagraphStyle(
+        'ArHeading', fontName=ARABIC_FONT_BOLD, fontSize=12, alignment=TA_RIGHT,
+        textColor=NAVY, wordWrap='RTL', leading=16
     )
     style_ar_normal = ParagraphStyle(
         'ArNormal', fontName=ARABIC_FONT, fontSize=9, alignment=TA_RIGHT,
@@ -191,71 +201,103 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
         'ArBold', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_RIGHT,
         textColor=TEXT_DARK, wordWrap='RTL', leading=13
     )
+    style_ar_small = ParagraphStyle(
+        'ArSmall', fontName=ARABIC_FONT, fontSize=8, alignment=TA_RIGHT,
+        textColor=TEXT_MUTED, wordWrap='RTL', leading=11
+    )
     style_en_title = ParagraphStyle(
-        'EnTitle', fontName='Helvetica-Bold', fontSize=16, alignment=TA_CENTER,
-        textColor=PRIMARY_NAVY, leading=22
+        'EnTitle', fontName='Helvetica-Bold', fontSize=18, alignment=TA_CENTER,
+        textColor=NAVY, leading=24
     )
     style_en_subtitle = ParagraphStyle(
-        'EnSubtitle', fontName='Helvetica', fontSize=10, alignment=TA_CENTER,
-        textColor=TEXT_MUTED, leading=14
-    )
-    style_en_normal = ParagraphStyle(
-        'EnNormal', fontName='Helvetica', fontSize=9, alignment=TA_LEFT,
-        textColor=TEXT_DARK, leading=13
+        'EnSubtitle', fontName='Helvetica', fontSize=11, alignment=TA_CENTER,
+        textColor=GOLD, leading=15
     )
     style_ltr = ParagraphStyle(
         'LTR', fontName='Helvetica', fontSize=9, alignment=TA_CENTER,
         textColor=TEXT_DARK, leading=13
     )
     style_ltr_right = ParagraphStyle(
-        'LTRRight', fontName='Helvetica-Bold', fontSize=9, alignment=TA_RIGHT,
-        textColor=TEXT_DARK, leading=13
+        'LTRRight', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT,
+        textColor=TEXT_DARK, leading=14
     )
-    style_amount = ParagraphStyle(
-        'Amount', fontName='Helvetica-Bold', fontSize=9, alignment=TA_RIGHT,
-        textColor=DANGER_RED, leading=13
+    style_amount_red = ParagraphStyle(
+        'AmountRed', fontName='Helvetica-Bold', fontSize=9, alignment=TA_RIGHT,
+        textColor=DANGER, leading=13
     )
-    style_balance = ParagraphStyle(
-        'Balance', fontName='Helvetica', fontSize=9, alignment=TA_RIGHT,
-        textColor=TEXT_MUTED, leading=13
+    style_amount_green = ParagraphStyle(
+        'AmountGreen', fontName='Helvetica-Bold', fontSize=9, alignment=TA_RIGHT,
+        textColor=SUCCESS, leading=13
+    )
+    style_footer = ParagraphStyle(
+        'Footer', fontName='Helvetica', fontSize=7, alignment=TA_CENTER,
+        textColor=TEXT_MUTED, leading=10
     )
     
-    # ==================== HEADER ====================
-    header_data = []
+    # ==================== HEADER WITH LOGO ====================
+    # Get company info
+    company_name_ar = 'دار الكود للاستشارات الهندسية'
+    company_name_en = 'DAR AL CODE Engineering Consultants'
+    company_slogan_ar = 'التميز الهندسي'
+    company_slogan_en = 'Engineering Excellence'
+    
+    if branding:
+        company_name_ar = branding.get('company_name_ar', company_name_ar)
+        company_name_en = branding.get('company_name_en', branding.get('company_name', company_name_en))
+        company_slogan_ar = branding.get('slogan_ar', company_slogan_ar)
+        company_slogan_en = branding.get('slogan_en', branding.get('slogan', company_slogan_en))
     
     # Logo
     logo_img = None
     if branding and branding.get('logo_data'):
-        logo_img = create_logo_image(branding['logo_data'])
+        logo_img = create_logo_image(branding['logo_data'], max_width=30, max_height=20)
     
-    # Company name
-    company_name = branding.get('company_name', 'DAR AL CODE') if branding else 'DAR AL CODE'
-    company_name_ar = branding.get('company_name_ar', 'دار الكود للاستشارات الهندسية') if branding else 'دار الكود للاستشارات الهندسية'
-    
+    # Build header
     if is_ar:
-        title_text = make_arabic_para(company_name_ar, style_ar_title)
-        subtitle_text = make_arabic_para('كشف العهدة المالية', style_ar_subtitle)
+        title_text = ar_para(company_name_ar, style_ar_title)
+        subtitle_text = ar_para(company_slogan_ar, style_ar_subtitle)
+        doc_title = ar_para('كشف العهدة المالية', style_ar_heading)
     else:
-        title_text = Paragraph(company_name, style_en_title)
-        subtitle_text = Paragraph('Financial Custody Statement', style_en_subtitle)
+        title_text = Paragraph(company_name_en, style_en_title)
+        subtitle_text = Paragraph(company_slogan_en, style_en_subtitle)
+        doc_title = Paragraph('FINANCIAL CUSTODY STATEMENT', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=12, alignment=TA_CENTER, textColor=NAVY))
     
+    # Header table with logo
     if logo_img:
-        header_data = [[logo_img, [title_text, Spacer(1, 2*mm), subtitle_text]]]
-        header_table = Table(header_data, colWidths=[25*mm, CONTENT_WIDTH - 30*mm])
-        header_table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
-        ]))
+        if is_ar:
+            # Logo on right for Arabic
+            header_data = [[[title_text, Spacer(1, 1*mm), subtitle_text], logo_img]]
+            header_table = Table(header_data, colWidths=[CONTENT_WIDTH - 35*mm, 35*mm])
+        else:
+            # Logo on left for English
+            header_data = [[logo_img, [title_text, Spacer(1, 1*mm), subtitle_text]]]
+            header_table = Table(header_data, colWidths=[35*mm, CONTENT_WIDTH - 35*mm])
     else:
         header_data = [[title_text], [subtitle_text]]
         header_table = Table(header_data, colWidths=[CONTENT_WIDTH])
-        header_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ]))
+    
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ]))
     
     elements.append(header_table)
-    elements.append(Spacer(1, 8*mm))
+    elements.append(Spacer(1, 4*mm))
+    
+    # Decorative line
+    line_data = [['', '', '']]
+    line_table = Table(line_data, colWidths=[CONTENT_WIDTH*0.35, CONTENT_WIDTH*0.3, CONTENT_WIDTH*0.35])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 1.5, GOLD),
+        ('LINEABOVE', (1, 0), (1, 0), 3, NAVY),
+        ('LINEABOVE', (2, 0), (2, 0), 1.5, GOLD),
+    ]))
+    elements.append(line_table)
+    elements.append(Spacer(1, 4*mm))
+    
+    # Document title
+    elements.append(doc_title)
+    elements.append(Spacer(1, 6*mm))
     
     # ==================== CUSTODY INFO BOX ====================
     custody_number = custody.get('custody_number', '-')
@@ -276,54 +318,62 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     }
     status_text = status_map_ar.get(status, status) if is_ar else status_map_en.get(status, status)
     
+    # Info box with premium styling
     if is_ar:
         info_data = [
             [
-                make_ltr_para(f'{budget:,.2f}', style_ltr_right),
-                make_arabic_para('الميزانية:', style_ar_bold),
-                make_ltr_para(custody_number, style_ltr_right),
-                make_arabic_para('رقم العهدة:', style_ar_bold),
+                ltr_para(f'{budget:,.2f}', style_ltr_right),
+                ar_para('الميزانية', style_ar_bold),
+                ltr_para(custody_number, style_ltr_right),
+                ar_para('رقم العهدة', style_ar_bold),
             ],
             [
-                make_ltr_para(f'{spent:,.2f}', style_amount),
-                make_arabic_para('المصروف:', style_ar_bold),
-                make_ltr_para(created_at, style_ltr_right),
-                make_arabic_para('التاريخ:', style_ar_bold),
+                ltr_para(f'{spent:,.2f}', style_amount_red),
+                ar_para('المصروف', style_ar_bold),
+                ltr_para(created_at, style_ltr_right),
+                ar_para('تاريخ الإنشاء', style_ar_bold),
             ],
             [
-                make_ltr_para(f'{remaining:,.2f}', style_balance),
-                make_arabic_para('المتبقي:', style_ar_bold),
-                make_arabic_para(status_text, style_ar_normal),
-                make_arabic_para('الحالة:', style_ar_bold),
+                ltr_para(f'{remaining:,.2f}', style_amount_green),
+                ar_para('المتبقي', style_ar_bold),
+                ar_para(status_text, style_ar_normal),
+                ar_para('الحالة', style_ar_bold),
+            ],
+            [
+                '', '',
+                ar_para(created_by, style_ar_small),
+                ar_para('أنشأها', style_ar_bold),
             ],
         ]
     else:
         info_data = [
             [
-                Paragraph('Custody No:', style_en_normal),
-                make_ltr_para(custody_number, style_ltr_right),
-                Paragraph('Budget:', style_en_normal),
-                make_ltr_para(f'{budget:,.2f} SAR', style_ltr_right),
+                Paragraph('Custody No:', style_ar_bold),
+                ltr_para(custody_number, style_ltr_right),
+                Paragraph('Budget:', style_ar_bold),
+                ltr_para(f'{budget:,.2f} SAR', style_ltr_right),
             ],
             [
-                Paragraph('Date:', style_en_normal),
-                make_ltr_para(created_at, style_ltr_right),
-                Paragraph('Spent:', style_en_normal),
-                make_ltr_para(f'{spent:,.2f} SAR', style_amount),
+                Paragraph('Date:', style_ar_bold),
+                ltr_para(created_at, style_ltr_right),
+                Paragraph('Spent:', style_ar_bold),
+                ltr_para(f'{spent:,.2f} SAR', style_amount_red),
             ],
             [
-                Paragraph('Status:', style_en_normal),
-                Paragraph(status_text, style_en_normal),
-                Paragraph('Remaining:', style_en_normal),
-                make_ltr_para(f'{remaining:,.2f} SAR', style_balance),
+                Paragraph('Status:', style_ar_bold),
+                Paragraph(status_text, style_ar_normal),
+                Paragraph('Remaining:', style_ar_bold),
+                ltr_para(f'{remaining:,.2f} SAR', style_amount_green),
             ],
         ]
     
     info_table = Table(info_data, colWidths=[CONTENT_WIDTH*0.25]*4)
     info_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
-        ('INNERGRID', (0, 0), (-1, -1), 0.25, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1, NAVY),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.5, BORDER),
+        ('LINEBELOW', (0, 1), (-1, 1), 0.5, BORDER),
+        ('LINEBELOW', (0, 2), (-1, 2), 0.5, BORDER),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('TOPPADDING', (0, 0), (-1, -1), 4*mm),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 4*mm),
@@ -332,38 +382,38 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     ]))
     
     elements.append(info_table)
-    elements.append(Spacer(1, 6*mm))
+    elements.append(Spacer(1, 8*mm))
     
     # ==================== EXPENSES TABLE ====================
     if is_ar:
-        table_title = make_arabic_para('تفاصيل المصروفات', style_ar_bold)
+        section_title = ar_para('تفاصيل المصروفات', style_ar_heading)
     else:
-        table_title = Paragraph('Expense Details', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=11, textColor=PRIMARY_NAVY))
+        section_title = Paragraph('EXPENSE DETAILS', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=11, textColor=NAVY))
     
-    elements.append(table_title)
+    elements.append(section_title)
     elements.append(Spacer(1, 3*mm))
     
     # Table header
     if is_ar:
         header_row = [
-            make_arabic_para('الرصيد', style_ar_bold),
-            make_arabic_para('المبلغ', style_ar_bold),
-            make_arabic_para('الوصف', style_ar_bold),
-            make_arabic_para('الحساب', style_ar_bold),
-            make_arabic_para('الكود', style_ar_bold),
-            make_arabic_para('#', style_ar_bold),
+            ar_para('الرصيد', style_ar_bold),
+            ar_para('المبلغ', style_ar_bold),
+            ar_para('الوصف', style_ar_bold),
+            ar_para('الحساب', style_ar_bold),
+            ar_para('الكود', style_ar_bold),
+            ar_para('م', style_ar_bold),
         ]
-        col_widths = [22*mm, 22*mm, 50*mm, 40*mm, 18*mm, 12*mm]
+        col_widths = [24*mm, 24*mm, 48*mm, 42*mm, 16*mm, 10*mm]
     else:
         header_row = [
-            Paragraph('#', style_en_normal),
-            Paragraph('Code', style_en_normal),
-            Paragraph('Account', style_en_normal),
-            Paragraph('Description', style_en_normal),
-            Paragraph('Amount', style_en_normal),
-            Paragraph('Balance', style_en_normal),
+            Paragraph('#', style_ar_bold),
+            Paragraph('Code', style_ar_bold),
+            Paragraph('Account', style_ar_bold),
+            Paragraph('Description', style_ar_bold),
+            Paragraph('Amount', style_ar_bold),
+            Paragraph('Balance', style_ar_bold),
         ]
-        col_widths = [12*mm, 18*mm, 40*mm, 50*mm, 22*mm, 22*mm]
+        col_widths = [10*mm, 16*mm, 42*mm, 48*mm, 24*mm, 24*mm]
     
     table_data = [header_row]
     
@@ -374,21 +424,21 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
         
         if is_ar:
             row = [
-                make_ltr_para(f'{running_balance:,.2f}', style_balance),
-                make_ltr_para(f'-{exp.get("amount", 0):,.2f}', style_amount),
-                make_arabic_para(exp.get('description', '-'), style_ar_normal),
-                make_arabic_para(exp.get('code_name_ar', '-'), style_ar_normal),
-                make_ltr_para(str(exp.get('code', '-')), style_ltr),
-                make_ltr_para(str(i), style_ltr),
+                ltr_para(f'{running_balance:,.2f}', style_amount_green if running_balance > 0 else style_amount_red),
+                ltr_para(f'-{exp.get("amount", 0):,.2f}', style_amount_red),
+                ar_para(exp.get('description', '-'), style_ar_normal),
+                ar_para(exp.get('code_name_ar', '-'), style_ar_small),
+                ltr_para(str(exp.get('code', '-')), style_ltr),
+                ltr_para(str(i), style_ltr),
             ]
         else:
             row = [
-                make_ltr_para(str(i), style_ltr),
-                make_ltr_para(str(exp.get('code', '-')), style_ltr),
-                Paragraph(exp.get('code_name_en', '-'), style_en_normal),
-                Paragraph(exp.get('description', '-'), style_en_normal),
-                make_ltr_para(f'-{exp.get("amount", 0):,.2f}', style_amount),
-                make_ltr_para(f'{running_balance:,.2f}', style_balance),
+                ltr_para(str(i), style_ltr),
+                ltr_para(str(exp.get('code', '-')), style_ltr),
+                Paragraph(exp.get('code_name_en', '-'), style_ar_small),
+                Paragraph(exp.get('description', '-'), style_ar_normal),
+                ltr_para(f'-{exp.get("amount", 0):,.2f}', style_amount_red),
+                ltr_para(f'{running_balance:,.2f}', style_amount_green if running_balance > 0 else style_amount_red),
             ]
         
         table_data.append(row)
@@ -396,17 +446,17 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     # Total row
     if is_ar:
         total_row = [
-            make_ltr_para(f'{remaining:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=SUCCESS_GREEN)),
-            make_ltr_para(f'-{spent:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=DANGER_RED)),
-            make_arabic_para('الإجمالي', style_ar_bold),
+            ltr_para(f'{remaining:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=SUCCESS)),
+            ltr_para(f'-{spent:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=DANGER)),
+            ar_para('الإجمالي', ParagraphStyle('', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_RIGHT, textColor=NAVY, wordWrap='RTL')),
             '', '', ''
         ]
     else:
         total_row = [
             '', '', '',
-            Paragraph('TOTAL', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, textColor=PRIMARY_NAVY)),
-            make_ltr_para(f'-{spent:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=DANGER_RED)),
-            make_ltr_para(f'{remaining:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=SUCCESS_GREEN)),
+            Paragraph('TOTAL', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, textColor=NAVY)),
+            ltr_para(f'-{spent:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=DANGER)),
+            ltr_para(f'{remaining:,.2f}', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=10, alignment=TA_RIGHT, textColor=SUCCESS)),
         ]
     
     table_data.append(total_row)
@@ -414,41 +464,50 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     expenses_table = Table(table_data, colWidths=col_widths)
     expenses_table.setStyle(TableStyle([
         # Header
-        ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_NAVY),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
         # Total row
-        ('BACKGROUND', (0, -1), (-1, -1), LIGHT_BG),
-        ('LINEABOVE', (0, -1), (-1, -1), 1, PRIMARY_NAVY),
+        ('BACKGROUND', (0, -1), (-1, -1), LIGHT_GOLD),
+        ('LINEABOVE', (0, -1), (-1, -1), 2, GOLD),
+        # Alternating rows
+        *[('BACKGROUND', (0, i), (-1, i), LIGHT_BG) for i in range(2, len(table_data)-1, 2)],
         # Grid
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
-        ('INNERGRID', (0, 0), (-1, -2), 0.25, BORDER_COLOR),
+        ('BOX', (0, 0), (-1, -1), 1, NAVY),
+        ('INNERGRID', (0, 0), (-1, -2), 0.25, BORDER),
         # Padding
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2.5*mm),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5*mm),
+        ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
         ('LEFTPADDING', (0, 0), (-1, -1), 2*mm),
         ('RIGHTPADDING', (0, 0), (-1, -1), 2*mm),
     ]))
     
     elements.append(expenses_table)
-    elements.append(Spacer(1, 8*mm))
+    elements.append(Spacer(1, 10*mm))
     
     # ==================== SIGNATURES ====================
-    sig_title = make_arabic_para('التوقيعات والاعتمادات', style_ar_bold) if is_ar else Paragraph('Signatures & Approvals', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=11, textColor=PRIMARY_NAVY))
-    elements.append(sig_title)
-    elements.append(Spacer(1, 3*mm))
+    if is_ar:
+        sig_title = ar_para('التوقيعات والاعتمادات', style_ar_heading)
+    else:
+        sig_title = Paragraph('SIGNATURES & APPROVALS', ParagraphStyle('', fontName='Helvetica-Bold', fontSize=11, textColor=NAVY))
     
-    # QR codes for signatures
-    stas_qr = create_qr_image(f"STAS-CUSTODY-{custody_number}-{custody.get('id', '')[:8]}", size=16)
-    audit_qr = create_qr_image(f"AUDIT-{custody.get('audited_by', 'pending')}", size=16)
-    barcode = create_barcode_image(f"CST-{custody_number}", width=35, height=8)
+    elements.append(sig_title)
+    elements.append(Spacer(1, 4*mm))
+    
+    # QR codes
+    stas_qr = create_qr_image(f"STAS-{custody_number}-{custody.get('id', '')[:8]}", size=18)
+    audit_qr = create_qr_image(f"AUDIT-{custody.get('audited_by', 'pending')}", size=18)
+    barcode = create_barcode_image(f"CST-{custody_number}", width=40, height=10)
+    
+    audited_by = custody.get('audited_by_name', 'بانتظار التدقيق' if is_ar else 'Pending')
+    executed_by = custody.get('executed_by_name', 'بانتظار التنفيذ' if is_ar else 'Pending')
     
     if is_ar:
         sig_data = [
             [
-                make_arabic_para('STAS', style_ar_bold),
-                make_arabic_para('المدقق', style_ar_bold),
-                make_arabic_para('رقم العهدة', style_ar_bold),
+                ar_para('STAS', style_ar_bold),
+                ar_para('المدقق', style_ar_bold),
+                ar_para('رقم العهدة', style_ar_bold),
             ],
             [
                 stas_qr or '',
@@ -456,17 +515,17 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
                 barcode or '',
             ],
             [
-                make_arabic_para(custody.get('executed_by_name', 'بانتظار التنفيذ'), style_ar_normal),
-                make_arabic_para(custody.get('audited_by_name', 'بانتظار التدقيق'), style_ar_normal),
-                make_ltr_para(custody_number, style_ltr),
+                ar_para(executed_by, style_ar_small),
+                ar_para(audited_by, style_ar_small),
+                ltr_para(custody_number, style_ltr),
             ],
         ]
     else:
         sig_data = [
             [
-                Paragraph('Custody No.', style_en_normal),
-                Paragraph('Auditor', style_en_normal),
-                Paragraph('STAS', style_en_normal),
+                Paragraph('Custody No.', style_ar_bold),
+                Paragraph('Auditor', style_ar_bold),
+                Paragraph('STAS', style_ar_bold),
             ],
             [
                 barcode or '',
@@ -474,9 +533,9 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
                 stas_qr or '',
             ],
             [
-                make_ltr_para(custody_number, style_ltr),
-                Paragraph(custody.get('audited_by_name', 'Pending'), style_en_normal),
-                Paragraph(custody.get('executed_by_name', 'Pending'), style_en_normal),
+                ltr_para(custody_number, style_ltr),
+                Paragraph(audited_by, style_ar_small),
+                Paragraph(executed_by, style_ar_small),
             ],
         ]
     
@@ -484,20 +543,28 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     sig_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BACKGROUND', (0, 0), (-1, 0), LIGHT_BG),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
-        ('INNERGRID', (0, 0), (-1, -1), 0.25, BORDER_COLOR),
+        ('BACKGROUND', (0, 0), (-1, 0), LIGHT_GOLD),
+        ('BOX', (0, 0), (-1, -1), 1, NAVY),
+        ('INNERGRID', (0, 0), (-1, -1), 0.25, BORDER),
         ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
     ]))
     
     elements.append(sig_table)
-    elements.append(Spacer(1, 5*mm))
+    elements.append(Spacer(1, 8*mm))
     
     # ==================== FOOTER ====================
-    footer_text = f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC | DAR AL CODE HR OS"
-    footer = Paragraph(footer_text, ParagraphStyle('', fontName='Helvetica', fontSize=7, alignment=TA_CENTER, textColor=TEXT_MUTED))
-    elements.append(footer)
+    # Decorative line
+    elements.append(line_table)
+    elements.append(Spacer(1, 3*mm))
+    
+    footer_text = f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC"
+    if is_ar:
+        footer_text += " | نظام دار الكود للموارد البشرية"
+    else:
+        footer_text += " | DAR AL CODE HR System"
+    
+    elements.append(Paragraph(footer_text, style_footer))
     
     # Build PDF
     doc.build(elements)
