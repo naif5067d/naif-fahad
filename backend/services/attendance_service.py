@@ -659,7 +659,7 @@ async def get_employee_attendance_summary(employee_id: str, start_date: str = No
         "date": {"$gte": start_date, "$lte": end_date}
     }
     
-    entries = await db.attendance_ledger.find(query, {"_id": 0}).to_list(5000)
+    entries = await db.attendance_ledger.find(query, {"_id": 0, "type": 1, "late_minutes": 1, "early_minutes": 1, "settled": 1, "is_active": 1}).to_list(5000)
     
     summary = {
         "employee_id": employee_id,
