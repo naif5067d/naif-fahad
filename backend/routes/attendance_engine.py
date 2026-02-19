@@ -638,7 +638,24 @@ async def get_my_deductions(user=Depends(get_current_user)):
         "type": "debit"
     }, {"_id": 0}).sort("executed_at", -1).to_list(100)
     
-    return deductions
+    # تحويل البيانات لتتوافق مع الواجهة
+    result = []
+    for d in deductions:
+        result.append({
+            "id": d.get('id'),
+            "amount": d.get('amount'),
+            "currency": d.get('currency', 'SAR'),
+            "reason": d.get('description'),
+            "reason_ar": d.get('description_ar'),
+            "deduction_type": d.get('deduction_type'),
+            "month": d.get('month'),
+            "date": d.get('executed_at', '')[:10] if d.get('executed_at') else '',
+            "status": "executed",
+            "executed_at": d.get('executed_at'),
+            "explanation": d.get('explanation', {})
+        })
+    
+    return result
 
 
 @router.get("/my-finances/warnings")
