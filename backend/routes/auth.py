@@ -67,6 +67,13 @@ async def login(req: LoginRequest):
         raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     if not user.get('is_active', True):
         raise HTTPException(status_code=403, detail="الحساب معطل")
+    
+    # التحقق من الحساب المحجوب للتحقيق
+    if user.get('is_blocked'):
+        raise HTTPException(
+            status_code=403, 
+            detail="تم إيقاف حسابك مؤقتاً للتحقق من تجاوزات تخالف سياسة النظام. يرجى مراجعة مقر الشركة."
+        )
 
     token = create_access_token({
         "user_id": user['id'],
