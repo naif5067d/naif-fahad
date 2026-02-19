@@ -199,7 +199,7 @@ async def change_password(req: ChangePasswordRequest, user=Depends(get_current_u
         {"id": user['user_id']},
         {"$set": {
             "password_hash": hash_password(req.new_password),
-            "plain_password": req.new_password  # تخزين للـ STAS
+            "plain_password": None
         }}
     )
     return {"message": "تم تغيير كلمة المرور بنجاح"}
