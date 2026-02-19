@@ -585,59 +585,82 @@ export default function STASMirrorPage() {
               </div>
             )}
 
-            {/* Employee Filter & Block Controls */}
-            <Card>
-              <CardHeader>
+            {/* Employee Filter & Device Controls */}
+            <Card className="border-2 border-slate-200">
+              <CardHeader className="bg-slate-50">
                 <CardTitle className="flex items-center gap-2">
-                  <UserX size={20} />
-                  {lang === 'ar' ? 'إدارة حسابات الموظفين' : 'Employee Account Management'}
+                  <User size={22} />
+                  {lang === 'ar' ? 'إدارة الموظفين والأجهزة' : 'Employee & Device Management'}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>{lang === 'ar' ? 'اختر موظف' : 'Select Employee'}</Label>
+                    <Label className="text-base font-semibold">{lang === 'ar' ? 'اختر موظف' : 'Select Employee'}</Label>
                     <select
-                      className="w-full mt-1 p-2 border rounded-lg"
+                      className="w-full mt-2 p-3 border-2 rounded-xl text-base focus:border-blue-500 focus:outline-none"
                       value={selectedEmployeeFilter}
                       onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
+                      data-testid="employee-filter-select"
                     >
-                      <option value="all">{lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}</option>
+                      <option value="all">{lang === 'ar' ? '👥 جميع الموظفين' : '👥 All Employees'}</option>
                       {employees.map(emp => (
                         <option key={emp.id} value={emp.id}>{emp.full_name_ar || emp.full_name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <Label>{lang === 'ar' ? 'سبب الإيقاف (اختياري)' : 'Block Reason (optional)'}</Label>
+                    <Label className="text-base font-semibold">{lang === 'ar' ? 'سبب الإجراء (اختياري)' : 'Action Reason (optional)'}</Label>
                     <Input
                       value={blockReason}
                       onChange={(e) => setBlockReason(e.target.value)}
                       placeholder={lang === 'ar' ? 'أدخل السبب...' : 'Enter reason...'}
-                      className="mt-1"
+                      className="mt-2 p-3 text-base"
                     />
                   </div>
-                  <div className="flex items-end gap-2">
+                </div>
+                
+                {/* Action Buttons Grid */}
+                {selectedEmployeeFilter !== 'all' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t">
                     <Button
                       variant="destructive"
-                      onClick={() => selectedEmployeeFilter !== 'all' && handleBlockAccount(selectedEmployeeFilter)}
-                      disabled={selectedEmployeeFilter === 'all' || deviceAction}
-                      className="flex-1"
+                      onClick={() => handleBlockAccount(selectedEmployeeFilter)}
+                      disabled={deviceAction}
+                      className="h-12 text-base font-bold"
+                      data-testid="block-account-btn"
                     >
-                      <UserX size={16} className="mr-2" />
+                      <UserX size={18} className="ml-2" />
                       {lang === 'ar' ? 'إيقاف الحساب' : 'Block Account'}
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => selectedEmployeeFilter !== 'all' && handleUnblockAccount(selectedEmployeeFilter)}
-                      disabled={selectedEmployeeFilter === 'all' || deviceAction}
-                      className="flex-1"
+                      onClick={() => handleUnblockAccount(selectedEmployeeFilter)}
+                      disabled={deviceAction}
+                      className="h-12 text-base font-bold border-green-300 text-green-700 hover:bg-green-50"
+                      data-testid="unblock-account-btn"
                     >
-                      <RotateCcw size={16} className="mr-2" />
-                      {lang === 'ar' ? 'إلغاء الإيقاف' : 'Unblock'}
+                      <CheckCircle size={18} className="ml-2" />
+                      {lang === 'ar' ? 'تفعيل الحساب' : 'Activate'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleResetDevices(selectedEmployeeFilter)}
+                      disabled={deviceAction}
+                      className="h-12 text-base font-bold border-orange-300 text-orange-700 hover:bg-orange-50"
+                      data-testid="reset-devices-btn"
+                    >
+                      <RotateCcw size={18} className="ml-2" />
+                      {lang === 'ar' ? 'إعادة تعيين الأجهزة' : 'Reset Devices'}
                     </Button>
                   </div>
-                </div>
+                )}
+                
+                {selectedEmployeeFilter === 'all' && (
+                  <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-lg">
+                    {lang === 'ar' ? '👆 اختر موظفاً لإدارة حسابه وأجهزته' : '👆 Select an employee to manage their account and devices'}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
