@@ -349,7 +349,7 @@ export default function STASMirrorPage() {
                         <span className="text-xs text-orange-600 font-medium">{d.deduction_type_ar}</span>
                         <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
                       </div>
-                      <p className="text-sm font-medium mt-1">{d.employee_name_ar || d.employee_id}</p>
+                      <p className="text-sm font-medium mt-1">{d.employee_name || d.employee_name_ar || d.employee_id}</p>
                       <p className="text-xs text-muted-foreground">{d.period_start}</p>
                     </button>
                   ))}
@@ -380,7 +380,7 @@ export default function STASMirrorPage() {
                         <span className="text-xs text-green-600 font-medium">{d.deduction_type_ar}</span>
                         <span className="text-sm font-bold text-red-600">{d.amount?.toFixed(2)} ر.س</span>
                       </div>
-                      <p className="text-sm font-medium mt-1">{d.employee_name_ar || d.employee_id}</p>
+                      <p className="text-sm font-medium mt-1">{d.employee_name || d.employee_name_ar || d.employee_id}</p>
                       <p className="text-xs text-muted-foreground">{d.period_start}</p>
                     </button>
                   ))}
