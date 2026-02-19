@@ -1,20 +1,33 @@
 """
-Financial Custody System - نظام العهدة المالية الإدارية
+نظام العهدة المالية الإدارية - Financial Custody System
 للإدارة فقط: سلطان، محمد، صلاح، STAS
+
+التدفق:
+1. سلطان/محمد ينشئ عهدة جديدة بمبلغ
+2. يضيف مصروفات عبر جدول Excel-like (كود + وصف + مبلغ)
+3. النظام يحسب تلقائياً: المصروف والمتبقي
+4. إرسال للتدقيق (صلاح)
+5. صلاح يعتمد أو يرجع + يمكنه التعديل
+6. STAS ينفذ
+7. إذا بقي فائض، يُرحّل للعهدة الجديدة
 """
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 from database import db
-from utils.auth import require_roles, get_current_user
+from utils.auth import get_current_user
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin-custody", tags=["Admin Custody"])
 
-# ==================== الأكواد الثابتة (60 كود) ====================
-DEFAULT_EXPENSE_CODES = [
-    {"code": 1, "name_ar": "اثاث الامانة", "name_en": "Furniture and Fixtures Amanah", "category_ar": "مصاريف إدارية عامة", "category_en": "General administrative expenses"},
+# ==================== الأكواد الـ60 ====================
+EXPENSE_CODES = [
+    {"code": 1, "name_ar": "اثاث الامانة", "name_en": "Amanah Furniture", "category_ar": "مصاريف إدارية عامة", "category_en": "General administrative expenses"},
     {"code": 2, "name_ar": "ادوات نظافة", "name_en": "Cleaning supplies", "category_ar": "حساب الاستهلاك", "category_en": "Amortisation expense"},
     {"code": 3, "name_ar": "ادوات ومهمات مستهلكة", "name_en": "Consumable tools", "category_ar": "الديون المعدومة", "category_en": "Bad debts"},
     {"code": 4, "name_ar": "اللوازم والمواد", "name_en": "Supplies and materials", "category_ar": "الرسوم المصرفية", "category_en": "Bank charges"},
@@ -79,114 +92,96 @@ DEFAULT_EXPENSE_CODES = [
 # ==================== MODELS ====================
 
 class CustodyCreate(BaseModel):
-    amount: float = Field(..., gt=0)
+    amount: float = Field(..., gt=0, description="مبلغ العهدة")
     notes: Optional[str] = None
-    carry_forward_from: Optional[str] = None  # رقم العهدة السابقة للترحيل
 
 class ExpenseCreate(BaseModel):
-    code: int = Field(..., ge=1)
-    description: str
-    amount: float = Field(..., gt=0)
-    custom_name: Optional[str] = None  # للأكواد الجديدة (61+)
+    code: int = Field(..., ge=1, description="كود المصروف")
+    description: str = Field(..., min_length=1, description="وصف المصروف")
+    amount: float = Field(..., gt=0, description="المبلغ")
+    custom_name: Optional[str] = None
 
-class ExpenseUpdate(BaseModel):
+class AuditAction(BaseModel):
+    action: str = Field(..., pattern="^(approve|reject)$")
+    comment: Optional[str] = None
+
+class ExpenseEdit(BaseModel):
     description: Optional[str] = None
     amount: Optional[float] = None
 
-class AuditAction(BaseModel):
-    action: str  # approve, reject
-    comment: Optional[str] = None
-
 # ==================== HELPER FUNCTIONS ====================
 
-async def get_next_custody_number() -> str:
-    """توليد رقم العهدة التالي"""
-    last = await db.admin_custodies.find_one(
-        {},
-        sort=[("custody_number", -1)]
-    )
-    if last and last.get('custody_number'):
-        try:
-            num = int(last['custody_number']) + 1
-        except:
-            num = 1
-    else:
-        num = 1
-    return str(num).zfill(3)
+ALLOWED_ROLES = ['sultan', 'mohammed', 'salah', 'stas']
 
-async def get_expense_code_info(code: int) -> dict:
-    """جلب معلومات كود المصروف"""
-    # أولاً: البحث في الأكواد المخصصة
-    custom = await db.expense_codes.find_one({"code": code}, {"_id": 0})
-    if custom:
-        return custom
-    
-    # ثانياً: البحث في الأكواد الافتراضية
-    for c in DEFAULT_EXPENSE_CODES:
+def check_role(user: dict, allowed: list):
+    role = user.get('role', '')
+    if role not in allowed:
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    return role
+
+async def get_next_custody_number() -> str:
+    last = await db.admin_custodies.find_one({}, sort=[("custody_number_int", -1)])
+    next_num = (last.get('custody_number_int', 0) + 1) if last else 1
+    return str(next_num).zfill(3), next_num
+
+def get_code_info(code: int) -> dict:
+    """جلب معلومات الكود من القائمة الثابتة"""
+    for c in EXPENSE_CODES:
         if c['code'] == code:
             return c
-    
     return None
 
-async def init_expense_codes():
-    """تهيئة الأكواد في قاعدة البيانات"""
-    count = await db.expense_codes.count_documents({})
-    if count == 0:
-        await db.expense_codes.insert_many(DEFAULT_EXPENSE_CODES)
+async def get_code_info_db(code: int) -> dict:
+    """جلب معلومات الكود من قاعدة البيانات أولاً، ثم القائمة الثابتة"""
+    db_code = await db.expense_codes.find_one({"code": code}, {"_id": 0})
+    if db_code:
+        return db_code
+    return get_code_info(code)
 
-# ==================== ENDPOINTS ====================
+# ==================== EXPENSE CODES ====================
 
-@router.on_event("startup")
-async def startup():
-    await init_expense_codes()
-
-
-@router.get("/expense-codes")
-async def get_all_expense_codes(
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
-):
-    """جلب جميع أكواد المصروفات"""
-    # جلب الأكواد من قاعدة البيانات
-    codes = await db.expense_codes.find({}, {"_id": 0}).sort("code", 1).to_list(200)
+@router.get("/codes")
+async def get_all_codes(user=Depends(get_current_user)):
+    """جلب جميع الأكواد (ثابتة + مضافة)"""
+    check_role(user, ALLOWED_ROLES)
     
-    # إذا فارغة، استخدم الافتراضية
-    if not codes:
-        codes = DEFAULT_EXPENSE_CODES
+    # جلب الأكواد المضافة من قاعدة البيانات
+    custom_codes = await db.expense_codes.find({"code": {"$gt": 60}}, {"_id": 0}).to_list(100)
     
-    return codes
+    # دمج مع الأكواد الثابتة
+    all_codes = EXPENSE_CODES.copy()
+    all_codes.extend(custom_codes)
+    
+    return {"codes": all_codes, "total": len(all_codes)}
 
 
-@router.get("/expense-codes/{code}")
-async def get_expense_code(
-    code: int,
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
-):
-    """جلب معلومات كود معين"""
-    info = await get_expense_code_info(code)
+@router.get("/codes/{code}")
+async def get_code(code: int, user=Depends(get_current_user)):
+    """جلب معلومات كود محدد"""
+    check_role(user, ALLOWED_ROLES)
+    
+    info = await get_code_info_db(code)
+    
     if info:
-        return info
+        return {"found": True, "code": info}
     
-    # كود جديد
     return {
-        "code": code,
-        "name_ar": None,
-        "name_en": None,
-        "category_ar": None,
-        "category_en": None,
-        "is_new": True
+        "found": False,
+        "code": {"code": code, "name_ar": None, "name_en": None, "is_new": True}
     }
 
 
-@router.post("/expense-codes")
-async def create_expense_code(
-    code: int,
-    name_ar: str,
+@router.post("/codes")
+async def create_code(
+    code: int = Query(..., ge=61),
+    name_ar: str = Query(...),
     name_en: Optional[str] = None,
     category_ar: Optional[str] = None,
-    category_en: Optional[str] = None,
-    user=Depends(require_roles('sultan', 'mohammed', 'stas'))
+    user=Depends(get_current_user)
 ):
-    """إنشاء كود جديد"""
+    """إنشاء كود جديد (61+)"""
+    check_role(user, ['sultan', 'mohammed', 'stas'])
+    
     existing = await db.expense_codes.find_one({"code": code})
     if existing:
         raise HTTPException(status_code=400, detail="الكود موجود مسبقاً")
@@ -196,7 +191,7 @@ async def create_expense_code(
         "name_ar": name_ar,
         "name_en": name_en or name_ar,
         "category_ar": category_ar or "غير مصنف",
-        "category_en": category_en or "Uncategorized",
+        "category_en": "Uncategorized",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "created_by": user.get('user_id')
     }
@@ -206,188 +201,244 @@ async def create_expense_code(
     
     return {"success": True, "code": new_code}
 
-
 # ==================== CUSTODY MANAGEMENT ====================
 
 @router.post("/create")
-async def create_custody(
-    data: CustodyCreate,
-    user=Depends(require_roles('sultan', 'mohammed'))
-):
+async def create_custody(data: CustodyCreate, user=Depends(get_current_user)):
     """إنشاء عهدة جديدة"""
-    now = datetime.now(timezone.utc).isoformat()
-    custody_number = await get_next_custody_number()
+    check_role(user, ['sultan', 'mohammed'])
     
-    # التحقق من الفائض السابق
+    now = datetime.now(timezone.utc).isoformat()
+    custody_number, custody_number_int = await get_next_custody_number()
+    
+    # فحص الفائض من العهد السابقة
+    surplus_info = await db.admin_custodies.find_one(
+        {"status": "closed", "remaining": {"$gt": 0}},
+        sort=[("created_at", -1)]
+    )
+    
     surplus_amount = 0
     surplus_from = None
-    if data.carry_forward_from:
-        prev = await db.admin_custodies.find_one({"custody_number": data.carry_forward_from})
-        if prev and prev.get('status') == 'closed':
-            surplus_amount = prev.get('remaining', 0)
-            surplus_from = data.carry_forward_from
+    if surplus_info and surplus_info.get('remaining', 0) > 0:
+        surplus_amount = surplus_info['remaining']
+        surplus_from = surplus_info['custody_number']
     
-    new_custody = {
+    custody = {
         "id": str(uuid.uuid4()),
         "custody_number": custody_number,
-        "total_amount": data.amount + surplus_amount,
-        "original_amount": data.amount,
-        "surplus_from": surplus_from,
+        "custody_number_int": custody_number_int,
+        "total_amount": data.amount,
         "surplus_amount": surplus_amount,
-        "spent": 0,
+        "surplus_from": surplus_from,
+        "budget": data.amount + surplus_amount,
+        "spent": 0.0,
         "remaining": data.amount + surplus_amount,
-        "status": "open",  # open, pending_audit, approved, executed, closed
+        "status": "open",
         "notes": data.notes,
         "created_by": user.get('user_id'),
-        "created_by_name": user.get('full_name', ''),
+        "created_by_name": user.get('full_name', user.get('username', '')),
         "created_at": now,
         "updated_at": now,
-        "audit_status": None,
+        "sent_for_audit_at": None,
+        "sent_for_audit_by": None,
         "audited_by": None,
+        "audited_by_name": None,
         "audited_at": None,
+        "audit_status": None,
         "audit_comment": None,
         "executed_by": None,
-        "executed_at": None
+        "executed_by_name": None,
+        "executed_at": None,
+        "closed_at": None,
+        "closed_by": None
     }
     
-    await db.admin_custodies.insert_one(new_custody)
-    new_custody.pop('_id', None)
+    await db.admin_custodies.insert_one(custody)
+    custody.pop('_id', None)
     
-    # تسجيل في السجل
+    # سجل الأحداث
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
-        "custody_id": new_custody['id'],
+        "custody_id": custody['id'],
         "action": "created",
         "details": {"amount": data.amount, "surplus": surplus_amount},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
+    
+    # إذا تم ترحيل فائض، تحديث العهدة السابقة
+    if surplus_from:
+        await db.admin_custodies.update_one(
+            {"custody_number": surplus_from},
+            {"$set": {"surplus_transferred_to": custody_number, "remaining": 0}}
+        )
     
     return {
         "success": True,
         "message_ar": f"تم إنشاء العهدة رقم {custody_number}",
-        "message_en": f"Custody {custody_number} created",
-        "custody": new_custody
+        "custody": custody,
+        "surplus_alert": f"تم ترحيل {surplus_amount} ريال من العهدة {surplus_from}" if surplus_from else None
     }
 
 
 @router.get("/all")
 async def get_all_custodies(
     status: Optional[str] = None,
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
+    user=Depends(get_current_user)
 ):
     """جلب جميع العهد"""
+    check_role(user, ALLOWED_ROLES)
+    
     query = {}
     if status:
         query["status"] = status
     
-    custodies = await db.admin_custodies.find(
-        query,
-        {"_id": 0}
-    ).sort("created_at", -1).to_list(100)
+    custodies = await db.admin_custodies.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # جلب عدد المصروفات لكل عهدة
+    for c in custodies:
+        count = await db.custody_expenses.count_documents({"custody_id": c['id'], "status": "active"})
+        c['expense_count'] = count
     
     return custodies
 
 
-@router.get("/open-surplus")
-async def get_open_surplus(
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
-):
-    """جلب الفائض من العهد المغلقة"""
-    closed = await db.admin_custodies.find(
-        {"status": "closed", "remaining": {"$gt": 0}},
+@router.get("/summary")
+async def get_summary(user=Depends(get_current_user)):
+    """إحصائيات العهد"""
+    check_role(user, ALLOWED_ROLES)
+    
+    all_custodies = await db.admin_custodies.find({}, {"_id": 0}).to_list(500)
+    
+    open_custodies = [c for c in all_custodies if c['status'] == 'open']
+    pending_audit = [c for c in all_custodies if c['status'] == 'pending_audit']
+    approved = [c for c in all_custodies if c['status'] == 'approved']
+    executed = [c for c in all_custodies if c['status'] == 'executed']
+    closed = [c for c in all_custodies if c['status'] == 'closed']
+    
+    return {
+        "total_custodies": len(all_custodies),
+        "open": len(open_custodies),
+        "pending_audit": len(pending_audit),
+        "approved": len(approved),
+        "executed": len(executed),
+        "closed": len(closed),
+        "total_budget": sum(c.get('budget', 0) for c in all_custodies if c['status'] not in ['closed']),
+        "total_spent": sum(c.get('spent', 0) for c in all_custodies if c['status'] not in ['closed']),
+        "total_remaining": sum(c.get('remaining', 0) for c in all_custodies if c['status'] not in ['closed']),
+        "total_surplus": sum(c.get('remaining', 0) for c in closed)
+    }
+
+
+@router.get("/surplus-available")
+async def get_available_surplus(user=Depends(get_current_user)):
+    """جلب الفائض المتاح للترحيل"""
+    check_role(user, ALLOWED_ROLES)
+    
+    closed_with_surplus = await db.admin_custodies.find(
+        {"status": "closed", "remaining": {"$gt": 0}, "surplus_transferred_to": None},
         {"_id": 0}
     ).to_list(50)
     
-    total_surplus = sum(c.get('remaining', 0) for c in closed)
+    total = sum(c.get('remaining', 0) for c in closed_with_surplus)
     
     return {
-        "total_surplus": total_surplus,
-        "custodies": closed
+        "available_surplus": total,
+        "custodies": closed_with_surplus
     }
 
 
 @router.get("/{custody_id}")
-async def get_custody(
-    custody_id: str,
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
-):
-    """جلب عهدة معينة مع مصروفاتها"""
+async def get_custody(custody_id: str, user=Depends(get_current_user)):
+    """جلب عهدة محددة مع مصروفاتها"""
+    check_role(user, ALLOWED_ROLES)
+    
     custody = await db.admin_custodies.find_one({"id": custody_id}, {"_id": 0})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
-    # جلب المصروفات
     expenses = await db.custody_expenses.find(
-        {"custody_id": custody_id},
+        {"custody_id": custody_id, "status": "active"},
         {"_id": 0}
     ).sort("created_at", 1).to_list(500)
     
+    logs = await db.custody_logs.find(
+        {"custody_id": custody_id},
+        {"_id": 0}
+    ).sort("performed_at", -1).to_list(100)
+    
     custody['expenses'] = expenses
+    custody['logs'] = logs
     
     return custody
 
-
 # ==================== EXPENSES ====================
 
-@router.post("/{custody_id}/expenses")
-async def add_expense(
-    custody_id: str,
-    data: ExpenseCreate,
-    user=Depends(require_roles('sultan', 'mohammed'))
-):
-    """إضافة مصروف للعهدة"""
+@router.post("/{custody_id}/expense")
+async def add_expense(custody_id: str, data: ExpenseCreate, user=Depends(get_current_user)):
+    """إضافة مصروف"""
+    check_role(user, ['sultan', 'mohammed'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
-    if custody['status'] == 'executed':
-        raise HTTPException(status_code=400, detail="لا يمكن التعديل - العهدة منفذة")
+    if custody['status'] not in ['open', 'pending_audit']:
+        raise HTTPException(status_code=400, detail="لا يمكن إضافة مصروفات - العهدة ليست مفتوحة")
     
-    # التحقق من المتبقي
+    if custody['status'] == 'pending_audit':
+        # إرجاع للحالة المفتوحة إذا كانت بانتظار التدقيق
+        await db.admin_custodies.update_one(
+            {"id": custody_id},
+            {"$set": {"status": "open"}}
+        )
+    
     if data.amount > custody['remaining']:
         raise HTTPException(
-            status_code=400, 
-            detail=f"المبلغ ({data.amount}) أكبر من المتبقي ({custody['remaining']})"
+            status_code=400,
+            detail=f"المبلغ ({data.amount}) يتجاوز المتبقي ({custody['remaining']})"
         )
     
     # جلب معلومات الكود
-    code_info = await get_expense_code_info(data.code)
+    code_info = await get_code_info_db(data.code)
     
-    now = datetime.now(timezone.utc).isoformat()
-    
-    # إذا كود جديد (61+) وغير موجود
+    # إذا كود جديد (61+) ولم يوجد
     if not code_info and data.code > 60:
         if not data.custom_name:
             raise HTTPException(status_code=400, detail="يجب إدخال اسم للكود الجديد")
         
-        # حفظ الكود الجديد
-        new_code = {
+        code_info = {
             "code": data.code,
             "name_ar": data.custom_name,
             "name_en": data.custom_name,
             "category_ar": "غير مصنف",
-            "category_en": "Uncategorized",
-            "created_at": now,
-            "created_by": user.get('user_id')
+            "category_en": "Uncategorized"
         }
-        await db.expense_codes.insert_one(new_code)
-        code_info = new_code
+        # حفظ الكود الجديد
+        await db.expense_codes.insert_one({
+            **code_info,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_by": user.get('user_id')
+        })
+    
+    now = datetime.now(timezone.utc).isoformat()
     
     expense = {
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "code": data.code,
-        "code_name_ar": code_info.get('name_ar', data.custom_name) if code_info else data.custom_name,
-        "code_name_en": code_info.get('name_en', data.custom_name) if code_info else data.custom_name,
+        "code_name_ar": code_info.get('name_ar', str(data.code)) if code_info else str(data.code),
+        "code_name_en": code_info.get('name_en', str(data.code)) if code_info else str(data.code),
         "category_ar": code_info.get('category_ar', 'غير مصنف') if code_info else 'غير مصنف',
-        "category_en": code_info.get('category_en', 'Uncategorized') if code_info else 'Uncategorized',
         "description": data.description,
         "amount": data.amount,
+        "status": "active",
         "created_by": user.get('user_id'),
         "created_by_name": user.get('full_name', ''),
         "created_at": now,
-        "status": "active"  # active, cancelled
+        "edited_by": None,
+        "edited_at": None
     }
     
     await db.custody_expenses.insert_one(expense)
@@ -395,44 +446,36 @@ async def add_expense(
     
     # تحديث العهدة
     new_spent = custody['spent'] + data.amount
-    new_remaining = custody['total_amount'] - new_spent
+    new_remaining = custody['budget'] - new_spent
     
     await db.admin_custodies.update_one(
         {"id": custody_id},
-        {"$set": {
-            "spent": new_spent,
-            "remaining": new_remaining,
-            "updated_at": now
-        }}
+        {"$set": {"spent": new_spent, "remaining": new_remaining, "updated_at": now}}
     )
     
-    # تسجيل في السجل
+    # سجل
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "action": "expense_added",
-        "details": {"expense_id": expense['id'], "amount": data.amount, "code": data.code},
+        "details": {"expense_id": expense['id'], "code": data.code, "amount": data.amount},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
     
     return {
         "success": True,
         "expense": expense,
-        "custody_update": {
-            "spent": new_spent,
-            "remaining": new_remaining
-        }
+        "custody_update": {"spent": new_spent, "remaining": new_remaining}
     }
 
 
-@router.delete("/{custody_id}/expenses/{expense_id}")
-async def cancel_expense(
-    custody_id: str,
-    expense_id: str,
-    user=Depends(require_roles('sultan', 'mohammed'))
-):
-    """إلغاء مصروف (ليس حذف)"""
+@router.delete("/{custody_id}/expense/{expense_id}")
+async def cancel_expense(custody_id: str, expense_id: str, user=Depends(get_current_user)):
+    """إلغاء مصروف (لا حذف فعلي)"""
+    check_role(user, ['sultan', 'mohammed', 'salah'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
@@ -457,51 +500,110 @@ async def cancel_expense(
     
     # تحديث العهدة
     new_spent = custody['spent'] - expense['amount']
-    new_remaining = custody['total_amount'] - new_spent
+    new_remaining = custody['budget'] - new_spent
     
     await db.admin_custodies.update_one(
         {"id": custody_id},
-        {"$set": {
-            "spent": new_spent,
-            "remaining": new_remaining,
-            "updated_at": now
-        }}
+        {"$set": {"spent": new_spent, "remaining": new_remaining, "updated_at": now}}
     )
     
-    # تسجيل في السجل
+    # سجل
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "action": "expense_cancelled",
         "details": {"expense_id": expense_id, "amount": expense['amount']},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
     
     return {
         "success": True,
         "message_ar": "تم إلغاء المصروف",
-        "custody_update": {
-            "spent": new_spent,
-            "remaining": new_remaining
-        }
+        "custody_update": {"spent": new_spent, "remaining": new_remaining}
     }
 
 
-# ==================== AUDIT & EXECUTION ====================
-
-@router.post("/{custody_id}/send-for-audit")
-async def send_for_audit(
+@router.put("/{custody_id}/expense/{expense_id}")
+async def edit_expense(
     custody_id: str,
-    user=Depends(require_roles('sultan', 'mohammed'))
+    expense_id: str,
+    data: ExpenseEdit,
+    user=Depends(get_current_user)
 ):
+    """تعديل مصروف (صلاح فقط أثناء التدقيق)"""
+    role = check_role(user, ['salah', 'stas'])
+    
+    custody = await db.admin_custodies.find_one({"id": custody_id})
+    if not custody:
+        raise HTTPException(status_code=404, detail="العهدة غير موجودة")
+    
+    if custody['status'] != 'pending_audit' and role != 'stas':
+        raise HTTPException(status_code=400, detail="التعديل متاح فقط أثناء التدقيق")
+    
+    expense = await db.custody_expenses.find_one({"id": expense_id, "custody_id": custody_id, "status": "active"})
+    if not expense:
+        raise HTTPException(status_code=404, detail="المصروف غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    updates = {"edited_by": user.get('user_id'), "edited_at": now}
+    
+    amount_diff = 0
+    if data.description:
+        updates['description'] = data.description
+    
+    if data.amount is not None and data.amount != expense['amount']:
+        amount_diff = data.amount - expense['amount']
+        new_remaining = custody['remaining'] - amount_diff
+        
+        if new_remaining < 0:
+            raise HTTPException(status_code=400, detail="المبلغ الجديد يتجاوز المتبقي")
+        
+        updates['amount'] = data.amount
+    
+    await db.custody_expenses.update_one({"id": expense_id}, {"$set": updates})
+    
+    # تحديث العهدة إذا تغير المبلغ
+    if amount_diff != 0:
+        new_spent = custody['spent'] + amount_diff
+        new_remaining = custody['budget'] - new_spent
+        await db.admin_custodies.update_one(
+            {"id": custody_id},
+            {"$set": {"spent": new_spent, "remaining": new_remaining, "updated_at": now}}
+        )
+    
+    # سجل
+    await db.custody_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "custody_id": custody_id,
+        "action": "expense_edited",
+        "details": {"expense_id": expense_id, "changes": updates},
+        "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
+        "performed_at": now
+    })
+    
+    return {"success": True, "message_ar": "تم تعديل المصروف"}
+
+# ==================== WORKFLOW ====================
+
+@router.post("/{custody_id}/submit-audit")
+async def submit_for_audit(custody_id: str, user=Depends(get_current_user)):
     """إرسال للتدقيق (صلاح)"""
+    check_role(user, ['sultan', 'mohammed'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
     if custody['status'] != 'open':
-        raise HTTPException(status_code=400, detail="العهدة ليست مفتوحة")
+        raise HTTPException(status_code=400, detail="العهدة يجب أن تكون مفتوحة")
+    
+    # التحقق من وجود مصروفات
+    expense_count = await db.custody_expenses.count_documents({"custody_id": custody_id, "status": "active"})
+    if expense_count == 0:
+        raise HTTPException(status_code=400, detail="أضف مصروفات أولاً")
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -520,22 +622,32 @@ async def send_for_audit(
         "id": str(uuid.uuid4()),
         "employee_id": "salah",
         "title": "عهدة للتدقيق",
-        "message": f"العهدة رقم {custody['custody_number']} بانتظار تدقيقك",
+        "message": f"العهدة رقم {custody['custody_number']} بانتظار تدقيقك - المبلغ: {custody['spent']} ريال",
         "type": "custody_audit",
+        "reference_id": custody_id,
         "read": False,
         "created_at": now
     })
     
-    return {"success": True, "message_ar": "تم إرسال العهدة للتدقيق"}
+    # سجل
+    await db.custody_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "custody_id": custody_id,
+        "action": "submitted_for_audit",
+        "details": {"spent": custody['spent'], "remaining": custody['remaining']},
+        "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
+        "performed_at": now
+    })
+    
+    return {"success": True, "message_ar": "تم إرسال العهدة للتدقيق", "status": "pending_audit"}
 
 
 @router.post("/{custody_id}/audit")
-async def audit_custody(
-    custody_id: str,
-    data: AuditAction,
-    user=Depends(require_roles('salah', 'stas'))
-):
-    """تدقيق العهدة (صلاح أو STAS)"""
+async def audit_custody(custody_id: str, data: AuditAction, user=Depends(get_current_user)):
+    """تدقيق العهدة (صلاح) - أو STAS بعد 24 ساعة"""
+    role = check_role(user, ['salah', 'stas'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
@@ -543,15 +655,11 @@ async def audit_custody(
     if custody['status'] != 'pending_audit':
         raise HTTPException(status_code=400, detail="العهدة ليست بانتظار التدقيق")
     
-    # STAS يستطيع الاعتماد بعد 24 ساعة
-    role = user.get('role')
-    if role == 'stas':
-        sent_at = custody.get('sent_for_audit_at')
-        if sent_at:
-            sent_time = datetime.fromisoformat(sent_at.replace('Z', '+00:00'))
-            now_time = datetime.now(timezone.utc)
-            if (now_time - sent_time) < timedelta(hours=24):
-                raise HTTPException(status_code=400, detail="STAS يستطيع الاعتماد بعد 24 ساعة")
+    # STAS يستطيع الاعتماد بعد 24 ساعة فقط
+    if role == 'stas' and custody.get('sent_for_audit_at'):
+        sent_time = datetime.fromisoformat(custody['sent_for_audit_at'].replace('Z', '+00:00'))
+        if (datetime.now(timezone.utc) - sent_time) < timedelta(hours=24):
+            raise HTTPException(status_code=400, detail="STAS يستطيع الاعتماد بعد مرور 24 ساعة")
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -559,7 +667,7 @@ async def audit_custody(
         new_status = 'approved'
         audit_status = 'approved'
     else:
-        new_status = 'open'  # إرجاع لسلطان
+        new_status = 'open'
         audit_status = 'rejected'
     
     await db.admin_custodies.update_one(
@@ -575,29 +683,42 @@ async def audit_custody(
         }}
     )
     
-    # تسجيل في السجل
+    # سجل
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "action": f"audit_{data.action}",
         "details": {"comment": data.comment},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
+    
+    # إشعار
+    if data.action == 'reject':
+        await db.notifications.insert_one({
+            "id": str(uuid.uuid4()),
+            "employee_id": custody['created_by'],
+            "title": "تم إرجاع العهدة",
+            "message": f"العهدة رقم {custody['custody_number']} تم إرجاعها: {data.comment or 'بدون ملاحظات'}",
+            "type": "custody_rejected",
+            "reference_id": custody_id,
+            "read": False,
+            "created_at": now
+        })
     
     return {
         "success": True,
         "message_ar": "تم الاعتماد" if data.action == 'approve' else "تم الإرجاع",
-        "new_status": new_status
+        "status": new_status
     }
 
 
 @router.post("/{custody_id}/execute")
-async def execute_custody(
-    custody_id: str,
-    user=Depends(require_roles('stas'))
-):
+async def execute_custody(custody_id: str, user=Depends(get_current_user)):
     """تنفيذ العهدة (STAS فقط)"""
+    check_role(user, ['stas'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
@@ -618,31 +739,36 @@ async def execute_custody(
         }}
     )
     
-    # تسجيل في السجل
+    # سجل
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "action": "executed",
-        "details": {},
+        "details": {"spent": custody['spent'], "remaining": custody['remaining']},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
     
-    return {"success": True, "message_ar": "تم تنفيذ العهدة"}
+    return {
+        "success": True,
+        "message_ar": "تم تنفيذ العهدة",
+        "status": "executed",
+        "remaining": custody['remaining']
+    }
 
 
 @router.post("/{custody_id}/close")
-async def close_custody(
-    custody_id: str,
-    user=Depends(require_roles('sultan', 'mohammed', 'stas'))
-):
+async def close_custody(custody_id: str, user=Depends(get_current_user)):
     """إغلاق العهدة"""
+    check_role(user, ['sultan', 'mohammed', 'stas'])
+    
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
         raise HTTPException(status_code=404, detail="العهدة غير موجودة")
     
     if custody['status'] != 'executed':
-        raise HTTPException(status_code=400, detail="العهدة غير منفذة")
+        raise HTTPException(status_code=400, detail="العهدة يجب أن تكون منفذة لإغلاقها")
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -656,43 +782,24 @@ async def close_custody(
         }}
     )
     
-    # تسجيل في السجل
+    # سجل
     await db.custody_logs.insert_one({
         "id": str(uuid.uuid4()),
         "custody_id": custody_id,
         "action": "closed",
-        "details": {"remaining": custody['remaining']},
+        "details": {"surplus": custody['remaining']},
         "performed_by": user.get('user_id'),
+        "performed_by_name": user.get('full_name', ''),
         "performed_at": now
     })
     
+    msg = "تم إغلاق العهدة"
+    if custody['remaining'] > 0:
+        msg += f" - فائض {custody['remaining']} ريال سيُرحّل للعهدة القادمة"
+    
     return {
         "success": True,
-        "message_ar": "تم إغلاق العهدة",
+        "message_ar": msg,
+        "status": "closed",
         "surplus": custody['remaining']
     }
-
-
-# ==================== DASHBOARD ====================
-
-@router.get("/dashboard/summary")
-async def get_dashboard_summary(
-    user=Depends(require_roles('sultan', 'mohammed', 'salah', 'stas'))
-):
-    """لوحة الإجماليات"""
-    custodies = await db.admin_custodies.find({}, {"_id": 0}).to_list(500)
-    
-    summary = {
-        "total_custodies": len(custodies),
-        "open_custodies": len([c for c in custodies if c['status'] == 'open']),
-        "pending_audit": len([c for c in custodies if c['status'] == 'pending_audit']),
-        "approved": len([c for c in custodies if c['status'] == 'approved']),
-        "executed": len([c for c in custodies if c['status'] == 'executed']),
-        "closed": len([c for c in custodies if c['status'] == 'closed']),
-        "total_amount": sum(c.get('total_amount', 0) for c in custodies if c['status'] != 'closed'),
-        "total_spent": sum(c.get('spent', 0) for c in custodies if c['status'] != 'closed'),
-        "total_remaining": sum(c.get('remaining', 0) for c in custodies if c['status'] != 'closed'),
-        "total_surplus": sum(c.get('remaining', 0) for c in custodies if c['status'] == 'closed')
-    }
-    
-    return summary
