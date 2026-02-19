@@ -91,7 +91,7 @@ export default function FinancialCustodyPage() {
         api.get('/api/admin-custody/all'),
         api.get('/api/admin-custody/summary')
       ]);
-      setCustodies(custodiesRes.data.filter(c => c.status !== 'deleted'));
+      setCustodies(custodiesRes.data);
       setSummary(summaryRes.data);
     } catch (e) {
       console.error('Error fetching custodies:', e);
