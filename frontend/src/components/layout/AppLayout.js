@@ -309,6 +309,16 @@ export default function AppLayout({ children }) {
               >
                 {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
               </button>
+
+              {/* Logout button */}
+              <button 
+                data-testid="logout-btn" 
+                onClick={logout} 
+                className="p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-colors touch-target"
+                title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           </div>
         </header>
