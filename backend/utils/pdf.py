@@ -560,80 +560,48 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         ]))
         elements.append(details_table)
     
-    # ============ APPROVAL CHAIN ============
+    # ============ APPROVAL CHAIN - STAS ONLY ============
+    # فقط توقيع STAS يظهر رقمياً - باقي التوقيعات يدوية
     approval_chain = transaction.get('approval_chain', [])
-    if approval_chain:
-        elements.append(make_para(labels['approvals'], styles['section']))
+    stas_approval = None
+    for approval in approval_chain:
+        if approval.get('stage') == 'stas':
+            stas_approval = approval
+            break
+    
+    if stas_approval or transaction.get('status') == 'executed':
+        elements.append(Spacer(1, 8*mm))
         
-        headers = [
-            make_para(labels['stage'], styles['header_cell']),
-            make_para(labels['approver'], styles['header_cell']),
-            make_para(labels['action'], styles['header_cell']),
-            make_para(labels['time'], styles['header_cell']),
-            make_para(labels['signature'], styles['header_cell']),
-        ]
-        approval_data = [headers]
+        # إنشاء توقيع STAS كباركود
+        sig_code = f"STAS-{ref_no}"
+        barcode_drawing = create_barcode_image(sig_code, width=50, height=12)
         
-        for approval in approval_chain:
-            stage = approval.get('stage', '')
-            
-            if stage in ('stas', 'ceo'):
-                stage_display = stage.upper()
-                stage_para = make_ltr_para(stage_display, styles['cell_center'])
-            else:
-                stage_display = labels.get(stage, stage.title())
-                stage_para = make_para(stage_display, styles['cell_center'])
-            
-            approver_name = approval.get('approver_name', approval.get('actor_name', '-'))
-            action_raw = approval.get('status', approval.get('action', ''))
-            action_label = labels.get(action_raw, action_raw.title())
-            timestamp = format_saudi_time(approval.get('timestamp'))
-            
-            # Signature: BARCODE for STAS, QR for others
-            approver_id = approval.get('approver_id', '')[:8]
-            if stage == 'stas':
-                sig_code = f"STAS-{ref_no[-8:]}"
-                barcode_drawing = create_barcode_image(sig_code, width=35, height=8)
-                if barcode_drawing:
-                    ref_text = make_ltr_para(ref_no, styles['cell_center'])
-                    sig_table = Table([[barcode_drawing], [ref_text]], colWidths=[40*mm], rowHeights=[10*mm, 4*mm])
-                    sig_table.setStyle(TableStyle([
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ]))
-                    sig_img = sig_table
-                else:
-                    sig_img = make_ltr_para(f"[STAS-{ref_no[-8:]}]", styles['cell_center'])
-            else:
-                sig_data = f"{stage}-{approver_id}"
-                sig_img = create_qr_image(sig_data, size=12)
-                if sig_img is None:
-                    sig_img = make_ltr_para(f"[{approver_id[:6]}]", styles['cell_center'])
-            
-            approval_data.append([
-                stage_para,
-                make_para(approver_name, styles['cell_center']),
-                make_para(action_label, styles['cell_center']),
-                make_ltr_para(timestamp, styles['cell_center']),
-                sig_img
-            ])
+        # نص "فحص النظام صحيح"
+        system_check_text = reshape_arabic("فحص النظام صحيح ✓") if lang == 'ar' else "System Verified ✓"
         
-        row_heights = [7*mm] + [14*mm] * (len(approval_data) - 1)
-        
-        approval_table = Table(
-            approval_data,
-            colWidths=[28*mm, 40*mm, 25*mm, 35*mm, 42*mm],
-            rowHeights=row_heights
-        )
-        approval_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), NAVY),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
-            ('LINEBELOW', (0, 0), (-1, -1), 0.3, BORDER_GRAY),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ]))
-        elements.append(approval_table)
+        if barcode_drawing:
+            # جدول التوقيع
+            sig_elements = [
+                [make_para(reshape_arabic("توقيع STAS") if lang == 'ar' else "STAS Signature", styles['header_cell'])],
+                [barcode_drawing],
+                [make_ltr_para(ref_no, styles['cell_center'])],
+                [Spacer(1, 2*mm)],
+                [make_para(system_check_text, ParagraphStyle('check', parent=styles['cell_center'], textColor=colors.HexColor('#16a34a'), fontSize=8))],
+            ]
+            
+            if stas_approval:
+                timestamp = format_saudi_time(stas_approval.get('timestamp'))
+                sig_elements.append([make_ltr_para(timestamp, styles['cell_center'])])
+            
+            sig_table = Table(sig_elements, colWidths=[60*mm])
+            sig_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
+            ]))
+            elements.append(sig_table)
     
     # ============ EMPLOYEE DEDUCTION CONSENT (Blue QR for sick leave > 30 days) ============
     tx_data = transaction.get('data', {})
