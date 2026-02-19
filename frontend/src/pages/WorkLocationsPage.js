@@ -220,6 +220,42 @@ export default function WorkLocationsPage() {
     return lang === 'ar' ? (emp.full_name_ar || emp.full_name) : emp.full_name;
   };
 
+  // === Ramadan Functions (STAS only) ===
+  const openRamadanDialog = (loc) => {
+    setRamadanDialog(loc);
+    setRamadanForm({
+      ramadan_work_start: loc.ramadan_work_start || '09:00',
+      ramadan_work_end: loc.ramadan_work_end || '15:00',
+      ramadan_daily_hours: loc.ramadan_daily_hours || 6
+    });
+  };
+
+  const handleActivateRamadan = async () => {
+    if (!ramadanDialog) return;
+    setSavingRamadan(true);
+    try {
+      await api.put(`/api/work-locations/${ramadanDialog.id}/ramadan/activate`, ramadanForm);
+      toast.success(lang === 'ar' ? 'تم تفعيل دوام رمضان للموقع' : 'Ramadan hours activated for location');
+      setRamadanDialog(null);
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to activate Ramadan hours');
+    } finally {
+      setSavingRamadan(false);
+    }
+  };
+
+  const handleDeactivateRamadan = async (locId) => {
+    if (!confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء دوام رمضان لهذا الموقع؟' : 'Are you sure you want to deactivate Ramadan hours for this location?')) return;
+    try {
+      await api.put(`/api/work-locations/${locId}/ramadan/deactivate`);
+      toast.success(lang === 'ar' ? 'تم إلغاء دوام رمضان' : 'Ramadan hours deactivated');
+      fetchData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to deactivate');
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="work-locations-page">
       <div className="flex items-center justify-between">
