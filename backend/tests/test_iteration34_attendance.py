@@ -20,8 +20,8 @@ TEST_CREDENTIALS = {
     "password": "123456"
 }
 
-# Fallback password based on iteration 32/33
-FALLBACK_PASSWORD = "DarAlCode2026!"
+# Fallback password based on iteration 32/33 - NOT VALID anymore
+FALLBACK_PASSWORD = "123456"  # Same as main password
 
 
 class TestAttendanceAuth:
