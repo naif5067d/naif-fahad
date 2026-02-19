@@ -82,6 +82,44 @@ export default function STASMirrorPage() {
     api.get('/api/stas/users/archived').then(r => setArchivedUsers(r.data)).catch(() => {});
   };
 
+  // === My Transactions Functions ===
+  const fetchMyTransactions = async () => {
+    try {
+      // جلب معاملات STAS (EMP-STAS)
+      const res = await api.get('/api/transactions');
+      // فلترة المعاملات الخاصة بـ STAS
+      const stasTransactions = res.data.filter(tx => 
+        tx.employee_id === 'EMP-STAS' || 
+        tx.created_by === 'stas' ||
+        tx.requester_id === 'stas'
+      );
+      setMyTransactions(stasTransactions);
+    } catch (err) {
+      console.error('Failed to fetch my transactions:', err);
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId) => {
+    if (!confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه المعاملة؟' : 'Are you sure you want to delete this transaction?')) return;
+    
+    setDeletingTransaction(transactionId);
+    try {
+      await api.delete(`/api/transactions/${transactionId}`);
+      toast.success(lang === 'ar' ? 'تم حذف المعاملة بنجاح' : 'Transaction deleted successfully');
+      fetchMyTransactions();
+      fetchPending();
+    } catch (err) {
+      const errorDetail = err.response?.data?.detail;
+      if (typeof errorDetail === 'object') {
+        toast.error(lang === 'ar' ? errorDetail.message_ar : errorDetail.message_en);
+      } else {
+        toast.error(errorDetail || (lang === 'ar' ? 'فشل حذف المعاملة' : 'Failed to delete transaction'));
+      }
+    } finally {
+      setDeletingTransaction(null);
+    }
+  };
+
   const fetchEmployees = () => {
     api.get('/api/employees').then(r => {
       // استثناء المدراء
