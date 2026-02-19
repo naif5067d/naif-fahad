@@ -64,6 +64,7 @@ class ResolveBulkRequest(BaseModel):
 
 class ProcessDailyRequest(BaseModel):
     date: str  # YYYY-MM-DD
+    employee_id: Optional[str] = None  # إذا فارغ = جميع الموظفين
 
 
 # الموظفون المستثنون من الحضور (ليسوا موظفين)
@@ -73,53 +74,69 @@ EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
 @router.post("/process-daily")
 async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     """
-    التحضير اليدوي - تحليل الحضور لجميع الموظفين ليوم محدد
+    التحضير اليدوي من الإدارة - تحليل الحضور للموظفين
     
-    لا يتعارض مع البصمة الذاتية:
-    - إذا الموظف سجل بصمة ذاتية، لا يُغيّر
-    - إذا لم يسجل، يُحلل حالته
+    المنطق:
+    - إذا الموظف سجل بصمة ذاتية (GPS) → لا يُغيّر
+    - إذا لم يسجل وكان ضمن أوقات العمل → يُحسب تأخير
+    - إذا لم يسجل وكان خارج أوقات العمل → لا يُحسب تأخير (فقط إثبات حضور)
     
     يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
     """
-    # جلب الموظفين النشطين (باستثناء المستثنين)
-    employees = await db.employees.find(
-        {
-            "is_active": {"$ne": False},
-            "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
-        }, 
-        {"_id": 0, "id": 1}
-    ).to_list(500)
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    
+    RIYADH_TZ = ZoneInfo('Asia/Riyadh')
+    
+    # جلب الموظفين
+    if req.employee_id:
+        # موظف واحد محدد
+        employees = await db.employees.find(
+            {"id": req.employee_id, "is_active": {"$ne": False}}, 
+            {"_id": 0, "id": 1}
+        ).to_list(1)
+    else:
+        # جميع الموظفين (باستثناء المستثنين)
+        employees = await db.employees.find(
+            {
+                "is_active": {"$ne": False},
+                "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+            }, 
+            {"_id": 0, "id": 1}
+        ).to_list(500)
     
     processed = 0
     skipped = 0
     results = []
     
     for emp in employees:
-        # فحص إذا كان هناك سجل يومي موجود مسبقاً (من بصمة ذاتية)
-        existing = await db.daily_status.find_one({
+        # فحص إذا كان هناك سجل بصمة ذاتية (GPS)
+        existing_gps = await db.attendance_ledger.find_one({
             "employee_id": emp['id'],
             "date": req.date,
-            "source": "self_checkin"  # بصمة ذاتية
+            "type": "check_in",
+            "source": "self_checkin"
         })
         
-        if existing:
-            # لا نُغيّر البصمة الذاتية
+        if existing_gps:
+            # لا نُغيّر البصمة الذاتية - GPS هو الأصل
             skipped += 1
             results.append({
                 "employee_id": emp['id'],
                 "action": "skipped",
-                "reason": "بصمة ذاتية موجودة"
+                "reason": "بصمة ذاتية GPS موجودة"
             })
             continue
         
-        # تحليل اليوم
+        # تحليل اليوم وتسجيل الحضور
         result = await resolve_and_save_v2(emp['id'], req.date)
         processed += 1
         results.append({
             "employee_id": emp['id'],
             "action": "processed",
             "status": result.get('final_status'),
-            "status_ar": result.get('status_ar')
+            "status_ar": result.get('status_ar'),
+            "late_minutes": result.get('late_minutes', 0)
         })
     
     return {
@@ -127,7 +144,7 @@ async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(requir
         "date": req.date,
         "processed": processed,
         "skipped": skipped,
-        "message_ar": f"تم تحضير {processed} موظف، تم تخطي {skipped} (بصمة ذاتية)",
+        "message_ar": f"تم التحضير: {processed} موظف، تخطي {skipped} (بصمة GPS)",
         "results": results
     }
 
