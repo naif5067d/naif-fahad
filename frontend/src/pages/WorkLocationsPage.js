@@ -63,6 +63,10 @@ export default function WorkLocationsPage() {
   const [editingLocation, setEditingLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
   
+  // Ramadan Dialog (STAS only)
+  const [ramadanDialog, setRamadanDialog] = useState(null);
+  const [savingRamadan, setSavingRamadan] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -87,8 +91,16 @@ export default function WorkLocationsPage() {
     assigned_employees: [],
   });
 
+  // Ramadan form state
+  const [ramadanForm, setRamadanForm] = useState({
+    ramadan_work_start: '09:00',
+    ramadan_work_end: '15:00',
+    ramadan_daily_hours: 6
+  });
+
   const canEdit = ['sultan', 'naif', 'stas'].includes(user?.role);
   const canAssign = ['sultan', 'naif'].includes(user?.role);
+  const isStas = user?.role === 'stas';
 
   const fetchData = useCallback(async () => {
     try {
