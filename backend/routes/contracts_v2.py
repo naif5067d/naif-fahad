@@ -654,6 +654,60 @@ async def close_contract_endpoint(
 
 
 # ============================================================
+# REVERT TO DRAFT (Sultan & STAS Only)
+# ============================================================
+
+@router.post("/{contract_id}/revert-to-draft")
+async def revert_contract_to_draft(
+    contract_id: str,
+    user=Depends(require_roles('stas', 'sultan'))
+):
+    """
+    إعادة العقد لوضع المسودة للتعديل الكامل.
+    سلطان و STAS فقط يستطيعون ذلك.
+    لا يُحذف أي محتوى - فقط يُغيّر الحالة.
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    if contract["status"] == "closed":
+        raise HTTPException(status_code=400, detail="لا يمكن إعادة عقد مغلق للمسودة")
+    
+    if contract["status"] == "draft":
+        raise HTTPException(status_code=400, detail="العقد بالفعل في وضع المسودة")
+    
+    # إعادة للمسودة مع الاحتفاظ بكل البيانات
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {
+            "$set": {
+                "status": "draft",
+                "reverted_to_draft_at": datetime.now(timezone.utc).isoformat(),
+                "reverted_by": user["user_id"],
+                "reverted_by_name": user.get("full_name", user.get("username", "Admin"))
+            },
+            "$push": {
+                "audit_log": {
+                    "action": "reverted_to_draft",
+                    "actor_id": user["user_id"],
+                    "actor_name": user.get("full_name", user.get("username", "Admin")),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "previous_status": contract["status"],
+                    "note": "تم إعادة العقد للمسودة للتعديل"
+                }
+            }
+        }
+    )
+    
+    updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    return {
+        "message": "تم إعادة العقد لوضع المسودة",
+        "contract": updated
+    }
+
+
+# ============================================================
 # DELETE CONTRACT (Draft Only)
 # ============================================================
 
