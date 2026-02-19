@@ -51,6 +51,61 @@ async def generate_device_signature(fingerprint_data: dict) -> str:
     return signature
 
 
+async def register_login_session(
+    employee_id: str,
+    fingerprint_data: dict,
+    username: str,
+    role: str
+) -> dict:
+    """
+    تسجيل جلسة دخول للموظف (للمراقبة فقط - بدون منع)
+    يُسجّل كل دخول مع معلومات الجهاز
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحليل معلومات الجهاز
+    user_agent = fingerprint_data.get('userAgent', '')
+    device_info = _parse_user_agent(user_agent)
+    
+    session = {
+        "id": str(uuid.uuid4()),
+        "employee_id": employee_id,
+        "username": username,
+        "role": role,
+        "login_at": now,
+        "logout_at": None,
+        "device_type": device_info['device_type'],
+        "device_name": device_info.get('friendly_name', 'جهاز غير معروف'),
+        "browser": device_info['browser'],
+        "os": device_info['os'],
+        "os_display": device_info.get('os_display', ''),
+        "is_mobile": device_info.get('is_mobile', False),
+        "fingerprint_data": fingerprint_data,
+        "status": "active"
+    }
+    
+    await db.login_sessions.insert_one(session)
+    session.pop('_id', None)
+    
+    return session
+
+
+async def register_logout_session(employee_id: str) -> dict:
+    """تسجيل خروج الموظف"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديث آخر جلسة نشطة
+    result = await db.login_sessions.update_one(
+        {"employee_id": employee_id, "status": "active"},
+        {"$set": {"logout_at": now, "status": "completed"}},
+        sort=[("login_at", -1)]
+    )
+    
+    return {"updated": result.modified_count > 0}
+
+
+
+
 async def register_device(
     employee_id: str,
     fingerprint_data: dict,
