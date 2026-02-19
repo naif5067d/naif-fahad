@@ -625,94 +625,160 @@ export default function STASMirrorPage() {
               </CardContent>
             </Card>
 
-            {/* Devices Table */}
+            {/* Devices Grid - عرض الأجهزة ككروت */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Settings size={20} />
-                    {lang === 'ar' ? 'سجل الأجهزة' : 'Device Registry'}
+                    <Laptop size={22} />
+                    {lang === 'ar' ? 'أجهزة الموظفين' : 'Employee Devices'}
                   </span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {devices.length} {lang === 'ar' ? 'جهاز' : 'devices'}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-normal bg-slate-100 px-3 py-1 rounded-full">
+                      {devices.filter(d => selectedEmployeeFilter === 'all' || d.employee_id === selectedEmployeeFilter).length} {lang === 'ar' ? 'جهاز' : 'devices'}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => fetchDevices()} data-testid="refresh-devices-btn">
+                      <RefreshCw size={14} className="ml-1" />
+                      {lang === 'ar' ? 'تحديث' : 'Refresh'}
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {devices.length === 0 ? (
-                  <div className="text-center py-8 space-y-3">
-                    <Settings size={40} className="mx-auto text-muted-foreground opacity-50" />
-                    <p className="text-muted-foreground">
+                  <div className="text-center py-12 space-y-4">
+                    <div className="w-20 h-20 mx-auto bg-slate-100 rounded-full flex items-center justify-center">
+                      <Smartphone size={40} className="text-slate-400" />
+                    </div>
+                    <p className="text-lg font-medium text-slate-600">
                       {lang === 'ar' ? 'لا توجد أجهزة مسجلة حالياً' : 'No devices registered yet'}
                     </p>
-                    <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    <p className="text-sm text-slate-500 max-w-md mx-auto">
                       {lang === 'ar' 
-                        ? 'يتم تسجيل الأجهزة تلقائياً عند أول تسجيل دخول لكل موظف. المدراء (سلطان، نايف، ستاس) معفون من فحص الأجهزة.'
-                        : 'Devices are registered automatically on first login. Admins are exempt from device checks.'}
+                        ? 'يتم تسجيل الأجهزة تلقائياً عند أول تسجيل دخول لكل موظف'
+                        : 'Devices are registered automatically on first login'}
                     </p>
-                    <Button variant="outline" size="sm" onClick={() => api.get('/api/devices/all').then(r => setDevices(r.data)).catch(() => {})}>
-                      <RefreshCw size={14} className="mr-2" />
-                      {lang === 'ar' ? 'تحديث' : 'Refresh'}
-                    </Button>
                   </div>
                 ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-slate-50">
-                        <th className="p-3 text-right">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>
-                        <th className="p-3 text-right">{lang === 'ar' ? 'الجهاز' : 'Device'}</th>
-                        <th className="p-3 text-right">{lang === 'ar' ? 'المتصفح' : 'Browser'}</th>
-                        <th className="p-3 text-right">{lang === 'ar' ? 'النظام' : 'OS'}</th>
-                        <th className="p-3 text-right">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                        <th className="p-3 text-right">{lang === 'ar' ? 'آخر استخدام' : 'Last Used'}</th>
-                        <th className="p-3 text-center">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {devices
-                        .filter(d => selectedEmployeeFilter === 'all' || d.employee_id === selectedEmployeeFilter)
-                        .map(device => (
-                          <tr key={device.id} className="border-b hover:bg-slate-50">
-                            <td className="p-3">{device.employee_name_ar || device.employee_id}</td>
-                            <td className="p-3">{device.device_type}</td>
-                            <td className="p-3">{device.browser}</td>
-                            <td className="p-3">{device.os}</td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                device.status === 'trusted' ? 'bg-green-100 text-green-700' :
-                                device.status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                                'bg-red-100 text-red-700'
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {devices
+                    .filter(d => selectedEmployeeFilter === 'all' || d.employee_id === selectedEmployeeFilter)
+                    .map(device => {
+                      const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
+                      const statusColors = {
+                        trusted: 'border-green-400 bg-green-50',
+                        pending: 'border-orange-400 bg-orange-50',
+                        blocked: 'border-red-400 bg-red-50'
+                      };
+                      const statusBadge = {
+                        trusted: 'bg-green-500 text-white',
+                        pending: 'bg-orange-500 text-white',
+                        blocked: 'bg-red-500 text-white'
+                      };
+                      const statusText = {
+                        trusted: lang === 'ar' ? '✓ موثوق' : '✓ Trusted',
+                        pending: lang === 'ar' ? '⏳ معلق' : '⏳ Pending',
+                        blocked: lang === 'ar' ? '✕ محظور' : '✕ Blocked'
+                      };
+                      
+                      return (
+                        <div 
+                          key={device.id} 
+                          className={`rounded-xl border-2 p-4 transition-all hover:shadow-md ${statusColors[device.status] || 'border-slate-200'}`}
+                          data-testid={`device-card-${device.id}`}
+                        >
+                          {/* Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                device.status === 'trusted' ? 'bg-green-100' :
+                                device.status === 'pending' ? 'bg-orange-100' : 'bg-red-100'
                               }`}>
-                                {device.status === 'trusted' ? (lang === 'ar' ? 'موثوق' : 'Trusted') :
-                                 device.status === 'pending' ? (lang === 'ar' ? 'معلق' : 'Pending') :
-                                 (lang === 'ar' ? 'محظور' : 'Blocked')}
-                              </span>
-                            </td>
-                            <td className="p-3 text-xs text-muted-foreground">
-                              {new Date(device.last_used_at).toLocaleString('ar-SA')}
-                            </td>
-                            <td className="p-3 text-center">
-                              <div className="flex justify-center gap-1">
-                                {device.status === 'pending' && (
-                                  <Button size="sm" variant="ghost" onClick={() => handleApproveDevice(device.id)}>
-                                    <CheckCircle size={14} className="text-green-600" />
-                                  </Button>
-                                )}
-                                {device.status !== 'blocked' && (
-                                  <Button size="sm" variant="ghost" onClick={() => handleBlockDevice(device.id)}>
-                                    <XCircle size={14} className="text-orange-600" />
-                                  </Button>
-                                )}
-                                <Button size="sm" variant="ghost" onClick={() => handleDeleteDevice(device.id)}>
-                                  <Trash2 size={14} className="text-red-600" />
-                                </Button>
+                                <DeviceIcon size={24} className={
+                                  device.status === 'trusted' ? 'text-green-600' :
+                                  device.status === 'pending' ? 'text-orange-600' : 'text-red-600'
+                                } />
                               </div>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
+                              <div>
+                                <p className="font-bold text-slate-800">{device.employee_name_ar || device.employee_id}</p>
+                                <p className="text-xs text-slate-500">#{device.employee_number || '-'}</p>
+                              </div>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${statusBadge[device.status]}`}>
+                              {statusText[device.status]}
+                            </span>
+                          </div>
+                          
+                          {/* Device Info */}
+                          <div className="space-y-2 mb-4">
+                            <div className="bg-white/70 rounded-lg p-3">
+                              <p className="text-base font-semibold text-slate-700">
+                                {device.friendly_name || device.device_type}
+                              </p>
+                              <p className="text-sm text-slate-500">
+                                {device.browser} • {device.os_display || device.os}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <Clock size={12} />
+                              <span>{lang === 'ar' ? 'آخر استخدام:' : 'Last used:'}</span>
+                              <span className="font-medium">{new Date(device.last_used_at).toLocaleDateString('ar-SA')}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-3 border-t border-slate-200">
+                            {device.status === 'pending' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleApproveDevice(device.id)}
+                                disabled={deviceAction}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                data-testid={`approve-btn-${device.id}`}
+                              >
+                                <CheckCircle size={14} className="ml-1" />
+                                {lang === 'ar' ? 'موافقة' : 'Approve'}
+                              </Button>
+                            )}
+                            {device.status !== 'blocked' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleBlockDevice(device.id)}
+                                disabled={deviceAction}
+                                className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50"
+                                data-testid={`block-btn-${device.id}`}
+                              >
+                                <XCircle size={14} className="ml-1" />
+                                {lang === 'ar' ? 'حظر' : 'Block'}
+                              </Button>
+                            )}
+                            {device.status === 'blocked' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleApproveDevice(device.id)}
+                                disabled={deviceAction}
+                                className="flex-1 border-green-300 text-green-600 hover:bg-green-50"
+                              >
+                                <RotateCcw size={14} className="ml-1" />
+                                {lang === 'ar' ? 'إلغاء الحظر' : 'Unblock'}
+                              </Button>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleDeleteDevice(device.id)}
+                              disabled={deviceAction}
+                              className="text-red-500 hover:bg-red-50"
+                              data-testid={`delete-btn-${device.id}`}
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
                 )}
               </CardContent>
