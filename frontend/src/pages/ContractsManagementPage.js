@@ -301,6 +301,19 @@ export default function ContractsManagementPage() {
     }
   };
 
+  // إعادة العقد للمسودة للتعديل الكامل
+  const handleRevertToDraft = async (contractId) => {
+    if (!confirm('هل تريد إعادة العقد لوضع المسودة؟ سيتمكن المسؤولون من تعديله بالكامل.')) return;
+    
+    try {
+      await api.post(`/api/contracts-v2/${contractId}/revert-to-draft`);
+      toast.success('تم إعادة العقد لوضع المسودة');
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إعادة العقد للمسودة');
+    }
+  };
+
   const handlePreviewPDF = async (contractId) => {
     try {
       const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
