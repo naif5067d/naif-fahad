@@ -83,6 +83,7 @@ export default function NotificationBell() {
   const [hasCritical, setHasCritical] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastCount, setLastCount] = useState(0);
+  const [initialized, setInitialized] = useState(false);
   const bellRef = useRef(null);
   
   // جلب الإشعارات
@@ -95,15 +96,16 @@ export default function NotificationBell() {
       setUnreadCount(data.unread_count || 0);
       setHasCritical(data.has_critical || false);
       
-      // تشغيل الصوت عند وصول إشعار جديد
-      if (data.unread_count > lastCount && lastCount > 0) {
+      // تشغيل الصوت عند وصول إشعار جديد (بعد التحميل الأول)
+      if (initialized && data.unread_count > lastCount) {
         playNotificationSound();
       }
       setLastCount(data.unread_count || 0);
+      setInitialized(true);
     } catch (err) {
       console.log('Failed to fetch notifications');
     }
-  }, [lastCount]);
+  }, [lastCount, initialized]);
   
   // جلب الإشعارات عند التحميل وكل 30 ثانية وعند تبديل المستخدم
   useEffect(() => {
