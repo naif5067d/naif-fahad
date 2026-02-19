@@ -656,6 +656,11 @@ export default function WorkLocationsPage() {
                   <span className="flex items-center gap-2">
                     <MapPin size={16} className="text-primary" />
                     {lang === 'ar' ? loc.name_ar : loc.name}
+                    {loc.ramadan_hours_active && (
+                      <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                        🌙 {lang === 'ar' ? 'رمضان' : 'Ramadan'}
+                      </span>
+                    )}
                   </span>
                   {canEdit && (
                     <div className="flex gap-1">
@@ -699,6 +704,13 @@ export default function WorkLocationsPage() {
                       )}
                     </div>
                   )}
+                  {/* Ramadan Hours Info */}
+                  {loc.ramadan_hours_active && (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <span>🌙</span>
+                      <span className="text-xs">{loc.ramadan_work_start || '09:00'} - {loc.ramadan_work_end || '15:00'} ({loc.ramadan_daily_hours || 6}h)</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar size={14} />
                     <span className="text-xs">
@@ -718,6 +730,33 @@ export default function WorkLocationsPage() {
                     {lang === 'ar' ? 'النطاق:' : 'Radius:'} {loc.radius_meters}m
                   </div>
                 </div>
+
+                {/* Ramadan Toggle (STAS only) */}
+                {isStas && (
+                  <div className="pt-2 border-t border-border">
+                    {loc.ramadan_hours_active ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
+                        onClick={() => handleDeactivateRamadan(loc.id)}
+                        data-testid={`deactivate-ramadan-${loc.id}`}
+                      >
+                        {lang === 'ar' ? 'إلغاء دوام رمضان' : 'Deactivate Ramadan'}
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
+                        onClick={() => openRamadanDialog(loc)}
+                        data-testid={`activate-ramadan-${loc.id}`}
+                      >
+                        🌙 {lang === 'ar' ? 'تفعيل دوام رمضان' : 'Activate Ramadan Hours'}
+                      </Button>
+                    )}
+                  </div>
+                )}
 
                 {/* Assigned Employees */}
                 {loc.assigned_employees?.length > 0 && (
