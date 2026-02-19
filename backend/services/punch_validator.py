@@ -226,10 +226,12 @@ async def validate_punch_location(
     employee_id: str,
     latitude: float,
     longitude: float,
-    gps_available: bool = True
+    gps_available: bool = True,
+    selected_location_id: str = None
 ) -> dict:
     """
     التحقق من موقع التبصيم (GPS)
+    يدعم الموظفين المعينين في مواقع متعددة
     
     Returns:
         {
@@ -253,10 +255,10 @@ async def validate_punch_location(
             "work_location": None
         }
     
-    # الحصول على موقع العمل
-    work_location = await get_employee_work_location(employee_id)
+    # الحصول على جميع مواقع العمل للموظف
+    all_locations = await get_all_employee_work_locations(employee_id)
     
-    if not work_location:
+    if not all_locations:
         return {
             "valid": False,
             "error": {
@@ -269,53 +271,83 @@ async def validate_punch_location(
             "work_location": None
         }
     
-    # الحصول على إحداثيات الموقع
-    location_lat = work_location.get('latitude')
-    location_lng = work_location.get('longitude')
-    # radius_meters أو geofence_radius_km
-    radius_meters = work_location.get('radius_meters', 500)
-    geofence_radius = radius_meters / 1000  # تحويل إلى كيلومتر
+    # إذا تم تحديد موقع معين - نتحقق منه فقط
+    if selected_location_id:
+        selected_loc = next((loc for loc in all_locations if loc.get('id') == selected_location_id), None)
+        if selected_loc:
+            all_locations = [selected_loc]
     
-    if location_lat is None or location_lng is None:
-        # موقع العمل بدون إحداثيات - السماح مع تحذير
-        return {
-            "valid": True,
-            "warning": {
-                "code": "warning.no_location_coords",
-                "message": "Work location has no GPS coordinates configured",
-                "message_ar": "موقع العمل ليس له إحداثيات محددة"
-            },
-            "gps_valid": True,  # نسمح لأن الموقع غير مُعد
-            "distance_km": None,
-            "work_location": work_location
-        }
+    # البحث في جميع المواقع عن موقع صالح
+    best_location = None
+    best_distance = float('inf')
     
-    # حساب المسافة
-    distance = haversine_distance(latitude, longitude, location_lat, location_lng)
-    gps_valid = distance <= geofence_radius
+    for work_location in all_locations:
+        location_lat = work_location.get('latitude')
+        location_lng = work_location.get('longitude')
+        radius_meters = work_location.get('radius_meters', 500)
+        geofence_radius = radius_meters / 1000  # تحويل إلى كيلومتر
+        
+        if location_lat is None or location_lng is None:
+            # موقع العمل بدون إحداثيات - نسمح به مع تحذير
+            return {
+                "valid": True,
+                "warning": {
+                    "code": "warning.no_location_coords",
+                    "message": "Work location has no GPS coordinates configured",
+                    "message_ar": "موقع العمل ليس له إحداثيات محددة"
+                },
+                "gps_valid": True,
+                "distance_km": None,
+                "work_location": work_location
+            }
+        
+        # حساب المسافة
+        distance = haversine_distance(latitude, longitude, location_lat, location_lng)
+        
+        # إذا كان ضمن النطاق - نجحت
+        if distance <= geofence_radius:
+            return {
+                "valid": True,
+                "error": None,
+                "gps_valid": True,
+                "distance_km": round(distance, 3),
+                "work_location": work_location
+            }
+        
+        # حفظ أقرب موقع للرسالة الخطأ
+        if distance < best_distance:
+            best_distance = distance
+            best_location = work_location
     
-    if not gps_valid:
+    # لم يُعثر على موقع صالح - نرجع أقرب موقع
+    if best_location:
+        radius_meters = best_location.get('radius_meters', 500)
         return {
             "valid": False,
             "error": {
                 "code": "error.outside_geofence",
-                "message": f"You are {distance*1000:.0f}m away from work location. Maximum allowed is {geofence_radius*1000:.0f}m",
-                "message_ar": f"أنت على بُعد {distance*1000:.0f} متر من موقع العمل. الحد المسموح {geofence_radius*1000:.0f} متر",
-                "distance_meters": round(distance * 1000),
-                "allowed_meters": round(geofence_radius * 1000),
-                "work_location_name": work_location.get('name_ar', work_location.get('name'))
+                "message": f"You are {best_distance*1000:.0f}m away from work location. Maximum allowed is {radius_meters}m",
+                "message_ar": f"أنت على بُعد {best_distance*1000:.0f} متر من موقع العمل. الحد المسموح {radius_meters} متر",
+                "distance_meters": round(best_distance * 1000),
+                "allowed_meters": radius_meters,
+                "work_location_name": best_location.get('name_ar', best_location.get('name')),
+                "all_locations_count": len(all_locations)
             },
             "gps_valid": False,
-            "distance_km": round(distance, 3),
-            "work_location": work_location
+            "distance_km": round(best_distance, 3),
+            "work_location": best_location
         }
     
     return {
-        "valid": True,
-        "error": None,
-        "gps_valid": True,
-        "distance_km": round(distance, 3),
-        "work_location": work_location
+        "valid": False,
+        "error": {
+            "code": "error.no_valid_location",
+            "message": "Could not validate location",
+            "message_ar": "تعذر التحقق من الموقع"
+        },
+        "gps_valid": False,
+        "distance_km": None,
+        "work_location": None
     }
 
 
