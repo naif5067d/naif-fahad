@@ -179,18 +179,38 @@ export default function LeavePage() {
   };
 
   const handleAddHoliday = async () => {
-    if (!holidayForm.name || !holidayForm.date) return toast.error(lang === 'ar' ? 'أدخل الاسم والتاريخ' : 'Enter name and date');
+    const startDate = holidayForm.start_date || holidayForm.date;
+    const endDate = holidayForm.end_date || holidayForm.date || startDate;
+    
+    if (!holidayForm.name || !startDate) return toast.error(lang === 'ar' ? 'أدخل الاسم وتاريخ البداية' : 'Enter name and start date');
+    
     setSubmitting(true);
     try {
       if (editHoliday) {
-        await api.put(`/api/leave/holidays/${editHoliday.id}`, holidayForm);
+        await api.put(`/api/leave/holidays/${editHoliday.id}`, { ...holidayForm, date: startDate });
         toast.success(lang === 'ar' ? 'تم التعديل' : 'Updated');
       } else {
-        await api.post('/api/leave/holidays', holidayForm);
-        toast.success(lang === 'ar' ? 'تم الإضافة' : 'Added');
+        // إضافة جميع أيام الإجازة في النطاق
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        let addedCount = 0;
+        
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().slice(0, 10);
+          await api.post('/api/leave/holidays', {
+            name: holidayForm.name,
+            name_ar: holidayForm.name_ar,
+            date: dateStr
+          });
+          addedCount++;
+        }
+        
+        toast.success(lang === 'ar' 
+          ? `تم إضافة ${addedCount} يوم إجازة` 
+          : `Added ${addedCount} holiday days`);
       }
       setAddHolidayOpen(false); setEditHoliday(null);
-      setHolidayForm({ name: '', name_ar: '', date: '' });
+      setHolidayForm({ name: '', name_ar: '', start_date: '', end_date: '' });
       api.get('/api/leave/holidays').then(r => setHolidays(r.data)).catch(() => {});
     } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
     finally { setSubmitting(false); }
