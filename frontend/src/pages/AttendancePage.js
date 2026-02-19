@@ -514,15 +514,20 @@ export default function AttendancePage() {
           {gpsState.checking && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600">
               <Loader2 size={18} className="animate-spin" />
-              <span className="text-sm font-medium">{lang === 'ar' ? 'جاري تحديد موقعك...' : 'Detecting your location...'}</span>
+              <span className="text-sm font-medium">[GPS001] {lang === 'ar' ? 'جاري تحديد موقعك...' : 'Detecting your location...'}</span>
             </div>
           )}
           
           {!gpsState.checking && !gpsState.available && (
-            <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600">
+            <div className="flex items-center justify-between gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600">
               <div className="flex items-center gap-2">
                 <AlertTriangle size={18} />
-                <span className="text-sm font-medium">{lang === 'ar' ? 'تحديد الموقع غير متاح' : 'Location not available'}</span>
+                <div>
+                  <span className="text-sm font-bold">[GPS002] </span>
+                  <span className="text-sm font-medium">
+                    {lang === 'ar' ? 'GPS غير متصل - يرجى تفعيله من إعدادات المتصفح' : 'GPS not connected - Enable in browser settings'}
+                  </span>
+                </div>
               </div>
               <button 
                 onClick={async () => {
@@ -530,12 +535,24 @@ export default function AttendancePage() {
                   try {
                     await requestGPSPermission();
                   } catch (err) {
+                    console.error('GPS error:', err.code, err.message);
+                    let errorMsg = '';
+                    if (err.code === 1) {
+                      errorMsg = '[GPS003] تم رفض إذن الموقع من المتصفح';
+                    } else if (err.code === 2) {
+                      errorMsg = '[GPS004] الموقع غير متاح حالياً';
+                    } else if (err.code === 3) {
+                      errorMsg = '[GPS005] انتهت مهلة تحديد الموقع';
+                    } else {
+                      errorMsg = `[GPS006] خطأ غير معروف: ${err.message}`;
+                    }
+                    toast.error(errorMsg);
                     setGpsState(prev => ({ ...prev, checking: false }));
                   }
                 }}
-                className="px-3 py-1 text-xs bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                className="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
-                {lang === 'ar' ? 'تفعيل الموقع' : 'Enable Location'}
+                {lang === 'ar' ? 'إعادة المحاولة' : 'Retry'}
               </button>
             </div>
           )}
@@ -543,7 +560,10 @@ export default function AttendancePage() {
           {!gpsState.checking && gpsState.available && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">
               <MapPin size={18} />
-              <span className="text-sm font-medium">{lang === 'ar' ? 'تم تحديد موقعك بنجاح' : 'Location detected successfully'}</span>
+              <span className="text-sm font-medium">[GPS000] {lang === 'ar' ? 'GPS متصل ✓' : 'GPS Connected ✓'}</span>
+              <span className="text-xs text-muted-foreground ms-2">
+                ({gpsState.lat?.toFixed(4)}, {gpsState.lng?.toFixed(4)})
+              </span>
             </div>
           )}
 
