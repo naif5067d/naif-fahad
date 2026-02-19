@@ -237,9 +237,7 @@ export default function FinancialCustodyPage() {
     }
   };
 
-  const toggleSelectOne = (id, status) => {
-    if (['executed', 'closed'].includes(status)) return;
-    
+  const toggleSelectOne = (id) => {
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter(i => i !== id));
     } else {
