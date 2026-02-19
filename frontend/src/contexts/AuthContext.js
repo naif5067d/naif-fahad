@@ -4,23 +4,56 @@ import api from '@/lib/api';
 const AuthContext = createContext(null);
 
 // Generate device fingerprint for security
-const generateDeviceSignature = () => {
+// تجميع بصمة الجهاز الكاملة مع فصل Hardware عن Browser
+const generateDeviceFingerprint = () => {
+  // Canvas Fingerprint
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   ctx.textBaseline = 'top';
   ctx.font = '14px Arial';
-  ctx.fillText('fingerprint', 2, 2);
-  const canvasData = canvas.toDataURL();
+  ctx.fillText('HR System Fingerprint', 2, 2);
+  ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+  ctx.fillRect(50, 0, 20, 20);
+  const canvasFingerprint = canvas.toDataURL();
   
-  const data = [
-    navigator.userAgent,
-    navigator.language,
-    screen.width + 'x' + screen.height,
-    new Date().getTimezoneOffset(),
-    canvasData.slice(-50)
-  ].join('|');
+  // WebGL Info (مهم جداً - لا يتغير بتغيير المتصفح)
+  let webglVendor = '';
+  let webglRenderer = '';
+  try {
+    const gl = document.createElement('canvas').getContext('webgl');
+    if (gl) {
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        webglVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        webglRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+      }
+    }
+  } catch (e) {}
   
-  // Simple hash
+  return {
+    // 🔐 Core Hardware (لا يتغير بتغيير المتصفح)
+    webglVendor: webglVendor,
+    webglRenderer: webglRenderer,
+    canvasFingerprint: canvasFingerprint.slice(-100),
+    hardwareConcurrency: navigator.hardwareConcurrency || 0,
+    deviceMemory: navigator.deviceMemory || 0,
+    platform: navigator.platform,
+    screenResolution: `${screen.width}x${screen.height}`,
+    
+    // 📱 Soft Browser Data (للتسجيل فقط)
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    timezone: new Date().getTimezoneOffset().toString(),
+    touchSupport: 'ontouchstart' in window,
+    cookiesEnabled: navigator.cookieEnabled,
+    localStorageEnabled: typeof localStorage !== 'undefined'
+  };
+};
+
+const generateDeviceSignature = () => {
+  const fp = generateDeviceFingerprint();
+  // Simple hash for backward compatibility
+  const data = [fp.userAgent, fp.language, fp.screenResolution, fp.timezone, fp.canvasFingerprint].join('|');
   let hash = 0;
   for (let i = 0; i < data.length; i++) {
     hash = ((hash << 5) - hash) + data.charCodeAt(i);
