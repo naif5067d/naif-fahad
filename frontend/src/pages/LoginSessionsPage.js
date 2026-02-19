@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, LogIn, LogOut, Smartphone, Monitor, Tablet, 
-  Calendar, User, RefreshCw, Download, ChevronLeft, ChevronRight,
-  FileSpreadsheet, Filter, ArrowUpDown
+  Calendar, User, RefreshCw, Download, FileSpreadsheet
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -17,7 +16,6 @@ export default function LoginSessionsPage() {
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [period, setPeriod] = useState('monthly');
   const [loading, setLoading] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: 'login_at', direction: 'desc' });
 
   useEffect(() => {
     fetchEmployees();
@@ -46,93 +44,65 @@ export default function LoginSessionsPage() {
       const res = await api.get(url);
       setSessions(res.data);
     } catch (err) {
-      console.error('Failed to fetch sessions:', err);
       toast.error(lang === 'ar' ? 'فشل تحميل السجلات' : 'Failed to load sessions');
     } finally {
       setLoading(false);
     }
   };
 
-  // الترتيب
-  const sortedSessions = useMemo(() => {
-    const sorted = [...sessions];
-    sorted.sort((a, b) => {
-      if (sortConfig.key === 'login_at' || sortConfig.key === 'logout_at') {
-        const aVal = a[sortConfig.key] ? new Date(a[sortConfig.key]) : new Date(0);
-        const bVal = b[sortConfig.key] ? new Date(b[sortConfig.key]) : new Date(0);
-        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      const aVal = a[sortConfig.key] || '';
-      const bVal = b[sortConfig.key] || '';
-      return sortConfig.direction === 'asc' 
-        ? aVal.localeCompare(bVal)
-        : bVal.localeCompare(aVal);
-    });
-    return sorted;
-  }, [sessions, sortConfig]);
-
-  // تجميع حسب اليوم
-  const groupedByDate = useMemo(() => {
-    const groups = {};
-    sortedSessions.forEach(session => {
-      const date = new Date(session.login_at).toLocaleDateString('ar-EG', {
-        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
-      });
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(session);
-    });
-    return groups;
-  }, [sortedSessions]);
-
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
-    }));
-  };
-
   const formatTime = (dateStr) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleTimeString('ar-EG', { 
+    if (!dateStr) return '--:--';
+    return new Date(dateStr).toLocaleTimeString('en-GB', { 
       hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
+      minute: '2-digit'
     });
   };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('ar-EG');
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
+  };
+
+  const formatFullDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
   const calculateDuration = (loginAt, logoutAt) => {
     if (!loginAt) return '-';
     const login = new Date(loginAt);
     const logout = logoutAt ? new Date(logoutAt) : new Date();
-    const diff = Math.floor((logout - login) / 1000); // بالثواني
+    const diff = Math.floor((logout - login) / 1000 / 60);
     
-    const hours = Math.floor(diff / 3600);
-    const mins = Math.floor((diff % 3600) / 60);
-    const secs = diff % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const hours = Math.floor(diff / 60);
+    const mins = diff % 60;
+    return `${hours.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}`;
   };
 
   const DeviceIcon = ({ session }) => {
-    if (session.is_mobile) return <Smartphone size={16} className="text-blue-500" />;
-    if (session.device_type === 'tablet') return <Tablet size={16} className="text-purple-500" />;
-    return <Monitor size={16} className="text-slate-600" />;
+    if (session.is_mobile) return <Smartphone size={18} className="text-green-600" />;
+    if (session.device_type === 'tablet') return <Tablet size={18} className="text-purple-600" />;
+    return <Monitor size={18} className="text-blue-600" />;
   };
+
+  // تجميع حسب اليوم
+  const groupedByDate = useMemo(() => {
+    const groups = {};
+    sessions.forEach(session => {
+      const date = formatDate(session.login_at);
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(session);
+    });
+    return groups;
+  }, [sessions]);
 
   // إحصائيات
   const stats = useMemo(() => {
     const total = sessions.length;
-    const active = sessions.filter(s => s.status === 'active').length;
     const totalMinutes = sessions.reduce((acc, s) => {
       if (s.login_at) {
         const login = new Date(s.login_at);
@@ -141,109 +111,93 @@ export default function LoginSessionsPage() {
       }
       return acc;
     }, 0);
-    const avgMinutes = total > 0 ? Math.round(totalMinutes / total) : 0;
-    
-    return { total, active, totalMinutes: Math.round(totalMinutes), avgMinutes };
+    return { total, totalHours: Math.floor(totalMinutes / 60), totalMins: Math.round(totalMinutes % 60) };
   }, [sessions]);
 
   const periodOptions = [
-    { value: 'daily', label: lang === 'ar' ? 'اليوم' : 'Today' },
-    { value: 'weekly', label: lang === 'ar' ? 'أسبوعي' : 'Weekly' },
-    { value: 'monthly', label: lang === 'ar' ? 'شهري' : 'Monthly' },
-    { value: 'yearly', label: lang === 'ar' ? 'سنوي' : 'Yearly' },
+    { value: 'daily', label: 'يومي', icon: '📅' },
+    { value: 'weekly', label: 'أسبوعي', icon: '📆' },
+    { value: 'monthly', label: 'شهري', icon: '🗓️' },
+    { value: 'yearly', label: 'سنوي', icon: '📊' },
   ];
 
-  const selectedEmployeeData = employees.find(e => e.id === selectedEmployee);
+  const selectedEmp = employees.find(e => e.id === selectedEmployee);
 
-  // تصدير Excel
   const exportToCSV = () => {
     if (sessions.length === 0) return;
-    
-    const headers = ['التاريخ', 'وقت الدخول', 'وقت الخروج', 'المدة', 'الجهاز', 'المتصفح', 'الحالة'];
+    const headers = ['التاريخ', 'الدخول', 'الخروج', 'المدة', 'الجهاز', 'المتصفح'];
     const rows = sessions.map(s => [
       formatDate(s.login_at),
       formatTime(s.login_at),
       formatTime(s.logout_at),
       calculateDuration(s.login_at, s.logout_at),
       s.device_name || '-',
-      s.browser || '-',
-      s.status === 'active' ? 'نشط' : 'مكتمل'
+      s.browser || '-'
     ]);
-    
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `login_sessions_${selectedEmployeeData?.full_name_ar || 'employee'}_${period}.csv`;
-    link.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `سجل_${selectedEmp?.full_name_ar || 'موظف'}_${period}.csv`;
+    a.click();
   };
 
   return (
-    <div className="space-y-6 pb-24 md:pb-6" data-testid="login-sessions-page">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6 pb-24" data-testid="login-sessions-page">
       {/* Header */}
-      <div className="bg-gradient-to-l from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur">
-            <FileSpreadsheet size={28} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {lang === 'ar' ? 'سجل الدخول والخروج' : 'Login Sessions Report'}
-            </h1>
-            <p className="text-white/80 text-sm mt-1">
-              {lang === 'ar' ? 'تقرير تفصيلي لكل موظف - يومي / أسبوعي / شهري / سنوي' : 'Detailed report per employee'}
-            </p>
-          </div>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+          <FileSpreadsheet className="text-indigo-600" size={28} />
+          {lang === 'ar' ? 'سجل الدخول والخروج' : 'Login Sessions'}
+        </h1>
+        <p className="text-slate-500 mt-1">
+          {lang === 'ar' ? 'تقرير تفصيلي لكل موظف' : 'Detailed employee report'}
+        </p>
       </div>
 
-      {/* Employee Selection Card */}
-      <Card className="border-2 border-indigo-200 shadow-lg">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Employee Dropdown */}
-            <div className="md:col-span-2">
-              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                <User size={18} className="text-indigo-600" />
-                {lang === 'ar' ? 'اختر الموظف' : 'Select Employee'}
+      {/* Controls */}
+      <Card className="mb-6 shadow-sm">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Employee Select */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <User size={16} className="inline ml-1" />
+                اختر الموظف
               </label>
               <select
                 value={selectedEmployee}
                 onChange={(e) => setSelectedEmployee(e.target.value)}
-                className="w-full p-4 border-2 border-slate-200 rounded-xl text-lg font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none transition-all bg-white"
-                data-testid="employee-select"
+                className="w-full p-3 border-2 rounded-lg text-base focus:border-indigo-500 focus:outline-none"
               >
-                <option value="">
-                  {lang === 'ar' ? '-- اختر موظف لعرض سجله --' : '-- Select an employee --'}
-                </option>
+                <option value="">-- اختر موظف --</option>
                 {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.full_name_ar || emp.full_name} ({emp.employee_number || '-'})
+                    {emp.full_name_ar} - {emp.employee_number || ''}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Period Filter */}
+            {/* Period Select */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
-                <Calendar size={18} className="text-indigo-600" />
-                {lang === 'ar' ? 'الفترة' : 'Period'}
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                <Calendar size={16} className="inline ml-1" />
+                الفترة
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-2">
                 {periodOptions.map(opt => (
                   <button
                     key={opt.value}
                     onClick={() => setPeriod(opt.value)}
-                    className={`p-3 rounded-xl font-medium transition-all ${
+                    className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                       period === opt.value
-                        ? 'bg-indigo-600 text-white shadow-lg'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-indigo-600 text-white shadow'
+                        : 'bg-white border-2 text-slate-600 hover:border-indigo-300'
                     }`}
-                    data-testid={`period-${opt.value}`}
                   >
-                    {opt.label}
+                    {opt.icon} {opt.label}
                   </button>
                 ))}
               </div>
@@ -252,260 +206,150 @@ export default function LoginSessionsPage() {
         </CardContent>
       </Card>
 
-      {/* No Employee Selected */}
+      {/* No Selection */}
       {!selectedEmployee && (
-        <Card className="border-2 border-dashed border-slate-300">
+        <Card className="border-dashed border-2 border-slate-300 bg-white">
           <CardContent className="py-16 text-center">
-            <User size={64} className="mx-auto text-slate-300 mb-4" />
-            <h3 className="text-xl font-bold text-slate-500 mb-2">
-              {lang === 'ar' ? 'اختر موظفاً لعرض سجله' : 'Select an employee to view their log'}
-            </h3>
-            <p className="text-slate-400">
-              {lang === 'ar' ? 'استخدم القائمة المنسدلة أعلاه لاختيار الموظف' : 'Use the dropdown above to select an employee'}
-            </p>
+            <User size={56} className="mx-auto text-slate-300 mb-4" />
+            <p className="text-lg text-slate-500">اختر موظفاً من القائمة لعرض سجله</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Employee Selected - Show Stats & Table */}
+      {/* Employee Selected */}
       {selectedEmployee && (
         <>
-          {/* Employee Info & Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Employee Card */}
-            <Card className="md:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-2xl font-bold">
-                    {selectedEmployeeData?.full_name_ar?.charAt(0) || '؟'}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">{selectedEmployeeData?.full_name_ar || '-'}</h3>
-                    <p className="text-slate-400">#{selectedEmployeeData?.employee_number || '-'}</p>
-                    <p className="text-sm text-indigo-300 mt-1">{selectedEmployeeData?.department || '-'}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-4 text-center">
-                <p className="text-3xl font-bold text-blue-700">{stats.total}</p>
-                <p className="text-sm text-blue-600 font-medium">
-                  {lang === 'ar' ? 'إجمالي الجلسات' : 'Total Sessions'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4 text-center">
-                <p className="text-3xl font-bold text-green-700">{stats.active}</p>
-                <p className="text-sm text-green-600 font-medium">
-                  {lang === 'ar' ? 'نشط الآن' : 'Active Now'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-purple-50 border-purple-200">
-              <CardContent className="p-4 text-center">
-                <p className="text-3xl font-bold text-purple-700">
-                  {Math.floor(stats.totalMinutes / 60)}:{(stats.totalMinutes % 60).toString().padStart(2, '0')}
-                </p>
-                <p className="text-sm text-purple-600 font-medium">
-                  {lang === 'ar' ? 'إجمالي الوقت' : 'Total Time'}
-                </p>
-              </CardContent>
-            </Card>
+          {/* Employee Info Bar */}
+          <div className="bg-gradient-to-l from-indigo-600 to-indigo-700 rounded-xl p-4 mb-4 text-white flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">
+                {selectedEmp?.full_name_ar?.charAt(0) || '؟'}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">{selectedEmp?.full_name_ar}</h2>
+                <p className="text-indigo-200 text-sm">#{selectedEmp?.employee_number}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-center">
+              <div>
+                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-xs text-indigo-200">جلسة</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalHours}:{stats.totalMins.toString().padStart(2,'0')}</p>
+                <p className="text-xs text-indigo-200">ساعة</p>
+              </div>
+            </div>
           </div>
 
-          {/* Actions Bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                onClick={fetchSessions}
-                disabled={loading}
-                className="gap-2"
-              >
-                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                {lang === 'ar' ? 'تحديث' : 'Refresh'}
-              </Button>
-            </div>
-            <Button 
-              onClick={exportToCSV}
-              disabled={sessions.length === 0}
-              className="gap-2 bg-green-600 hover:bg-green-700"
-            >
+          {/* Actions */}
+          <div className="flex gap-2 mb-4">
+            <Button variant="outline" size="sm" onClick={fetchSessions} disabled={loading}>
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              تحديث
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportToCSV} disabled={sessions.length === 0}>
               <Download size={16} />
-              {lang === 'ar' ? 'تصدير Excel' : 'Export CSV'}
+              تصدير
             </Button>
           </div>
 
-          {/* Excel-like Table */}
-          <Card className="overflow-hidden shadow-xl border-2">
-            <div className="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
-              <span className="font-bold flex items-center gap-2">
-                <FileSpreadsheet size={20} />
-                {lang === 'ar' ? 'جدول السجلات' : 'Sessions Table'}
-              </span>
-              <span className="text-sm bg-slate-700 px-3 py-1 rounded-full">
-                {sessions.length} {lang === 'ar' ? 'سجل' : 'records'}
-              </span>
-            </div>
-            
+          {/* Table */}
+          <Card className="overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <RefreshCw size={32} className="animate-spin text-indigo-500" />
+                <div className="py-16 text-center">
+                  <RefreshCw size={32} className="animate-spin text-indigo-500 mx-auto" />
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="text-center py-20">
+                <div className="py-16 text-center">
                   <Clock size={48} className="mx-auto text-slate-300 mb-4" />
-                  <p className="text-slate-500 font-medium">
-                    {lang === 'ar' ? 'لا توجد سجلات في هذه الفترة' : 'No records for this period'}
-                  </p>
+                  <p className="text-slate-500">لا توجد سجلات في هذه الفترة</p>
                 </div>
               ) : (
-                <table className="w-full border-collapse">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gradient-to-r from-slate-100 to-slate-50">
-                      <th className="border-b-2 border-slate-300 p-4 text-right font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        #
-                      </th>
-                      <th 
-                        className="border-b-2 border-slate-300 p-4 text-right font-bold text-slate-700 cursor-pointer hover:bg-slate-200 transition-colors sticky top-0 bg-slate-100"
-                        onClick={() => handleSort('login_at')}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Calendar size={16} />
-                          {lang === 'ar' ? 'التاريخ' : 'Date'}
-                          <ArrowUpDown size={14} className="text-slate-400" />
-                        </span>
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-center font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        <span className="flex items-center justify-center gap-2">
-                          <LogIn size={16} className="text-green-600" />
-                          {lang === 'ar' ? 'وقت الدخول' : 'Login Time'}
-                        </span>
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-center font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        <span className="flex items-center justify-center gap-2">
-                          <LogOut size={16} className="text-red-600" />
-                          {lang === 'ar' ? 'وقت الخروج' : 'Logout Time'}
-                        </span>
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-center font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        <span className="flex items-center justify-center gap-2">
-                          <Clock size={16} />
-                          {lang === 'ar' ? 'المدة' : 'Duration'}
-                        </span>
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-right font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        {lang === 'ar' ? 'الجهاز' : 'Device'}
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-right font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        {lang === 'ar' ? 'المتصفح' : 'Browser'}
-                      </th>
-                      <th className="border-b-2 border-slate-300 p-4 text-center font-bold text-slate-700 sticky top-0 bg-slate-100">
-                        {lang === 'ar' ? 'الحالة' : 'Status'}
-                      </th>
+                    <tr className="bg-slate-800 text-white">
+                      <th className="p-3 text-right w-12">#</th>
+                      <th className="p-3 text-right">التاريخ</th>
+                      <th className="p-3 text-center w-24">الدخول</th>
+                      <th className="p-3 text-center w-24">الخروج</th>
+                      <th className="p-3 text-center w-20">المدة</th>
+                      <th className="p-3 text-right">الجهاز</th>
+                      <th className="p-3 text-center w-20">الحالة</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(groupedByDate).map(([date, dateSessions], groupIdx) => (
+                    {Object.entries(groupedByDate).map(([date, dateSessions], gIdx) => (
                       <>
-                        {/* Date Header Row */}
-                        <tr key={`date-${groupIdx}`} className="bg-indigo-50">
-                          <td colSpan={8} className="p-3 font-bold text-indigo-700 border-b border-indigo-200">
-                            <Calendar size={16} className="inline ml-2" />
-                            {date}
-                            <span className="font-normal text-indigo-500 mr-3">
-                              ({dateSessions.length} {lang === 'ar' ? 'جلسة' : 'sessions'})
+                        {/* Date Row */}
+                        <tr key={`d-${gIdx}`} className="bg-indigo-50 border-b-2 border-indigo-200">
+                          <td colSpan={7} className="p-2 font-bold text-indigo-700">
+                            📅 {formatFullDate(dateSessions[0]?.login_at)}
+                            <span className="font-normal text-indigo-500 mr-2">
+                              ({dateSessions.length} جلسة)
                             </span>
                           </td>
                         </tr>
                         {/* Session Rows */}
-                        {dateSessions.map((session, idx) => (
+                        {dateSessions.map((s, idx) => (
                           <tr 
-                            key={session.id}
-                            className={`
-                              border-b border-slate-200 transition-colors
-                              ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
-                              ${session.status === 'active' ? 'bg-green-50' : ''}
-                              hover:bg-indigo-50
-                            `}
+                            key={s.id} 
+                            className={`border-b hover:bg-slate-50 ${s.status === 'active' ? 'bg-green-50' : idx % 2 ? 'bg-slate-50/50' : ''}`}
                           >
-                            <td className="p-4 text-center font-mono text-slate-500 text-sm">
-                              {idx + 1}
-                            </td>
-                            <td className="p-4 font-medium text-slate-700">
-                              {formatDate(session.login_at)}
-                            </td>
-                            <td className="p-4 text-center">
-                              <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg font-mono font-bold">
-                                <LogIn size={14} />
-                                {formatTime(session.login_at)}
+                            <td className="p-3 text-center text-slate-400 font-mono">{idx + 1}</td>
+                            <td className="p-3 font-medium">{formatDate(s.login_at)}</td>
+                            <td className="p-3 text-center">
+                              <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded font-mono font-bold">
+                                {formatTime(s.login_at)}
                               </span>
                             </td>
-                            <td className="p-4 text-center">
-                              {session.logout_at ? (
-                                <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-mono font-bold">
-                                  <LogOut size={14} />
-                                  {formatTime(session.logout_at)}
+                            <td className="p-3 text-center">
+                              {s.logout_at ? (
+                                <span className="inline-block bg-red-100 text-red-700 px-2 py-1 rounded font-mono font-bold">
+                                  {formatTime(s.logout_at)}
                                 </span>
                               ) : (
-                                <span className="text-slate-400 font-mono">--:--:--</span>
+                                <span className="text-slate-400">--:--</span>
                               )}
                             </td>
-                            <td className="p-4 text-center">
-                              <span className={`font-mono font-bold ${
-                                session.status === 'active' ? 'text-green-600' : 'text-slate-600'
-                              }`}>
-                                {calculateDuration(session.login_at, session.logout_at)}
-                              </span>
+                            <td className="p-3 text-center font-mono font-bold text-slate-700">
+                              {calculateDuration(s.login_at, s.logout_at)}
                             </td>
-                            <td className="p-4">
+                            <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <DeviceIcon session={session} />
-                                <span className="text-sm font-medium text-slate-700">
-                                  {session.device_name || '-'}
-                                </span>
+                                <DeviceIcon session={s} />
+                                <div>
+                                  <p className="font-medium text-slate-700">{s.device_name || '-'}</p>
+                                  <p className="text-xs text-slate-500">{s.browser}</p>
+                                </div>
                               </div>
                             </td>
-                            <td className="p-4">
-                              <span className="text-sm text-slate-600">
-                                {session.browser || '-'}
-                              </span>
-                            </td>
-                            <td className="p-4 text-center">
-                              <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                                session.status === 'active'
-                                  ? 'bg-green-500 text-white animate-pulse'
-                                  : 'bg-slate-200 text-slate-600'
-                              }`}>
-                                {session.status === 'active'
-                                  ? (lang === 'ar' ? '🟢 نشط' : '🟢 Active')
-                                  : (lang === 'ar' ? '✓ مكتمل' : '✓ Done')
-                                }
-                              </span>
+                            <td className="p-3 text-center">
+                              {s.status === 'active' ? (
+                                <span className="inline-block bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                                  نشط
+                                </span>
+                              ) : (
+                                <span className="inline-block bg-slate-200 text-slate-600 px-2 py-1 rounded-full text-xs">
+                                  ✓
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))}
                       </>
                     ))}
                   </tbody>
-                  {/* Footer with totals */}
+                  {/* Footer */}
                   <tfoot>
                     <tr className="bg-slate-800 text-white font-bold">
-                      <td colSpan={4} className="p-4 text-right">
-                        {lang === 'ar' ? 'الإجمالي' : 'Total'}
+                      <td colSpan={4} className="p-3 text-right">الإجمالي:</td>
+                      <td className="p-3 text-center font-mono">
+                        {stats.totalHours}:{stats.totalMins.toString().padStart(2,'0')}
                       </td>
-                      <td className="p-4 text-center font-mono">
-                        {Math.floor(stats.totalMinutes / 60)}:{(stats.totalMinutes % 60).toString().padStart(2, '0')}:00
-                      </td>
-                      <td colSpan={3} className="p-4 text-center">
-                        {stats.total} {lang === 'ar' ? 'جلسة' : 'sessions'}
+                      <td colSpan={2} className="p-3 text-center">
+                        {stats.total} جلسة
                       </td>
                     </tr>
                   </tfoot>
