@@ -113,6 +113,80 @@ async def update_contract(contract_id: str, req: ContractUpdate, user=Depends(re
     return updated
 
 
+@router.get("/settlement/calculate/{employee_id}")
+async def calculate_settlement_data(employee_id: str, user=Depends(require_roles('sultan', 'naif', 'stas'))):
+    """
+    حساب بيانات المخالصة تلقائياً:
+    - الراتب الأساسي
+    - رصيد الإجازات
+    - مكافأة نهاية الخدمة
+    - الخصومات المنفذة من finance_ledger
+    """
+    from services.leave_service import get_employee_leave_summary
+    
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # الراتب الأساسي
+    basic_salary = emp.get('basic_salary', 0)
+    
+    # حساب رصيد الإجازات
+    leave_summary = await get_employee_leave_summary(employee_id)
+    annual_balance = leave_summary.get('annual', {}).get('remaining', 0)
+    daily_rate = basic_salary / 30 if basic_salary else 0
+    leave_encashment = round(annual_balance * daily_rate, 2)
+    
+    # حساب مكافأة نهاية الخدمة (مبسط)
+    join_date = emp.get('join_date', '')
+    years_of_service = 0
+    if join_date:
+        try:
+            from datetime import datetime
+            join_dt = datetime.strptime(join_date[:10], "%Y-%m-%d")
+            now_dt = datetime.now()
+            years_of_service = (now_dt - join_dt).days / 365
+        except:
+            pass
+    
+    # مكافأة نهاية الخدمة حسب نظام العمل السعودي
+    if years_of_service <= 5:
+        eos_amount = round((basic_salary / 2) * years_of_service, 2)
+    else:
+        eos_amount = round((basic_salary / 2) * 5 + basic_salary * (years_of_service - 5), 2)
+    
+    # الخصومات المنفذة من finance_ledger (كل الخصومات غير المُسددة)
+    total_deductions = 0
+    deduction_details = []
+    ledger_entries = await db.finance_ledger.find({
+        "employee_id": employee_id,
+        "type": "debit"
+    }, {"_id": 0}).to_list(100)
+    
+    for entry in ledger_entries:
+        amount = entry.get('amount', 0)
+        total_deductions += amount
+        deduction_details.append({
+            "date": entry.get('created_at', '')[:10] if entry.get('created_at') else '',
+            "amount": amount,
+            "reason": entry.get('note', entry.get('description', ''))
+        })
+    
+    return {
+        "employee_id": employee_id,
+        "employee_name": emp.get('full_name', ''),
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "basic_salary": basic_salary,
+        "years_of_service": round(years_of_service, 1),
+        "leave_balance_days": annual_balance,
+        "leave_encashment": leave_encashment,
+        "eos_amount": eos_amount,
+        "total_deductions": round(total_deductions, 2),
+        "deduction_details": deduction_details,
+        "net_settlement": round(basic_salary + leave_encashment + eos_amount - total_deductions, 2)
+    }
+
+
 @router.post("/settlement")
 async def create_settlement(req: SettlementRequest, user=Depends(require_roles('sultan', 'naif'))):
     """
