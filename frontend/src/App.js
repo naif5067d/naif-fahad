@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Toaster } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
+import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import TransactionsPage from "@/pages/TransactionsPage";
 import TransactionDetailPage from "@/pages/TransactionDetailPage";
@@ -27,6 +28,7 @@ import PenaltiesPage from "@/pages/PenaltiesPage";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -37,16 +39,12 @@ function ProtectedRoute({ children, allowedRoles }) {
       </div>
     );
   }
+  
+  // Not logged in - show login page
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Initializing...</p>
-        </div>
-      </div>
-    );
+    return <LoginPage />;
   }
+  
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
   return <AppLayout>{children}</AppLayout>;
 }
