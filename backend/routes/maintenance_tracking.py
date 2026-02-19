@@ -83,7 +83,7 @@ def check_delay(expected_date: str) -> dict:
                 "days_remaining": days,
                 "alert": None
             }
-    except:
+    except Exception:
         return {"has_expected": False, "is_delayed": False, "days_remaining": None, "alert": None}
 
 # ==================== ENDPOINTS ====================
