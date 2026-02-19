@@ -67,13 +67,32 @@ async def get_employee(employee_id: str, user=Depends(get_current_user)):
 
 
 @router.patch("/{employee_id}")
-async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends(require_roles('stas'))):
+async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends(get_current_user)):
+    """تحديث بيانات الموظف - STAS أو الموظف نفسه لبياناته الشخصية"""
     emp = await db.employees.find_one({"id": employee_id})
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من الصلاحيات
+    is_admin = user.get('role') in ['stas', 'sultan', 'naif']
+    is_self = user.get('employee_id') == employee_id
+    
+    if not is_admin and not is_self:
+        raise HTTPException(status_code=403, detail="غير مصرح لك بتعديل بيانات هذا الموظف")
+    
+    # الموظف العادي يمكنه فقط تعديل الاسم والبريد
+    allowed_fields_for_self = {'full_name', 'full_name_ar', 'email', 'phone'}
+    
     updates = {k: v for k, v in update.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="لا توجد تحديثات")
+    
+    # تصفية الحقول للموظف غير المسؤول
+    if is_self and not is_admin:
+        updates = {k: v for k, v in updates.items() if k in allowed_fields_for_self}
+        if not updates:
+            raise HTTPException(status_code=400, detail="لا يمكنك تعديل هذه الحقول")
+    
     await db.employees.update_one({"id": employee_id}, {"$set": updates})
     if 'full_name' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"full_name": updates['full_name']}})
