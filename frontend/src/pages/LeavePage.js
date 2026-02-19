@@ -349,16 +349,22 @@ export default function LeavePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold flex items-center gap-2"><CalendarDays size={18} /> {t('leave.publicHolidays')}</h2>
             {canEditHolidays && (
-              <Dialog open={addHolidayOpen} onOpenChange={(open) => { setAddHolidayOpen(open); if (!open) { setEditHoliday(null); setHolidayForm({ name: '', name_ar: '', date: '' }); } }}>
+              <Dialog open={addHolidayOpen} onOpenChange={(open) => { setAddHolidayOpen(open); if (!open) { setEditHoliday(null); setHolidayForm({ name: '', name_ar: '', start_date: '', end_date: '' }); } }}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline" data-testid="add-holiday-btn"><Plus size={14} className="me-1" />{lang === 'ar' ? 'إضافة إجازة' : 'Add Holiday'}</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>{editHoliday ? (lang === 'ar' ? 'تعديل الإجازة' : 'Edit Holiday') : (lang === 'ar' ? 'إضافة إجازة رسمية' : 'Add Public Holiday')}</DialogTitle></DialogHeader>
                   <div className="space-y-3">
-                    <div><Label>{lang === 'ar' ? 'الاسم (إنجليزي)' : 'Name'}</Label><Input data-testid="holiday-name" value={holidayForm.name} onChange={e => setHolidayForm(f => ({ ...f, name: e.target.value }))} /></div>
-                    <div><Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label><Input data-testid="holiday-name-ar" value={holidayForm.name_ar} onChange={e => setHolidayForm(f => ({ ...f, name_ar: e.target.value }))} dir="rtl" /></div>
-                    <div><Label>{lang === 'ar' ? 'التاريخ' : 'Date'}</Label><Input data-testid="holiday-date" type="date" value={holidayForm.date} onChange={e => setHolidayForm(f => ({ ...f, date: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'الاسم (إنجليزي)' : 'Name'}</Label><Input data-testid="holiday-name" value={holidayForm.name} onChange={e => setHolidayForm(f => ({ ...f, name: e.target.value }))} placeholder="Eid Al-Fitr" /></div>
+                    <div><Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Name (Arabic)'}</Label><Input data-testid="holiday-name-ar" value={holidayForm.name_ar} onChange={e => setHolidayForm(f => ({ ...f, name_ar: e.target.value }))} dir="rtl" placeholder="عيد الفطر" /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><Label>{lang === 'ar' ? 'من تاريخ' : 'Start Date'}</Label><Input data-testid="holiday-start-date" type="date" value={holidayForm.start_date || holidayForm.date || ''} onChange={e => setHolidayForm(f => ({ ...f, start_date: e.target.value, date: e.target.value }))} /></div>
+                      <div><Label>{lang === 'ar' ? 'إلى تاريخ' : 'End Date'}</Label><Input data-testid="holiday-end-date" type="date" value={holidayForm.end_date || holidayForm.date || ''} onChange={e => setHolidayForm(f => ({ ...f, end_date: e.target.value }))} /></div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {lang === 'ar' ? 'سيتم إضافة جميع أيام الإجازة تلقائياً بين التاريخين' : 'All holiday days between the dates will be added automatically'}
+                    </p>
                     <Button onClick={handleAddHoliday} disabled={submitting} data-testid="save-holiday" className="w-full">{submitting ? <Loader2 size={14} className="me-1 animate-spin" /> : null}{editHoliday ? (lang === 'ar' ? 'حفظ' : 'Save') : (lang === 'ar' ? 'إضافة' : 'Add')}</Button>
                   </div>
                 </DialogContent>
@@ -370,28 +376,66 @@ export default function LeavePage() {
               <table className="w-full text-sm" data-testid="holidays-table">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900/50 text-xs border-b border-border">
-                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">Name</th>
-                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground hidden sm:table-cell">Name (AR)</th>
-                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'المصدر' : 'Source'}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'الإجازة' : 'Holiday'}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'من' : 'From'}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'إلى' : 'To'}</th>
+                    <th className="px-3 py-2.5 text-start font-semibold text-muted-foreground">{lang === 'ar' ? 'الأيام' : 'Days'}</th>
                     {canEditHolidays && <th className="px-2 py-2.5 w-16"></th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {holidays.map(h => (
-                    <tr key={h.id || h.date} className="hover:bg-muted/30">
-                      <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(h.date).combined}</td>
-                      <td className="px-3 py-2 text-sm">{h.name}</td>
-                      <td className="px-3 py-2 text-sm hidden sm:table-cell">{h.name_ar}</td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground capitalize">{h.source || 'system'}</td>
-                      {canEditHolidays && (
-                        <td className="px-2 py-2 flex gap-1">
-                          <button onClick={() => { setEditHoliday(h); setHolidayForm({ name: h.name, name_ar: h.name_ar || '', date: h.date }); setAddHolidayOpen(true); }} className="text-muted-foreground hover:text-foreground"><Pencil size={13} /></button>
-                          <button onClick={() => handleDeleteHoliday(h.id)} className="text-red-400 hover:text-red-600"><Trash2 size={13} /></button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
+                  {/* Group consecutive holidays by name */}
+                  {(() => {
+                    // Group holidays by base name (remove numbers like "1", "2" etc.)
+                    const groups = {};
+                    holidays.forEach(h => {
+                      const baseName = (h.name_ar || h.name || '').replace(/\s*\d+\s*$/, '').trim() || h.name;
+                      if (!groups[baseName]) {
+                        groups[baseName] = [];
+                      }
+                      groups[baseName].push(h);
+                    });
+                    
+                    // Convert to range format
+                    return Object.entries(groups).map(([name, days]) => {
+                      // Sort by date
+                      days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                      const startDate = days[0]?.date;
+                      const endDate = days[days.length - 1]?.date;
+                      const nameAr = days[0]?.name_ar?.replace(/\s*\d+\s*$/, '').trim() || name;
+                      const nameEn = days[0]?.name?.replace(/\s*\d+\s*$/, '').trim() || name;
+                      
+                      return (
+                        <tr key={name} className="hover:bg-muted/30">
+                          <td className="px-3 py-2 text-sm font-medium">
+                            {lang === 'ar' ? nameAr : nameEn}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(startDate).combined}</td>
+                          <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(endDate).combined}</td>
+                          <td className="px-3 py-2 text-sm text-center">
+                            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                              {days.length}
+                            </span>
+                          </td>
+                          {canEditHolidays && (
+                            <td className="px-2 py-2">
+                              <button 
+                                onClick={() => {
+                                  // Delete all days of this holiday
+                                  if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
+                                    days.forEach(d => handleDeleteHoliday(d.id));
+                                  }
+                                }} 
+                                className="text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
