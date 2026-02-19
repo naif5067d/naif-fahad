@@ -129,24 +129,15 @@ async def login(req: LoginRequest):
     employee_id = user.get('employee_id')
     role = user.get('role', 'employee')
     
-    # فحص الجهاز للموظفين فقط (غير المدراء)
-    if role not in EXEMPT_ROLES and req.device_signature and employee_id:
-        from services.device_service import check_device_for_login
-        device_check = await check_device_for_login(
+    # تسجيل الجهاز للمراقبة (بدون منع الدخول)
+    if req.fingerprint_data and employee_id:
+        from services.device_service import register_login_session
+        await register_login_session(
             employee_id=employee_id,
-            device_signature=req.device_signature,
-            fingerprint_data=req.fingerprint_data or {}
+            fingerprint_data=req.fingerprint_data or {},
+            username=req.username,
+            role=role
         )
-        
-        if not device_check['allowed']:
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "error": device_check['error'],
-                    "message_ar": device_check['message_ar'],
-                    "message_en": device_check['message_en']
-                }
-            )
     
     # تسجيل الدخول في سجل الأمان
     await db.security_audit_log.insert_one({
