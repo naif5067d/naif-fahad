@@ -1002,29 +1002,46 @@ export default function STASMirrorPage() {
                         deductionTrace.map((check, i) => (
                           <div 
                             key={i} 
-                            className={`p-3 rounded border-r-4 ${
-                              check.status === 'FAIL' || check.found === false
-                                ? 'bg-red-50 border-red-500' 
-                                : check.status === 'WARNING' 
-                                  ? 'bg-amber-50 border-amber-500' 
-                                  : 'bg-green-50 border-green-500'
+                            className={`p-3 rounded-lg border ${
+                              check.found 
+                                ? 'bg-green-50 border-green-200' 
+                                : check.checked 
+                                  ? 'bg-slate-50 border-slate-200'
+                                  : 'bg-gray-50 border-gray-200'
                             }`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className={`text-xs font-bold ${
-                                check.status === 'FAIL' || check.found === false ? 'text-red-600' :
-                                check.status === 'WARNING' ? 'text-amber-600' : 'text-green-600'
-                              }`}>
-                                {check.status || (check.found ? 'PASS' : 'FAIL')}
+                              <span className="font-medium text-sm flex items-center gap-2">
+                                {check.found ? (
+                                  <CheckCircle className="text-green-500" size={14} />
+                                ) : check.checked ? (
+                                  <XCircle className="text-slate-400" size={14} />
+                                ) : (
+                                  <Clock className="text-gray-400" size={14} />
+                                )}
+                                {check.step_ar || check.step}
                               </span>
-                              <span className="text-xs text-muted-foreground">{check.check_name_ar || check.check_name || check.step_ar || check.step}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                check.found 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : check.checked 
+                                    ? 'bg-slate-100 text-slate-600'
+                                    : 'bg-gray-100 text-gray-500'
+                              }`}>
+                                {check.found 
+                                  ? (lang === 'ar' ? 'وُجد' : 'Found')
+                                  : check.checked 
+                                    ? (lang === 'ar' ? 'لم يُوجد' : 'Not found')
+                                    : (lang === 'ar' ? 'لم يُفحص' : 'Not checked')}
+                              </span>
                             </div>
-                            <p className="text-sm mt-1">{check.message_ar || check.message || check.details}</p>
-                            {check.data && (
+                            {check.details && (
                               <div className="mt-2 text-xs text-muted-foreground">
-                                {Object.entries(check.data).map(([k, v]) => (
-                                  <span key={k} className="mr-3">{k}: <strong>{String(v)}</strong></span>
-                                ))}
+                                {typeof check.details === 'object' 
+                                  ? Object.entries(check.details).slice(0, 4).map(([k, v]) => (
+                                      <span key={k} className="mr-3 inline-block">{k}: <strong>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</strong></span>
+                                    ))
+                                  : check.details}
                               </div>
                             )}
                           </div>
