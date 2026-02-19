@@ -35,6 +35,7 @@ from routes.team_attendance import router as team_attendance_router
 from routes.penalties import router as penalties_router
 from routes.devices import router as devices_router
 from routes.tasks import router as tasks_router
+from routes.maintenance_tracking import router as maintenance_tracking_router
 from seed import seed_database
 
 # App Version
