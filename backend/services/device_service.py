@@ -642,53 +642,153 @@ async def get_security_logs(employee_id: str = None, limit: int = 100) -> List[d
 
 
 def _parse_user_agent(user_agent: str) -> dict:
-    """استخراج معلومات الجهاز من User Agent"""
-    ua = user_agent.lower()
+    """استخراج معلومات الجهاز من User Agent بشكل سهل للمستخدم"""
+    from user_agents import parse
     
-    # نوع الجهاز
-    device_type = "desktop"
-    if "mobile" in ua or "android" in ua and "mobile" in ua:
-        device_type = "mobile"
-    elif "tablet" in ua or "ipad" in ua:
-        device_type = "tablet"
+    try:
+        ua = parse(user_agent)
+        
+        # تحديد نوع الجهاز بشكل واضح
+        if ua.is_mobile:
+            device_type = "mobile"
+        elif ua.is_tablet:
+            device_type = "tablet"
+        elif ua.is_pc:
+            device_type = "desktop"
+        else:
+            device_type = "unknown"
+        
+        # استخراج اسم الجهاز بشكل واضح
+        device_brand = ua.device.brand or ""
+        device_model = ua.device.model or ""
+        device_family = ua.device.family or ""
+        
+        # بناء اسم جهاز سهل للمستخدم
+        if device_brand and device_model:
+            device_name = f"{device_brand} {device_model}"
+        elif device_family and device_family != "Other":
+            device_name = device_family
+        elif ua.is_mobile:
+            device_name = "هاتف محمول"
+        elif ua.is_tablet:
+            device_name = "جهاز لوحي"
+        else:
+            device_name = "كمبيوتر"
+        
+        # المتصفح
+        browser = ua.browser.family or "متصفح غير معروف"
+        browser_version = ua.browser.version_string or ""
+        
+        # نظام التشغيل
+        os_name = ua.os.family or "نظام غير معروف"
+        os_version = ua.os.version_string or ""
+        
+        # بناء اسم نظام سهل
+        if os_name == "iOS":
+            os_display = f"iOS {os_version}" if os_version else "iOS"
+        elif os_name == "Android":
+            os_display = f"أندرويد {os_version}" if os_version else "أندرويد"
+        elif os_name == "Windows":
+            os_display = f"ويندوز {os_version}" if os_version else "ويندوز"
+        elif os_name == "Mac OS X":
+            os_display = "ماك"
+        else:
+            os_display = os_name
+        
+        # اسم مختصر للعرض
+        friendly_name = _get_friendly_device_name(device_type, device_brand, device_model, os_name, browser)
+        
+        return {
+            "device_type": device_type,
+            "device_name": device_name,
+            "device_brand": device_brand,
+            "device_model": device_model,
+            "browser": browser,
+            "browser_version": browser_version,
+            "os": os_name,
+            "os_version": os_version,
+            "os_display": os_display,
+            "friendly_name": friendly_name,
+            "is_mobile": ua.is_mobile,
+            "is_tablet": ua.is_tablet,
+            "is_pc": ua.is_pc
+        }
+    except Exception:
+        # في حالة فشل التحليل، نستخدم الطريقة القديمة
+        ua_lower = user_agent.lower()
+        device_type = "desktop"
+        if "mobile" in ua_lower or ("android" in ua_lower and "mobile" in ua_lower):
+            device_type = "mobile"
+        elif "tablet" in ua_lower or "ipad" in ua_lower:
+            device_type = "tablet"
+        
+        return {
+            "device_type": device_type,
+            "device_name": "جهاز غير معروف",
+            "device_brand": "",
+            "device_model": "",
+            "browser": "متصفح",
+            "browser_version": "",
+            "os": "نظام",
+            "os_version": "",
+            "os_display": "غير معروف",
+            "friendly_name": "جهاز غير معروف",
+            "is_mobile": device_type == "mobile",
+            "is_tablet": device_type == "tablet",
+            "is_pc": device_type == "desktop"
+        }
+
+
+def _get_friendly_device_name(device_type: str, brand: str, model: str, os_name: str, browser: str) -> str:
+    """توليد اسم جهاز سهل للعرض"""
     
-    # المتصفح
-    browser = "Unknown"
-    browser_version = ""
-    if "chrome" in ua and "edg" not in ua:
-        browser = "Chrome"
-    elif "firefox" in ua:
-        browser = "Firefox"
-    elif "safari" in ua and "chrome" not in ua:
-        browser = "Safari"
-    elif "edg" in ua:
-        browser = "Edge"
-    elif "opera" in ua or "opr" in ua:
-        browser = "Opera"
+    # أجهزة آبل
+    if brand and "apple" in brand.lower():
+        if "iphone" in model.lower():
+            return f"آيفون {model.replace('iPhone', '').strip()}"
+        elif "ipad" in model.lower():
+            return f"آيباد {model.replace('iPad', '').strip()}"
+        elif os_name == "Mac OS X":
+            return "ماك"
     
-    # نظام التشغيل
-    os_name = "Unknown"
-    os_version = ""
-    if "windows" in ua:
-        os_name = "Windows"
-        if "windows nt 10" in ua:
-            os_version = "10/11"
-    elif "mac os" in ua or "macos" in ua:
-        os_name = "macOS"
-    elif "android" in ua:
-        os_name = "Android"
-    elif "iphone" in ua or "ipad" in ua:
-        os_name = "iOS"
-    elif "linux" in ua:
-        os_name = "Linux"
+    # أجهزة سامسونج
+    if brand and "samsung" in brand.lower():
+        if model:
+            return f"سامسونج {model}"
+        return "جهاز سامسونج"
     
-    return {
-        "device_type": device_type,
-        "browser": browser,
-        "browser_version": browser_version,
-        "os": os_name,
-        "os_version": os_version
-    }
+    # أجهزة هواوي
+    if brand and "huawei" in brand.lower():
+        if model:
+            return f"هواوي {model}"
+        return "جهاز هواوي"
+    
+    # أجهزة شاومي
+    if brand and ("xiaomi" in brand.lower() or "redmi" in brand.lower()):
+        if model:
+            return f"شاومي {model}"
+        return "جهاز شاومي"
+    
+    # حسب نظام التشغيل
+    if os_name == "iOS":
+        return "آيفون"
+    elif os_name == "Android":
+        if device_type == "tablet":
+            return "جهاز لوحي أندرويد"
+        return "هاتف أندرويد"
+    elif os_name == "Windows":
+        return f"كمبيوتر ويندوز ({browser})"
+    elif os_name == "Mac OS X":
+        return f"ماك ({browser})"
+    elif os_name == "Linux":
+        return f"كمبيوتر لينكس ({browser})"
+    
+    # افتراضي
+    if device_type == "mobile":
+        return "هاتف محمول"
+    elif device_type == "tablet":
+        return "جهاز لوحي"
+    return f"كمبيوتر ({browser})"
 
 
 async def _notify_stas_new_device(employee_id: str, device_id: str, fingerprint_data: dict):
