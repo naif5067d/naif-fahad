@@ -146,7 +146,7 @@ async def calculate_settlement_data(employee_id: str, user=Depends(require_roles
             join_dt = datetime.strptime(join_date[:10], "%Y-%m-%d")
             now_dt = datetime.now()
             years_of_service = (now_dt - join_dt).days / 365
-        except:
+        except Exception:
             pass
     
     # مكافأة نهاية الخدمة حسب نظام العمل السعودي
