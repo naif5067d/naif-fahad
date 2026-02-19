@@ -193,8 +193,8 @@ async def search_contracts_endpoint(
 
 
 @router.get("/pending-stas")
-async def get_pending_stas_contracts(user=Depends(require_roles('stas'))):
-    """Get contracts pending STAS execution"""
+async def get_pending_stas_contracts(user=Depends(require_roles('stas', 'sultan', 'naif'))):
+    """Get contracts pending STAS execution - visible to admins"""
     contracts = await db.contracts_v2.find(
         {"status": "pending_stas"}, {"_id": 0}
     ).sort("created_at", -1).to_list(500)
