@@ -38,7 +38,7 @@ async def calculate_attendance_score(employee_id: str = None, month: str = None)
     if employee_id:
         query["employee_id"] = employee_id
     
-    records = await db.daily_status.find(query, {"_id": 0}).to_list(5000)
+    records = await db.daily_status.find(query, {"_id": 0, "final_status": 1, "late_minutes": 1, "date": 1, "employee_id": 1}).to_list(5000)
     
     if not records:
         return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0}
@@ -84,7 +84,7 @@ async def calculate_task_score(employee_id: str = None, month: str = None) -> di
         start_date, end_date = get_month_range(year, mon)
         query["closed_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
     
-    tasks = await db.tasks.find(query, {"_id": 0}).to_list(1000)
+    tasks = await db.tasks.find(query, {"_id": 0, "final_score": 1, "delay_info": 1, "closed_at": 1, "employee_id": 1}).to_list(1000)
     
     if not tasks:
         return {"score": 0, "total_tasks": 0, "completed_on_time": 0, "delayed": 0, "average_rating": 0}
