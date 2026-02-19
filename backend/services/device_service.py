@@ -398,6 +398,81 @@ async def delete_device(device_id: str, deleted_by: str) -> dict:
     return {"success": True, "message_ar": "تم حذف الجهاز"}
 
 
+async def reset_employee_devices(employee_id: str, reset_by: str) -> dict:
+    """
+    إعادة تعيين جميع أجهزة الموظف
+    يُستخدم من قبل STAS لتغيير جهاز الموظف
+    """
+    # حذف جميع الأجهزة المسجلة
+    result = await db.employee_devices.delete_many({"employee_id": employee_id})
+    
+    await log_security_event(
+        employee_id=employee_id,
+        action="all_devices_reset",
+        performed_by=reset_by,
+        details={"deleted_count": result.deleted_count}
+    )
+    
+    return {
+        "success": True,
+        "deleted_count": result.deleted_count,
+        "message_ar": f"تم حذف {result.deleted_count} جهاز. الجهاز القادم سيُعتمد تلقائياً."
+    }
+
+
+async def set_device_as_primary(employee_id: str, device_id: str, set_by: str) -> dict:
+    """
+    تعيين جهاز كجهاز رئيسي للموظف
+    وحظر باقي الأجهزة
+    """
+    # التحقق من وجود الجهاز
+    device = await db.employee_devices.find_one({"id": device_id})
+    if not device:
+        return {"success": False, "error": "الجهاز غير موجود"}
+    
+    if device['employee_id'] != employee_id:
+        return {"success": False, "error": "الجهاز لا ينتمي لهذا الموظف"}
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تعيين الجهاز المختار كموثوق
+    await db.employee_devices.update_one(
+        {"id": device_id},
+        {"$set": {
+            "status": "trusted",
+            "approved_by": set_by,
+            "approved_at": now
+        }}
+    )
+    
+    # حظر باقي الأجهزة
+    await db.employee_devices.update_many(
+        {
+            "employee_id": employee_id,
+            "id": {"$ne": device_id}
+        },
+        {"$set": {
+            "status": "blocked",
+            "blocked_by": set_by,
+            "blocked_at": now,
+            "block_reason": "تم تعيين جهاز آخر كجهاز رئيسي"
+        }}
+    )
+    
+    await log_security_event(
+        employee_id=employee_id,
+        action="device_set_as_primary",
+        device_signature=device['device_signature'],
+        performed_by=set_by,
+        details={"device_id": device_id}
+    )
+    
+    return {
+        "success": True,
+        "message_ar": "تم تعيين الجهاز كجهاز رئيسي"
+    }
+
+
 async def block_account(employee_id: str, blocked_by: str, reason: str = "") -> dict:
     """إيقاف حساب موظف للتحقيق"""
     now = datetime.now(timezone.utc).isoformat()
