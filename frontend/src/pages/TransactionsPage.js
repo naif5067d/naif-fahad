@@ -48,21 +48,34 @@ const TYPE_CONFIG = {
   field_work: { icon: '🚗', label_ar: 'مهمة خارجية', label_en: 'Field Work' },
   early_leave_request: { icon: '🚪', label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request' },
   late_excuse: { icon: '⏱️', label_ar: 'تبرير تأخير', label_en: 'Late Excuse' },
-  add_finance_code: { icon: '🔢', label: 'إضافة رمز مالي' },
-  warning: { icon: '⚠️', label: 'إنذار' },
+  add_finance_code: { icon: '🔢', label_ar: 'إضافة رمز مالي', label_en: 'Add Finance Code' },
+  warning: { icon: '⚠️', label_ar: 'إنذار', label_en: 'Warning' },
 };
 
-// تكوين المراحل بالعربية
+// تكوين المراحل
 const STAGE_CONFIG = {
-  supervisor: 'المشرف',
-  ops: 'العمليات',
-  finance: 'المالية',
-  ceo: 'المدير التنفيذي',
-  stas: 'التنفيذ',
-  employee_accept: 'قبول الموظف',
-  completed: 'مكتملة',
-  cancelled: 'ملغاة',
-  returned: 'معادة',
+  ar: {
+    supervisor: 'المشرف',
+    ops: 'العمليات',
+    finance: 'المالية',
+    ceo: 'المدير التنفيذي',
+    stas: 'التنفيذ',
+    employee_accept: 'قبول الموظف',
+    completed: 'مكتملة',
+    cancelled: 'ملغاة',
+    returned: 'معادة',
+  },
+  en: {
+    supervisor: 'Supervisor',
+    ops: 'Operations',
+    finance: 'Finance',
+    ceo: 'CEO',
+    stas: 'Execution',
+    employee_accept: 'Employee Accept',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    returned: 'Returned',
+  }
 };
 
 export default function TransactionsPage() {
