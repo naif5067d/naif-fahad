@@ -650,3 +650,346 @@ async def get_employee_attendance(
         result["daily"] = daily_records
     
     return result
+
+
+
+# ==================== نظام طلبات التعديل ====================
+
+@router.post("/{employee_id}/request-correction/{date}")
+async def supervisor_request_correction(
+    employee_id: str,
+    date: str,
+    body: SupervisorCorrectionRequest,
+    user=Depends(require_roles('supervisor'))
+):
+    """
+    طلب تعديل من المشرف - يحتاج موافقة سلطان
+    
+    المشرف يطلب تعديل حالة موظف تحت إشرافه.
+    الطلب يظهر لسلطان للموافقة/الرفض.
+    """
+    # التحقق من إقرار المشرف
+    if not body.supervisor_acknowledgment:
+        raise HTTPException(
+            status_code=400, 
+            detail={
+                "error": "ACKNOWLEDGMENT_REQUIRED",
+                "message_ar": f"عزيزي {user.get('full_name_ar', user.get('full_name', 'المشرف'))}، تعديلك للحالة يعني تحملك لمسؤوليتها. يرجى تأكيد الإقرار.",
+                "message_en": f"Dear {user.get('full_name', 'Supervisor')}, modifying this status means you take responsibility for it. Please confirm acknowledgment."
+            }
+        )
+    
+    # التحقق من أن الموظف تحت إشراف هذا المشرف
+    emp = await db.employees.find_one({
+        "id": employee_id,
+        "supervisor_id": user.get('employee_id')
+    }, {"_id": 0})
+    
+    if not emp:
+        raise HTTPException(
+            status_code=403, 
+            detail={
+                "error": "NOT_YOUR_EMPLOYEE",
+                "message_ar": "هذا الموظف ليس تحت إشرافك",
+                "message_en": "This employee is not under your supervision"
+            }
+        )
+    
+    # جلب السجل الحالي
+    daily = await db.daily_status.find_one({
+        "employee_id": employee_id,
+        "date": date
+    }, {"_id": 0})
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # إنشاء طلب التعديل
+    correction_request = {
+        "id": str(uuid.uuid4()),
+        "employee_id": employee_id,
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "date": date,
+        "original_status": daily.get('final_status', 'UNKNOWN') if daily else 'UNKNOWN',
+        "requested_status": body.new_status,
+        "reason": body.reason,
+        "check_in_time": body.check_in_time,
+        "check_out_time": body.check_out_time,
+        "supervisor_id": user.get('employee_id'),
+        "supervisor_name_ar": user.get('full_name_ar', user.get('full_name', '')),
+        "supervisor_user_id": user['user_id'],
+        "status": "pending",  # pending, approved, rejected, modified
+        "created_at": now,
+        "decision": None,
+        "decided_by": None,
+        "decided_at": None,
+        "decision_note": None,
+        "final_status": None  # الحالة النهائية بعد قرار سلطان
+    }
+    
+    await db.attendance_corrections.insert_one(correction_request)
+    
+    # إرسال إشعار لسلطان
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        await create_notification(
+            recipient_id="",
+            notification_type=NotificationType.ACTION_REQUIRED,
+            title="Attendance Correction Request",
+            title_ar="طلب تعديل حضور",
+            message=f"Supervisor {user.get('full_name', '')} requested correction for {emp.get('full_name_ar', '')}",
+            message_ar=f"المشرف {user.get('full_name_ar', '')} يطلب تعديل حالة {emp.get('full_name_ar', '')} ليوم {date}",
+            priority=NotificationPriority.HIGH,
+            recipient_role="sultan",
+            reference_type="attendance_correction",
+            reference_id=correction_request['id'],
+            reference_url="/team-attendance?tab=pending"
+        )
+    except:
+        pass
+    
+    return {
+        "success": True,
+        "message_ar": "تم إرسال طلب التعديل لسلطان للموافقة",
+        "message_en": "Correction request sent to Sultan for approval",
+        "request_id": correction_request['id']
+    }
+
+
+@router.get("/pending-corrections")
+async def get_pending_corrections(
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    طلبات التعديل المعلقة - لسلطان
+    
+    يعرض جميع طلبات التعديل من المشرفين بانتظار الموافقة
+    """
+    corrections = await db.attendance_corrections.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return corrections
+
+
+@router.post("/correction/{correction_id}/decide")
+async def decide_correction(
+    correction_id: str,
+    body: CorrectionDecisionRequest,
+    user=Depends(require_roles('sultan'))
+):
+    """
+    قرار سلطان على طلب التعديل - نهائي ونافذ
+    
+    الإجراءات:
+    - approve: موافقة على الحالة المطلوبة
+    - reject: رفض التعديل
+    - modify: موافقة مع تعديل الحالة
+    """
+    if body.action not in ['approve', 'reject', 'modify']:
+        raise HTTPException(status_code=400, detail="الإجراء غير صحيح")
+    
+    correction = await db.attendance_corrections.find_one(
+        {"id": correction_id},
+        {"_id": 0}
+    )
+    
+    if not correction:
+        raise HTTPException(status_code=404, detail="طلب التعديل غير موجود")
+    
+    if correction['status'] != 'pending':
+        raise HTTPException(status_code=400, detail="تم اتخاذ قرار على هذا الطلب مسبقاً")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديد الحالة النهائية
+    if body.action == 'approve':
+        final_status = correction['requested_status']
+        decision_status = 'approved'
+    elif body.action == 'reject':
+        final_status = correction['original_status']
+        decision_status = 'rejected'
+    else:  # modify
+        if not body.final_status:
+            raise HTTPException(status_code=400, detail="يجب تحديد الحالة النهائية عند التعديل")
+        final_status = body.final_status
+        decision_status = 'modified'
+    
+    status_ar_map = {
+        'PRESENT': 'حاضر',
+        'ABSENT': 'غائب',
+        'LATE': 'متأخر',
+        'ON_LEAVE': 'إجازة',
+        'EXCUSED': 'معذور',
+        'ON_MISSION': 'مهمة خارجية'
+    }
+    
+    # تحديث طلب التعديل
+    await db.attendance_corrections.update_one(
+        {"id": correction_id},
+        {"$set": {
+            "status": decision_status,
+            "decision": body.action,
+            "decided_by": user['user_id'],
+            "decided_by_name": user.get('full_name_ar', user.get('full_name', '')),
+            "decided_at": now,
+            "decision_note": body.decision_note,
+            "final_status": final_status
+        }}
+    )
+    
+    # إذا تمت الموافقة أو التعديل، نطبق التغيير على daily_status
+    if body.action in ['approve', 'modify']:
+        await db.daily_status.update_one(
+            {"employee_id": correction['employee_id'], "date": correction['date']},
+            {
+                "$set": {
+                    "final_status": final_status,
+                    "status_ar": status_ar_map.get(final_status, final_status),
+                    "decision_reason_ar": f"قرار سلطان: {body.decision_note or 'موافقة على طلب المشرف'}",
+                    "decision_source": "sultan_decision",
+                    "check_in_time": correction.get('check_in_time'),
+                    "check_out_time": correction.get('check_out_time'),
+                    "updated_at": now,
+                    "updated_by": user['user_id']
+                },
+                "$push": {
+                    "corrections": {
+                        "from_status": correction['original_status'],
+                        "to_status": final_status,
+                        "reason": f"قرار سلطان على طلب المشرف {correction['supervisor_name_ar']}: {body.decision_note or ''}",
+                        "requested_by": correction['supervisor_user_id'],
+                        "requested_by_name": correction['supervisor_name_ar'],
+                        "corrected_by": user['user_id'],
+                        "corrected_by_name": user.get('full_name_ar', ''),
+                        "corrected_at": now
+                    }
+                }
+            },
+            upsert=True
+        )
+    
+    # حفظ في أرشيف STAS السنوي
+    year = correction['date'][:4]
+    archive_entry = {
+        "id": str(uuid.uuid4()),
+        "year": year,
+        "type": "attendance_correction",
+        "correction_id": correction_id,
+        "employee_id": correction['employee_id'],
+        "employee_name_ar": correction['employee_name_ar'],
+        "date": correction['date'],
+        "original_status": correction['original_status'],
+        "requested_status": correction['requested_status'],
+        "final_status": final_status,
+        "supervisor_id": correction['supervisor_id'],
+        "supervisor_name_ar": correction['supervisor_name_ar'],
+        "decision": body.action,
+        "decision_note": body.decision_note,
+        "decided_by": user['user_id'],
+        "decided_by_name": user.get('full_name_ar', ''),
+        "decided_at": now,
+        "archived_at": now
+    }
+    await db.stas_annual_archive.insert_one(archive_entry)
+    
+    # إرسال إشعار للمشرف بالقرار
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        
+        decision_text_ar = {
+            'approve': 'تمت الموافقة',
+            'reject': 'تم الرفض',
+            'modify': 'تم التعديل'
+        }
+        
+        await create_notification(
+            recipient_id=correction['supervisor_id'],
+            notification_type=NotificationType.INFO,
+            title="Correction Decision",
+            title_ar="قرار طلب التعديل",
+            message=f"Sultan decided on your correction request: {body.action}",
+            message_ar=f"{decision_text_ar.get(body.action, body.action)} على طلب تعديل حالة {correction['employee_name_ar']}",
+            priority=NotificationPriority.NORMAL,
+            recipient_role="supervisor",
+            reference_type="attendance_correction",
+            reference_id=correction_id
+        )
+        
+        # إشعار للموظف أيضاً
+        await create_notification(
+            recipient_id=correction['employee_id'],
+            notification_type=NotificationType.INFO,
+            title="Attendance Status Updated",
+            title_ar="تحديث حالة الحضور",
+            message=f"Your attendance for {correction['date']} has been updated",
+            message_ar=f"تم تعديل حالتك ليوم {correction['date']} إلى: {status_ar_map.get(final_status, final_status)}",
+            priority=NotificationPriority.NORMAL,
+            recipient_role="employee"
+        )
+    except:
+        pass
+    
+    return {
+        "success": True,
+        "message_ar": f"تم {decision_text_ar.get(body.action, body.action)} طلب التعديل",
+        "decision": body.action,
+        "final_status": final_status,
+        "archived": True
+    }
+
+
+@router.get("/stas-archive")
+async def get_stas_archive(
+    year: Optional[str] = None,
+    type: Optional[str] = None,
+    user=Depends(require_roles('stas'))
+):
+    """
+    أرشيف STAS السنوي - للمراجعة
+    
+    يعرض جميع القرارات والتعديلات المحفوظة
+    """
+    if not year:
+        year = str(datetime.now(timezone.utc).year)
+    
+    query = {"year": year}
+    if type:
+        query["type"] = type
+    
+    archive = await db.stas_annual_archive.find(
+        query,
+        {"_id": 0}
+    ).sort("archived_at", -1).to_list(500)
+    
+    # إحصائيات
+    stats = {
+        "year": year,
+        "total_entries": len(archive),
+        "corrections_approved": sum(1 for a in archive if a.get('decision') == 'approve'),
+        "corrections_rejected": sum(1 for a in archive if a.get('decision') == 'reject'),
+        "corrections_modified": sum(1 for a in archive if a.get('decision') == 'modify')
+    }
+    
+    return {
+        "stats": stats,
+        "entries": archive
+    }
+
+
+@router.get("/corrections-history/{employee_id}")
+async def get_employee_corrections_history(
+    employee_id: str,
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
+):
+    """
+    سجل تعديلات موظف معين
+    """
+    corrections = await db.attendance_corrections.find(
+        {"employee_id": employee_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return corrections
