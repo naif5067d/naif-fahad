@@ -33,9 +33,10 @@ class TestAuth:
         )
         assert response.status_code == 200, f"Supervisor login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
+        assert "token" in data
         assert data.get("user", {}).get("role") == "supervisor"
-        return data["access_token"]
+        print(f"Supervisor login OK: {data['user']['full_name']}")
+        return data["token"]
     
     def test_login_sultan(self):
         """Login as sultan (management)"""
@@ -45,9 +46,10 @@ class TestAuth:
         )
         assert response.status_code == 200, f"Sultan login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
+        assert "token" in data
         assert data.get("user", {}).get("role") == "sultan"
-        return data["access_token"]
+        print(f"Sultan login OK: {data['user']['full_name']}")
+        return data["token"]
 
 
 @pytest.fixture
