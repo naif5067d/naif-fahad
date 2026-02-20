@@ -2162,3 +2162,66 @@ POST /api/performance/generate-all?year=YYYY
 ---
 
 Version: 39.3 (2026-02-20)
+
+---
+
+### Phase 39.4: نظام العقوبات الجديد + تعديلات المخالصة ✅ (2026-02-20)
+
+#### 1. إزالة العقوبات من المشرفين
+- ❌ المشرف لا يستطيع إنشاء عقوبات
+- ✅ فقط سلطان + محمد يستطيعون إنشاء العقوبات
+
+#### 2. التسلسل الإداري الجديد للعقوبات:
+```
+سلطان/نايف يُنشئ العقوبة
+         ↓
+    الحالة: pending_mohammed
+         ↓
+محمد يراجع ويقرر:
+├── [execute_from_salary] → خصم من الراتب فوراً → لا تدخل المخالصة
+├── [defer_to_settlement] → ترحيل للمخالصة → تُحتسب عند المخالصة
+└── [reject] → رفض العقوبة
+         ↓
+    يُحفظ في أرشيف STAS
+         ↓
+    إشعار للموظف
+```
+
+#### 3. APIs الجديدة:
+```
+POST /api/deductions
+     → إنشاء عقوبة (سلطان/محمد فقط)
+     → الحالة: pending_mohammed
+
+GET  /api/deductions/pending-mohammed
+     → العقوبات بانتظار قرار محمد
+
+POST /api/deductions/{id}/mohammed-decision
+     → قرار محمد: execute_from_salary | defer_to_settlement | reject
+```
+
+#### 4. منطق المخالصة:
+- ✅ الخصومات المؤجلة (deferred_to_settlement=True) تدخل المخالصة
+- ✅ الخصومات المخصومة من الراتب (deducted_from_salary=True) لا تدخل المخالصة
+
+#### 5. تعديلات توقيعات المخالصة:
+- ❌ إزالة توقيعات سلطان ومحمد (تتم يدوياً)
+- ✅ فقط توقيع STAS الإلكتروني بلون أخضر
+- ✅ QR Code + Barcode
+- ✅ نص: "Valid Document - معاملة صحيحة"
+
+#### 6. تعيين موظفين متعددين للمشرف:
+```
+PUT /api/employees/bulk-supervisor
+    → تعيين عدة موظفين تحت مشرف واحد
+```
+
+**الملفات المُحدّثة:**
+- `/app/backend/routes/deductions.py` - نظام العقوبات الجديد
+- `/app/backend/utils/settlement_pdf.py` - توقيعات المخالصة
+- `/app/frontend/src/pages/EmployeesPage.js` - تعيين موظفين متعددين
+- `/app/frontend/src/App.js` - صلاحيات المشرف
+
+---
+
+Version: 39.4 (2026-02-20)
