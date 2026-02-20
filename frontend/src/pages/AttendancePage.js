@@ -904,13 +904,13 @@ export default function AttendancePage() {
             <table className="hr-table">
               <thead>
                 <tr>
-                  <th>الاسم</th>
-                  <th>التاريخ</th>
-                  <th>الدخول</th>
-                  <th>الخروج</th>
-                  <th>الحالة</th>
-                  <th>GPS</th>
-                  {isStas && <th>إجراء</th>}
+                  <th>{lang === 'ar' ? 'الاسم' : 'Name'}</th>
+                  <th>{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                  <th>{lang === 'ar' ? 'الدخول' : 'Check-in'}</th>
+                  <th>{lang === 'ar' ? 'الخروج' : 'Check-out'}</th>
+                  <th>{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                  <th>{lang === 'ar' ? 'الموقع' : 'GPS'}</th>
+                  {isStas && <th>{lang === 'ar' ? 'إجراء' : 'Action'}</th>}
                 </tr>
               </thead>
               <tbody>
