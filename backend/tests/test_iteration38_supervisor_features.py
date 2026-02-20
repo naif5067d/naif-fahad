@@ -60,7 +60,7 @@ def supervisor_token():
         json=SUPERVISOR_CREDS
     )
     if response.status_code == 200:
-        return response.json().get("access_token")
+        return response.json().get("token")
     pytest.skip("Supervisor login failed")
 
 
@@ -72,7 +72,7 @@ def sultan_token():
         json=SULTAN_CREDS
     )
     if response.status_code == 200:
-        return response.json().get("access_token")
+        return response.json().get("token")
     pytest.skip("Sultan login failed")
 
 
