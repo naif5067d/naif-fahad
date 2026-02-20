@@ -32,18 +32,37 @@ class DeductionBonusCreate(BaseModel):
 
 
 class DeductionBonusAction(BaseModel):
-    action: str  # approve | reject
+    action: str  # approve | reject | defer_to_settlement
+    note: Optional[str] = ""
+    defer_to_settlement: bool = False  # ترحيل للمخالصة
+
+
+class MohammedDecision(BaseModel):
+    """قرار محمد على العقوبة"""
+    decision: str  # execute_from_salary | defer_to_settlement | reject
     note: Optional[str] = ""
 
 
 # ============================================================
-# STATUS CONSTANTS
+# STATUS CONSTANTS - التسلسل الإداري الجديد
 # ============================================================
 
 DEDUCTION_STATUS = {
-    "pending_stas": "بانتظار STAS",
+    "pending_sultan": "بانتظار سلطان",
+    "pending_mohammed": "بانتظار موافقة محمد",
+    "approved_for_salary": "معتمد للخصم من الراتب",
+    "deferred_to_settlement": "مؤجل للمخالصة",
     "executed": "منفذ",
     "rejected": "مرفوض"
+}
+
+DEDUCTION_STATUS_EN = {
+    "pending_sultan": "Pending Sultan",
+    "pending_mohammed": "Pending Mohammed's Approval",
+    "approved_for_salary": "Approved - Deduct from Salary",
+    "deferred_to_settlement": "Deferred to Settlement",
+    "executed": "Executed",
+    "rejected": "Rejected"
 }
 
 
