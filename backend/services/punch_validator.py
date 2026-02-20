@@ -44,6 +44,281 @@ MAX_ALLOWED_EARLY_CHECKIN_MINUTES = 120  # الحد الأقصى ساعتين ل
 EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN']
 
 
+# ============================================================
+# فحوصات ما قبل التبصيم الجديدة
+# ============================================================
+
+async def check_employee_sandbox_mode(employee_id: str) -> dict:
+    """
+    التحقق إذا كان الموظف في وضع التجربة (sandbox)
+    
+    وضع التجربة يعني:
+    - الموظف يمكنه دخول النظام
+    - يمكنه إصدار طلبات تجريبية
+    - لكن لا يُحتسب له حضور أو غياب
+    - لا تصل طلباته للإدارة
+    
+    Returns:
+        {
+            "is_sandbox": bool,
+            "work_start_date": str or None,
+            "message_ar": str
+        }
+    """
+    # البحث في العقد النشط للموظف
+    contract = await db.contracts_v2.find_one({
+        "employee_id": employee_id,
+        "status": "active"
+    }, {"_id": 0, "sandbox_mode": 1, "work_start_date": 1, "start_date": 1})
+    
+    if not contract:
+        # لا يوجد عقد نشط - ربما في وضع التجربة
+        return {
+            "is_sandbox": True,
+            "work_start_date": None,
+            "reason": "no_active_contract",
+            "message_ar": "لا يوجد عقد نشط - النظام في وضع التجربة"
+        }
+    
+    # فحص وضع التجربة الصريح
+    if contract.get("sandbox_mode", False):
+        work_start = contract.get("work_start_date")
+        return {
+            "is_sandbox": True,
+            "work_start_date": work_start,
+            "reason": "sandbox_mode_active",
+            "message_ar": f"النظام في وضع التجربة. تاريخ المباشرة: {work_start or 'غير محدد'}"
+        }
+    
+    # فحص تاريخ المباشرة
+    work_start_date = contract.get("work_start_date") or contract.get("start_date")
+    if work_start_date:
+        today = datetime.now(RIYADH_TZ).strftime("%Y-%m-%d")
+        if work_start_date > today:
+            return {
+                "is_sandbox": True,
+                "work_start_date": work_start_date,
+                "reason": "work_not_started",
+                "message_ar": f"لم يحن تاريخ المباشرة بعد ({work_start_date})"
+            }
+    
+    return {
+        "is_sandbox": False,
+        "work_start_date": work_start_date,
+        "message_ar": "الموظف في وضع العمل الرسمي"
+    }
+
+
+async def check_work_day(employee_id: str, check_date: datetime = None) -> dict:
+    """
+    التحقق إذا كان اليوم يوم عمل للموظف
+    
+    يستعلم من: work_locations.work_days
+    
+    Returns:
+        {
+            "is_work_day": bool,
+            "day_name": str,
+            "day_name_ar": str,
+            "error": Optional[dict]
+        }
+    """
+    if check_date is None:
+        check_date = datetime.now(RIYADH_TZ)
+    
+    # اسم اليوم بالإنجليزية
+    day_index = check_date.weekday()  # 0=Monday, 6=Sunday
+    day_name = WEEKDAY_NAMES[day_index]
+    
+    # أسماء الأيام بالعربية
+    day_names_ar = {
+        'monday': 'الاثنين',
+        'tuesday': 'الثلاثاء',
+        'wednesday': 'الأربعاء',
+        'thursday': 'الخميس',
+        'friday': 'الجمعة',
+        'saturday': 'السبت',
+        'sunday': 'الأحد'
+    }
+    day_name_ar = day_names_ar.get(day_name, day_name)
+    
+    # جلب موقع العمل للموظف
+    work_location = await get_employee_work_location(employee_id)
+    
+    if not work_location:
+        # لا يوجد موقع عمل - نسمح بالتبصيم مع تحذير
+        return {
+            "is_work_day": True,
+            "day_name": day_name,
+            "day_name_ar": day_name_ar,
+            "warning": {
+                "code": "warning.no_work_location",
+                "message_ar": "لم يتم تعيين موقع عمل للموظف"
+            }
+        }
+    
+    # فحص أيام العمل
+    work_days = work_location.get("work_days", {})
+    
+    if not work_days:
+        # لا توجد أيام عمل محددة - نسمح بالتبصيم
+        return {
+            "is_work_day": True,
+            "day_name": day_name,
+            "day_name_ar": day_name_ar,
+            "work_location": work_location
+        }
+    
+    # التحقق من يوم العمل
+    is_work_day = work_days.get(day_name, True)  # افتراضي: يوم عمل
+    
+    if not is_work_day:
+        return {
+            "is_work_day": False,
+            "day_name": day_name,
+            "day_name_ar": day_name_ar,
+            "work_location": work_location,
+            "error": {
+                "code": "error.not_work_day",
+                "message": f"Today ({day_name}) is not a work day",
+                "message_ar": f"اليوم ({day_name_ar}) ليس يوم عمل في موقعك",
+                "work_location_name": work_location.get("name_ar", "")
+            }
+        }
+    
+    return {
+        "is_work_day": True,
+        "day_name": day_name,
+        "day_name_ar": day_name_ar,
+        "work_location": work_location
+    }
+
+
+async def check_public_holiday(check_date: str = None) -> dict:
+    """
+    التحقق إذا كان اليوم عطلة رسمية
+    
+    يستعلم من: public_holidays + holidays
+    
+    Returns:
+        {
+            "is_holiday": bool,
+            "holiday_name": str or None,
+            "holiday_name_ar": str or None
+        }
+    """
+    if check_date is None:
+        check_date = datetime.now(RIYADH_TZ).strftime("%Y-%m-%d")
+    
+    # البحث في public_holidays
+    holiday = await db.public_holidays.find_one({"date": check_date}, {"_id": 0})
+    
+    if not holiday:
+        # البحث في holidays
+        holiday = await db.holidays.find_one({"date": check_date}, {"_id": 0})
+    
+    if holiday:
+        return {
+            "is_holiday": True,
+            "holiday_name": holiday.get("name"),
+            "holiday_name_ar": holiday.get("name_ar") or holiday.get("name"),
+            "error": {
+                "code": "error.public_holiday",
+                "message": f"Today is a public holiday: {holiday.get('name')}",
+                "message_ar": f"اليوم عطلة رسمية: {holiday.get('name_ar') or holiday.get('name')}"
+            }
+        }
+    
+    return {
+        "is_holiday": False,
+        "holiday_name": None,
+        "holiday_name_ar": None
+    }
+
+
+async def check_employee_on_leave_for_punch(employee_id: str, check_date: str = None) -> dict:
+    """
+    التحقق إذا كان الموظف في إجازة معتمدة
+    
+    يستعلم من: transactions + leave_ledger
+    
+    Returns:
+        {
+            "is_on_leave": bool,
+            "leave_type": str or None,
+            "end_date": str or None,
+            "error": Optional[dict]
+        }
+    """
+    if check_date is None:
+        check_date = datetime.now(RIYADH_TZ).strftime("%Y-%m-%d")
+    
+    # البحث في المعاملات المنفذة
+    leave = await db.transactions.find_one({
+        "employee_id": employee_id,
+        "type": "leave_request",
+        "status": "executed",
+        "data.start_date": {"$lte": check_date},
+        "data.end_date": {"$gte": check_date}
+    }, {"_id": 0, "data": 1, "ref_no": 1})
+    
+    if leave:
+        leave_data = leave.get("data", {})
+        leave_type = leave_data.get("leave_type", "annual")
+        leave_types_ar = {
+            "annual": "سنوية",
+            "sick": "مرضية",
+            "emergency": "اضطرارية",
+            "unpaid": "بدون راتب",
+            "maternity": "أمومة",
+            "paternity": "أبوة",
+            "hajj": "حج",
+            "marriage": "زواج",
+            "death": "وفاة"
+        }
+        leave_type_ar = leave_types_ar.get(leave_type, leave_type)
+        
+        return {
+            "is_on_leave": True,
+            "leave_type": leave_type,
+            "leave_type_ar": leave_type_ar,
+            "end_date": leave_data.get("end_date") or leave_data.get("adjusted_end_date"),
+            "ref_no": leave.get("ref_no"),
+            "error": {
+                "code": "error.employee_on_leave",
+                "message": f"You are on {leave_type} leave until {leave_data.get('end_date')}",
+                "message_ar": f"أنت في إجازة {leave_type_ar} حتى {leave_data.get('end_date')}"
+            }
+        }
+    
+    # البحث في leave_ledger
+    leave_entry = await db.leave_ledger.find_one({
+        "employee_id": employee_id,
+        "type": "debit",
+        "start_date": {"$lte": check_date},
+        "end_date": {"$gte": check_date}
+    }, {"_id": 0})
+    
+    if leave_entry:
+        leave_type = leave_entry.get("leave_type", "annual")
+        return {
+            "is_on_leave": True,
+            "leave_type": leave_type,
+            "end_date": leave_entry.get("end_date"),
+            "error": {
+                "code": "error.employee_on_leave",
+                "message": f"You are on leave until {leave_entry.get('end_date')}",
+                "message_ar": f"أنت في إجازة حتى {leave_entry.get('end_date')}"
+            }
+        }
+    
+    return {
+        "is_on_leave": False,
+        "leave_type": None,
+        "end_date": None
+    }
+
+
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """حساب المسافة بالكيلومتر بين نقطتين"""
     R = 6371  # نصف قطر الأرض بالكيلومتر
