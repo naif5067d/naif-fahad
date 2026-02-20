@@ -492,7 +492,11 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
             "deficit_hours": deficit_hours,
             "deficit_minutes": total_deficit_minutes,
             "late_minutes_month": total_late_minutes_month,
-            "early_leave_minutes": total_early_leave_minutes
+            "early_leave_minutes": total_early_leave_minutes,
+            "work_days_in_month": work_days_count,
+            "daily_hours": daily_hours,
+            "hours_until_deduction": max(0, 8 - deficit_hours),
+            "days_to_deduct": round(deficit_hours / 8, 2) if deficit_hours >= 8 else 0
         },
         "annual_leave": {
             "balance": round(pro_rata.get('available_balance', 0), 2),
