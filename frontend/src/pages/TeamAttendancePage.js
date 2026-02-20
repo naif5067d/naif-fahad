@@ -616,10 +616,13 @@ export default function TeamAttendancePage() {
             <Clock size={16} />
             {lang === 'ar' ? 'الحضور' : 'Attendance'}
           </TabsTrigger>
-          <TabsTrigger value="penalties" className="flex-1 md:flex-none gap-2">
-            <AlertTriangle size={16} />
-            {lang === 'ar' ? 'العقوبات' : 'Penalties'}
-          </TabsTrigger>
+          {/* تبويب العقوبات - للإدارة فقط، ليس للمشرفين */}
+          {!isSupervisor && (
+            <TabsTrigger value="penalties" className="flex-1 md:flex-none gap-2">
+              <AlertTriangle size={16} />
+              {lang === 'ar' ? 'العقوبات' : 'Penalties'}
+            </TabsTrigger>
+          )}
           {/* تبويب طلبات التعديل - sultan فقط */}
           {isSultan && (
             <TabsTrigger value="corrections-review" className="flex-1 md:flex-none gap-2">
