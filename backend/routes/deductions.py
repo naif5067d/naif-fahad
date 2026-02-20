@@ -507,12 +507,20 @@ async def get_employee_unsettled(
     employee_id: str,
     user=Depends(get_current_user)
 ):
-    """Get all unsettled deductions/bonuses for an employee (for settlement)"""
-    # من finance_ledger
+    """
+    Get all unsettled deductions/bonuses for an employee (for settlement)
+    
+    فقط الخصومات المؤجلة للمخالصة (deferred_to_settlement = True)
+    الخصومات التي تم خصمها من الراتب لا تدخل هنا
+    """
+    # من finance_ledger - فقط المؤجلة للمخالصة
     items = await db.finance_ledger.find({
         "employee_id": employee_id,
         "category": {"$in": ["deduction", "bonus"]},
-        "settled": {"$ne": True}
+        "$or": [
+            {"settled": {"$ne": True}, "deferred_to_settlement": True},  # مؤجلة للمخالصة
+            {"settled": {"$ne": True}, "deducted_from_salary": {"$ne": True}}  # قديمة - للتوافق
+        ]
     }, {"_id": 0}).to_list(100)
     
     deductions = [i for i in items if i["type"] == "debit"]
