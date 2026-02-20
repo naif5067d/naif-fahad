@@ -1891,6 +1891,69 @@ export default function STASMirrorPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* PDF Preview Modal - Full Screen */}
+      <Dialog open={pdfPreviewOpen} onOpenChange={closePdfPreview}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 overflow-hidden">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
+              <div className="flex items-center gap-3">
+                <FileText size={20} className="text-primary" />
+                <span className="font-semibold text-slate-800">
+                  {lang === 'ar' ? 'معاينة المستند' : 'Document Preview'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={downloadPdf}
+                  className="gap-2"
+                >
+                  <Download size={16} />
+                  {lang === 'ar' ? 'تحميل' : 'Download'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => pdfUrl && window.open(pdfUrl, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink size={16} />
+                  {lang === 'ar' ? 'فتح في نافذة جديدة' : 'Open in new tab'}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={closePdfPreview}
+                >
+                  <X size={20} />
+                </Button>
+              </div>
+            </div>
+            
+            {/* PDF Viewer */}
+            <div className="flex-1 bg-slate-100 overflow-hidden">
+              {pdfLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 size={40} className="animate-spin text-primary" />
+                </div>
+              ) : pdfUrl ? (
+                <iframe 
+                  src={pdfUrl} 
+                  className="w-full h-full border-0"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  {lang === 'ar' ? 'لا يوجد مستند للعرض' : 'No document to display'}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
