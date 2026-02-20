@@ -620,17 +620,17 @@ export default function AttendancePage() {
                   data-testid="view-map-btn"
                 >
                   <Eye size={14} className="me-1" />
-                  عرض الخريطة
+                  {lang === 'ar' ? 'عرض الخريطة' : 'View Map'}
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                  موقعك المعين
+                  {lang === 'ar' ? 'موقعك المعين' : 'Your Location'}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                  مواقع أخرى
+                  {lang === 'ar' ? 'مواقع أخرى' : 'Other Locations'}
                 </span>
               </div>
             </div>
@@ -640,14 +640,14 @@ export default function AttendancePage() {
           <div className="space-y-3">
             <Select value={workLocation} onValueChange={setWorkLocation} disabled={!!today.check_in}>
               <SelectTrigger className="h-12 rounded-xl" data-testid="work-location-select">
-                <SelectValue placeholder="اختر موقع العمل" />
+                <SelectValue placeholder={lang === 'ar' ? 'اختر موقع العمل' : 'Select Work Location'} />
               </SelectTrigger>
               <SelectContent>
                 {assignedLocations.map(loc => (
                   <SelectItem key={loc.id} value={loc.id}>
                     <div className="flex items-center gap-2">
                       <Navigation size={14} className="text-primary" />
-                      {loc.name_ar || loc.name}
+                      {lang === 'ar' ? loc.name_ar || loc.name : loc.name}
                     </div>
                   </SelectItem>
                 ))}
@@ -656,13 +656,13 @@ export default function AttendancePage() {
                     <SelectItem value="HQ">
                       <div className="flex items-center gap-2">
                         <Building2 size={14} className="text-primary" />
-                        المقر الرئيسي
+                        {lang === 'ar' ? 'المقر الرئيسي' : 'Headquarters'}
                       </div>
                     </SelectItem>
                     <SelectItem value="Project">
                       <div className="flex items-center gap-2">
                         <Navigation size={14} className="text-amber-500" />
-                        المشروع
+                        {lang === 'ar' ? 'المشروع' : 'Project'}
                       </div>
                     </SelectItem>
                   </>
@@ -678,7 +678,7 @@ export default function AttendancePage() {
                 className="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-base font-semibold"
               >
                 <MapPin size={20} className="me-2" />
-                تسجيل دخول
+                {lang === 'ar' ? 'تسجيل دخول' : 'Check In'}
                 {today.check_in && (
                   <span className="ms-2 text-xs opacity-80">✓ {formatSaudiTime(today.check_in.timestamp)}</span>
                 )}
@@ -691,7 +691,7 @@ export default function AttendancePage() {
                 className="h-14 rounded-xl text-base font-semibold"
               >
                 <Clock size={20} className="me-2" />
-                تسجيل خروج
+                {lang === 'ar' ? 'تسجيل خروج' : 'Check Out'}
                 {today.check_out && (
                   <span className="ms-2 text-xs opacity-80">✓ {formatSaudiTime(today.check_out.timestamp)}</span>
                 )}
