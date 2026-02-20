@@ -1015,3 +1015,213 @@ async def get_employee_corrections_history(
     ).sort("created_at", -1).to_list(100)
     
     return corrections
+
+
+
+# ==================== التحضير اليدوي للمشرفين ====================
+
+class ManualCheckInRequest(BaseModel):
+    """طلب تسجيل حضور يدوي من المشرف"""
+    employee_id: str
+    check_type: str  # check_in or check_out
+    time: Optional[str] = None  # HH:MM format, defaults to now
+    reason: str
+    supervisor_acknowledgment: bool = False
+
+
+@router.post("/manual-attendance")
+async def supervisor_manual_attendance(
+    body: ManualCheckInRequest,
+    user=Depends(require_roles('supervisor'))
+):
+    """
+    التحضير اليدوي للمشرفين - تسجيل حضور/انصراف يدوي لموظف
+    
+    ⚠️ القواعد:
+    1. المشرف يمكنه تسجيل حضور/انصراف لموظفيه فقط
+    2. النظام الآلي (GPS/البصمة) له الأولوية دائماً
+    3. إذا وُجد تسجيل آلي، لا يمكن إضافة تسجيل يدوي
+    4. يحتاج إقرار المشرف بتحمل المسؤولية
+    """
+    # التحقق من إقرار المشرف
+    if not body.supervisor_acknowledgment:
+        raise HTTPException(
+            status_code=400, 
+            detail={
+                "error": "ACKNOWLEDGMENT_REQUIRED",
+                "message_ar": f"عزيزي {user.get('full_name_ar', 'المشرف')}، تسجيل الحضور يدوياً يعني تحملك لمسؤوليته. يرجى تأكيد الإقرار.",
+                "message_en": f"Dear {user.get('full_name', 'Supervisor')}, manual check-in/out means you take responsibility. Please confirm acknowledgment."
+            }
+        )
+    
+    # التحقق من أن الموظف تحت إشراف هذا المشرف
+    emp = await db.employees.find_one({
+        "id": body.employee_id,
+        "supervisor_id": user.get('employee_id')
+    }, {"_id": 0})
+    
+    if not emp:
+        raise HTTPException(
+            status_code=403, 
+            detail={
+                "error": "NOT_YOUR_EMPLOYEE",
+                "message_ar": "هذا الموظف ليس تحت إشرافك",
+                "message_en": "This employee is not under your supervision"
+            }
+        )
+    
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    
+    # التحقق من عدم وجود تسجيل آلي لهذا اليوم
+    existing_auto = await db.attendance_ledger.find_one({
+        "employee_id": body.employee_id,
+        "date": today,
+        "type": body.check_type,
+        "source": {"$in": ["gps", "biometric", "auto"]}
+    }, {"_id": 0})
+    
+    if existing_auto:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "AUTO_RECORD_EXISTS",
+                "message_ar": f"يوجد تسجيل آلي {'دخول' if body.check_type == 'check_in' else 'خروج'} لهذا الموظف اليوم. النظام الآلي له الأولوية.",
+                "message_en": f"An automatic {body.check_type.replace('_', ' ')} record exists for this employee today. Automatic system has priority."
+            }
+        )
+    
+    # تحديد الوقت
+    if body.time:
+        timestamp = f"{today}T{body.time}:00"
+    else:
+        timestamp = now.isoformat()
+    
+    # إنشاء سجل الحضور اليدوي
+    attendance_record = {
+        "id": str(uuid.uuid4()),
+        "employee_id": body.employee_id,
+        "date": today,
+        "type": body.check_type,
+        "timestamp": timestamp,
+        "source": "manual_supervisor",
+        "supervisor_id": user.get('employee_id'),
+        "supervisor_name_ar": user.get('full_name_ar', user.get('full_name', '')),
+        "supervisor_user_id": user['user_id'],
+        "reason": body.reason,
+        "created_at": now.isoformat()
+    }
+    
+    await db.attendance_ledger.insert_one(attendance_record)
+    
+    # إرسال إشعار للموظف
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        
+        check_type_ar = "دخول" if body.check_type == "check_in" else "خروج"
+        
+        await create_notification(
+            recipient_id=body.employee_id,
+            notification_type=NotificationType.INFO,
+            title="Manual Attendance Recorded",
+            title_ar="تسجيل حضور يدوي",
+            message=f"Your supervisor recorded your {body.check_type.replace('_', ' ')} for today",
+            message_ar=f"سجّل مشرفك {user.get('full_name_ar', '')} {check_type_ar} لك اليوم",
+            priority=NotificationPriority.NORMAL,
+            recipient_role="employee",
+            reference_type="manual_attendance"
+        )
+    except:
+        pass
+    
+    return {
+        "success": True,
+        "message_ar": f"تم تسجيل ال{check_type_ar} يدوياً بنجاح لـ {emp.get('full_name_ar', '')}",
+        "message_en": f"Manual {body.check_type.replace('_', ' ')} recorded successfully for {emp.get('full_name', '')}",
+        "record_id": attendance_record['id'],
+        "timestamp": timestamp
+    }
+
+
+@router.get("/my-team-attendance")
+async def get_supervisor_team_attendance(
+    date: str = None,
+    user=Depends(require_roles('supervisor'))
+):
+    """
+    حالة حضور فريق المشرف اليوم - للتحضير اليدوي
+    
+    يُظهر حالة كل موظف وما إذا كان يمكن تسجيل حضور/انصراف يدوي له
+    """
+    target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    supervisor_employee_id = user.get('employee_id')
+    
+    # جلب موظفي هذا المشرف
+    employees = await db.employees.find(
+        {
+            "supervisor_id": supervisor_employee_id,
+            "is_active": {"$ne": False}
+        },
+        {"_id": 0}
+    ).to_list(100)
+    
+    if not employees:
+        return []
+    
+    emp_ids = [e['id'] for e in employees]
+    emp_map = {e['id']: e for e in employees}
+    
+    # جلب سجلات الحضور لهذا اليوم
+    attendance = await db.attendance_ledger.find(
+        {"employee_id": {"$in": emp_ids}, "date": target_date},
+        {"_id": 0}
+    ).to_list(500)
+    
+    # تجميع حسب الموظف
+    attendance_map = {}
+    for a in attendance:
+        emp_id = a['employee_id']
+        if emp_id not in attendance_map:
+            attendance_map[emp_id] = {
+                "check_in": None,
+                "check_out": None,
+                "check_in_source": None,
+                "check_out_source": None
+            }
+        if a['type'] == 'check_in':
+            attendance_map[emp_id]['check_in'] = a['timestamp']
+            attendance_map[emp_id]['check_in_source'] = a.get('source', 'auto')
+        elif a['type'] == 'check_out':
+            attendance_map[emp_id]['check_out'] = a['timestamp']
+            attendance_map[emp_id]['check_out_source'] = a.get('source', 'auto')
+    
+    result = []
+    for emp_id, emp in emp_map.items():
+        att = attendance_map.get(emp_id, {})
+        
+        check_in = att.get('check_in')
+        check_out = att.get('check_out')
+        check_in_source = att.get('check_in_source')
+        check_out_source = att.get('check_out_source')
+        
+        # يمكن تسجيل دخول يدوي فقط إذا لم يكن هناك تسجيل آلي
+        can_manual_check_in = not check_in or check_in_source == 'manual_supervisor'
+        can_manual_check_out = not check_out or check_out_source == 'manual_supervisor'
+        
+        result.append({
+            "employee_id": emp_id,
+            "employee_name": emp.get('full_name', ''),
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "employee_number": emp.get('employee_number', ''),
+            "job_title_ar": emp.get('job_title_ar', emp.get('job_title', '')),
+            "date": target_date,
+            "check_in": check_in,
+            "check_out": check_out,
+            "check_in_source": check_in_source,
+            "check_out_source": check_out_source,
+            "can_manual_check_in": can_manual_check_in,
+            "can_manual_check_out": can_manual_check_out
+        })
+    
+    return result
