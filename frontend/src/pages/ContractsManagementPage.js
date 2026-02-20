@@ -325,6 +325,62 @@ export default function ContractsManagementPage() {
     }
   };
 
+  // تفعيل/إلغاء وضع التجربة (Sandbox)
+  const handleToggleSandbox = async (contractId, currentMode) => {
+    const newMode = !currentMode;
+    const action = newMode ? 'تفعيل' : 'إلغاء';
+    
+    if (!confirm(`هل تريد ${action} وضع التجربة لهذا العقد؟`)) return;
+    
+    setActionLoading(true);
+    try {
+      const payload = {
+        sandbox_mode: newMode,
+        work_start_date: newMode ? null : new Date().toISOString().split('T')[0]
+      };
+      await api.post(`/api/contracts-v2/${contractId}/sandbox-mode`, payload);
+      toast.success(`تم ${action} وضع التجربة`);
+      setViewContract(null);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || `فشل ${action} وضع التجربة`);
+    }
+    setActionLoading(false);
+  };
+
+  // إعادة تفعيل العقد من مسودة التصحيح
+  const handleReactivateContract = async (contractId) => {
+    if (!confirm('هل تريد إعادة تفعيل هذا العقد؟')) return;
+    
+    setActionLoading(true);
+    try {
+      await api.post(`/api/contracts-v2/${contractId}/reactivate`);
+      toast.success('تم إعادة تفعيل العقد بنجاح');
+      setViewContract(null);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إعادة التفعيل');
+    }
+    setActionLoading(false);
+  };
+
+  // تحديد تاريخ المباشرة
+  const handleSetWorkStartDate = async (contractId) => {
+    const date = prompt('أدخل تاريخ المباشرة (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+    if (!date) return;
+    
+    setActionLoading(true);
+    try {
+      await api.post(`/api/contracts-v2/${contractId}/set-work-start-date?work_start_date=${date}`);
+      toast.success(`تم تحديد تاريخ المباشرة: ${date}`);
+      setViewContract(null);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل تحديد تاريخ المباشرة');
+    }
+    setActionLoading(false);
+  };
+
   const handlePreviewPDF = async (contractId) => {
     try {
       const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
