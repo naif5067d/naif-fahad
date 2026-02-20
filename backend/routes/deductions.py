@@ -316,3 +316,46 @@ async def get_employee_unsettled(
         "total_bonuses": total_bonuses,
         "net": total_bonuses - total_deductions
     }
+
+
+
+# ============================================================
+# CHECK DEDUCTION LIMIT (50%)
+# ============================================================
+
+@router.get("/employee/{employee_id}/deduction-limit")
+async def check_employee_deduction_limit(
+    employee_id: str,
+    month: str,
+    proposed_amount: float = 0,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    التحقق من حد الخصم (50% من الراتب)
+    
+    نظام العمل السعودي: لا يجوز خصم أكثر من 50% من راتب الموظف
+    """
+    from services.deduction_service import check_deduction_limit, get_employee_salary, get_month_deductions
+    
+    salary = await get_employee_salary(employee_id)
+    current_deductions = await get_month_deductions(employee_id, month)
+    max_allowed = salary * 0.5
+    remaining = max_allowed - current_deductions
+    
+    can_deduct = True
+    warning = ""
+    if proposed_amount > 0:
+        can_deduct, _, warning = await check_deduction_limit(employee_id, month, proposed_amount)
+    
+    return {
+        "employee_id": employee_id,
+        "month": month,
+        "salary": salary,
+        "max_allowed_deduction": max_allowed,
+        "max_percentage": 50,
+        "current_deductions": current_deductions,
+        "remaining_allowed": max(0, remaining),
+        "proposed_amount": proposed_amount,
+        "can_deduct": can_deduct,
+        "warning": warning
+    }
