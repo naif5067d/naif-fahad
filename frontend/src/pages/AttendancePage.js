@@ -900,7 +900,7 @@ export default function AttendancePage() {
                 <TabsTrigger value="daily" className="rounded-lg text-xs">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
                 <TabsTrigger value="weekly" className="rounded-lg text-xs">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
                 <TabsTrigger value="monthly" className="rounded-lg text-xs">{lang === 'ar' ? 'شهري' : 'Monthly'}</TabsTrigger>
-                <TabsTrigger value="yearly" className="rounded-lg text-xs">سنوي</TabsTrigger>
+                <TabsTrigger value="yearly" className="rounded-lg text-xs">{lang === 'ar' ? 'سنوي' : 'Yearly'}</TabsTrigger>
               </TabsList>
             </Tabs>
             <Input
@@ -928,7 +928,7 @@ export default function AttendancePage() {
               <tbody>
                 {adminData.length === 0 ? (
                   <tr>
-                    <td colSpan={isStas ? 7 : 6} className="text-center py-8 text-muted-foreground">لا توجد بيانات</td>
+                    <td colSpan={isStas ? 7 : 6} className="text-center py-8 text-muted-foreground">{lang === 'ar' ? 'لا توجد بيانات' : 'No data'}</td>
                   </tr>
                 ) : (
                   adminData.map((r, i) => (
@@ -938,7 +938,7 @@ export default function AttendancePage() {
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                             <User size={14} className="text-primary" />
                           </div>
-                          <span className="font-medium">{r.employee_name_ar || r.employee_name}</span>
+                          <span className="font-medium">{lang === 'ar' ? r.employee_name_ar || r.employee_name : r.employee_name}</span>
                         </div>
                       </td>
                       <td className="font-mono text-muted-foreground">{formatSaudiDate(r.date)}</td>
@@ -946,15 +946,15 @@ export default function AttendancePage() {
                       <td className="font-mono">{r.check_out_time || (r.check_out ? formatSaudiTime(r.check_out) : '-')}</td>
                       <td>
                         {r.on_leave ? (
-                          <span className="badge bg-blue-100 text-blue-700">إجازة</span>
+                          <span className="badge bg-blue-100 text-blue-700">{lang === 'ar' ? 'إجازة' : 'Leave'}</span>
                         ) : r.check_in ? (
                           r.is_late ? (
-                            <span className="badge bg-amber-100 text-amber-700">متأخر</span>
+                            <span className="badge bg-amber-100 text-amber-700">{lang === 'ar' ? 'متأخر' : 'Late'}</span>
                           ) : (
-                            <span className="badge bg-emerald-100 text-emerald-700">حاضر</span>
+                            <span className="badge bg-emerald-100 text-emerald-700">{lang === 'ar' ? 'حاضر' : 'Present'}</span>
                           )
                         ) : (
-                          <span className="badge bg-red-100 text-red-700">غائب</span>
+                          <span className="badge bg-red-100 text-red-700">{lang === 'ar' ? 'غائب' : 'Absent'}</span>
                         )}
                       </td>
                       <td>
@@ -987,7 +987,7 @@ export default function AttendancePage() {
           {/* طلبات الحضور مع أزرار الإجراءات */}
           {attendanceRequests.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-base font-semibold mb-3">طلبات الحضور والبصمة</h3>
+              <h3 className="text-base font-semibold mb-3">{lang === 'ar' ? 'طلبات الحضور والبصمة' : 'Attendance Requests'}</h3>
               <div className="space-y-2">
                 {attendanceRequests.map((req, i) => {
                   const reqType = ATTENDANCE_REQUEST_TYPES[req.type];
