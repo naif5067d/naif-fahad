@@ -553,7 +553,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     elements.append(Spacer(1, 3*mm))
     
     # ============ 9. SIGNATURES / التوقيعات ============
-    sig_header = Table([[title_en("Signatures"), title_ar("التوقيعات")]], colWidths=[col_en, col_ar])
+    # فقط توقيع STAS الإلكتروني + فراغ للتوقيع اليدوي للموظف
+    sig_header = Table([[title_en("Electronic Signature"), title_ar("التوقيع الإلكتروني")]], colWidths=[col_en, col_ar])
     sig_header.setStyle(TableStyle([
         ('ALIGN', (0, 0), (0, 0), 'LEFT'),
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
@@ -564,63 +565,77 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     ]))
     elements.append(sig_header)
     
-    # QR codes للتوقيعات
-    qr_sultan = create_qr_image(f"SULTAN-{txn}-APPROVED", size=15)
-    qr_mohammed = create_qr_image(f"CEO-{txn}-APPROVED", size=15)
-    qr_stas = create_qr_image(f"STAS-{txn}-EXECUTED", size=15)
-    barcode_stas = create_barcode_image(f"EXEC-{txn}", width=35, height=8)
+    # لون أخضر لتوقيع STAS
+    STAS_GREEN = colors.Color(0.2, 0.6, 0.2)  # أخضر
     
-    # صف التوقيعات: الموظف | سلطان | محمد | STAS
-    sig_label_style = ParagraphStyle('sig_label', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER)
-    sig_label_style_ar = ParagraphStyle('sig_label_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_CENTER, wordWrap='RTL')
+    # QR code + Barcode لـ STAS فقط - مع نص "معاملة صحيحة"
+    verification_text = f"VALID-{txn}-VERIFIED"
+    qr_stas = create_qr_image(verification_text, size=25)
+    barcode_stas = create_barcode_image(f"EXEC-{txn}", width=50, height=12)
     
-    sig_row1 = [
-        Paragraph("STAS Execution", sig_label_style),
-        Paragraph("CEO (Mohammed)", sig_label_style),
-        Paragraph("HR (Sultan)", sig_label_style),
-        Paragraph("Employee", sig_label_style),
+    # أنماط للتوقيع
+    sig_label_style = ParagraphStyle('sig_label', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER)
+    sig_label_style_ar = ParagraphStyle('sig_label_ar', fontName=ARABIC_FONT, fontSize=8, alignment=TA_CENTER, wordWrap='RTL')
+    sig_label_green = ParagraphStyle('sig_green', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=STAS_GREEN)
+    sig_label_green_ar = ParagraphStyle('sig_green_ar', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=STAS_GREEN, wordWrap='RTL')
+    
+    # صف واحد: STAS (QR + Barcode + نص) | فراغ توقيع الموظف اليدوي
+    left_col = CONTENT_WIDTH * 0.6
+    right_col = CONTENT_WIDTH * 0.4
+    
+    # خلية STAS - توقيع إلكتروني بلون أخضر
+    stas_content = [
+        [Paragraph("STAS Electronic Verification", sig_label_green)],
+        [Paragraph(reshape_arabic("التحقق الإلكتروني - STAS"), sig_label_green_ar)],
+        [Spacer(1, 2*mm)],
+        [qr_stas if qr_stas else ''],
+        [Spacer(1, 2*mm)],
+        [barcode_stas if barcode_stas else ''],
+        [Spacer(1, 2*mm)],
+        [Paragraph("Valid Document - معاملة صحيحة", sig_label_green)],
+        [Paragraph(f"Ref: {txn}", sig_label_style)],
     ]
-    sig_row2 = [
-        Paragraph(reshape_arabic("تنفيذ STAS"), sig_label_style_ar),
-        Paragraph(reshape_arabic("المدير العام (محمد)"), sig_label_style_ar),
-        Paragraph(reshape_arabic("الموارد البشرية (سلطان)"), sig_label_style_ar),
-        Paragraph(reshape_arabic("الموظف"), sig_label_style_ar),
+    stas_table = Table(stas_content, colWidths=[left_col * 0.8])
+    stas_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOX', (0, 0), (-1, -1), 1, STAS_GREEN),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.95, 1, 0.95)),  # خلفية خضراء فاتحة
+    ]))
+    
+    # خلية الموظف - توقيع يدوي
+    emp_content = [
+        [Paragraph("Employee Signature", sig_label_style)],
+        [Paragraph(reshape_arabic("توقيع الموظف"), sig_label_style_ar)],
+        [Spacer(1, 8*mm)],
+        [Paragraph("________________", sig_label_style)],
+        [Spacer(1, 3*mm)],
+        [Paragraph(reshape_arabic(emp_name_ar), sig_label_style_ar)],
+        [Paragraph("Date / التاريخ: ____________", sig_label_style)],
     ]
-    
-    # QR/Barcode row
-    stas_cell = []
-    if qr_stas:
-        stas_cell.append(qr_stas)
-    if barcode_stas:
-        stas_cell.append(barcode_stas)
-    
-    sig_row3 = [
-        Table([[qr_stas], [barcode_stas]], colWidths=[35*mm]) if qr_stas and barcode_stas else '',
-        qr_mohammed or '',
-        qr_sultan or '',
-        Paragraph("________________", sig_label_style),  # فراغ توقيع الموظف اليدوي
-    ]
-    
-    sig_row4 = [
-        Paragraph(f"Ref: {txn}", sig_label_style),
-        '',
-        '',
-        Paragraph(reshape_arabic(emp_name_ar), sig_label_style_ar),
-    ]
-    
-    col_width = CONTENT_WIDTH / 4
-    sig_data = [sig_row1, sig_row2, sig_row3, sig_row4]
-    
-    sig_table = Table(sig_data, colWidths=[col_width, col_width, col_width, col_width])
-    sig_table.setStyle(TableStyle([
+    emp_table = Table(emp_content, colWidths=[right_col * 0.9])
+    emp_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
-        ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER_GRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
-    elements.append(sig_table)
+    
+    # جدول رئيسي للتوقيعات
+    sig_main = Table([[stas_table, emp_table]], colWidths=[left_col, right_col])
+    sig_main.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(sig_main)
+    
+    # ملاحظة هامة
+    elements.append(Spacer(1, 3*mm))
+    note_style = ParagraphStyle('note', fontName=ARABIC_FONT, fontSize=7, alignment=TA_CENTER, textColor=colors.gray)
+    elements.append(Paragraph(
+        reshape_arabic("التوقيعات الأخرى (سلطان، محمد) تتم يدوياً | Other signatures (Sultan, Mohammed) are manual"),
+        note_style
+    ))
     
     # ============ FOOTER ============
     elements.append(Spacer(1, 2*mm))
