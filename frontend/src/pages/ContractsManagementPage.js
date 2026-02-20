@@ -587,24 +587,6 @@ export default function ContractsManagementPage() {
                     </div>
                   </div>
                 </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                      <Label>اختيار الموظف *</Label>
-                      <Select value={formData.employee_id} onValueChange={handleEmployeeSelect}>
-                        <SelectTrigger data-testid="employee-select">
-                          <SelectValue placeholder="اختر موظف من القائمة" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employees.map(emp => (
-                            <SelectItem key={emp.id} value={emp.id}>
-                              {emp.full_name_ar || emp.full_name} ({emp.employee_number || emp.id})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
                 
                 {/* المسمى الوظيفي والقسم */}
                 <div className="grid grid-cols-2 gap-4">
