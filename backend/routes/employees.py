@@ -339,10 +339,6 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "status": {"$in": ["active", "terminated"]}
     }, {"_id": 0})
     
-    # Debug logging
-    import logging
-    logging.info(f"Contract for {employee_id}: {contract}")
-    
     # 2. معلومات الخدمة
     service_info = await get_employee_service_info(employee_id)
     
