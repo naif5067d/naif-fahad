@@ -480,6 +480,25 @@ async def update_employee_status(
         upsert=True
     )
     
+    # حفظ في أرشيف STAS السنوي (قرارات سلطان المباشرة)
+    year = date[:4]
+    archive_entry = {
+        "id": str(uuid.uuid4()),
+        "year": year,
+        "type": "direct_correction",
+        "employee_id": employee_id,
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "date": date,
+        "original_status": daily.get('final_status', 'UNKNOWN') if daily else 'UNKNOWN',
+        "final_status": body.new_status,
+        "reason": body.reason,
+        "decided_by": user['user_id'],
+        "decided_by_name": user.get('full_name_ar', user.get('full_name', '')),
+        "decided_at": now,
+        "archived_at": now
+    }
+    await db.stas_annual_archive.insert_one(archive_entry)
+    
     # إرسال إشعار للموظف
     try:
         from services.notification_service import create_notification
@@ -503,7 +522,8 @@ async def update_employee_status(
     return {
         "success": True,
         "message": f"تم تعديل حالة {emp.get('full_name_ar', '')} إلى {status_ar_map.get(body.new_status, body.new_status)}",
-        "correction": correction
+        "correction": correction,
+        "archived": True
     }
 
 
