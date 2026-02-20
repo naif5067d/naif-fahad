@@ -47,11 +47,11 @@ async def list_employees(user=Depends(get_current_user)):
             return []
         reports = await db.employees.find(
             {"$or": [{"id": emp['id']}, {"supervisor_id": emp['id']}]}, 
-            {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "position": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1}
+            {"_id": 0, "id": 1, "employee_number": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "department_ar": 1, "position": 1, "position_ar": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, "start_date": 1, "created_at": 1}
         ).to_list(100)
         return reports
     else:
-        return await db.employees.find({}, {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "position": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1}).to_list(500)
+        return await db.employees.find({}, {"_id": 0, "id": 1, "employee_number": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "department_ar": 1, "position": 1, "position_ar": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, "start_date": 1, "created_at": 1}).to_list(500)
 
 
 @router.get("/{employee_id}")
