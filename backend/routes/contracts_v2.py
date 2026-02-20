@@ -349,15 +349,40 @@ async def create_contract(
     # Note: We allow creating draft contracts even if active exists
     
     # Validate category and employment_type combination
-    if req.contract_category == "internship_unpaid" and req.employment_type != "unlimited":
+    if req.contract_category in ("internship_unpaid", "student_training") and req.employment_type != "unlimited":
         req.employment_type = "unlimited"  # Internships are always unlimited term
     
-    if req.contract_category == "internship_unpaid":
-        # No salary for unpaid internship
+    if req.contract_category in ("internship_unpaid", "student_training"):
+        # No salary for unpaid internship or student training
         req.basic_salary = 0
         req.housing_allowance = 0
         req.transport_allowance = 0
         req.other_allowances = 0
+    
+    # حساب سنوات الخدمة تلقائياً من تاريخ التعيين
+    service_years = 0
+    calculated_leave_days = 21  # افتراضي
+    
+    if req.start_date:
+        from datetime import date
+        try:
+            start = datetime.strptime(req.start_date, "%Y-%m-%d").date()
+            today = date.today()
+            service_years = (today - start).days / 365.25
+            
+            # حسب نظام العمل السعودي:
+            # أقل من 5 سنوات = 21 يوم إجازة سنوية
+            # 5 سنوات فأكثر = 30 يوم إجازة سنوية
+            if service_years >= 5:
+                calculated_leave_days = 30
+            else:
+                calculated_leave_days = 21
+        except:
+            pass
+    
+    # استخدام القيمة المحسوبة إذا لم يُحدد المستخدم قيمة مختلفة
+    if req.annual_policy_days not in [21, 30]:
+        req.annual_policy_days = calculated_leave_days
     
     # Generate serial
     contract_serial = await generate_contract_serial()
@@ -385,9 +410,15 @@ async def create_contract(
         
         "start_date": req.start_date,
         "end_date": req.end_date,
+        "work_start_date": req.work_start_date or req.start_date,  # تاريخ المباشرة
+        "sandbox_mode": req.sandbox_mode,  # وضع التجربة
         
         "probation_months": req.probation_months,
         "notice_period_days": req.notice_period_days,
+        
+        # سنوات الخدمة المحسوبة تلقائياً
+        "service_years": round(service_years, 2),
+        "service_years_calculated_at": now,
         
         "basic_salary": req.basic_salary,
         "housing_allowance": req.housing_allowance,
