@@ -706,7 +706,7 @@ export default function AttendancePage() {
               data-testid="new-attendance-request-btn"
             >
               <FileText size={18} className="me-2" />
-              طلب حضور جديد (نسيان بصمة / مهمة خارجية / ...)
+              {lang === 'ar' ? 'طلب حضور جديد (نسيان بصمة / مهمة خارجية / ...)' : 'New Attendance Request (Forgot Punch / Field Work / ...)'}
             </Button>
           </div>
         </div>
@@ -715,7 +715,7 @@ export default function AttendancePage() {
       {/* سجل الحضور */}
       {(isEmployee || isAdmin) && history.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-3">السجل</h2>
+          <h2 className="text-lg font-semibold mb-3">{lang === 'ar' ? 'السجل' : 'History'}</h2>
           <div className="space-y-2">
             {history.slice(0, 10).map((h, i) => (
               <div key={i} className="card-premium p-4 flex items-center justify-between">
@@ -729,7 +729,7 @@ export default function AttendancePage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">
-                      {h.type === 'check_in' ? 'تسجيل دخول' : 'تسجيل خروج'}
+                      {h.type === 'check_in' ? (lang === 'ar' ? 'تسجيل دخول' : 'Check In') : (lang === 'ar' ? 'تسجيل خروج' : 'Check Out')}
                     </p>
                     <p className="text-xs text-muted-foreground">{formatSaudiDate(h.date)}</p>
                   </div>
@@ -739,7 +739,7 @@ export default function AttendancePage() {
                   {(h.gps_status === 'valid' || h.gps_valid === true || h.gps_available === true) ? (
                     <span className="text-[10px] text-emerald-500">● GPS ✓</span>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground">○ بدون GPS</span>
+                    <span className="text-[10px] text-muted-foreground">○ {lang === 'ar' ? 'بدون GPS' : 'No GPS'}</span>
                   )}
                 </div>
               </div>
@@ -753,7 +753,7 @@ export default function AttendancePage() {
         <div className="border-t border-border pt-5">
           {/* ترويسة القسم الإداري */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold">حضور الفريق</h2>
+            <h2 className="text-lg font-semibold">{lang === 'ar' ? 'حضور الفريق' : 'Team Attendance'}</h2>
             
             <div className="flex flex-wrap gap-2">
               {/* أزرار STAS فقط */}
@@ -767,23 +767,23 @@ export default function AttendancePage() {
                       className="text-amber-600 border-amber-600 hover:bg-amber-50"
                     >
                       <Moon size={14} className="me-1" />
-                      إلغاء دوام رمضان
+                      {lang === 'ar' ? 'إلغاء دوام رمضان' : 'Deactivate Ramadan Hours'}
                     </Button>
                   ) : (
                     <Dialog open={showRamadanDialog} onOpenChange={setShowRamadanDialog}>
                       <DialogTrigger asChild>
                         <Button variant="outline" size="sm">
                           <Moon size={14} className="me-1" />
-                          تفعيل دوام رمضان
+                          {lang === 'ar' ? 'تفعيل دوام رمضان' : 'Activate Ramadan Hours'}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>تفعيل دوام رمضان (6 ساعات)</DialogTitle>
+                          <DialogTitle>{lang === 'ar' ? 'تفعيل دوام رمضان (6 ساعات)' : 'Activate Ramadan Hours (6 hours)'}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                           <div>
-                            <label className="text-sm font-medium">من تاريخ</label>
+                            <label className="text-sm font-medium">{lang === 'ar' ? 'من تاريخ' : 'From Date'}</label>
                             <Input 
                               type="date" 
                               value={ramadanForm.start_date}
@@ -792,7 +792,7 @@ export default function AttendancePage() {
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">إلى تاريخ</label>
+                            <label className="text-sm font-medium">{lang === 'ar' ? 'إلى تاريخ' : 'To Date'}</label>
                             <Input 
                               type="date" 
                               value={ramadanForm.end_date}
