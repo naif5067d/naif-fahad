@@ -99,18 +99,27 @@ async def get_team_daily(
     جدول الحضور اليومي لجميع الموظفين
     يُظهر جميع الموظفين حتى لو لم يسجلوا بصمة
     يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
+    
+    المشرف يرى فقط الموظفين المسؤولين عنهم
     """
     # الموظفون المستثنون من الحضور (ليسوا موظفين)
     EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
     
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # جلب جميع الموظفين النشطين (باستثناء المستثنين)
+    # بناء فلتر الموظفين
+    emp_filter = {
+        "is_active": {"$ne": False},
+        "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+    }
+    
+    # إذا كان المستخدم مشرف، يرى فقط الموظفين التابعين له
+    if user.get('role') == 'supervisor':
+        emp_filter["supervisor_id"] = user.get('employee_id')
+    
+    # جلب الموظفين
     employees = await db.employees.find(
-        {
-            "is_active": {"$ne": False},
-            "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
-        },
+        emp_filter,
         {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "employee_number": 1, "department": 1, "job_title": 1, "job_title_ar": 1, "work_location_id": 1}
     ).to_list(500)
     
