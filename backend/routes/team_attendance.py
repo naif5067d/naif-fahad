@@ -412,10 +412,12 @@ async def update_employee_status(
     employee_id: str,
     date: str,
     body: StatusUpdateRequest,
-    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """
-    تعديل حالة الموظف (سلطان/نايف/STAS)
+    تعديل حالة الموظف - سلطان/نايف/STAS فقط (قرار نهائي ونافذ)
+    
+    ⚠️ المشرف يستخدم /request-correction للطلب ثم ينتظر موافقة سلطان
     
     مثال: تحويل موظف من غائب إلى حاضر مع تسجيل السبب
     """
