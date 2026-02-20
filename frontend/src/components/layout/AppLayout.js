@@ -244,6 +244,16 @@ export default function AppLayout({ children }) {
 
             {/* Right side controls */}
             <div className="flex items-center gap-2">
+              {/* Fullscreen Toggle Button */}
+              <button 
+                data-testid="toggle-fullscreen" 
+                onClick={toggleFullscreen} 
+                className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                title={isFullscreen ? (lang === 'ar' ? 'إلغاء ملء الشاشة' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
+              >
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+              </button>
+
               {/* Notification Bell - For ALL users */}
               <NotificationBell />
 
