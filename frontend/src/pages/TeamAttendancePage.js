@@ -304,7 +304,8 @@ export default function TeamAttendancePage() {
       new_status: employee.final_status === 'ABSENT' ? 'PRESENT' : employee.final_status,
       reason: '',
       check_in_time: employee.check_in_time?.slice(11, 16) || '08:00',
-      check_out_time: employee.check_out_time?.slice(11, 16) || '17:00'
+      check_out_time: employee.check_out_time?.slice(11, 16) || '17:00',
+      supervisor_acknowledgment: false
     });
   };
 
@@ -316,13 +317,67 @@ export default function TeamAttendancePage() {
     
     try {
       setLoading(true);
-      await api.post(`/api/team-attendance/${editDialog.employee_id}/update-status?date=${editDialog.date}`, editForm);
-      toast.success(lang === 'ar' ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
+      
+      if (isSupervisor) {
+        // المشرف يرسل طلب تعديل - يحتاج إقرار
+        if (!editForm.supervisor_acknowledgment) {
+          toast.error(lang === 'ar' 
+            ? `عزيزي ${user?.full_name_ar || user?.full_name || 'المشرف'}، تعديلك للحالة يعني تحملك لمسؤوليتها. يرجى تأكيد الإقرار.`
+            : `Dear ${user?.full_name || 'Supervisor'}, modifying this status means you take responsibility for it. Please confirm acknowledgment.`
+          );
+          return;
+        }
+        
+        await api.post(`/api/team-attendance/${editDialog.employee_id}/request-correction/${editDialog.date}`, {
+          new_status: editForm.new_status,
+          reason: editForm.reason,
+          check_in_time: editForm.check_in_time,
+          check_out_time: editForm.check_out_time,
+          supervisor_acknowledgment: true
+        });
+        toast.success(lang === 'ar' 
+          ? 'تم إرسال طلب التعديل لسلطان للموافقة' 
+          : 'Correction request sent to Sultan for approval'
+        );
+      } else {
+        // سلطان/نايف/STAS - تعديل مباشر
+        await api.post(`/api/team-attendance/${editDialog.employee_id}/update-status?date=${editDialog.date}`, editForm);
+        toast.success(lang === 'ar' ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
+      }
+      
       setEditDialog(null);
       if (viewMode === 'all') fetchAllData();
       else fetchEmployeeData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Error updating status');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        toast.error(lang === 'ar' ? detail.message_ar : detail.message_en);
+      } else {
+        toast.error(detail || 'Error updating status');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // قرار سلطان على طلب التعديل
+  const handleCorrectionDecision = async (correctionId, action, finalStatus = null, note = '') => {
+    try {
+      setLoading(true);
+      await api.post(`/api/team-attendance/correction/${correctionId}/decide`, {
+        action,
+        final_status: finalStatus,
+        decision_note: note
+      });
+      toast.success(lang === 'ar' 
+        ? (action === 'approve' ? 'تمت الموافقة' : action === 'reject' ? 'تم الرفض' : 'تم التعديل')
+        : (action === 'approve' ? 'Approved' : action === 'reject' ? 'Rejected' : 'Modified')
+      );
+      setCorrectionDecision(null);
+      fetchPendingCorrections();
+      fetchAllData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error processing decision');
     } finally {
       setLoading(false);
     }
