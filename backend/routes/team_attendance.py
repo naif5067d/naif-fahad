@@ -61,7 +61,7 @@ async def get_team_summary(
     المشرف يرى فقط الموظفين المسؤولين عنهم
     """
     # الموظفون المستثنون من الحضور (ليسوا موظفين)
-    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']
     
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
@@ -138,7 +138,7 @@ async def get_team_daily(
     المشرف يرى فقط الموظفين المسؤولين عنهم
     """
     # الموظفون المستثنون من الحضور (ليسوا موظفين)
-    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-004', 'EMP-NAIF']
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']
     
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
