@@ -527,92 +527,66 @@ export default function ContractsManagementPage() {
               
               <div className="space-y-4 py-4">
                 {/* اختيار نوع الموظف: جديد أو قديم */}
-                <div className="flex gap-4 p-3 bg-muted/50 rounded-lg">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="employee_type" 
-                      checked={formData.is_new_employee}
-                      onChange={() => setFormData(p => ({ ...p, is_new_employee: true, employee_id: '' }))}
-                      className="accent-primary"
-                    />
-                    <span>موظف جديد</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="employee_type" 
-                      checked={!formData.is_new_employee}
-                      onChange={() => setFormData(p => ({ ...p, is_new_employee: false }))}
-                      className="accent-primary"
-                    />
-                    <span>موظف قديم (اختيار من القائمة)</span>
-                  </label>
-                </div>
-
-                {/* إذا موظف جديد - إدخال البيانات */}
-                {formData.is_new_employee ? (
-                  <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <Users className="w-4 h-4" /> بيانات الموظف الجديد
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>الاسم بالعربي *</Label>
-                        <Input 
-                          value={formData.employee_name_ar}
-                          onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
-                          placeholder="أحمد محمد"
-                          dir="rtl"
-                          data-testid="employee-name-ar"
-                        />
-                      </div>
-                      <div>
-                        <Label>الاسم بالإنجليزي</Label>
-                        <Input 
-                          value={formData.employee_name}
-                          onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
-                          placeholder="Ahmed Mohammed"
-                          dir="ltr"
-                        />
-                      </div>
-                      <div>
-                        <Label>رقم الهوية / الإقامة</Label>
-                        <Input 
-                          value={formData.national_id}
-                          onChange={e => setFormData(p => ({ ...p, national_id: e.target.value }))}
-                          placeholder="1234567890"
-                        />
-                      </div>
-                      <div>
-                        <Label>البريد الإلكتروني</Label>
-                        <Input 
-                          type="email"
-                          value={formData.email}
-                          onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                          placeholder="ahmed@company.com"
-                        />
-                      </div>
-                      <div>
-                        <Label>رقم الجوال</Label>
-                        <Input 
-                          value={formData.phone}
-                          onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                          placeholder="05xxxxxxxx"
-                        />
-                      </div>
-                      <div>
-                        <Label>الرقم الوظيفي</Label>
-                        <Input 
-                          value={formData.employee_code}
-                          onChange={e => setFormData(p => ({ ...p, employee_code: e.target.value }))}
-                          placeholder="EMP-001"
-                        />
-                      </div>
+                {/* بيانات الموظف الجديد - الخيار الوحيد */}
+                <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <Users className="w-4 h-4" /> بيانات الموظف الجديد
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>الاسم بالعربي *</Label>
+                      <Input 
+                        value={formData.employee_name_ar}
+                        onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
+                        placeholder="أحمد محمد"
+                        dir="rtl"
+                        data-testid="employee-name-ar"
+                      />
+                    </div>
+                    <div>
+                      <Label>الاسم بالإنجليزي</Label>
+                      <Input 
+                        value={formData.employee_name}
+                        onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
+                        placeholder="Ahmed Mohammed"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label>رقم الهوية / الإقامة</Label>
+                      <Input 
+                        value={formData.national_id}
+                        onChange={e => setFormData(p => ({ ...p, national_id: e.target.value }))}
+                        placeholder="1234567890"
+                      />
+                    </div>
+                    <div>
+                      <Label>البريد الإلكتروني</Label>
+                      <Input 
+                        type="email"
+                        value={formData.email}
+                        onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                        placeholder="ahmed@company.com"
+                      />
+                    </div>
+                    <div>
+                      <Label>رقم الجوال</Label>
+                      <Input 
+                        value={formData.phone}
+                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                        placeholder="05xxxxxxxx"
+                      />
+                    </div>
+                    <div>
+                      <Label>الرقم الوظيفي</Label>
+                      <Input 
+                        value={formData.employee_code}
+                        onChange={e => setFormData(p => ({ ...p, employee_code: e.target.value }))}
+                        placeholder="EMP-001"
+                      />
                     </div>
                   </div>
-                ) : (
-                  /* إذا موظف قديم - اختيار من القائمة */
+                </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <Label>اختيار الموظف *</Label>
