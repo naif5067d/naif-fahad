@@ -68,6 +68,7 @@ const STATUS_COLORS = {
   'WEEKEND': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
   'HOLIDAY': 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
   'ON_MISSION': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  'NOT_REGISTERED': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   'UNKNOWN': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
   'NOT_PROCESSED': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   'PERMISSION': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
@@ -82,7 +83,8 @@ const STATUS_AR = {
   'WEEKEND': 'عطلة نهاية أسبوع',
   'HOLIDAY': 'عطلة رسمية',
   'ON_MISSION': 'مهمة خارجية',
-  'UNKNOWN': 'غير محدد',
+  'NOT_REGISTERED': 'لم يُسجل',
+  'UNKNOWN': 'لم يُسجل',
   'NOT_PROCESSED': 'غير محلل',
   'PERMISSION': 'استئذان',
   'EARLY_LEAVE': 'خروج مبكر',
