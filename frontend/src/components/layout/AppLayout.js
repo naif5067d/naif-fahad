@@ -10,7 +10,8 @@ import NotificationBell from '@/components/NotificationBell';
 const NAV_ITEMS = {
   // الموظفون العاديون يرون الحضور والماليات والمهام
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
-  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
+  // المشرف يرى الحضور والعقوبات لمتابعة فريقه
+  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties'],
   // سلطان موظف + إداري
   // سلطان مدير إداري
   sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],

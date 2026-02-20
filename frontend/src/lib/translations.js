@@ -9,7 +9,7 @@ export const translations = {
       logout: "Logout", profile: "Profile", workLocations: "Work Locations",
       custody: "Tangible Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
-      myFinances: "My Finances", teamAttendance: "Team Attendance", penalties: "Penalties",
+      myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
       attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance"
     },
     login: {
@@ -170,7 +170,7 @@ export const translations = {
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
-      myFinances: "ماليّاتي", teamAttendance: "حضور الفريق", penalties: "العقوبات",
+      myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
       attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة"
     },
     login: {
