@@ -93,24 +93,24 @@ export default function ContractsPage() {
                 <DialogHeader><DialogTitle>{t('contracts.create')}</DialogTitle></DialogHeader>
                 <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                   <div>
-                    <Label>Employee</Label>
+                    <Label>{lang === 'ar' ? 'الموظف' : 'Employee'}</Label>
                     <Select value={cForm.employee_id} onValueChange={v => setCForm(f => ({ ...f, employee_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
+                      <SelectTrigger><SelectValue placeholder={lang === 'ar' ? 'اختر' : 'Select'} /></SelectTrigger>
+                      <SelectContent>{employees.map(e => <SelectItem key={e.id} value={e.id}>{lang === 'ar' ? e.full_name_ar || e.full_name : e.full_name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Type</Label><Select value={cForm.contract_type} onValueChange={v => setCForm(f => ({ ...f, contract_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="full_time">Full Time</SelectItem><SelectItem value="part_time">Part Time</SelectItem><SelectItem value="contract">Contract</SelectItem></SelectContent></Select></div>
-                    <div><Label>Salary (SAR)</Label><Input type="number" value={cForm.salary} onChange={e => setCForm(f => ({ ...f, salary: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'النوع' : 'Type'}</Label><Select value={cForm.contract_type} onValueChange={v => setCForm(f => ({ ...f, contract_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="full_time">{lang === 'ar' ? 'دوام كامل' : 'Full Time'}</SelectItem><SelectItem value="part_time">{lang === 'ar' ? 'دوام جزئي' : 'Part Time'}</SelectItem><SelectItem value="contract">{lang === 'ar' ? 'عقد' : 'Contract'}</SelectItem></SelectContent></Select></div>
+                    <div><Label>{lang === 'ar' ? 'الراتب (ريال)' : 'Salary (SAR)'}</Label><Input type="number" value={cForm.salary} onChange={e => setCForm(f => ({ ...f, salary: e.target.value }))} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Start Date</Label><Input type="date" value={cForm.start_date} onChange={e => setCForm(f => ({ ...f, start_date: e.target.value }))} /></div>
-                    <div><Label>End Date</Label><Input type="date" value={cForm.end_date} onChange={e => setCForm(f => ({ ...f, end_date: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'تاريخ البداية' : 'Start Date'}</Label><Input type="date" value={cForm.start_date} onChange={e => setCForm(f => ({ ...f, start_date: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'تاريخ النهاية' : 'End Date'}</Label><Input type="date" value={cForm.end_date} onChange={e => setCForm(f => ({ ...f, end_date: e.target.value }))} /></div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <div><Label>Housing</Label><Input type="number" value={cForm.housing_allowance} onChange={e => setCForm(f => ({ ...f, housing_allowance: e.target.value }))} /></div>
-                    <div><Label>Transport</Label><Input type="number" value={cForm.transport_allowance} onChange={e => setCForm(f => ({ ...f, transport_allowance: e.target.value }))} /></div>
-                    <div><Label>Other</Label><Input type="number" value={cForm.other_allowances} onChange={e => setCForm(f => ({ ...f, other_allowances: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'بدل السكن' : 'Housing'}</Label><Input type="number" value={cForm.housing_allowance} onChange={e => setCForm(f => ({ ...f, housing_allowance: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'بدل النقل' : 'Transport'}</Label><Input type="number" value={cForm.transport_allowance} onChange={e => setCForm(f => ({ ...f, transport_allowance: e.target.value }))} /></div>
+                    <div><Label>{lang === 'ar' ? 'أخرى' : 'Other'}</Label><Input type="number" value={cForm.other_allowances} onChange={e => setCForm(f => ({ ...f, other_allowances: e.target.value }))} /></div>
                   </div>
                   <Button data-testid="submit-contract" onClick={handleCreateContract} className="w-full bg-primary text-primary-foreground" disabled={submitting}>
                     {submitting ? t('common.loading') : t('common.submit')}
