@@ -51,16 +51,34 @@ class ContractCreate(BaseModel):
     phone: str = ""
     national_id: str = ""
     
-    contract_category: str = "employment"  # employment | internship_unpaid
-    employment_type: str = "unlimited"  # unlimited | fixed_term | trial_paid
+    # أنواع العقود المدعومة:
+    # employment = توظيف عادي
+    # internship_unpaid = تدريب بدون راتب
+    # student_training = تدريب طالب
+    contract_category: str = "employment"  # employment | internship_unpaid | student_training
+    
+    # أنواع التوظيف:
+    # unlimited = غير محدد المدة
+    # fixed_term = محدد المدة
+    # trial_paid = فترة تجربة مدفوعة
+    # part_time = دوام جزئي
+    employment_type: str = "unlimited"  # unlimited | fixed_term | trial_paid | part_time
     
     job_title: str = ""
     job_title_ar: str = ""
     department: str = ""
     department_ar: str = ""
     
-    start_date: str  # YYYY-MM-DD
+    start_date: str  # YYYY-MM-DD - تاريخ بداية العقد
     end_date: Optional[str] = None
+    
+    # تاريخ المباشرة الفعلية - إذا مختلف عن start_date
+    # إذا لم يُحدد، يُستخدم start_date
+    # قبل هذا التاريخ، الموظف في "وضع التجربة" (sandbox)
+    work_start_date: Optional[str] = None
+    
+    # وضع التجربة - الموظف يمكنه دخول النظام لكن لا يُحتسب له حضور/غياب
+    sandbox_mode: bool = False
     
     probation_months: int = 3
     notice_period_days: int = 30
@@ -74,14 +92,25 @@ class ContractCreate(BaseModel):
     
     wage_definition: str = "basic_only"  # basic_only | basic_plus_fixed
     
-    # الإجازة السنوية: 21 أو 30 يوم فقط
+    # الإجازة السنوية: 21 أو 30 يوم فقط (تُحسب تلقائياً من سنوات الخدمة)
+    # أقل من 5 سنوات = 21 يوم | 5 سنوات فأكثر = 30 يوم
     annual_leave_days: int = 21  # للواجهة الحالية
     annual_policy_days: int = 21  # السياسة الرسمية - 21 أو 30 فقط
+    
     # رصيد الاستئذان الشهري (0-3 ساعات)
     monthly_permission_hours: int = 2
     
     is_migrated: bool = False
-    leave_opening_balance: Optional[Dict[str, float]] = None  # {"annual": 10.5, "sick": 5, "permission_hours": 2}
+    
+    # أرصدة الإجازات - للموظفين المُهاجَرين من نظام قديم
+    leave_opening_balance: Optional[Dict[str, float]] = None  # {"annual": 10.5, "sick": 5}
+    
+    # الأرصدة المستهلكة - تُحدّث تلقائياً من النظام
+    leave_consumed: Optional[Dict[str, float]] = None  # {"annual": 5, "sick": 2}
+    
+    # رصيد الساعات (الاستئذان)
+    permission_hours_balance: Optional[float] = None  # الرصيد المتبقي
+    permission_hours_consumed: Optional[float] = None  # المستهلك
     
     supervisor_id: Optional[str] = None
     notes: str = ""
