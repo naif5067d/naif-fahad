@@ -219,20 +219,14 @@ async def get_employee_service_info(employee_id: str) -> Optional[dict]:
     Returns:
         dict أو None
     """
-    import logging
-    
     # البحث عن العقد النشط أو المنتهي
     contract = await db.contracts_v2.find_one({
         "employee_id": employee_id,
         "status": {"$in": ["active", "terminated"]}
     }, {"_id": 0})
     
-    logging.info(f"Service info - Contract for {employee_id}: {contract is not None}")
-    
     if not contract:
         return None
-    
-    logging.info(f"Service info - Contract start_date: {contract.get('start_date')}")
     
     # تحديد تاريخ النهاية
     if contract.get('status') == 'terminated' and contract.get('termination_date'):
@@ -242,7 +236,6 @@ async def get_employee_service_info(employee_id: str) -> Optional[dict]:
     
     # حساب مدة الخدمة
     service = calculate_service_years(contract['start_date'], end_date)
-    logging.info(f"Service info - Calculated service: {service}")
     
     # حساب الأجر
     wages = calculate_monthly_wage(contract)
