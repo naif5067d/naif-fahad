@@ -228,6 +228,7 @@ async def create_deduction_bonus(
 # MOHAMMED'S DECISION - قرار محمد (إلزامي)
 # ============================================================
 
+@router.post("/{item_id}/mohammed-decision")
 async def mohammed_decision(
     item_id: str,
     req: MohammedDecision,
