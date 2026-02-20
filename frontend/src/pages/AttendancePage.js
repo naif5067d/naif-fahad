@@ -753,7 +753,7 @@ export default function AttendancePage() {
         <div className="border-t border-border pt-5">
           {/* ترويسة القسم الإداري */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold">{lang === 'ar' ? 'حضور الفريق' : 'Team Attendance'}</h2>
+            <h2 className="text-lg font-semibold">{lang === 'ar' ? 'الحضور والعقوبات' : 'Attendance & Penalties'}</h2>
             
             <div className="flex flex-wrap gap-2">
               {/* أزرار STAS فقط */}
