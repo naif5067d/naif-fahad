@@ -41,11 +41,12 @@ DEFAULT_EARLY_CHECKIN_MINUTES = 0  # لا يُسمح بالتبصيم المبك
 MAX_ALLOWED_EARLY_CHECKIN_MINUTES = 120  # الحد الأقصى ساعتين للمخولين
 
 # المستخدمين المُعفَين من قواعد التبصيم
-# يشمل: الإداريين الذين هم موظفين أيضاً
-EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-SALAH', 'EMP-NAIF', 'EMP-SULTAN', 'EMP-001', 'EMP-002', 'EMP-004']
+# فقط مسؤول النظام (STAS) - ليس موظف فعلي في الشركة
+# سلطان ونايف ومحمد موظفين في الشركة ويُطبق عليهم نظام الحضور
+EXEMPT_EMPLOYEE_IDS = ['EMP-STAS']
 
-# الأدوار المُعفاة من قواعد الحضور
-EXEMPT_ROLES = ['stas', 'sultan', 'naif', 'salah', 'mohammed']
+# الأدوار المُعفاة من قواعد الحضور - فقط مسؤول النظام
+EXEMPT_ROLES = ['stas']
 
 
 # ============================================================
