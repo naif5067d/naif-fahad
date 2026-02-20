@@ -173,7 +173,7 @@ export default function TransactionsPage() {
 
   const getStatusConfig = (status) => STATUS_CONFIG[status] || { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20', label: status };
   const getTypeConfig = (type) => TYPE_CONFIG[type] || { icon: '📄', label: type };
-  const getStageLabel = (stage) => STAGE_CONFIG[stage] || stage;
+  const getStageLabel = (stage) => STAGE_CONFIG[lang]?.[stage] || stage;
 
   // التحقق من إمكانية الموافقة
   const canApprove = (tx) => {
