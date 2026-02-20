@@ -439,7 +439,7 @@ async def approve_review(
             reference_type="performance_review",
             reference_id=review_id
         )
-    except:
+    except Exception:
         pass
     
     return {
