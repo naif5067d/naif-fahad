@@ -597,18 +597,27 @@ export default function STASMirrorPage() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="my-transactions" data-testid="tab-my-transactions" className="flex items-center gap-2">
+          <TabsTrigger value="my-transactions" data-testid="tab-my-transactions" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <FileText size={16} />
-            {lang === 'ar' ? 'معاملاتي' : 'My Transactions'}
+            <span className="hidden sm:inline">{lang === 'ar' ? 'معاملاتي' : 'My Trans'}</span>
             {myTransactions.length > 0 && (
-              <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+              <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {myTransactions.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="mirror" data-testid="tab-mirror">{t('stas.mirror')}</TabsTrigger>
-          <TabsTrigger value="holidays" data-testid="tab-holidays">{t('stas.holidayManagement')}</TabsTrigger>
-          <TabsTrigger value="maintenance" data-testid="tab-maintenance">{t('stas.maintenance')}</TabsTrigger>
+          <TabsTrigger value="mirror" data-testid="tab-mirror" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Eye size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'المرآة' : 'Mirror'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="holidays" data-testid="tab-holidays" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Calendar size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'العطل' : 'Holidays'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="maintenance" data-testid="tab-maintenance" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Settings size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'صيانة' : 'Maintenance'}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* === Devices Tab === */}
