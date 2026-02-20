@@ -582,12 +582,12 @@ export default function AttendancePage() {
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
               <p className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
                 <MapPin size={16} />
-                مواقع العمل المعينة لك
+                {lang === 'ar' ? 'مواقع العمل المعينة لك' : 'Your Assigned Work Locations'}
               </p>
               <div className="flex flex-wrap gap-2">
                 {assignedLocations.map(loc => (
                   <div key={loc.id} className="text-sm bg-background px-3 py-2 rounded-lg border border-border">
-                    <span className="font-medium">{loc.name_ar || loc.name}</span>
+                    <span className="font-medium">{lang === 'ar' ? loc.name_ar || loc.name : loc.name}</span>
                     <span className="text-muted-foreground ms-2 text-xs">({loc.work_start} - {loc.work_end})</span>
                   </div>
                 ))}
@@ -599,7 +599,7 @@ export default function AttendancePage() {
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
               <p className="text-sm text-amber-600 flex items-center gap-2">
                 <AlertTriangle size={16} />
-                لم يتم تعيين موقع عمل لك بعد. تواصل مع مديرك.
+                {lang === 'ar' ? 'لم يتم تعيين موقع عمل لك بعد. تواصل مع مديرك.' : 'No work location assigned yet. Contact your manager.'}
               </p>
             </div>
           )}
@@ -610,7 +610,7 @@ export default function AttendancePage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium text-primary flex items-center gap-2">
                   <Map size={16} />
-                  مواقع العمل
+                  {lang === 'ar' ? 'مواقع العمل' : 'Work Locations'}
                 </p>
                 <Button
                   variant="outline"
