@@ -713,15 +713,44 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* Dates */}
+                {/* تاريخ البداية مع حساب سنوات الخدمة */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>تاريخ البداية *</Label>
+                    <Label>تاريخ التعيين / البداية *</Label>
                     <Input 
                       type="date" 
                       value={formData.start_date}
-                      onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
+                      onChange={e => handleStartDateChange(e.target.value)}
                       data-testid="start-date-input"
                     />
+                    {/* عرض سنوات الخدمة */}
+                    {formData.start_date && (
+                      <div className="mt-2 p-2 bg-primary/10 rounded-lg">
+                        {(() => {
+                          const info = calculateServiceYears(formData.start_date);
+                          if (info.future) {
+                            return (
+                              <p className="text-sm text-amber-600">
+                                ⏳ تاريخ مستقبلي - لم تبدأ الخدمة بعد
+                              </p>
+                            );
+                          }
+                          return (
+                            <>
+                              <p className="text-sm font-bold text-primary">
+                                📅 مدة الخدمة: {info.years} سنة و {info.months} شهر
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                إجمالي: {info.totalYears} سنة → 
+                                <span className={`font-bold mr-1 ${info.policyDays === 30 ? 'text-emerald-600' : 'text-blue-600'}`}>
+                                  {info.policyDays} يوم إجازة سنوية
+                                </span>
+                              </p>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label>تاريخ النهاية (اختياري)</Label>
