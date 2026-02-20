@@ -645,11 +645,19 @@ async def validate_full_punch(
     bypass_gps: bool = False  # للمدراء - تجاوز GPS
 ) -> dict:
     """
-    التحقق الكامل من التبصيم
+    التحقق الكامل من التبصيم - النسخة المحسنة
+    
+    ترتيب الفحوصات:
+    1. هل الموظف معفى (إداري)؟
+    2. هل الموظف في وضع التجربة (sandbox)؟
+    3. هل اليوم يوم عمل (من work_locations.work_days)؟
+    4. هل اليوم عطلة رسمية؟
+    5. هل الموظف في إجازة معتمدة؟
+    6. هل الوقت ضمن ساعات العمل؟
+    7. هل الموقع صحيح (GPS)؟
     
     ملاحظة مهمة للخروج (checkout):
     - إذا سجل الموظف دخوله بـ GPS صالح، يُسمح له بالخروج حتى بدون GPS
-    - هذا لتجنب حالة "عالق" حيث لا يستطيع الموظف الخروج بسبب مشكلة GPS
     
     Returns:
         {
@@ -658,7 +666,8 @@ async def validate_full_punch(
             "warnings": List[dict],
             "work_location": Optional[dict],
             "gps_valid": bool,
-            "distance_km": Optional[float]
+            "distance_km": Optional[float],
+            "is_sandbox": bool
         }
     """
     errors = []
@@ -667,7 +676,15 @@ async def validate_full_punch(
     gps_valid = False
     distance_km = None
     
-    # === فحص الإعفاء - المستخدمين المُعفَين يمكنهم التبصيم في أي وقت ومكان ===
+    if current_time is None:
+        current_time = datetime.now(timezone.utc)
+    
+    local_time = current_time.astimezone(RIYADH_TZ)
+    today_str = local_time.strftime("%Y-%m-%d")
+    
+    # ============================================================
+    # فحص 1: الإعفاء - المستخدمين المُعفَين يمكنهم التبصيم في أي وقت
+    # ============================================================
     if employee_id in EXEMPT_EMPLOYEE_IDS:
         return {
             "valid": True,
@@ -680,32 +697,117 @@ async def validate_full_punch(
             "work_location": None,
             "gps_valid": True,
             "distance_km": None,
-            "is_exempt": True
+            "is_exempt": True,
+            "is_sandbox": False
         }
     
-    # === للخروج: التحقق إذا كان الدخول تم بـ GPS صالح ===
-    # إذا نعم، نسمح بالخروج حتى بدون GPS لتجنب "عالق"
+    # ============================================================
+    # فحص 2: وضع التجربة (Sandbox) - للموظفين الجدد قبل المباشرة
+    # ============================================================
+    sandbox_check = await check_employee_sandbox_mode(employee_id)
+    if sandbox_check.get("is_sandbox"):
+        return {
+            "valid": False,
+            "errors": [{
+                "code": "error.sandbox_mode",
+                "message": sandbox_check.get("message_ar"),
+                "message_ar": sandbox_check.get("message_ar"),
+                "work_start_date": sandbox_check.get("work_start_date"),
+                "reason": sandbox_check.get("reason")
+            }],
+            "warnings": [],
+            "work_location": None,
+            "gps_valid": False,
+            "distance_km": None,
+            "is_sandbox": True
+        }
+    
+    # ============================================================
+    # فحص 3: هل اليوم يوم عمل؟ (من work_locations.work_days)
+    # ============================================================
+    work_day_check = await check_work_day(employee_id, local_time)
+    work_location = work_day_check.get("work_location")
+    
+    if not work_day_check.get("is_work_day"):
+        return {
+            "valid": False,
+            "errors": [work_day_check.get("error")],
+            "warnings": [],
+            "work_location": work_location,
+            "gps_valid": False,
+            "distance_km": None,
+            "is_sandbox": False,
+            "day_info": {
+                "day_name": work_day_check.get("day_name"),
+                "day_name_ar": work_day_check.get("day_name_ar")
+            }
+        }
+    
+    if work_day_check.get("warning"):
+        warnings.append(work_day_check["warning"])
+    
+    # ============================================================
+    # فحص 4: هل اليوم عطلة رسمية؟
+    # ============================================================
+    holiday_check = await check_public_holiday(today_str)
+    if holiday_check.get("is_holiday"):
+        return {
+            "valid": False,
+            "errors": [holiday_check.get("error")],
+            "warnings": [],
+            "work_location": work_location,
+            "gps_valid": False,
+            "distance_km": None,
+            "is_sandbox": False,
+            "holiday_info": {
+                "name": holiday_check.get("holiday_name"),
+                "name_ar": holiday_check.get("holiday_name_ar")
+            }
+        }
+    
+    # ============================================================
+    # فحص 5: هل الموظف في إجازة معتمدة؟
+    # ============================================================
+    leave_check = await check_employee_on_leave_for_punch(employee_id, today_str)
+    if leave_check.get("is_on_leave"):
+        return {
+            "valid": False,
+            "errors": [leave_check.get("error")],
+            "warnings": [],
+            "work_location": work_location,
+            "gps_valid": False,
+            "distance_km": None,
+            "is_sandbox": False,
+            "leave_info": {
+                "type": leave_check.get("leave_type"),
+                "type_ar": leave_check.get("leave_type_ar"),
+                "end_date": leave_check.get("end_date")
+            }
+        }
+    
+    # ============================================================
+    # للخروج: التحقق إذا كان الدخول تم بـ GPS صالح
+    # ============================================================
     checkout_bypass_gps = False
     if punch_type == 'checkout' and not bypass_gps:
-        today = (current_time or datetime.now(timezone.utc)).strftime("%Y-%m-%d")
         checkin_record = await db.attendance_ledger.find_one({
             "employee_id": employee_id,
-            "date": today,
+            "date": today_str,
             "type": "check_in"
         }, {"_id": 0, "gps_valid": 1, "work_location": 1, "work_location_id": 1})
         
         if checkin_record:
-            # إذا سجل الدخول بـ GPS صالح أو من موقع عمل معروف
             if checkin_record.get('gps_valid') or checkin_record.get('work_location_id'):
                 checkout_bypass_gps = True
-                # استخدام موقع العمل من بصمة الدخول
                 if checkin_record.get('work_location_id'):
                     work_location = await db.work_locations.find_one(
                         {"id": checkin_record['work_location_id']},
                         {"_id": 0}
                     )
     
-    # 1. التحقق من الوقت
+    # ============================================================
+    # فحص 6: التحقق من الوقت
+    # ============================================================
     time_result = await validate_punch_time(employee_id, punch_type, current_time)
     if not work_location:
         work_location = time_result.get('work_location')
@@ -715,7 +817,9 @@ async def validate_full_punch(
     elif time_result.get('warning'):
         warnings.append(time_result['warning'])
     
-    # 2. التحقق من الموقع (GPS) - إذا لم يكن تجاوز
+    # ============================================================
+    # فحص 7: التحقق من الموقع (GPS)
+    # ============================================================
     should_bypass_gps = bypass_gps or checkout_bypass_gps
     
     if not should_bypass_gps:
@@ -731,11 +835,10 @@ async def validate_full_punch(
         elif location_result.get('warning'):
             warnings.append(location_result['warning'])
         
-        # تحديث work_location من نتيجة GPS إذا وجد
         if location_result.get('work_location'):
             work_location = location_result['work_location']
     else:
-        gps_valid = True  # تم تجاوز GPS
+        gps_valid = True
         if checkout_bypass_gps and not gps_available:
             warnings.append({
                 "code": "info.checkout_gps_bypassed",
@@ -749,5 +852,6 @@ async def validate_full_punch(
         "warnings": warnings,
         "work_location": work_location,
         "gps_valid": gps_valid,
-        "distance_km": distance_km
+        "distance_km": distance_km,
+        "is_sandbox": False
     }
