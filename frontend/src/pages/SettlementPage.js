@@ -521,19 +521,19 @@ export default function SettlementPage() {
         <div className="grid grid-cols-4 gap-2 text-center text-xs border-t pt-2">
           <div>
             <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
-            <div>STAS</div>
+            <div>{lang === 'ar' ? 'ستاس' : 'STAS'}</div>
           </div>
           <div>
             <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
-            <div>CEO</div>
+            <div>{lang === 'ar' ? 'الرئيس التنفيذي' : 'CEO'}</div>
           </div>
           <div>
             <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">QR</div>
-            <div>HR</div>
+            <div>{lang === 'ar' ? 'الموارد البشرية' : 'HR'}</div>
           </div>
           <div>
-            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">توقيع يدوي</div>
-            <div>Employee</div>
+            <div className="h-12 border border-dashed flex items-center justify-center text-muted-foreground">{lang === 'ar' ? 'توقيع يدوي' : 'Signature'}</div>
+            <div>{lang === 'ar' ? 'الموظف' : 'Employee'}</div>
           </div>
         </div>
       </div>
