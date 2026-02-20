@@ -1305,9 +1305,27 @@ export default function ContractsManagementPage() {
                     <span>{formatDate(viewContract.start_date)}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">تاريخ المباشرة:</span>
+                    <span>{viewContract.work_start_date ? formatDate(viewContract.work_start_date) : formatDate(viewContract.start_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">تاريخ النهاية:</span>
                     <span>{viewContract.end_date ? formatDate(viewContract.end_date) : 'غير محدد'}</span>
                   </div>
+                  {/* وضع التجربة */}
+                  <div className="flex justify-between items-center py-1 border-t border-b">
+                    <span className="text-muted-foreground">وضع التجربة:</span>
+                    <Badge variant={viewContract.sandbox_mode ? "destructive" : "secondary"}>
+                      {viewContract.sandbox_mode ? 'مفعّل - لا يُحتسب حضور' : 'غير مفعّل'}
+                    </Badge>
+                  </div>
+                  {/* سنوات الخدمة */}
+                  {viewContract.service_years !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">سنوات الخدمة:</span>
+                      <span className="font-bold text-primary">{viewContract.service_years?.toFixed(1)} سنة</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">فترة التجربة:</span>
                     <span>{viewContract.probation_months} شهر</span>
@@ -1323,8 +1341,39 @@ export default function ContractsManagementPage() {
                 </CardContent>
               </Card>
               
+              {/* أرصدة الإجازات */}
+              <Card className="border-emerald-200 bg-emerald-50/50">
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
+                    <Calendar className="w-4 h-4" /> أرصدة الإجازات والساعات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="py-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">الإجازة السنوية (افتتاحي):</span>
+                    <span>{viewContract.leave_opening_balance?.annual || 0} يوم</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">الإجازة السنوية (مستهلك):</span>
+                    <span className="text-red-600">{viewContract.leave_consumed?.annual || 0} يوم</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">الإجازة المرضية (مستهلك):</span>
+                    <span className="text-red-600">{viewContract.leave_consumed?.sick || 0} يوم</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-1">
+                    <span className="text-muted-foreground">ساعات الاستئذان (رصيد):</span>
+                    <span className="font-bold">{viewContract.permission_hours_balance || 0} ساعة</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">ساعات الاستئذان (مستهلك):</span>
+                    <span className="text-red-600">{viewContract.permission_hours_consumed || 0} ساعة</span>
+                  </div>
+                </CardContent>
+              </Card>
+              
               {/* Salary (if applicable) */}
-              {viewContract.contract_category !== 'internship_unpaid' && (
+              {viewContract.contract_category !== 'internship_unpaid' && viewContract.contract_category !== 'student_training' && (
                 <Card>
                   <CardHeader className="py-3">
                     <CardTitle className="text-sm flex items-center gap-2">
