@@ -1769,12 +1769,26 @@ export default function ContractsManagementPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label>تاريخ البداية</Label>
+                  <Label>تاريخ التعيين / البداية</Label>
                   <Input 
                     type="date" 
                     value={formData.start_date}
-                    onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
+                    onChange={e => handleStartDateChange(e.target.value)}
                   />
+                  {/* عرض سنوات الخدمة */}
+                  {formData.start_date && (
+                    <div className="mt-2 p-2 bg-primary/10 rounded text-xs">
+                      {(() => {
+                        const info = calculateServiceYears(formData.start_date);
+                        if (info.future) return <span className="text-amber-600">⏳ مستقبلي</span>;
+                        return (
+                          <span className="font-bold text-primary">
+                            {info.years} سنة → {info.policyDays} يوم
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label>تاريخ النهاية</Label>
