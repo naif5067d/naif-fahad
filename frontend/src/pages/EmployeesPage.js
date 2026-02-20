@@ -343,9 +343,20 @@ export default function EmployeesPage() {
                           className="h-7 w-7 p-0" 
                           onClick={() => openSupervisorDialog(e)} 
                           data-testid={`assign-supervisor-${e.employee_number}`}
-                          title={lang === 'ar' ? 'تعيين مشرف' : 'Assign Supervisor'}
+                          title={lang === 'ar' ? 'تعيين مشرف له' : 'Assign Supervisor'}
                         >
                           <UserCheck size={14} />
+                        </Button>
+                        {/* زر تعيين موظفين تحت هذا المشرف */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700" 
+                          onClick={() => openBulkSupervisorDialog(e)} 
+                          data-testid={`assign-employees-${e.employee_number}`}
+                          title={lang === 'ar' ? 'تعيين موظفين تحت إشرافه' : 'Assign Employees Under'}
+                        >
+                          <Users size={14} />
                         </Button>
                         {isStas && (
                           <>
