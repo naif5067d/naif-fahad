@@ -686,7 +686,7 @@ async def execute_contract(
 ):
     """
     Execute and activate a contract.
-    سلطان و STAS يستطيعون التنفيذ.
+    سلطان وستاس ونايف يستطيعون التنفيذ.
     
     This will:
     1. Validate all conditions
