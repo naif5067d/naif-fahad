@@ -14,14 +14,14 @@ const NAV_ITEMS = {
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties'],
   // سلطان موظف + إداري
   // سلطان مدير إداري
-  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // نايف إداري فقط
-  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
+  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
   // صلاح مالي فقط
   salah: ['dashboard', 'transactions', 'financialCustody'],
   // محمد CEO
   mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody'],
-  // ستاس إداري + صلاحيات كاملة
+  // ستاس إداري + صلاحيات كاملة (loginSessions خاصة به فقط)
   stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations'],
 };
 
