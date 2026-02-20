@@ -447,6 +447,9 @@ export default function ContractsManagementPage() {
       department_ar: contract.department_ar,
       start_date: contract.start_date,
       end_date: contract.end_date || '',
+      // تاريخ المباشرة ووضع التجربة
+      work_start_date: contract.work_start_date || contract.start_date || '',
+      sandbox_mode: contract.sandbox_mode || false,
       probation_months: contract.probation_months,
       notice_period_days: contract.notice_period_days,
       basic_salary: contract.basic_salary,
@@ -459,7 +462,12 @@ export default function ContractsManagementPage() {
       annual_policy_days: contract.annual_policy_days || 21,
       monthly_permission_hours: contract.monthly_permission_hours || 2,
       is_migrated: contract.is_migrated,
-      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
+      // أرصدة الإجازات
+      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0 },
+      leave_consumed: contract.leave_consumed || { annual: 0, sick: 0, emergency: 0 },
+      // رصيد الساعات
+      permission_hours_balance: contract.permission_hours_balance || 0,
+      permission_hours_consumed: contract.permission_hours_consumed || 0,
       notes: contract.notes || '',
       bank_name: contract.bank_name || '',
       bank_iban: contract.bank_iban || '',
