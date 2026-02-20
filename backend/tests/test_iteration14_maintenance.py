@@ -10,7 +10,7 @@ import os
 import json
 import tempfile
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://penalty-mgmt.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-attendance-fix-2.preview.emergentagent.com').rstrip('/')
 STAS_USER_ID = "fedffe24-ec69-5c65-809d-5d24f8a16b9d"
 
 
