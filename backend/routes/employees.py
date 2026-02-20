@@ -633,7 +633,7 @@ async def upload_employee_photo(
         if os.path.exists(old_path):
             try:
                 os.remove(old_path)
-            except:
+            except OSError:
                 pass
     
     # إنشاء اسم ملف فريد
