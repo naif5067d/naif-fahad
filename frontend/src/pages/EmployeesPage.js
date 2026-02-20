@@ -465,6 +465,78 @@ export default function EmployeesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk Supervisor Assignment Dialog - تعيين موظفين متعددين للمشرف */}
+      <Dialog open={!!bulkSupervisorDialog} onOpenChange={() => setBulkSupervisorDialog(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {lang === 'ar' ? 'تعيين موظفين للمشرف' : 'Assign Employees to Supervisor'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="font-medium">
+                {lang === 'ar' ? 'المشرف:' : 'Supervisor:'} {bulkSupervisorDialog && (lang === 'ar' ? bulkSupervisorDialog.full_name_ar : bulkSupervisorDialog.full_name)}
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {lang === 'ar' 
+                  ? `اختر الموظفين لوضعهم تحت إشراف ${bulkSupervisorDialog?.full_name_ar || ''}`
+                  : `Select employees to place under ${bulkSupervisorDialog?.full_name || ''}`}
+              </p>
+              <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+                {employees
+                  .filter(e => e.is_active && e.id !== bulkSupervisorDialog?.id)
+                  .map(emp => (
+                    <label 
+                      key={emp.id} 
+                      className="flex items-center gap-3 p-2 hover:bg-muted rounded-lg cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployeesForSupervisor.includes(emp.id)}
+                        onChange={() => toggleEmployeeForSupervisor(emp.id)}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">
+                          {lang === 'ar' ? emp.full_name_ar || emp.full_name : emp.full_name}
+                        </span>
+                        <span className="text-xs text-muted-foreground ms-2">
+                          {emp.job_title_ar || emp.job_title}
+                        </span>
+                      </div>
+                      {emp.supervisor_id && (
+                        <span className="text-xs text-amber-600">
+                          {lang === 'ar' ? 'لديه مشرف' : 'Has supervisor'}
+                        </span>
+                      )}
+                    </label>
+                  ))}
+              </div>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {lang === 'ar' 
+                ? `تم اختيار ${selectedEmployeesForSupervisor.length} موظف`
+                : `${selectedEmployeesForSupervisor.length} employees selected`}
+            </div>
+            
+            <Button 
+              onClick={handleSaveBulkSupervisor} 
+              className="w-full" 
+              disabled={savingSupervisor}
+            >
+              {savingSupervisor 
+                ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') 
+                : (lang === 'ar' ? 'حفظ التعيينات' : 'Save Assignments')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Credentials Dialog (STAS only) */}
       <Dialog open={!!credentialsDialog} onOpenChange={() => setCredentialsDialog(null)}>
         <DialogContent>
