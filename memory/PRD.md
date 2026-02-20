@@ -1698,3 +1698,81 @@ available_balance = earned_to_date - used_executed
 ---
 
 Version: 36.0 (2026-02-19)
+
+
+---
+
+### Phase 37: Attendance System Deep Fix ✅ (2026-02-20)
+
+**إصلاحات نظام الحضور والعقوبات**
+
+#### 1. إصلاح مشكلة GPS عند تسجيل الخروج (P0):
+- **المشكلة:** الموظف لا يستطيع تسجيل الخروج إذا لم يكن GPS متاحاً، حتى لو سجل دخوله بـ GPS صالح
+- **الحل:** تعديل `punch_validator.py` للسماح بالخروج بدون GPS إذا كان الدخول تم بـ GPS مُصدّق
+- **المنطق الجديد:**
+  - عند تسجيل الخروج، يُفحص سجل الدخول لنفس اليوم
+  - إذا كان `gps_valid=true` أو `work_location_id` موجود في بصمة الدخول
+  - يُسمح بالخروج بدون GPS مع تحذير: "تم تجاوز فحص GPS للخروج"
+- **الملف:** `/app/backend/services/punch_validator.py`
+
+#### 2. تحسين حساب الساعات الشهرية المطلوبة (P1):
+- **المشكلة:** الساعات المطلوبة ثابتة على 176 ساعة (22 يوم × 8 ساعات)
+- **الحل:** حساب ديناميكي يعتمد على:
+  - عدد أيام العمل الفعلية في الشهر
+  - استبعاد العطل الرسمية من holidays collection
+  - إعدادات موقع العمل (work_days, daily_hours)
+  - الافتراضي: الجمعة والسبت عطلة
+- **النتيجة:** Required Hours = work_days_count × daily_hours
+- **الملف:** `/app/backend/routes/employees.py`
+
+#### 3. معلومات إضافية في Employee Summary (P2):
+- **حقول جديدة في attendance:**
+  - `work_days_in_month`: عدد أيام العمل في الشهر
+  - `daily_hours`: ساعات العمل اليومية
+  - `hours_until_deduction`: الساعات المتبقية قبل خصم يوم
+  - `days_to_deduct`: عدد الأيام للخصم (إذا deficit_hours >= 8)
+
+#### المنطق المُفصّل لنظام الحضور:
+
+**محرك القرار اليومي (day_resolver_v2):**
+| الترتيب | الفحص | النتيجة |
+|---------|-------|---------|
+| 1 | العطل الرسمية | HOLIDAY |
+| 2 | عطلة نهاية الأسبوع | WEEKEND |
+| 3 | إجازة منفذة | ON_LEAVE |
+| 4 | مهمة خارجية | ON_MISSION |
+| 5 | نسيان بصمة | PRESENT |
+| 6 | بصمة فعلية | PRESENT/LATE/EARLY_LEAVE |
+| 7 | استئذان | PERMISSION |
+| 8 | تبريرات | يُعدّل الحالة |
+| 9 | لا شيء | ABSENT |
+
+**قواعد العقوبات:**
+| نوع الغياب | العقوبة |
+|------------|---------|
+| يوم غياب بدون عذر | خصم أجر يوم كامل |
+| 3 أيام متصلة | إنذار أول |
+| 5 أيام متصلة | إنذار ثاني |
+| 10 أيام متصلة | إنذار نهائي |
+| 15 يوم متصل | فصل |
+| 10 أيام متفرقة/سنة | إنذار أول |
+| 20 يوم متفرق/سنة | إنذار نهائي |
+| 30 يوم متفرق/سنة | فصل |
+| كل 8 ساعات نقص | خصم يوم |
+
+**الجدولة التلقائية (scheduler.py):**
+- يومياً الساعة 1 صباحاً: معالجة daily_status لليوم السابق
+- شهرياً أول الشهر: إنشاء monthly_summary
+
+**الملفات المُعدلة:**
+- `/app/backend/services/punch_validator.py` - تجاوز GPS للخروج
+- `/app/backend/routes/employees.py` - حساب ديناميكي للساعات
+
+**Testing:** ✅ API endpoints verified via curl
+- Employee Summary returns dynamic `required_monthly_hours`
+- Work days calculated based on holidays and location settings
+
+---
+
+Version: 37.0 (2026-02-20)
+
