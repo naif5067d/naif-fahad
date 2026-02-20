@@ -802,7 +802,7 @@ export default function AttendancePage() {
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="text-sm font-medium">وقت الدخول</label>
+                              <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الدخول' : 'Start Time'}</label>
                               <Input 
                                 type="time" 
                                 value={ramadanForm.work_start}
@@ -811,7 +811,7 @@ export default function AttendancePage() {
                               />
                             </div>
                             <div>
-                              <label className="text-sm font-medium">وقت الخروج</label>
+                              <label className="text-sm font-medium">{lang === 'ar' ? 'وقت الخروج' : 'End Time'}</label>
                               <Input 
                                 type="time" 
                                 value={ramadanForm.work_end}
@@ -821,10 +821,10 @@ export default function AttendancePage() {
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            ملاحظة: ستُطبق أوقات الدوام على حساب التأخير والخروج المبكر
+                            {lang === 'ar' ? 'ملاحظة: ستُطبق أوقات الدوام على حساب التأخير والخروج المبكر' : 'Note: Work hours will apply to late arrival and early leave calculations'}
                           </p>
                           <Button onClick={handleActivateRamadan} className="w-full">
-                            تفعيل
+                            {lang === 'ar' ? 'تفعيل' : 'Activate'}
                           </Button>
                         </div>
                       </DialogContent>
@@ -839,7 +839,7 @@ export default function AttendancePage() {
                     className={mapVisible ? 'text-emerald-600 border-emerald-600' : ''}
                   >
                     <Eye size={14} className="me-1" />
-                    {mapVisible ? 'إخفاء الخريطة' : 'إظهار الخريطة'}
+                    {mapVisible ? (lang === 'ar' ? 'إخفاء الخريطة' : 'Hide Map') : (lang === 'ar' ? 'إظهار الخريطة' : 'Show Map')}
                   </Button>
                   
                   {/* زر حساب الغياب */}
@@ -850,7 +850,7 @@ export default function AttendancePage() {
                     disabled={loading}
                   >
                     <FileText size={14} className="me-1" />
-                    حساب الغياب
+                    {lang === 'ar' ? 'حساب الغياب' : 'Calculate Absence'}
                   </Button>
                 </>
               )}
@@ -862,7 +862,9 @@ export default function AttendancePage() {
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4 flex items-center gap-2">
               <Moon size={18} className="text-amber-600" />
               <span className="text-sm text-amber-700">
-                دوام رمضان مفعل (6 ساعات) - من {ramadanSettings.start_date} إلى {ramadanSettings.end_date}
+                {lang === 'ar' 
+                  ? `دوام رمضان مفعل (6 ساعات) - من ${ramadanSettings.start_date} إلى ${ramadanSettings.end_date}`
+                  : `Ramadan hours active (6 hours) - from ${ramadanSettings.start_date} to ${ramadanSettings.end_date}`}
               </span>
             </div>
           )}
@@ -872,22 +874,22 @@ export default function AttendancePage() {
             <div className="card-premium p-4 text-center">
               <CheckCircle className="mx-auto text-emerald-500 mb-2" size={24} />
               <p className="text-2xl font-bold text-emerald-600">{teamSummary.present}</p>
-              <p className="text-xs text-muted-foreground">حاضر</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'حاضر' : 'Present'}</p>
             </div>
             <div className="card-premium p-4 text-center">
               <UserX className="mx-auto text-red-500 mb-2" size={24} />
               <p className="text-2xl font-bold text-red-600">{teamSummary.absent}</p>
-              <p className="text-xs text-muted-foreground">غائب</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'غائب' : 'Absent'}</p>
             </div>
             <div className="card-premium p-4 text-center">
               <CalendarDays className="mx-auto text-blue-500 mb-2" size={24} />
               <p className="text-2xl font-bold text-blue-600">{teamSummary.on_leave}</p>
-              <p className="text-xs text-muted-foreground">إجازة</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجازة' : 'On Leave'}</p>
             </div>
             <div className="card-premium p-4 text-center">
               <Timer className="mx-auto text-amber-500 mb-2" size={24} />
               <p className="text-2xl font-bold text-amber-600">{teamSummary.late}</p>
-              <p className="text-xs text-muted-foreground">متأخر</p>
+              <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'متأخر' : 'Late'}</p>
             </div>
           </div>
           
@@ -895,9 +897,9 @@ export default function AttendancePage() {
           <div className="flex gap-3 mb-4 flex-wrap">
             <Tabs value={period} onValueChange={setPeriod} className="w-full">
               <TabsList className="grid grid-cols-4 h-11 rounded-xl p-1 bg-muted/50">
-                <TabsTrigger value="daily" className="rounded-lg text-xs">يومي</TabsTrigger>
-                <TabsTrigger value="weekly" className="rounded-lg text-xs">أسبوعي</TabsTrigger>
-                <TabsTrigger value="monthly" className="rounded-lg text-xs">شهري</TabsTrigger>
+                <TabsTrigger value="daily" className="rounded-lg text-xs">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
+                <TabsTrigger value="weekly" className="rounded-lg text-xs">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
+                <TabsTrigger value="monthly" className="rounded-lg text-xs">{lang === 'ar' ? 'شهري' : 'Monthly'}</TabsTrigger>
                 <TabsTrigger value="yearly" className="rounded-lg text-xs">سنوي</TabsTrigger>
               </TabsList>
             </Tabs>
