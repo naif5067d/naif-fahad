@@ -313,6 +313,21 @@ export default function ContractsManagementPage() {
     }
   };
 
+  // حذف نهائي للعقود الملغية (STAS فقط)
+  const handlePermanentDelete = async (contractId, contractSerial) => {
+    if (!confirm(`⚠️ تحذير: هل تريد حذف العقد ${contractSerial} نهائياً؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+    
+    setActionLoading(true);
+    try {
+      await api.delete(`/api/contracts-v2/${contractId}/permanent`);
+      toast.success(`تم حذف العقد ${contractSerial} نهائياً`);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل الحذف النهائي');
+    }
+    setActionLoading(false);
+  };
+
   // إعادة العقد للمسودة للتعديل الكامل
   const handleRevertToDraft = async (contractId) => {
     if (!confirm('هل تريد إعادة العقد لوضع المسودة؟ سيتمكن المسؤولون من تعديله بالكامل.')) return;
