@@ -242,6 +242,67 @@ async def remove_supervisor(employee_id: str, user=Depends(require_roles('stas',
     return {"message": "تم إزالة المشرف بنجاح"}
 
 
+class BulkSupervisorAssign(BaseModel):
+    supervisor_id: str
+    employee_ids: list
+
+
+@router.put("/bulk-supervisor")
+async def assign_bulk_supervisor(
+    body: BulkSupervisorAssign, 
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    تعيين موظفين متعددين تحت مشرف واحد
+    
+    - يزيل المشرف من الموظفين السابقين (غير المحددين)
+    - يعيّن المشرف للموظفين الجدد
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # التحقق من وجود المشرف
+    supervisor = await db.employees.find_one({"id": body.supervisor_id})
+    if not supervisor:
+        raise HTTPException(status_code=404, detail="المشرف غير موجود")
+    
+    # إزالة المشرف من الموظفين السابقين (غير المحددين في القائمة الجديدة)
+    await db.employees.update_many(
+        {
+            "supervisor_id": body.supervisor_id,
+            "id": {"$nin": body.employee_ids}
+        },
+        {"$unset": {"supervisor_id": "", "supervisor_name": "", "supervisor_name_ar": ""}}
+    )
+    
+    # تعيين المشرف للموظفين الجدد
+    updated = 0
+    for emp_id in body.employee_ids:
+        # التأكد أن الموظف ليس هو المشرف نفسه
+        if emp_id == body.supervisor_id:
+            continue
+        
+        result = await db.employees.update_one(
+            {"id": emp_id},
+            {"$set": {
+                "supervisor_id": body.supervisor_id,
+                "supervisor_name": supervisor.get('full_name', ''),
+                "supervisor_name_ar": supervisor.get('full_name_ar', ''),
+                "supervisor_updated_at": now,
+                "supervisor_updated_by": user['user_id']
+            }}
+        )
+        if result.modified_count > 0:
+            updated += 1
+    
+    return {
+        "success": True,
+        "message": f"تم تعيين {updated} موظف تحت المشرف {supervisor.get('full_name_ar', '')}",
+        "supervisor_id": body.supervisor_id,
+        "assigned_count": len(body.employee_ids),
+        "updated_count": updated
+    }
+
+
 # ==================== ASSIGNED LOCATIONS ====================
 
 @router.get("/{employee_id}/assigned-locations")
