@@ -1865,6 +1865,138 @@ export default function ContractsManagementPage() {
               </div>
             </div>
 
+            {/* أرصدة الإجازات والساعات - تعديل كامل */}
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                <Calendar className="w-4 h-4" />
+                أرصدة الإجازات والساعات (تعديل مباشر)
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-xs">رصيد سنوية (افتتاحي)</Label>
+                  <Input 
+                    type="number"
+                    step="0.5"
+                    value={formData.leave_opening_balance?.annual || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      leave_opening_balance: { 
+                        ...(p.leave_opening_balance || {}), 
+                        annual: parseFloat(e.target.value) || 0 
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">سنوية مستهلكة</Label>
+                  <Input 
+                    type="number"
+                    step="0.5"
+                    value={formData.leave_consumed?.annual || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      leave_consumed: { 
+                        ...(p.leave_consumed || {}), 
+                        annual: parseFloat(e.target.value) || 0 
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">رصيد مرضية (افتتاحي)</Label>
+                  <Input 
+                    type="number"
+                    value={formData.leave_opening_balance?.sick || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      leave_opening_balance: { 
+                        ...(p.leave_opening_balance || {}), 
+                        sick: parseInt(e.target.value) || 0 
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">مرضية مستهلكة</Label>
+                  <Input 
+                    type="number"
+                    value={formData.leave_consumed?.sick || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      leave_consumed: { 
+                        ...(p.leave_consumed || {}), 
+                        sick: parseInt(e.target.value) || 0 
+                      }
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">رصيد ساعات الاستئذان</Label>
+                  <Input 
+                    type="number"
+                    step="0.5"
+                    value={formData.permission_hours_balance || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      permission_hours_balance: parseFloat(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">ساعات مستهلكة</Label>
+                  <Input 
+                    type="number"
+                    step="0.5"
+                    value={formData.permission_hours_consumed || 0}
+                    onChange={e => setFormData(p => ({ 
+                      ...p, 
+                      permission_hours_consumed: parseFloat(e.target.value) || 0 
+                    }))}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+                ⚠️ هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
+              </p>
+            </div>
+
+            {/* تاريخ المباشرة ووضع التجربة */}
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <Clock className="w-4 h-4" />
+                تاريخ المباشرة ووضع التجربة
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>تاريخ المباشرة الفعلية</Label>
+                  <Input 
+                    type="date"
+                    value={formData.work_start_date || formData.start_date || ''}
+                    onChange={e => setFormData(p => ({ ...p, work_start_date: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    قبل هذا التاريخ لا يُحتسب حضور أو غياب
+                  </p>
+                </div>
+                <div className="flex flex-col justify-center">
+                  <Label className="mb-2">وضع التجربة (Sandbox)</Label>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={formData.sandbox_mode || false}
+                      onCheckedChange={checked => setFormData(p => ({ ...p, sandbox_mode: checked }))}
+                    />
+                    <span className="text-sm">
+                      {formData.sandbox_mode ? (
+                        <Badge variant="destructive">مفعّل - لا يُحتسب حضور</Badge>
+                      ) : (
+                        <Badge variant="secondary">غير مفعّل</Badge>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* ملاحظات */}
             <div>
               <Label>ملاحظات</Label>
