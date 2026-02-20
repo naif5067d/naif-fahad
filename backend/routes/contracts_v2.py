@@ -442,7 +442,7 @@ async def create_contract(
 
 
 # ============================================================
-# UPDATE CONTRACT (Before Execution Only)
+# UPDATE CONTRACT - صلاحية تعديل كاملة للسلطان وستاس ونايف
 # ============================================================
 
 @router.put("/{contract_id}")
@@ -452,9 +452,14 @@ async def update_contract(
     user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """
-    Update a contract.
-    - Draft/Pending: All fields can be edited
-    - Active: Only bank_name, bank_iban, notes can be edited (للمخالصة)
+    تحديث العقد - صلاحية كاملة
+    
+    للسلطان وستاس ونايف:
+    - يمكن تعديل أي حقل في أي وقت
+    - يمكن تعديل أرصدة الإجازات (المتبقي والمستهلك)
+    - يمكن تعديل رصيد الساعات
+    - عند تعديل عقد نشط، يعود العقد لحالة "مسودة تصحيح"
+    - مرونة كاملة - لا قفل بعد التفعيل
     """
     contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
     if not contract:
@@ -465,35 +470,59 @@ async def update_contract(
     # Build update dict
     update_data = {"updated_at": now}
     
-    # Fields that can ALWAYS be updated (even for active contracts)
-    always_editable = ["bank_name", "bank_iban", "notes"]
+    # قائمة الحقول التي تم تعديلها
+    changed_fields = []
     
-    if contract["status"] in ("draft", "pending_stas"):
-        # Draft/Pending: All fields can be edited
-        for field, value in req.dict(exclude_unset=True).items():
-            if value is not None:
+    # السلطان وستاس ونايف لهم صلاحية كاملة على كل الحقول
+    for field, value in req.dict(exclude_unset=True).items():
+        if value is not None and field != 'force_draft_correction':
+            old_value = contract.get(field)
+            if old_value != value:
                 update_data[field] = value
-    elif contract["status"] == "active":
-        # Active: Only bank/notes fields can be edited
-        for field in always_editable:
-            value = getattr(req, field, None)
-            if value is not None:
-                update_data[field] = value
+                changed_fields.append({
+                    "field": field,
+                    "old_value": old_value,
+                    "new_value": value
+                })
+    
+    # إذا كان العقد نشط وتم تعديل حقول جوهرية، يعود لمسودة تصحيح
+    critical_fields = [
+        "basic_salary", "housing_allowance", "transport_allowance",
+        "other_allowances", "nature_of_work_allowance",
+        "annual_leave_days", "annual_policy_days",
+        "leave_opening_balance", "leave_consumed", "leave_remaining",
+        "permission_hours_balance", "permission_hours_consumed",
+        "start_date", "end_date", "work_start_date",
+        "contract_category", "employment_type"
+    ]
+    
+    needs_correction = any(f["field"] in critical_fields for f in changed_fields)
+    force_correction = req.force_draft_correction
+    
+    if contract["status"] == "active" and (needs_correction or force_correction):
+        update_data["status"] = "draft_correction"
+        update_data["correction_reason"] = "تعديل بيانات العقد"
+        update_data["correction_by"] = user["user_id"]
+        update_data["correction_at"] = now
         
-        # Check if user tried to update other fields
-        for field, value in req.dict(exclude_unset=True).items():
-            if field not in always_editable and value is not None:
-                if contract.get(field) != value:
-                    # Silently ignore non-bank fields for active contracts
-                    pass
-    else:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"لا يمكن تعديل عقد بحالة {contract['status']}."
+        # إضافة للتاريخ
+        status_entry = {
+            "from_status": "active",
+            "to_status": "draft_correction",
+            "actor_id": user["user_id"],
+            "actor_name": user.get("full_name", ""),
+            "timestamp": now,
+            "note": f"تعديل: {', '.join([f['field'] for f in changed_fields[:5]])}" + ("..." if len(changed_fields) > 5 else ""),
+            "changed_fields": changed_fields
+        }
+        
+        await db.contracts_v2.update_one(
+            {"id": contract_id},
+            {"$push": {"status_history": status_entry}}
         )
     
-    # If salary fields updated and category is internship_unpaid, reset to 0
-    if contract["contract_category"] == "internship_unpaid":
+    # If salary fields updated and category is internship_unpaid or student_training, reset to 0
+    if contract.get("contract_category") in ("internship_unpaid", "student_training"):
         for salary_field in ["basic_salary", "housing_allowance", "transport_allowance", "other_allowances"]:
             if salary_field in update_data:
                 update_data[salary_field] = 0
