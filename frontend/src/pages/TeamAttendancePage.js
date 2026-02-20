@@ -1570,6 +1570,70 @@ export default function TeamAttendancePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Correction Decision Dialog - لتعديل القرار */}
+      <Dialog open={!!correctionDecision} onOpenChange={() => setCorrectionDecision(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {lang === 'ar' ? 'تعديل القرار' : 'Modify Decision'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {correctionDecision && (
+            <div className="space-y-4 py-4">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{correctionDecision.employee_name_ar}</p>
+                <p className="text-sm text-muted-foreground">{correctionDecision.date}</p>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">
+                  {lang === 'ar' ? 'الحالة النهائية' : 'Final Status'}
+                </label>
+                <select
+                  className="w-full mt-1 p-2 border rounded-lg bg-background"
+                  id="final_status_select"
+                  defaultValue={correctionDecision.requested_status}
+                >
+                  <option value="PRESENT">{lang === 'ar' ? 'حاضر' : 'Present'}</option>
+                  <option value="ABSENT">{lang === 'ar' ? 'غائب' : 'Absent'}</option>
+                  <option value="LATE">{lang === 'ar' ? 'متأخر' : 'Late'}</option>
+                  <option value="EXCUSED">{lang === 'ar' ? 'معذور' : 'Excused'}</option>
+                  <option value="ON_MISSION">{lang === 'ar' ? 'مهمة خارجية' : 'On Mission'}</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">
+                  {lang === 'ar' ? 'ملاحظة (اختياري)' : 'Note (optional)'}
+                </label>
+                <Input
+                  id="decision_note_input"
+                  placeholder={lang === 'ar' ? 'ملاحظة على القرار...' : 'Decision note...'}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCorrectionDecision(null)}>
+              {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button 
+              onClick={() => {
+                const finalStatus = document.getElementById('final_status_select')?.value;
+                const note = document.getElementById('decision_note_input')?.value;
+                handleCorrectionDecision(correctionDecision.id, 'modify', finalStatus, note);
+              }}
+              disabled={loading}
+            >
+              {loading ? <RefreshCw className="animate-spin" size={16} /> : (lang === 'ar' ? 'تأكيد التعديل' : 'Confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
