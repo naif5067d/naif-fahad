@@ -239,7 +239,7 @@ export default function EmployeesPage() {
           <table className="hr-table" data-testid="employees-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>{lang === 'ar' ? 'الرقم' : 'ID'}</th>
                 <th>{lang === 'ar' ? 'الاسم' : 'Name'}</th>
                 <th className="hidden sm:table-cell">{lang === 'ar' ? 'القسم' : 'Department'}</th>
                 <th className="hidden md:table-cell">{lang === 'ar' ? 'المشرف' : 'Supervisor'}</th>
