@@ -31,6 +31,10 @@ export default function EmployeesPage() {
   const [selectedSupervisor, setSelectedSupervisor] = useState('');
   const [savingSupervisor, setSavingSupervisor] = useState(false);
   
+  // حالات تعيين موظفين متعددين للمشرف
+  const [bulkSupervisorDialog, setBulkSupervisorDialog] = useState(null);
+  const [selectedEmployeesForSupervisor, setSelectedEmployeesForSupervisor] = useState([]);
+  
   // حالات بيانات الدخول
   const [credentialsDialog, setCredentialsDialog] = useState(null);
   const [credentialsForm, setCredentialsForm] = useState({ username: '', password: '' });
