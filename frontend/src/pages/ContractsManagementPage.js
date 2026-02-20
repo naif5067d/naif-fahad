@@ -533,8 +533,24 @@ export default function ContractsManagementPage() {
   };
 
   const filteredContracts = contracts.filter(c => {
+    // فلتر الحالة
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    // فلتر الفئة
     if (categoryFilter !== 'all' && c.contract_category !== categoryFilter) return false;
+    // فلتر البحث
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const matchSerial = c.contract_serial?.toLowerCase().includes(q);
+      const matchName = c.employee_name?.toLowerCase().includes(q) || c.employee_name_ar?.toLowerCase().includes(q);
+      const matchCode = c.employee_code?.toLowerCase().includes(q);
+      const matchId = c.employee_id?.toLowerCase().includes(q);
+      // البحث برقم فقط (مثل 16)
+      const matchNumber = c.contract_serial?.includes(q) || c.employee_code?.includes(q);
+      
+      if (!matchSerial && !matchName && !matchCode && !matchId && !matchNumber) {
+        return false;
+      }
+    }
     return true;
   });
 
