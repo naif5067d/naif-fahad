@@ -166,8 +166,8 @@ async def get_team_daily(
                 final_status = 'PRESENT'
                 status_ar = 'حاضر (غير مؤكد)'
             else:
-                final_status = 'UNKNOWN'
-                status_ar = 'غير محدد'
+                final_status = 'NOT_REGISTERED'
+                status_ar = 'لم يُسجل'
         
         result.append({
             "employee_id": emp_id,
@@ -195,7 +195,7 @@ async def get_team_daily(
         })
     
     # ترتيب حسب الحالة (الغائبون أولاً)
-    status_order = {'ABSENT': 0, 'LATE': 1, 'UNKNOWN': 2, 'PRESENT': 3, 'ON_LEAVE': 4, 'WEEKEND': 5, 'HOLIDAY': 6}
+    status_order = {'ABSENT': 0, 'LATE': 1, 'NOT_REGISTERED': 2, 'UNKNOWN': 2, 'PRESENT': 3, 'ON_LEAVE': 4, 'WEEKEND': 5, 'HOLIDAY': 6}
     result.sort(key=lambda x: (status_order.get(x['final_status'], 99), x['employee_name_ar']))
     
     return result
