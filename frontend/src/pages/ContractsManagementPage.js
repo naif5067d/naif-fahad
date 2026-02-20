@@ -925,6 +925,46 @@ export default function ContractsManagementPage() {
                         />
                       </div>
                     </div>
+                    
+                    {/* الأرصدة المستهلكة - للتعديل الكامل */}
+                    <h4 className="font-medium text-sm text-amber-800 mt-4">الأرصدة المستهلكة (للتصحيح)</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-xs">سنوية مستهلكة</Label>
+                        <Input 
+                          type="number" 
+                          step="0.5"
+                          value={formData.leave_consumed?.annual || 0}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_consumed: { ...p.leave_consumed, annual: parseFloat(e.target.value) || 0 }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">مرضية مستهلكة</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.leave_consumed?.sick || 0}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            leave_consumed: { ...p.leave_consumed, sick: parseInt(e.target.value) || 0 }
+                          }))}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">ساعات استئذان مستهلكة</Label>
+                        <Input 
+                          type="number" 
+                          step="0.5"
+                          value={formData.permission_hours_consumed || 0}
+                          onChange={e => setFormData(p => ({ 
+                            ...p, 
+                            permission_hours_consumed: parseFloat(e.target.value) || 0
+                          }))}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
                 
