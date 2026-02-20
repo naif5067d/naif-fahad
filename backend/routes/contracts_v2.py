@@ -584,16 +584,17 @@ async def submit_to_stas(
 ):
     """
     Submit a draft contract to STAS for execution.
-    Changes status from draft to pending_stas.
+    Changes status from draft/draft_correction to pending_stas.
     """
     contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
     if not contract:
         raise HTTPException(status_code=404, detail="العقد غير موجود")
     
-    if contract["status"] != "draft":
+    # السماح بالإرسال من draft أو draft_correction
+    if contract["status"] not in ("draft", "draft_correction"):
         raise HTTPException(
             status_code=400, 
-            detail=f"يمكن إرسال العقود بحالة draft فقط. الحالة الحالية: {contract['status']}"
+            detail=f"يمكن إرسال العقود بحالة draft أو draft_correction فقط. الحالة الحالية: {contract['status']}"
         )
     
     now = datetime.now(timezone.utc).isoformat()
