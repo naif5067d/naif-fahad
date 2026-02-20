@@ -311,6 +311,7 @@ const DetailRow = ({ label, value }) => (
 // ==================== MAIN DASHBOARD ====================
 export default function ExecutiveDashboard() {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [alerts, setAlerts] = useState([]);
