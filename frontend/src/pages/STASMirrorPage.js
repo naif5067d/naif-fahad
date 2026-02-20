@@ -5,12 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText, DollarSign, Clock, User, ChevronDown, ChevronUp, RefreshCw, Smartphone, Tablet, Monitor, Laptop } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText, DollarSign, Clock, User, ChevronDown, ChevronUp, RefreshCw, Smartphone, Tablet, Monitor, Laptop, Download, X, Maximize2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+
+// Theme colors for STAS Mirror
+const THEME = {
+  primary: '#6366f1',
+  primaryLight: '#818cf8',
+  primaryDark: '#4f46e5',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  info: '#3b82f6',
+  dark: '#0f172a',
+  darkSecondary: '#1e293b',
+  muted: '#64748b',
+};
 
 export default function STASMirrorPage() {
   const { t, lang } = useLanguage();
