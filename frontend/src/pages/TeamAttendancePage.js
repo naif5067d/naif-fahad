@@ -141,12 +141,22 @@ export default function TeamAttendancePage() {
     new_status: 'PRESENT',
     reason: '',
     check_in_time: '08:00',
-    check_out_time: '17:00'
+    check_out_time: '17:00',
+    supervisor_acknowledgment: false // إقرار المشرف
   });
+  
+  // Pending Corrections for Sultan
+  const [pendingCorrections, setPendingCorrections] = useState([]);
+  const [correctionDecision, setCorrectionDecision] = useState(null);
   
   // Trace Dialog
   const [traceDialog, setTraceDialog] = useState(null);
   const [traceData, setTraceData] = useState(null);
+  
+  // Check if user is supervisor
+  const isSupervisor = user?.role === 'supervisor';
+  const isSultan = ['sultan', 'naif'].includes(user?.role);
+  const isStas = user?.role === 'stas';
 
   // Filter employees - exclude non-employee roles
   const filteredEmployees = useMemo(() => {
