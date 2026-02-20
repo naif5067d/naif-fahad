@@ -1136,8 +1136,100 @@ export default function TeamAttendancePage() {
           </Card>
         </TabsContent>
 
+        {/* Corrections Review Tab - Sultan only */}
+        {isSultan && (
+          <TabsContent value="corrections-review">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Edit size={20} className="text-amber-500" />
+                  {lang === 'ar' ? 'طلبات تعديل الحضور من المشرفين' : 'Attendance Correction Requests from Supervisors'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingCorrections.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle size={40} className="mx-auto mb-3 text-emerald-500" />
+                    <p>{lang === 'ar' ? 'لا توجد طلبات تعديل معلقة' : 'No pending correction requests'}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingCorrections.map((req) => (
+                      <div key={req.id} className="p-4 border rounded-xl bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <User size={16} className="text-muted-foreground" />
+                              <span className="font-semibold">{req.employee_name_ar}</span>
+                              <Badge variant="outline">{req.date}</Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'الحالة الأصلية:' : 'Original:'}</span>
+                                <Badge className={STATUS_COLORS[req.original_status] + ' ms-2'}>
+                                  {STATUS_AR[req.original_status] || req.original_status}
+                                </Badge>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">{lang === 'ar' ? 'المطلوبة:' : 'Requested:'}</span>
+                                <Badge className={STATUS_COLORS[req.requested_status] + ' ms-2'}>
+                                  {STATUS_AR[req.requested_status] || req.requested_status}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm mb-2">
+                              <span className="text-muted-foreground">{lang === 'ar' ? 'السبب:' : 'Reason:'}</span>
+                              <span className="ms-2">{req.reason}</span>
+                            </p>
+                            
+                            <p className="text-xs text-muted-foreground">
+                              {lang === 'ar' ? 'المشرف:' : 'Supervisor:'} {req.supervisor_name_ar}
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-col gap-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              onClick={() => handleCorrectionDecision(req.id, 'approve')}
+                              disabled={loading}
+                            >
+                              <CheckCircle size={14} className="me-1" />
+                              {lang === 'ar' ? 'موافقة' : 'Approve'}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleCorrectionDecision(req.id, 'reject')}
+                              disabled={loading}
+                            >
+                              <XCircle size={14} className="me-1" />
+                              {lang === 'ar' ? 'رفض' : 'Reject'}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setCorrectionDecision(req)}
+                              disabled={loading}
+                            >
+                              <Edit size={14} className="me-1" />
+                              {lang === 'ar' ? 'تعديل' : 'Modify'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
         {/* Deductions Review Tab - Sultan/Naif only */}
-        {['sultan', 'naif'].includes(user?.role) && (
+        {isSultan && (
           <TabsContent value="deductions-review">
             <Card>
               <CardHeader>
