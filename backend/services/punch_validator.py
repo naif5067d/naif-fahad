@@ -689,6 +689,7 @@ async def validate_full_punch(
     # ============================================================
     # فحص 1: الإعفاء - المستخدمين المُعفَين يمكنهم التبصيم في أي وقت
     # ============================================================
+    # فحص بواسطة employee_id
     if employee_id in EXEMPT_EMPLOYEE_IDS:
         return {
             "valid": True,
@@ -704,6 +705,26 @@ async def validate_full_punch(
             "is_exempt": True,
             "is_sandbox": False
         }
+    
+    # فحص بواسطة الدور - جلب دور المستخدم من الموظف
+    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0, "user_id": 1})
+    if employee:
+        user = await db.users.find_one({"id": employee.get("user_id")}, {"_id": 0, "role": 1})
+        if user and user.get("role") in EXEMPT_ROLES:
+            return {
+                "valid": True,
+                "errors": [],
+                "warnings": [{
+                    "code": "info.exempt_employee",
+                    "message": "Admin user - exempt from attendance rules",
+                    "message_ar": "مستخدم إداري - مُعفى من قواعد الحضور"
+                }],
+                "work_location": None,
+                "gps_valid": True,
+                "distance_km": None,
+                "is_exempt": True,
+                "is_sandbox": False
+            }
     
     # ============================================================
     # فحص 2: وضع التجربة (Sandbox) - للموظفين الجدد قبل المباشرة
