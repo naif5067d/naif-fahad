@@ -66,7 +66,7 @@ export const translations = {
       selectLocation: "Select work location", insideLocation: "Inside Location",
       outsideLocation: "Outside Location", distance: "Distance",
       gpsStatus: "GPS Status", valid: "Valid", invalid: "Invalid",
-      date: "Date", time: "Time", adminView: "Team Attendance",
+      date: "Date", time: "Time", adminView: "Attendance & Penalties",
       daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly"
     },
     finance: {
@@ -233,7 +233,7 @@ export const translations = {
       selectLocation: "اختر موقع العمل", insideLocation: "داخل الموقع",
       outsideLocation: "خارج الموقع", distance: "المسافة",
       gpsStatus: "حالة GPS", valid: "صالح", invalid: "غير صالح",
-      date: "التاريخ", time: "الوقت", adminView: "حضور الفريق",
+      date: "التاريخ", time: "الوقت", adminView: "الحضور والعقوبات",
       daily: "يومي", weekly: "أسبوعي", monthly: "شهري", yearly: "سنوي"
     },
     finance: {
