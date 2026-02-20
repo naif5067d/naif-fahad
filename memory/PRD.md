@@ -2068,3 +2068,97 @@ GET  /api/team-attendance/corrections-history/{emp}
 ---
 
 Version: 39.2 (2026-02-20)
+
+---
+
+### Phase 39.3: منع خصم أكثر من 50% + تقييم الأداء السنوي ✅ (2026-02-20)
+
+#### 1. منع خصم أكثر من 50% من الراتب
+
+**نظام العمل السعودي:** لا يجوز خصم أكثر من 50% من راتب الموظف الشهري
+
+**المنطق:**
+```python
+MAX_DEDUCTION_PERCENTAGE = 0.5
+
+# حساب الحد
+max_monthly_deduction = salary * 0.5
+remaining_allowed = max_monthly_deduction - current_deductions
+
+# إذا تجاوز الخصم الحد
+if proposed_amount > remaining_allowed:
+    # يُضاف تحذير للمقترح ويُرسل إشعار critical لسلطان
+```
+
+**API جديد:**
+```
+GET /api/deductions/employee/{id}/deduction-limit?month=YYYY-MM&proposed_amount=X
+```
+
+**الاستجابة:**
+```json
+{
+  "salary": 11500,
+  "max_allowed_deduction": 5750,
+  "current_deductions": 0,
+  "remaining_allowed": 5750,
+  "can_deduct": true/false,
+  "warning": "..."
+}
+```
+
+---
+
+#### 2. نظام تقييم الأداء السنوي
+
+**الدرجات التلقائية (من البيانات):**
+- الحضور (attendance): من daily_status
+- المهام (tasks): من tasks collection
+- السلوك (behavior): من warnings + deductions
+
+**الدرجات اليدوية (من المشرف):**
+- المهارات (skills): 1-5
+- العمل الجماعي (teamwork): 1-5
+
+**مقياس التقييم:**
+| الدرجة | العربية | الإنجليزية |
+|--------|---------|------------|
+| 5 | ممتاز | Excellent |
+| 4 | جيد جداً | Very Good |
+| 3 | جيد | Good |
+| 2 | مقبول | Acceptable |
+| 1 | ضعيف | Poor |
+
+**APIs:**
+```
+POST /api/performance/generate/{employee_id}?year=YYYY
+     → إنشاء تقييم
+
+PUT  /api/performance/{id}/manual-scores
+     → تحديث الدرجات اليدوية (المشرف)
+
+PUT  /api/performance/{id}/approve
+     → اعتماد التقييم (سلطان فقط)
+
+GET  /api/performance/list?year=YYYY&status=draft
+     → جلب التقييمات
+
+POST /api/performance/generate-all?year=YYYY
+     → إنشاء تقييمات لجميع الموظفين (STAS فقط)
+```
+
+**سير العمل:**
+```
+1. STAS يُنشئ التقييمات (generate-all أو فردي)
+2. المشرف يُضيف الدرجات اليدوية (skills, teamwork)
+3. سلطان يراجع ويعتمد (approve)
+4. يُحفظ في أرشيف STAS + إشعار للموظف
+```
+
+**الملفات:**
+- `/app/backend/routes/performance.py` - جميع الـ APIs
+- `/app/backend/services/deduction_service.py` - دالة check_deduction_limit
+
+---
+
+Version: 39.3 (2026-02-20)
