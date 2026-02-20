@@ -862,6 +862,114 @@ async def delete_contract(
 
 
 # ============================================================
+# PERMANENT DELETE TERMINATED CONTRACTS (STAS ONLY)
+# ============================================================
+
+@router.delete("/{contract_id}/permanent")
+async def permanent_delete_contract(
+    contract_id: str,
+    user=Depends(require_roles('stas'))
+):
+    """
+    حذف العقد نهائياً من قاعدة البيانات
+    
+    متاح فقط لـ STAS
+    يُستخدم للعقود الملغية (terminated) أو المغلقة (closed)
+    
+    يتم حفظ نسخة في deleted_contracts_log قبل الحذف
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    # يمكن حذف الملغية والمغلقة فقط
+    if contract["status"] not in ("terminated", "closed"):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"الحذف النهائي متاح فقط للعقود الملغية (terminated) أو المغلقة (closed). حالة العقد الحالية: {contract['status']}"
+        )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # حفظ نسخة في سجل المحذوفات
+    deleted_record = {
+        "id": str(uuid.uuid4()),
+        "original_id": contract_id,
+        "contract_serial": contract.get("contract_serial"),
+        "employee_id": contract.get("employee_id"),
+        "employee_name_ar": contract.get("employee_name_ar"),
+        "contract_data": contract,
+        "deleted_by": user["user_id"],
+        "deleted_by_name": user.get("full_name", "STAS"),
+        "deleted_at": now,
+        "reason": "حذف نهائي من قائمة العقود"
+    }
+    
+    await db.deleted_contracts_log.insert_one(deleted_record)
+    
+    # حذف العقد نهائياً
+    await db.contracts_v2.delete_one({"id": contract_id})
+    
+    return {
+        "message": "تم حذف العقد نهائياً",
+        "contract_serial": contract["contract_serial"],
+        "employee_name": contract.get("employee_name_ar"),
+        "deleted_at": now
+    }
+
+
+@router.delete("/bulk/terminated")
+async def bulk_delete_terminated_contracts(
+    user=Depends(require_roles('stas'))
+):
+    """
+    حذف جميع العقود الملغية والمغلقة نهائياً
+    
+    متاح فقط لـ STAS
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # جلب كل العقود الملغية والمغلقة
+    contracts = await db.contracts_v2.find(
+        {"status": {"$in": ["terminated", "closed"]}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    if not contracts:
+        return {"message": "لا توجد عقود ملغية للحذف", "count": 0}
+    
+    # حفظ نسخ في سجل المحذوفات
+    deleted_records = []
+    for contract in contracts:
+        deleted_records.append({
+            "id": str(uuid.uuid4()),
+            "original_id": contract["id"],
+            "contract_serial": contract.get("contract_serial"),
+            "employee_id": contract.get("employee_id"),
+            "employee_name_ar": contract.get("employee_name_ar"),
+            "contract_data": contract,
+            "deleted_by": user["user_id"],
+            "deleted_by_name": user.get("full_name", "STAS"),
+            "deleted_at": now,
+            "reason": "حذف جماعي للعقود الملغية"
+        })
+    
+    if deleted_records:
+        await db.deleted_contracts_log.insert_many(deleted_records)
+    
+    # حذف العقود نهائياً
+    result = await db.contracts_v2.delete_many(
+        {"status": {"$in": ["terminated", "closed"]}}
+    )
+    
+    return {
+        "message": f"تم حذف {result.deleted_count} عقد نهائياً",
+        "count": result.deleted_count,
+        "deleted_at": now
+    }
+
+
+# ============================================================
 # SANDBOX MODE MANAGEMENT - إدارة وضع التجربة
 # ============================================================
 
