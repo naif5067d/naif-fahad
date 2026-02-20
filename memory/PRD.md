@@ -2225,3 +2225,71 @@ PUT /api/employees/bulk-supervisor
 ---
 
 Version: 39.4 (2026-02-20)
+
+
+---
+
+### Phase 40: إخفاء العقوبات عن المشرفين + التحضير اليدوي + زر ملء الشاشة ✅ (2026-02-20)
+
+#### 1. إخفاء قسم العقوبات عن المشرفين (P0)
+- ✅ المشرف لا يرى تبويب "العقوبات" في صفحة الحضور والعقوبات
+- ✅ سلطان/نايف/محمد/STAS يرون تبويب العقوبات كما هو
+- **الملف:** `/app/frontend/src/pages/TeamAttendancePage.js` (سطر ~705)
+
+#### 2. ميزة التحضير اليدوي للمشرفين (P0)
+المشرف يستطيع تسجيل حضور/انصراف يدوي لموظفيه مع:
+- ⚠️ النظام الآلي (البصمة/GPS) له الأولوية دائماً
+- ⚠️ يحتاج إقرار المشرف بتحمل المسؤولية
+- ❌ لا يمكن إضافة تسجيل يدوي إذا وُجد تسجيل آلي
+
+**API الجديد:**
+```
+POST /api/team-attendance/manual-attendance
+     Body: {
+       employee_id: string,
+       check_type: "check_in" | "check_out",
+       time: "HH:MM",  // optional
+       reason: string,
+       supervisor_acknowledgment: true  // مطلوب
+     }
+     
+GET  /api/team-attendance/my-team-attendance
+     → جلب موظفي المشرف مع حالة كل موظف
+```
+
+**الملفات:**
+- `/app/backend/routes/team_attendance.py` - إضافة APIs
+- `/app/frontend/src/pages/TeamAttendancePage.js` - تبويب "تحضير يدوي"
+
+#### 3. زر ملء الشاشة (Fullscreen Toggle)
+- ✅ زر بجانب الجرس في Header
+- ✅ يعمل على جميع الأجهزة (جوال/تابلت/كمبيوتر)
+- ✅ أيقونة تتغير بين تكبير/تصغير
+- **الملف:** `/app/frontend/src/components/layout/AppLayout.js`
+
+#### 4. Testing Results:
+- Backend: 13/13 tests passed (100%)
+- Frontend: All features verified
+- Test file: `/app/test_reports/iteration_38.json`
+
+---
+
+## Backlog (المهام المستقبلية)
+
+### P1 - قريباً
+- [ ] دمج صفحتي "ماليتي" و "الحضور والعقوبات" في صفحة واحدة
+- [ ] واجهة التقييم السنوي للأداء (UI)
+- [ ] قالب رسمي لوثائق الجزاءات
+
+### P2 - لاحقاً
+- [ ] نظام القروض
+- [ ] إضافة موظف "مؤمن" مع عقده
+- [ ] إعادة تصميم صفحة مرآة STAS
+- [ ] زر "استدعاء موظف" في لوحة المدير التنفيذي
+
+### Known Issues
+- ⚠️ React hydration warnings in TeamAttendancePage (table elements) - cosmetic only
+
+---
+
+Version: 40.0 (2026-02-20)
