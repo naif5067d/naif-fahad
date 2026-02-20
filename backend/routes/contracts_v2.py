@@ -862,6 +862,200 @@ async def delete_contract(
 
 
 # ============================================================
+# SANDBOX MODE MANAGEMENT - إدارة وضع التجربة
+# ============================================================
+
+class SandboxModeRequest(BaseModel):
+    sandbox_mode: bool
+    work_start_date: Optional[str] = None  # YYYY-MM-DD
+    note: Optional[str] = None
+
+
+@router.post("/{contract_id}/sandbox-mode")
+async def set_sandbox_mode(
+    contract_id: str,
+    req: SandboxModeRequest,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    تفعيل أو إلغاء وضع التجربة (Sandbox) للعقد
+    
+    وضع التجربة:
+    - الموظف يمكنه دخول النظام والتعرف عليه
+    - يمكنه إصدار طلبات تجريبية
+    - لا يُحتسب له حضور أو غياب
+    - لا تصل طلباته للإدارة
+    
+    عند إلغاء وضع التجربة:
+    - يُحدد تاريخ المباشرة الفعلية
+    - يبدأ احتساب الحضور والغياب من هذا التاريخ
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    update_data = {
+        "sandbox_mode": req.sandbox_mode,
+        "updated_at": now
+    }
+    
+    if req.work_start_date:
+        update_data["work_start_date"] = req.work_start_date
+    
+    if not req.sandbox_mode and not req.work_start_date:
+        # إلغاء وضع التجربة بدون تحديد تاريخ = اليوم
+        update_data["work_start_date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {
+            "$set": update_data,
+            "$push": {
+                "status_history": {
+                    "from_status": contract["status"],
+                    "to_status": contract["status"],
+                    "actor_id": user["user_id"],
+                    "actor_name": user.get("full_name", ""),
+                    "timestamp": now,
+                    "note": f"{'تفعيل' if req.sandbox_mode else 'إلغاء'} وضع التجربة" + (f" - تاريخ المباشرة: {req.work_start_date}" if req.work_start_date else ""),
+                    "sandbox_mode": req.sandbox_mode,
+                    "work_start_date": update_data.get("work_start_date")
+                }
+            }
+        }
+    )
+    
+    updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    
+    action = "تفعيل" if req.sandbox_mode else "إلغاء"
+    return {
+        "message": f"تم {action} وضع التجربة بنجاح",
+        "sandbox_mode": req.sandbox_mode,
+        "work_start_date": update_data.get("work_start_date"),
+        "contract": updated
+    }
+
+
+@router.post("/{contract_id}/set-work-start-date")
+async def set_work_start_date(
+    contract_id: str,
+    work_start_date: str,
+    note: Optional[str] = None,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    تحديد تاريخ المباشرة الفعلية للموظف
+    
+    قبل هذا التاريخ:
+    - الموظف في وضع التجربة تلقائياً
+    - لا يُحتسب له حضور أو غياب
+    
+    بعد هذا التاريخ:
+    - يبدأ النظام الرسمي
+    - يُحتسب الحضور والغياب
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # التحقق من صحة التاريخ
+    try:
+        datetime.strptime(work_start_date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="تنسيق التاريخ غير صحيح. استخدم YYYY-MM-DD")
+    
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {
+            "$set": {
+                "work_start_date": work_start_date,
+                "sandbox_mode": False,  # إلغاء وضع التجربة تلقائياً
+                "updated_at": now
+            },
+            "$push": {
+                "status_history": {
+                    "from_status": contract["status"],
+                    "to_status": contract["status"],
+                    "actor_id": user["user_id"],
+                    "actor_name": user.get("full_name", ""),
+                    "timestamp": now,
+                    "note": f"تحديد تاريخ المباشرة: {work_start_date}" + (f" - {note}" if note else "")
+                }
+            }
+        }
+    )
+    
+    updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    
+    return {
+        "message": f"تم تحديد تاريخ المباشرة: {work_start_date}",
+        "work_start_date": work_start_date,
+        "contract": updated
+    }
+
+
+# ============================================================
+# REACTIVATE FROM DRAFT CORRECTION - إعادة تفعيل من مسودة التصحيح
+# ============================================================
+
+@router.post("/{contract_id}/reactivate")
+async def reactivate_contract(
+    contract_id: str,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    إعادة تفعيل عقد من حالة مسودة التصحيح (draft_correction)
+    
+    بدون الحاجة للمرور بـ pending_stas
+    للمرونة الكاملة في التعديل والتفعيل
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    if contract["status"] != "draft_correction":
+        raise HTTPException(
+            status_code=400,
+            detail=f"هذه العملية متاحة فقط للعقود بحالة draft_correction. الحالة الحالية: {contract['status']}"
+        )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {
+            "$set": {
+                "status": "active",
+                "reactivated_at": now,
+                "reactivated_by": user["user_id"],
+                "updated_at": now
+            },
+            "$push": {
+                "status_history": {
+                    "from_status": "draft_correction",
+                    "to_status": "active",
+                    "actor_id": user["user_id"],
+                    "actor_name": user.get("full_name", ""),
+                    "timestamp": now,
+                    "note": "إعادة تفعيل العقد بعد التصحيح"
+                }
+            }
+        }
+    )
+    
+    updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    
+    return {
+        "message": "تم إعادة تفعيل العقد بنجاح",
+        "contract": updated
+    }
+
+
+# ============================================================
 # PDF GENERATION
 # ============================================================
 
