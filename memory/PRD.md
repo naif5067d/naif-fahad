@@ -1941,3 +1941,64 @@ elif role == 'supervisor':
 
 Version: 39.0 (2026-02-20)
 
+
+---
+
+### Phase 39.1: Attendance & Penalties System Refactor ✅ (2026-02-20)
+
+**التغييرات المُنفذة:**
+
+#### 1. إعادة تسمية "حضور الفريق" إلى "الحضور والعقوبات":
+- ✅ تحديث `translations.js`:
+  - `teamAttendance`: "حضور الفريق" → "الحضور والعقوبات" / "Attendance & Penalties"
+  - `attendancePenalties`: "الحضور والعقوبات" / "Attendance & Penalties"
+  - `adminView`: "حضور الفريق" → "الحضور والعقوبات"
+- ✅ تحديث `AttendancePage.js` - عنوان القسم الإداري
+- ✅ تحديث `AppLayout.js` - إضافة `attendancePenalties` للمشرف
+
+#### 2. إصلاح عمود "الحالة":
+- ✅ تغيير `UNKNOWN` / "غير محدد" إلى `NOT_REGISTERED` / "لم يُسجل"
+- ✅ تحديث `team_attendance.py` - الـ backend
+- ✅ تحديث `TeamAttendancePage.js` - ألوان وترجمات الحالات
+
+#### 3. صلاحيات المشرف (Supervisor):
+- ✅ إضافة `supervisor` لجميع endpoints في `/api/team-attendance/`:
+  - `/summary`, `/daily`, `/weekly`, `/monthly`
+  - `/{employee_id}/update-status`, `/{employee_id}/trace/{date}`
+  - `/employee/{employee_id}`
+- ✅ فلترة الموظفين للمشرف:
+  - المشرف يرى فقط الموظفين المسؤولين عنهم (`supervisor_id` = employee_id)
+  - المدراء (sultan, naif, stas) يرون جميع الموظفين
+
+#### 4. تحديث القائمة الجانبية:
+- ✅ إضافة `attendancePenalties` في `NAV_ITEMS.supervisor`
+- ✅ المشرف الآن يرى: dashboard, transactions, leave, attendance, tasks, myFinances, **attendancePenalties**
+
+**الملفات المُحدّثة:**
+- `/app/frontend/src/lib/translations.js` - الترجمات
+- `/app/frontend/src/components/layout/AppLayout.js` - قائمة المشرف
+- `/app/frontend/src/pages/AttendancePage.js` - عنوان القسم
+- `/app/frontend/src/pages/TeamAttendancePage.js` - ألوان وترجمات الحالات
+- `/app/backend/routes/team_attendance.py` - صلاحيات + فلترة المشرف
+
+**التغييرات في Backend:**
+```python
+# فلترة الموظفين حسب المشرف
+if user.get('role') == 'supervisor':
+    emp_filter["supervisor_id"] = user.get('employee_id')
+```
+
+**الحالات الجديدة:**
+| الحالة | العربية | الإنجليزية |
+|--------|---------|------------|
+| NOT_REGISTERED | لم يُسجل | Not Registered |
+| PRESENT | حاضر | Present |
+| ABSENT | غائب | Absent |
+| LATE | متأخر | Late |
+| ON_LEAVE | إجازة | On Leave |
+| WEEKEND | عطلة نهاية أسبوع | Weekend |
+| HOLIDAY | عطلة رسمية | Holiday |
+
+---
+
+Version: 39.1 (2026-02-20)
