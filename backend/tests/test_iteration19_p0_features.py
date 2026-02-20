@@ -14,7 +14,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://exec-intel-2.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-management-hub-9.preview.emergentagent.com').rstrip('/')
 
 
 class TestP0FeaturesIteration19:
