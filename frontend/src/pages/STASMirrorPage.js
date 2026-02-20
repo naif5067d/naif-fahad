@@ -524,28 +524,75 @@ export default function STASMirrorPage() {
   };
 
   return (
-    <div className="space-y-6 pb-24 md:pb-6" data-testid="stas-mirror-page">
-      <div className="flex items-center gap-3">
-        <Shield size={24} className="text-primary" />
-        <h1 className="text-2xl font-bold tracking-tight">{t('stas.mirror')}</h1>
+    <div className="min-h-screen pb-24 md:pb-6" data-testid="stas-mirror-page">
+      {/* Hero Header */}
+      <div className="relative mb-8 rounded-2xl overflow-hidden" style={{ background: `linear-gradient(135deg, ${THEME.primaryDark} 0%, ${THEME.primary} 50%, ${THEME.primaryLight} 100%)` }}>
+        <div className="absolute inset-0 bg-grid-white/[0.05]" />
+        <div className="relative px-6 py-8 md:py-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+              <Shield size={28} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                {lang === 'ar' ? 'مرآة العمليات' : 'Operations Mirror'}
+              </h1>
+              <p className="text-white/70 text-sm mt-1">
+                {lang === 'ar' ? 'مركز التحكم في العمليات والمعاملات' : 'Operations & Transactions Control Center'}
+              </p>
+            </div>
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="flex items-center gap-2 text-white/70 text-xs mb-1">
+                <DollarSign size={14} />
+                {lang === 'ar' ? 'الخصومات المعلقة' : 'Pending Deductions'}
+              </div>
+              <p className="text-white text-xl font-bold">{pendingDeductions.length}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="flex items-center gap-2 text-white/70 text-xs mb-1">
+                <Smartphone size={14} />
+                {lang === 'ar' ? 'أجهزة جديدة' : 'New Devices'}
+              </div>
+              <p className="text-white text-xl font-bold">{pendingDevices.length}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="flex items-center gap-2 text-white/70 text-xs mb-1">
+                <Clock size={14} />
+                {lang === 'ar' ? 'معاملات معلقة' : 'Pending Transactions'}
+              </div>
+              <p className="text-white text-xl font-bold">{pending.length}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="flex items-center gap-2 text-white/70 text-xs mb-1">
+                <Calendar size={14} />
+                {lang === 'ar' ? 'العطل' : 'Holidays'}
+              </div>
+              <p className="text-white text-xl font-bold">{holidays.length}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="deductions" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="deductions" data-testid="tab-deductions" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-6 h-12 p-1 bg-slate-100 rounded-xl mb-6">
+          <TabsTrigger value="deductions" data-testid="tab-deductions" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <DollarSign size={16} />
-            {lang === 'ar' ? 'الخصومات' : 'Deductions'}
+            <span className="hidden sm:inline">{lang === 'ar' ? 'الخصومات' : 'Deductions'}</span>
             {(pendingDeductions.length + approvedDeductions.length) > 0 && (
-              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+              <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {pendingDeductions.length + approvedDeductions.length}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="devices" data-testid="tab-devices" className="flex items-center gap-2">
-            <Settings size={16} />
-            {lang === 'ar' ? 'الأجهزة' : 'Devices'}
+          <TabsTrigger value="devices" data-testid="tab-devices" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Smartphone size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'الأجهزة' : 'Devices'}</span>
             {pendingDevices.length > 0 && (
-              <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+              <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {pendingDevices.length}
               </span>
             )}
