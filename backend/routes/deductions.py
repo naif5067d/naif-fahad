@@ -464,8 +464,15 @@ async def delete_deduction_bonus(
 # HELPER: ADD TO FINANCE LEDGER
 # ============================================================
 
-async def add_to_finance_ledger(item: dict, executor: dict):
-    """Add executed deduction/bonus to finance_ledger"""
+async def add_to_finance_ledger(item: dict, executor: dict, deferred: bool = False):
+    """
+    Add executed deduction/bonus to finance_ledger
+    
+    Args:
+        item: Deduction/bonus item
+        executor: User who executed the action
+        deferred: True if deferred to settlement, False if deducted from salary
+    """
     now = datetime.now(timezone.utc).isoformat()
     
     ledger_entry = {
@@ -478,10 +485,14 @@ async def add_to_finance_ledger(item: dict, executor: dict):
         "description_en": f"{'Deduction' if item['type'] == 'deduction' else 'Bonus'}: {item['reason']}",
         "reference_id": item["id"],
         "month": item["month"],
-        "settled": False,  # سيتم تسويتها في المخالصة
+        # إذا تم خصمها من الراتب = مسوّية، إذا مؤجلة = غير مسوّية (تدخل المخالصة)
+        "settled": not deferred,  
+        "deferred_to_settlement": deferred,
+        "deducted_from_salary": not deferred,
         "date": now,
         "created_at": now,
-        "created_by": executor["user_id"]
+        "created_by": executor["user_id"],
+        "approved_by_mohammed": True  # تم اعتماده من محمد
     }
     
     await db.finance_ledger.insert_one(ledger_entry)
