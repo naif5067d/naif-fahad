@@ -103,11 +103,24 @@ async def list_deductions(
 
 
 @router.get("/pending")
-async def get_pending_deductions(user=Depends(require_roles('stas'))):
-    """Get deductions/bonuses pending STAS execution"""
+async def get_pending_deductions(user=Depends(require_roles('stas', 'mohammed'))):
+    """Get deductions/bonuses pending approval"""
     items = await db.deductions_bonuses.find(
-        {"status": "pending_stas"}, {"_id": 0}
+        {"status": {"$in": ["pending_mohammed", "approved_for_salary", "deferred_to_settlement"]}}, 
+        {"_id": 0}
     ).sort("created_at", -1).to_list(500)
+    return items
+
+
+@router.get("/pending-mohammed")
+async def get_pending_for_mohammed(
+    user=Depends(require_roles('mohammed', 'stas'))
+):
+    """جلب العقوبات المعلقة بانتظار قرار محمد"""
+    items = await db.deductions_bonuses.find(
+        {"status": "pending_mohammed"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
     return items
 
 
