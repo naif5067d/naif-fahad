@@ -472,11 +472,11 @@ export default function SettlementPage() {
         {/* Entitlements & Deductions */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <div className="bg-emerald-600 text-white text-xs p-1 text-center">Entitlements / الاستحقاقات</div>
+            <div className="bg-emerald-600 text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستحقاقات' : 'Entitlements'}</div>
             <table className="w-full text-xs border">
               <tbody>
                 <tr className="border-b">
-                  <td className="p-1">End of Service</td>
+                  <td className="p-1">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'End of Service'}</td>
                   <td className="p-1 text-right">{snapshot.eos?.final_amount?.toLocaleString()}</td>
                 </tr>
                 <tr className="border-b">
