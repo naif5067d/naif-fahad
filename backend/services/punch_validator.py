@@ -363,6 +363,10 @@ async def validate_full_punch(
     """
     التحقق الكامل من التبصيم
     
+    ملاحظة مهمة للخروج (checkout):
+    - إذا سجل الموظف دخوله بـ GPS صالح، يُسمح له بالخروج حتى بدون GPS
+    - هذا لتجنب حالة "عالق" حيث لا يستطيع الموظف الخروج بسبب مشكلة GPS
+    
     Returns:
         {
             "valid": bool,
@@ -395,9 +399,32 @@ async def validate_full_punch(
             "is_exempt": True
         }
     
+    # === للخروج: التحقق إذا كان الدخول تم بـ GPS صالح ===
+    # إذا نعم، نسمح بالخروج حتى بدون GPS لتجنب "عالق"
+    checkout_bypass_gps = False
+    if punch_type == 'checkout' and not bypass_gps:
+        today = (current_time or datetime.now(timezone.utc)).strftime("%Y-%m-%d")
+        checkin_record = await db.attendance_ledger.find_one({
+            "employee_id": employee_id,
+            "date": today,
+            "type": "check_in"
+        }, {"_id": 0, "gps_valid": 1, "work_location": 1, "work_location_id": 1})
+        
+        if checkin_record:
+            # إذا سجل الدخول بـ GPS صالح أو من موقع عمل معروف
+            if checkin_record.get('gps_valid') or checkin_record.get('work_location_id'):
+                checkout_bypass_gps = True
+                # استخدام موقع العمل من بصمة الدخول
+                if checkin_record.get('work_location_id'):
+                    work_location = await db.work_locations.find_one(
+                        {"id": checkin_record['work_location_id']},
+                        {"_id": 0}
+                    )
+    
     # 1. التحقق من الوقت
     time_result = await validate_punch_time(employee_id, punch_type, current_time)
-    work_location = time_result.get('work_location')
+    if not work_location:
+        work_location = time_result.get('work_location')
     
     if not time_result['valid']:
         errors.append(time_result['error'])
@@ -405,7 +432,9 @@ async def validate_full_punch(
         warnings.append(time_result['warning'])
     
     # 2. التحقق من الموقع (GPS) - إذا لم يكن تجاوز
-    if not bypass_gps:
+    should_bypass_gps = bypass_gps or checkout_bypass_gps
+    
+    if not should_bypass_gps:
         location_result = await validate_punch_location(
             employee_id, latitude, longitude, gps_available
         )
@@ -423,6 +452,12 @@ async def validate_full_punch(
             work_location = location_result['work_location']
     else:
         gps_valid = True  # تم تجاوز GPS
+        if checkout_bypass_gps and not gps_available:
+            warnings.append({
+                "code": "info.checkout_gps_bypassed",
+                "message": "GPS check bypassed for checkout (check-in was GPS validated)",
+                "message_ar": "تم تجاوز فحص GPS للخروج (الدخول كان مُصدّقاً)"
+            })
     
     return {
         "valid": len(errors) == 0,
