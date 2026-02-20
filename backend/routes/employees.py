@@ -547,7 +547,7 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
             "code": "LOAN",
             "settled": {"$ne": True}
         }, {"_id": 0}).to_list(100)
-        total_loans = sum(l.get('amount', 0) for l in loans)
+        total_loans = sum(loan.get('amount', 0) for loan in loans)
         
         # العهد النشطة
         custody = await db.custody_ledger.find({
