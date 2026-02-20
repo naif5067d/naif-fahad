@@ -237,16 +237,17 @@ class TestEmployeeSummaryAccess:
 class TestAttendancePageAccess:
     """Tests for attendance page API endpoints"""
     
-    def test_attendance_endpoint_accessible(self, auth_token):
-        """Verify attendance endpoint is accessible"""
-        # Test attendance ledger endpoint
+    def test_attendance_today_endpoint_accessible(self, auth_token):
+        """Verify attendance/today endpoint is accessible"""
         response = requests.get(
-            f"{BASE_URL}/api/attendance",
+            f"{BASE_URL}/api/attendance/today",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
-        # Should return 200 or valid status
-        assert response.status_code in [200, 401, 403], f"Got unexpected status {response.status_code}"
-        print(f"✓ Attendance endpoint returned status {response.status_code}")
+        assert response.status_code == 200, f"Got unexpected status {response.status_code}"
+        data = response.json()
+        # Should have check_in and check_out fields
+        assert "check_in" in data or "check_out" in data
+        print(f"✓ Attendance today endpoint accessible: {data}")
 
 
 class TestHealthEndpoint:
