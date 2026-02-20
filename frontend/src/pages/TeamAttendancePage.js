@@ -178,10 +178,21 @@ export default function TeamAttendancePage() {
 
   // Fetch pending deductions for review (Sultan/Naif only)
   useEffect(() => {
-    if (['sultan', 'naif'].includes(user?.role)) {
+    if (isSultan) {
       fetchPendingDeductions();
+      fetchPendingCorrections();
     }
   }, [user?.role]);
+
+  // Fetch pending corrections (Sultan only)
+  const fetchPendingCorrections = async () => {
+    try {
+      const res = await api.get('/api/team-attendance/pending-corrections');
+      setPendingCorrections(res.data || []);
+    } catch (err) {
+      console.error('Error fetching pending corrections:', err);
+    }
+  };
 
   const fetchPendingDeductions = async () => {
     try {
