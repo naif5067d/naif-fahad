@@ -677,7 +677,7 @@ export default function DashboardPage() {
       {/* App Version */}
       {appVersion && (
         <div className="text-center text-xs text-muted-foreground pt-4 border-t">
-          DAR AL CODE HR OS v{appVersion}
+          {lang === 'ar' ? 'دار الكود - نظام الموارد البشرية' : 'DAR AL CODE HR OS'} v{appVersion}
         </div>
       )}
     </div>
