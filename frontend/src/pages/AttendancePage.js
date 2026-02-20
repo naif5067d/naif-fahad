@@ -476,14 +476,24 @@ export default function AttendancePage() {
   // الحصول على تسمية الحالة
   const getStatusLabel = (status) => {
     const labels = {
-      executed: 'منفذة',
-      rejected: 'مرفوضة',
-      cancelled: 'ملغاة',
-      pending_supervisor: 'بانتظار المشرف',
-      pending_ops: 'بانتظار العمليات',
-      stas: 'بانتظار STAS',
+      ar: {
+        executed: 'منفذة',
+        rejected: 'مرفوضة',
+        cancelled: 'ملغاة',
+        pending_supervisor: 'بانتظار المشرف',
+        pending_ops: 'بانتظار العمليات',
+        stas: 'بانتظار STAS',
+      },
+      en: {
+        executed: 'Executed',
+        rejected: 'Rejected',
+        cancelled: 'Cancelled',
+        pending_supervisor: 'Pending Supervisor',
+        pending_ops: 'Pending Operations',
+        stas: 'Pending STAS',
+      }
     };
-    return labels[status] || status;
+    return labels[lang]?.[status] || status;
   };
 
   // الحصول على لون الحالة
