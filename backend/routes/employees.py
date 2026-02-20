@@ -424,8 +424,60 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     total_deficit_minutes = total_late_minutes_month + total_early_leave_minutes
     deficit_hours = round(total_deficit_minutes / 60, 2)
     
-    # الساعات المطلوبة شهرياً (افتراضي 176 ساعة = 22 يوم × 8 ساعات)
-    required_monthly_hours = 176
+    # === حساب الساعات المطلوبة شهرياً بشكل ديناميكي ===
+    # احتساب أيام العمل الفعلية (بدون الجمعة والسبت والعطل الرسمية)
+    from calendar import monthrange
+    now = datetime.now(timezone.utc)
+    _, days_in_month = monthrange(now.year, now.month)
+    
+    # جلب موقع العمل للحصول على ساعات الدوام
+    work_location = None
+    if emp.get('work_location_id'):
+        work_location = await db.work_locations.find_one(
+            {"id": emp['work_location_id'], "is_active": True},
+            {"_id": 0, "daily_hours": 1, "work_days": 1}
+        )
+    if not work_location:
+        work_location = await db.work_locations.find_one(
+            {"assigned_employees": employee_id, "is_active": True},
+            {"_id": 0, "daily_hours": 1, "work_days": 1}
+        )
+    
+    daily_hours = work_location.get('daily_hours', 8) if work_location else 8
+    work_days_config = work_location.get('work_days', {}) if work_location else {}
+    
+    # جلب العطل الرسمية لهذا الشهر
+    month_holidays = await db.holidays.find({
+        "date": {"$regex": f"^{current_month}"},
+        "is_active": {"$ne": False}
+    }, {"_id": 0, "date": 1}).to_list(50)
+    holiday_dates = {h['date'] for h in month_holidays}
+    
+    # حساب أيام العمل الفعلية
+    work_days_count = 0
+    for day in range(1, days_in_month + 1):
+        date_str = f"{current_month}-{day:02d}"
+        date_obj = datetime(now.year, now.month, day)
+        day_of_week = date_obj.weekday()  # 0=Monday, 4=Friday, 5=Saturday
+        
+        # تخطي العطل الرسمية
+        if date_str in holiday_dates:
+            continue
+        
+        # فحص إذا كان يوم عمل (من إعدادات الموقع أو الافتراضي)
+        day_names = {0: "monday", 1: "tuesday", 2: "wednesday", 3: "thursday", 4: "friday", 5: "saturday", 6: "sunday"}
+        day_name = day_names[day_of_week]
+        
+        if work_days_config:
+            is_work_day = work_days_config.get(day_name, True)
+        else:
+            # الافتراضي: الجمعة والسبت عطلة
+            is_work_day = day_of_week not in [4, 5]
+        
+        if is_work_day:
+            work_days_count += 1
+    
+    required_monthly_hours = work_days_count * daily_hours
     
     employee_summary = {
         "employee": emp,
