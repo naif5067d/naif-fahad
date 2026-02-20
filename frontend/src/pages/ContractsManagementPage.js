@@ -107,6 +107,10 @@ export default function ContractsManagementPage() {
     department_ar: '',
     start_date: '',
     end_date: '',
+    // تاريخ المباشرة الفعلية - متى يبدأ احتساب الحضور
+    work_start_date: '',
+    // وضع التجربة - الموظف يدخل النظام لكن لا يُحتسب حضور
+    sandbox_mode: false,
     probation_months: 3,
     notice_period_days: 30,
     basic_salary: 0,
@@ -114,14 +118,18 @@ export default function ContractsManagementPage() {
     transport_allowance: 0,
     other_allowances: 0,
     wage_definition: 'basic_only',
-    // الإجازة السنوية: 21 أو 30 يوم فقط
+    // الإجازة السنوية: 21 أو 30 يوم (تُحسب تلقائياً من سنوات الخدمة)
     annual_leave_days: 21,
     annual_policy_days: 21,  // السياسة الرسمية - 21 أو 30
-    // رصيد الاستئذان الشهري (3 ساعات كحد أقصى، 2 تلقائي + 1 مرن)
+    // رصيد الاستئذان الشهري (3 ساعات كحد أقصى)
     monthly_permission_hours: 2,
     // خيار عقد مُهاجر للموظفين القدامى
     is_migrated: false,
-    leave_opening_balance: { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
+    leave_opening_balance: { annual: 0, sick: 0, emergency: 0 },
+    leave_consumed: { annual: 0, sick: 0, emergency: 0 },
+    // رصيد الساعات (الاستئذان)
+    permission_hours_balance: 24,  // 2 ساعة × 12 شهر
+    permission_hours_consumed: 0,
     notes: '',
     // معلومات البنك
     bank_name: '',
