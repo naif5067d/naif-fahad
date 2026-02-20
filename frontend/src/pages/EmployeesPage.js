@@ -280,6 +280,7 @@ export default function EmployeesPage() {
                 <th>{lang === 'ar' ? 'الرقم' : 'ID'}</th>
                 <th>{lang === 'ar' ? 'الاسم' : 'Name'}</th>
                 <th className="hidden sm:table-cell">{lang === 'ar' ? 'القسم' : 'Department'}</th>
+                <th className="hidden md:table-cell">{lang === 'ar' ? 'سنوات الخدمة' : 'Service Years'}</th>
                 <th className="hidden md:table-cell">{lang === 'ar' ? 'المشرف' : 'Supervisor'}</th>
                 <th>{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                 {isOps && <th>{lang === 'ar' ? 'الإجراءات' : 'Actions'}</th>}
@@ -290,6 +291,18 @@ export default function EmployeesPage() {
                 const expiryStatus = getExpiryStatus(e.id);
                 const isExpiring = expiryStatus && expiryStatus.days_remaining <= 90;
                 const isCritical = expiryStatus && expiryStatus.days_remaining <= 30;
+                
+                // حساب سنوات الخدمة
+                const calcServiceYears = () => {
+                  const startDate = e.hire_date || e.start_date || e.created_at;
+                  if (!startDate) return null;
+                  const start = new Date(startDate);
+                  const today = new Date();
+                  if (start > today) return null;
+                  const years = (today - start) / (365.25 * 24 * 60 * 60 * 1000);
+                  return Math.round(years * 10) / 10;
+                };
+                const serviceYears = calcServiceYears();
                 
                 return (
                 <tr 
