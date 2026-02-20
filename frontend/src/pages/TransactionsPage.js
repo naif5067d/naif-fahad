@@ -11,43 +11,43 @@ import { formatSaudiDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-// تكوين الحالات بالعربية - ألوان حسب نوع القرار
+// تكوين الحالات - ألوان حسب نوع القرار
 // أخضر = منفذ/موافق | أصفر = معلق | أحمر = مرفوض/ملغي
 const STATUS_CONFIG = {
   // منفذة - أخضر
-  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20', label: 'منفذة ✓', color: 'green' },
+  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20', label_ar: 'منفذة ✓', label_en: 'Executed ✓', color: 'green' },
   
   // مرفوضة/ملغاة - أحمر
-  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'مرفوضة ✗', color: 'red' },
-  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label: 'ملغاة ✗', color: 'red' },
+  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label_ar: 'مرفوضة ✗', label_en: 'Rejected ✗', color: 'red' },
+  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label_ar: 'ملغاة ✗', label_en: 'Cancelled ✗', color: 'red' },
   
   // معادة - أزرق
-  returned: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', label: 'معادة ⟲', color: 'blue' },
+  returned: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', label_ar: 'معادة ⟲', label_en: 'Returned ⟲', color: 'blue' },
   
   // معلقة - أصفر/برتقالي
-  pending_supervisor: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار المشرف ⏳', color: 'yellow' },
-  pending_ops: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار العمليات ⏳', color: 'yellow' },
-  pending_finance: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار المالية ⏳', color: 'yellow' },
-  pending_ceo: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار CEO ⏳', color: 'yellow' },
-  stas: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار التنفيذ ⏳', color: 'yellow' },
-  pending_employee_accept: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label: 'بانتظار قبول الموظف ⏳', color: 'yellow' },
+  pending_supervisor: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار المشرف ⏳', label_en: 'Pending Supervisor ⏳', color: 'yellow' },
+  pending_ops: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار العمليات ⏳', label_en: 'Pending Operations ⏳', color: 'yellow' },
+  pending_finance: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار المالية ⏳', label_en: 'Pending Finance ⏳', color: 'yellow' },
+  pending_ceo: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار CEO ⏳', label_en: 'Pending CEO ⏳', color: 'yellow' },
+  stas: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار التنفيذ ⏳', label_en: 'Pending Execution ⏳', color: 'yellow' },
+  pending_employee_accept: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار قبول الموظف ⏳', label_en: 'Pending Employee Accept ⏳', color: 'yellow' },
 };
 
-// تكوين أنواع المعاملات بالعربية
+// تكوين أنواع المعاملات
 const TYPE_CONFIG = {
-  leave_request: { icon: '📅', label: 'طلب إجازة' },
-  finance_60: { icon: '💰', label: 'عهدة مالية' },
-  settlement: { icon: '📊', label: 'مخالصة' },
-  contract: { icon: '📋', label: 'عقد' },
-  tangible_custody: { icon: '📦', label: 'عهدة ملموسة' },
-  tangible_custody_return: { icon: '📦', label: 'إرجاع عهدة' },
-  salary_advance: { icon: '💵', label: 'سلفة راتب' },
-  letter_request: { icon: '✉️', label: 'طلب خطاب' },
+  leave_request: { icon: '📅', label_ar: 'طلب إجازة', label_en: 'Leave Request' },
+  finance_60: { icon: '💰', label_ar: 'عهدة مالية', label_en: 'Financial Custody' },
+  settlement: { icon: '📊', label_ar: 'مخالصة', label_en: 'Settlement' },
+  contract: { icon: '📋', label_ar: 'عقد', label_en: 'Contract' },
+  tangible_custody: { icon: '📦', label_ar: 'عهدة ملموسة', label_en: 'Tangible Custody' },
+  tangible_custody_return: { icon: '📦', label_ar: 'إرجاع عهدة', label_en: 'Custody Return' },
+  salary_advance: { icon: '💵', label_ar: 'سلفة راتب', label_en: 'Salary Advance' },
+  letter_request: { icon: '✉️', label_ar: 'طلب خطاب', label_en: 'Letter Request' },
   // أنواع طلبات الحضور
-  forget_checkin: { icon: '⏰', label: 'نسيان بصمة' },
-  field_work: { icon: '🚗', label: 'مهمة خارجية' },
-  early_leave_request: { icon: '🚪', label: 'طلب خروج مبكر' },
-  late_excuse: { icon: '⏱️', label: 'تبرير تأخير' },
+  forget_checkin: { icon: '⏰', label_ar: 'نسيان بصمة', label_en: 'Forgot Punch' },
+  field_work: { icon: '🚗', label_ar: 'مهمة خارجية', label_en: 'Field Work' },
+  early_leave_request: { icon: '🚪', label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request' },
+  late_excuse: { icon: '⏱️', label_ar: 'تبرير تأخير', label_en: 'Late Excuse' },
   add_finance_code: { icon: '🔢', label: 'إضافة رمز مالي' },
   warning: { icon: '⚠️', label: 'إنذار' },
 };
