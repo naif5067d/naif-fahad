@@ -129,6 +129,8 @@ async def create_deduction_proposal(
         "calculation_formula": calculation_formula,
         "calculation_details": calculation_details,
         "status": ProposalStatus.PENDING.value,
+        "limit_exceeded": limit_exceeded,  # تجاوز حد الـ 50%
+        "limit_warning": limit_warning if limit_exceeded else None,
         "created_at": now,
         "created_by": "system",
         "status_history": [{
@@ -136,7 +138,7 @@ async def create_deduction_proposal(
             "to_status": ProposalStatus.PENDING.value,
             "actor": "system",
             "timestamp": now,
-            "note": "تم إنشاء المقترح تلقائياً"
+            "note": "تم إنشاء المقترح تلقائياً" + (" - ⚠️ يتجاوز حد الخصم" if limit_exceeded else "")
         }]
     }
     
@@ -153,14 +155,17 @@ async def create_deduction_proposal(
         emp_name = emp.get('full_name_ar', employee_id) if emp else employee_id
         
         # إشعار لسلطان
+        priority = NotificationPriority.CRITICAL if limit_exceeded else NotificationPriority.HIGH
+        title_ar = "⚠️ مقترح خصم يتجاوز الحد" if limit_exceeded else "مقترح خصم جديد"
+        
         await create_notification(
             recipient_id="",  # يُملأ لاحقاً
             notification_type=NotificationType.ALERT,
-            title="New Deduction Proposal",
-            title_ar="مقترح خصم جديد",
+            title="New Deduction Proposal" + (" - LIMIT EXCEEDED" if limit_exceeded else ""),
+            title_ar=title_ar,
             message=f"Deduction proposal for {emp_name}: {amount} SAR",
-            message_ar=f"مقترح خصم لـ {emp_name}: {amount} ر.س - {reason_ar}",
-            priority=NotificationPriority.HIGH,
+            message_ar=f"مقترح خصم لـ {emp_name}: {amount} ر.س - {reason_ar}" + (f"\n{limit_warning}" if limit_exceeded else ""),
+            priority=priority,
             recipient_role="sultan",
             reference_type="deduction_proposal",
             reference_id=proposal['id'],
