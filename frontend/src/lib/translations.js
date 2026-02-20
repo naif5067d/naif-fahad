@@ -2,6 +2,7 @@ export const translations = {
   en: {
     app: { name: "DAR AL CODE HR OS", company: "Dar Al Code Engineering Consultancy" },
     nav: {
+      executive: "Executive Dashboard",
       dashboard: "My Board", transactions: "Transactions", leave: "Leave",
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
       contractsManagement: "Contracts (V2)", settlement: "Settlement", employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
