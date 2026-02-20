@@ -80,30 +80,89 @@ export default function AppLayout({ children }) {
   const alertsRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Fullscreen handler
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
+  // Check if fullscreen is supported
+  const isFullscreenSupported = () => {
+    const doc = document.documentElement;
+    return !!(
+      doc.requestFullscreen ||
+      doc.webkitRequestFullscreen ||
+      doc.mozRequestFullScreen ||
+      doc.msRequestFullscreen
+    );
+  };
+
+  // Fullscreen handler with mobile support
+  const toggleFullscreen = async () => {
+    try {
+      const doc = document.documentElement;
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+
+      if (!isCurrentlyFullscreen) {
+        // Enter fullscreen
+        if (doc.requestFullscreen) {
+          await doc.requestFullscreen();
+        } else if (doc.webkitRequestFullscreen) {
+          // Safari/iOS
+          await doc.webkitRequestFullscreen();
+        } else if (doc.mozRequestFullScreen) {
+          // Firefox
+          await doc.mozRequestFullScreen();
+        } else if (doc.msRequestFullscreen) {
+          // IE/Edge
+          await doc.msRequestFullscreen();
+        }
         setIsFullscreen(true);
-      }).catch(err => {
-        console.error('Fullscreen error:', err);
-      });
-    } else {
-      document.exitFullscreen().then(() => {
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
         setIsFullscreen(false);
-      }).catch(err => {
-        console.error('Exit fullscreen error:', err);
-      });
+      }
+    } catch (err) {
+      // Fullscreen not supported on this device/browser
+      console.warn('Fullscreen not supported:', err.message);
+      // Show a toast or alert for mobile users
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        alert(lang === 'ar' ? 'وضع ملء الشاشة غير مدعوم على هذا الجهاز' : 'Fullscreen not supported on this device');
+      }
     }
   };
 
-  // Listen for fullscreen changes
+  // Listen for fullscreen changes (with prefixes)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const isFS = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsFullscreen(isFS);
     };
+    
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
   }, []);
 
   const role = user?.role || 'employee';
