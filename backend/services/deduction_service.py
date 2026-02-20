@@ -5,12 +5,80 @@ Deduction Service - خدمة مقترحات الخصم
 السير: النظام يقترح → سلطان يراجع → STAS ينفذ → finance_ledger
 
 لا يكتب في finance_ledger إلا STAS فقط.
+
+قيود الخصم (نظام العمل السعودي):
+- لا يجوز خصم أكثر من 50% من راتب الموظف الشهري
 """
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from database import db
 from models.deduction_proposals import DeductionType, ProposalStatus, DEDUCTION_TYPE_AR
+
+
+# الحد الأقصى للخصم من الراتب (50%)
+MAX_DEDUCTION_PERCENTAGE = 0.5
+
+
+async def get_employee_salary(employee_id: str) -> float:
+    """جلب الراتب الشهري للموظف"""
+    contract = await db.contracts_v2.find_one({
+        "employee_id": employee_id,
+        "status": "active"
+    }, {"_id": 0})
+    
+    if not contract:
+        contract = await db.contracts.find_one({
+            "employee_id": employee_id,
+            "$or": [{"status": "active"}, {"is_active": True}]
+        }, {"_id": 0})
+    
+    if not contract:
+        return 0
+    
+    total_salary = (contract.get('salary', 0) or contract.get('basic_salary', 0)) + \
+                  contract.get('housing_allowance', 0) + \
+                  contract.get('transport_allowance', 0)
+    return total_salary
+
+
+async def get_month_deductions(employee_id: str, month: str) -> float:
+    """جلب إجمالي الخصومات المُنفذة للشهر"""
+    deductions = await db.finance_ledger.find({
+        "employee_id": employee_id,
+        "type": "debit",
+        "month": month
+    }, {"_id": 0, "amount": 1}).to_list(100)
+    
+    return sum(d.get('amount', 0) for d in deductions)
+
+
+async def check_deduction_limit(employee_id: str, month: str, proposed_amount: float) -> Tuple[bool, float, str]:
+    """
+    التحقق من حد الـ 50% قبل إنشاء خصم
+    
+    Returns:
+        (can_deduct, max_allowed, message_ar)
+    """
+    salary = await get_employee_salary(employee_id)
+    if salary <= 0:
+        return True, 0, ""  # لا يوجد راتب، نسمح بالخصم
+    
+    max_monthly_deduction = salary * MAX_DEDUCTION_PERCENTAGE
+    current_deductions = await get_month_deductions(employee_id, month)
+    remaining_allowed = max_monthly_deduction - current_deductions
+    
+    if proposed_amount > remaining_allowed:
+        emp = await db.employees.find_one({"id": employee_id}, {"_id": 0, "full_name_ar": 1})
+        emp_name = emp.get('full_name_ar', employee_id) if emp else employee_id
+        
+        message_ar = f"⚠️ تنبيه: الخصم المقترح ({proposed_amount:.2f} ر.س) للموظف {emp_name} يتجاوز الحد المسموح.\n"
+        message_ar += f"الراتب: {salary:.2f} ر.س | الحد الأقصى للخصم (50%): {max_monthly_deduction:.2f} ر.س\n"
+        message_ar += f"الخصومات الحالية للشهر: {current_deductions:.2f} ر.س | المتبقي المسموح: {max(0, remaining_allowed):.2f} ر.س"
+        
+        return False, max(0, remaining_allowed), message_ar
+    
+    return True, remaining_allowed, ""
 
 
 async def create_deduction_proposal(
