@@ -606,7 +606,7 @@ async def search_contracts(
 ) -> List[dict]:
     """
     Search contracts by:
-    - Contract serial (full or last 3 digits)
+    - Contract serial (full or last digits like 16 or 016)
     - Employee code
     - Employee name
     """
@@ -620,9 +620,17 @@ async def search_contracts(
     
     if query:
         query = query.strip()
-        # Check if searching by last 3 digits of serial
-        if query.isdigit() and len(query) <= 3:
-            filter_query["contract_serial"] = {"$regex": f"-{query.zfill(3)}$"}
+        # Check if searching by number (like 16 or 016)
+        if query.isdigit():
+            # Search by serial number at end (e.g., 16 matches DAC-2026-016)
+            padded = query.zfill(3)  # 16 -> 016
+            filter_query["$or"] = [
+                {"contract_serial": {"$regex": f"-0*{query}$", "$options": "i"}},  # -16 or -016
+                {"contract_serial": {"$regex": f"-{padded}$", "$options": "i"}},   # -016
+                {"employee_code": {"$regex": query, "$options": "i"}},
+                {"employee_name": {"$regex": query, "$options": "i"}},
+                {"employee_name_ar": {"$regex": query, "$options": "i"}}
+            ]
         else:
             # Full text search on multiple fields
             filter_query["$or"] = [
