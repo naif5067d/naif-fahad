@@ -156,6 +156,17 @@ export default function TeamAttendancePage() {
   const [traceDialog, setTraceDialog] = useState(null);
   const [traceData, setTraceData] = useState(null);
   
+  // Manual Attendance for Supervisors
+  const [myTeamAttendance, setMyTeamAttendance] = useState([]);
+  const [manualAttendanceDialog, setManualAttendanceDialog] = useState(null);
+  const [manualAttendanceForm, setManualAttendanceForm] = useState({
+    check_type: 'check_in',
+    time: '',
+    reason: '',
+    supervisor_acknowledgment: false
+  });
+  const [submittingManual, setSubmittingManual] = useState(false);
+  
   // Check if user is supervisor
   const isSupervisor = user?.role === 'supervisor';
   const isSultan = ['sultan', 'naif'].includes(user?.role);
@@ -178,6 +189,78 @@ export default function TeamAttendancePage() {
     };
     fetchEmployees();
   }, []);
+  
+  // Fetch supervisor's team attendance for manual check-in
+  useEffect(() => {
+    if (isSupervisor && mainTab === 'manual-attendance') {
+      fetchMyTeamAttendance();
+    }
+  }, [isSupervisor, mainTab, date]);
+  
+  const fetchMyTeamAttendance = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/api/team-attendance/my-team-attendance', { params: { date } });
+      setMyTeamAttendance(res.data || []);
+    } catch (err) {
+      console.error('Error fetching team attendance:', err);
+      toast.error(lang === 'ar' ? 'خطأ في جلب بيانات الفريق' : 'Error fetching team data');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleOpenManualAttendance = (employee, checkType) => {
+    setManualAttendanceDialog(employee);
+    setManualAttendanceForm({
+      check_type: checkType,
+      time: new Date().toTimeString().slice(0, 5),
+      reason: '',
+      supervisor_acknowledgment: false
+    });
+  };
+  
+  const handleSubmitManualAttendance = async () => {
+    if (!manualAttendanceForm.reason) {
+      toast.error(lang === 'ar' ? 'يرجى إدخال السبب' : 'Please enter reason');
+      return;
+    }
+    if (!manualAttendanceForm.supervisor_acknowledgment) {
+      toast.error(lang === 'ar' 
+        ? 'يرجى تأكيد الإقرار بتحمل المسؤولية' 
+        : 'Please confirm acknowledgment'
+      );
+      return;
+    }
+    
+    try {
+      setSubmittingManual(true);
+      await api.post('/api/team-attendance/manual-attendance', {
+        employee_id: manualAttendanceDialog.employee_id,
+        check_type: manualAttendanceForm.check_type,
+        time: manualAttendanceForm.time,
+        reason: manualAttendanceForm.reason,
+        supervisor_acknowledgment: true
+      });
+      
+      toast.success(lang === 'ar' 
+        ? `تم تسجيل ${manualAttendanceForm.check_type === 'check_in' ? 'الدخول' : 'الخروج'} بنجاح`
+        : `${manualAttendanceForm.check_type === 'check_in' ? 'Check-in' : 'Check-out'} recorded successfully`
+      );
+      
+      setManualAttendanceDialog(null);
+      fetchMyTeamAttendance();
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'object') {
+        toast.error(lang === 'ar' ? detail.message_ar : detail.message_en);
+      } else {
+        toast.error(detail || 'Error recording attendance');
+      }
+    } finally {
+      setSubmittingManual(false);
+    }
+  };
 
   // Fetch pending deductions for review (Sultan/Naif only)
   useEffect(() => {
