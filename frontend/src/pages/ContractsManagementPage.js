@@ -671,6 +671,39 @@ export default function ContractsManagementPage() {
                   </div>
                 </div>
                 
+                {/* تاريخ المباشرة ووضع التجربة */}
+                <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-amber-600" />
+                      تاريخ المباشرة الفعلية
+                    </Label>
+                    <Input 
+                      type="date" 
+                      value={formData.work_start_date}
+                      onChange={e => setFormData(p => ({ ...p, work_start_date: e.target.value }))}
+                      placeholder="إذا فارغ = تاريخ البداية"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      قبل هذا التاريخ لا يُحتسب حضور أو غياب
+                    </p>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <Label className="flex items-center gap-2 mb-2">
+                      وضع التجربة (Sandbox)
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={formData.sandbox_mode}
+                        onCheckedChange={checked => setFormData(p => ({ ...p, sandbox_mode: checked }))}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {formData.sandbox_mode ? 'مفعّل - لا يُحتسب حضور' : 'غير مفعّل'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
                 {/* Probation & Notice */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -692,7 +725,7 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* Salary (hidden for unpaid internship) */}
-                {formData.contract_category !== 'internship_unpaid' && (
+                {formData.contract_category !== 'internship_unpaid' && formData.contract_category !== 'student_training' && (
                   <>
                     <div className="border-t pt-4">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
