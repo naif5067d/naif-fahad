@@ -444,9 +444,9 @@ export default function TransactionsPage() {
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl">
-              {actionDialog?.action === 'approve' && 'تأكيد الموافقة'}
-              {actionDialog?.action === 'reject' && 'تأكيد الرفض'}
-              {actionDialog?.action === 'escalate' && 'تأكيد التصعيد'}
+              {actionDialog?.action === 'approve' && (lang === 'ar' ? 'تأكيد الموافقة' : 'Confirm Approval')}
+              {actionDialog?.action === 'reject' && (lang === 'ar' ? 'تأكيد الرفض' : 'Confirm Rejection')}
+              {actionDialog?.action === 'escalate' && (lang === 'ar' ? 'تأكيد التصعيد' : 'Confirm Escalation')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 pt-2">
@@ -458,10 +458,10 @@ export default function TransactionsPage() {
             
             {/* حقل الملاحظة */}
             <div>
-              <label className="text-sm font-medium mb-2 block">ملاحظة (اختياري)</label>
+              <label className="text-sm font-medium mb-2 block">{lang === 'ar' ? 'ملاحظة (اختياري)' : 'Note (optional)'}</label>
               <Input
                 data-testid="action-note-input"
-                placeholder="أضف ملاحظة..."
+                placeholder={lang === 'ar' ? 'أضف ملاحظة...' : 'Add a note...'}
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 className="h-12 rounded-xl"
@@ -476,7 +476,7 @@ export default function TransactionsPage() {
                 className="flex-1 h-12 rounded-xl"
                 data-testid="cancel-action"
               >
-                إلغاء
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
               </Button>
               <Button
                 onClick={() => handleAction(actionDialog?.action)}
@@ -489,7 +489,7 @@ export default function TransactionsPage() {
                 data-testid="confirm-action"
               >
                 {loading && <Loader2 size={18} className="animate-spin me-2" />}
-                تأكيد
+                {lang === 'ar' ? 'تأكيد' : 'Confirm'}
               </Button>
             </div>
           </div>
