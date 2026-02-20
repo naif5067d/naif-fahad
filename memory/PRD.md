@@ -1776,3 +1776,94 @@ Version: 36.0 (2026-02-19)
 
 Version: 37.0 (2026-02-20)
 
+
+
+---
+
+### Phase 38: Language Unification & System Analysis ✅ (2026-02-20)
+
+**إصلاح تضارب اللغة (P0) + تحليل النظام الشامل**
+
+#### 1. إصلاح تضارب اللغة في الواجهات:
+
+| الملف | الإصلاح |
+|-------|---------|
+| `AttendancePage.js` | ترجمة رؤوس الجدول (GPS → الموقع، Check-in → الدخول) |
+| `ContractsPage.js` | ترجمة نموذج العقد (Type، Employee، Dates، Allowances) |
+| `EmployeesPage.js` | ترجمة عمود ID → الرقم |
+| `SettlementPage.js` | ترجمة جدول المخالصة + التوقيعات (STAS، CEO، HR، Employee) |
+| `ExecutiveDashboard.js` | ترجمة "Company Health Score" → "مؤشر صحة الشركة" |
+| `DashboardPage.js` | ترجمة اسم التطبيق |
+| `translations.js` | إضافة `nav.executive` = "لوحة التحكم التنفيذية" |
+
+#### 2. تحليل مشكلة مدة الخدمة = 0:
+
+**السبب:** العقد يجب أن يكون حالته `active` أو `terminated` لتظهر مدة الخدمة
+- إذا كان العقد `draft` أو `pending_stas` = لن تظهر معلومات الخدمة
+- **هذا سلوك صحيح ومقصود**
+
+**التحقق:**
+```
+EMP-001: contract.status = 'draft' → service_info = null ❌
+EMP-002: contract.status = 'active' → service_info = ✅ (4 سنة و 11 شهر و 27 يوم)
+```
+
+#### 3. تحليل ربط العقد بالمخالصة:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        employees                             │
+│  id, full_name, supervisor_id, user_id, is_active           │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│   contracts_v2  │ │  work_locations │ │      users      │
+│   employee_id   │ │ assigned_employees│ │  employee_id   │
+│   start_date    │ │    daily_hours  │ │    username    │
+│   status        │ │    work_days    │ │    is_active   │
+└────────┬────────┘ └────────┬────────┘ └────────────────┘
+         │                   │
+         │                   ▼
+         │          ┌─────────────────┐
+         │          │ attendance_ledger│
+         │          │   employee_id    │
+         │          │   work_location_id│
+         │          └────────┬────────┘
+         │                   │
+         ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐
+│   settlements   │ │   daily_status  │
+│   employee_id   │ │   employee_id   │
+│   contract_id   │ │   worked_hours  │
+└─────────────────┘ └─────────────────┘
+```
+
+#### 4. ماذا يربط الموظف بالنظام:
+
+| المكون | الرابط | الوصف |
+|--------|--------|-------|
+| **العقد** | `employee_id` | يحدد الراتب، البدلات، تاريخ البدء |
+| **موقع العمل** | `assigned_employees[]` | يحدد ساعات العمل، أيام الأسبوع |
+| **المستخدم** | `employee_id` | يحدد صلاحيات الدخول، اسم المستخدم |
+| **الحضور** | `employee_id` | يسجل بصمات الدخول والخروج |
+| **المخالصة** | `employee_id` + `contract_id` | يربط بالعقد لحساب EOS |
+
+#### 5. ما يحدث عند تفعيل العقد (activate):
+
+1. إنشاء/تحديث User إذا لم يكن موجوداً
+2. `contract.status` = `active`
+3. بدء احتساب الإجازات من `start_date`
+4. ظهور مدة الخدمة في Employee Summary
+
+#### 6. ما يحدث عند تنفيذ المخالصة (execute):
+
+1. `contract.status` = `closed`
+2. `user.is_active` = `false`
+3. تسجيل `last_working_day` و `termination_reason`
+4. حساب EOS وتعويض الإجازات
+
+---
+
+Version: 38.0 (2026-02-20)
