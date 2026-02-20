@@ -218,7 +218,7 @@ async def create_deduction_bonus(
             reference_type="deduction",
             reference_id=item["id"]
         )
-    except:
+    except Exception:
         pass
     
     return item
@@ -228,13 +228,6 @@ async def create_deduction_bonus(
 # MOHAMMED'S DECISION - قرار محمد (إلزامي)
 # ============================================================
 
-class MohammedDecision(BaseModel):
-    """قرار محمد على العقوبة"""
-    decision: str  # execute_from_salary | defer_to_settlement | reject
-    note: Optional[str] = ""
-
-
-@router.post("/{item_id}/mohammed-decision")
 async def mohammed_decision(
     item_id: str,
     req: MohammedDecision,
@@ -347,7 +340,7 @@ async def mohammed_decision(
             priority=NotificationPriority.HIGH,
             recipient_role="employee"
         )
-    except:
+    except Exception:
         pass
     
     # حفظ في أرشيف STAS
