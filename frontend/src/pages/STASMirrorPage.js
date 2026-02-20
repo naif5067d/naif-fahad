@@ -76,6 +76,11 @@ export default function STASMirrorPage() {
   const [myTransactions, setMyTransactions] = useState([]);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
 
+  // === PDF Preview State ===
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
