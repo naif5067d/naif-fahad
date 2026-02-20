@@ -225,7 +225,161 @@ async def create_deduction_bonus(
 
 
 # ============================================================
-# EXECUTE/REJECT DEDUCTION/BONUS (STAS ONLY)
+# MOHAMMED'S DECISION - قرار محمد (إلزامي)
+# ============================================================
+
+class MohammedDecision(BaseModel):
+    """قرار محمد على العقوبة"""
+    decision: str  # execute_from_salary | defer_to_settlement | reject
+    note: Optional[str] = ""
+
+
+@router.post("/{item_id}/mohammed-decision")
+async def mohammed_decision(
+    item_id: str,
+    req: MohammedDecision,
+    user=Depends(require_roles('mohammed'))
+):
+    """
+    قرار محمد على العقوبة - إلزامي قبل التنفيذ
+    
+    القرارات:
+    - execute_from_salary: خصم من الراتب فوراً (لا تدخل المخالصة)
+    - defer_to_settlement: ترحيل للمخالصة (لا تُخصم من الراتب)
+    - reject: رفض العقوبة
+    """
+    if req.decision not in ['execute_from_salary', 'defer_to_settlement', 'reject']:
+        raise HTTPException(status_code=400, detail="القرار غير صحيح")
+    
+    item = await db.deductions_bonuses.find_one({"id": item_id}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="السجل غير موجود")
+    
+    if item["status"] != "pending_mohammed":
+        raise HTTPException(status_code=400, detail="هذا السجل تم اتخاذ قرار عليه مسبقاً")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if req.decision == 'execute_from_salary':
+        # موافقة - خصم من الراتب
+        new_status = "executed"
+        
+        await db.deductions_bonuses.update_one(
+            {"id": item_id},
+            {"$set": {
+                "status": new_status,
+                "mohammed_decision": "execute_from_salary",
+                "mohammed_decision_note": req.note,
+                "mohammed_decided_at": now,
+                "mohammed_decided_by": user["user_id"],
+                "deferred_to_settlement": False,
+                "executed_by": user["user_id"],
+                "executed_at": now
+            }}
+        )
+        
+        # إضافة للسجل المالي (خصم من الراتب)
+        item["deferred_to_settlement"] = False
+        await add_to_finance_ledger(item, user, deferred=False)
+        
+        message_ar = "تم اعتماد الخصم من الراتب وتنفيذه"
+        message_en = "Deduction approved and executed from salary"
+        
+    elif req.decision == 'defer_to_settlement':
+        # ترحيل للمخالصة
+        new_status = "deferred_to_settlement"
+        
+        await db.deductions_bonuses.update_one(
+            {"id": item_id},
+            {"$set": {
+                "status": new_status,
+                "mohammed_decision": "defer_to_settlement",
+                "mohammed_decision_note": req.note,
+                "mohammed_decided_at": now,
+                "mohammed_decided_by": user["user_id"],
+                "deferred_to_settlement": True
+            }}
+        )
+        
+        # إضافة للسجل المالي (مؤجل للمخالصة)
+        item["deferred_to_settlement"] = True
+        await add_to_finance_ledger(item, user, deferred=True)
+        
+        message_ar = "تم ترحيل الخصم للمخالصة"
+        message_en = "Deduction deferred to settlement"
+        
+    else:  # reject
+        new_status = "rejected"
+        await db.deductions_bonuses.update_one(
+            {"id": item_id},
+            {"$set": {
+                "status": "rejected",
+                "mohammed_decision": "reject",
+                "mohammed_decision_note": req.note,
+                "mohammed_decided_at": now,
+                "mohammed_decided_by": user["user_id"],
+                "rejected_by": user["user_id"],
+                "rejected_at": now,
+                "rejection_note": req.note
+            }}
+        )
+        message_ar = "تم رفض العقوبة"
+        message_en = "Deduction rejected"
+    
+    # إرسال إشعار للموظف
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        
+        decision_text = {
+            'execute_from_salary': 'تم خصمها من راتبك',
+            'defer_to_settlement': 'ستُخصم عند المخالصة',
+            'reject': 'تم رفضها'
+        }
+        
+        await create_notification(
+            recipient_id=item["employee_id"],
+            notification_type=NotificationType.ALERT if req.decision != 'reject' else NotificationType.INFO,
+            title="Deduction Decision",
+            title_ar="قرار بشأن العقوبة",
+            message=f"Deduction of {item['amount']} SAR: {req.decision}",
+            message_ar=f"عقوبة {item['amount']} ر.س: {decision_text.get(req.decision, req.decision)}",
+            priority=NotificationPriority.HIGH,
+            recipient_role="employee"
+        )
+    except:
+        pass
+    
+    # حفظ في أرشيف STAS
+    archive_entry = {
+        "id": str(uuid.uuid4()),
+        "year": item["month"][:4],
+        "type": "deduction_decision",
+        "deduction_id": item_id,
+        "employee_id": item["employee_id"],
+        "employee_name_ar": item.get("employee_name", ""),
+        "amount": item["amount"],
+        "reason": item["reason"],
+        "decision": req.decision,
+        "decision_note": req.note,
+        "decided_by": user["user_id"],
+        "decided_by_name": user.get("full_name_ar", ""),
+        "decided_at": now,
+        "archived_at": now
+    }
+    await db.stas_annual_archive.insert_one(archive_entry)
+    
+    return {
+        "success": True,
+        "message_ar": message_ar,
+        "message_en": message_en,
+        "decision": req.decision,
+        "status": new_status
+    }
+
+
+# ============================================================
+# EXECUTE/REJECT DEDUCTION/BONUS (STAS ONLY - Legacy)
 # ============================================================
 
 @router.post("/{item_id}/action")
@@ -235,14 +389,17 @@ async def execute_deduction_bonus(
     user=Depends(require_roles('stas'))
 ):
     """
-    Execute or reject a deduction/bonus
-    STAS exclusive operation
+    Legacy: Execute or reject a deduction/bonus
+    يجب موافقة محمد أولاً
     """
     item = await db.deductions_bonuses.find_one({"id": item_id}, {"_id": 0})
     if not item:
         raise HTTPException(status_code=404, detail="السجل غير موجود")
     
-    if item["status"] != "pending_stas":
+    if item["status"] == "pending_mohammed":
+        raise HTTPException(status_code=400, detail="يجب موافقة محمد أولاً قبل التنفيذ")
+    
+    if item["status"] not in ["approved_for_salary", "deferred_to_settlement"]:
         raise HTTPException(status_code=400, detail="هذا السجل تم معالجته مسبقاً")
     
     now = datetime.now(timezone.utc).isoformat()
