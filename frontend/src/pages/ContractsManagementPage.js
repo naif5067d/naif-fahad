@@ -1510,11 +1510,63 @@ export default function ContractsManagementPage() {
             </div>
           )}
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => handlePreviewPDF(viewContract?.id)}>
-              <FileText className="w-4 h-4 ml-2" /> عرض PDF
-            </Button>
-            <Button variant="outline" onClick={() => setViewContract(null)}>إغلاق</Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {/* أزرار التحكم في وضع التجربة والتفعيل */}
+            <div className="flex flex-wrap gap-2">
+              {/* زر تفعيل/إلغاء وضع التجربة */}
+              {viewContract?.status === 'active' && (
+                <Button 
+                  variant={viewContract.sandbox_mode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleToggleSandbox(viewContract.id, viewContract.sandbox_mode)}
+                  disabled={actionLoading}
+                  className={viewContract.sandbox_mode ? "bg-amber-600 hover:bg-amber-700" : ""}
+                >
+                  {viewContract.sandbox_mode ? (
+                    <>
+                      <Play className="w-4 h-4 ml-1" /> بدء العمل الرسمي
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-4 h-4 ml-1" /> تفعيل وضع التجربة
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {/* زر تحديد تاريخ المباشرة */}
+              {viewContract?.status === 'active' && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSetWorkStartDate(viewContract.id)}
+                  disabled={actionLoading}
+                >
+                  <Calendar className="w-4 h-4 ml-1" /> تاريخ المباشرة
+                </Button>
+              )}
+              
+              {/* زر إعادة تفعيل من مسودة التصحيح */}
+              {viewContract?.status === 'draft_correction' && (
+                <Button 
+                  variant="default"
+                  size="sm"
+                  onClick={() => handleReactivateContract(viewContract.id)}
+                  disabled={actionLoading}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-1" /> : <CheckCircle className="w-4 h-4 ml-1" />}
+                  إعادة التفعيل
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handlePreviewPDF(viewContract?.id)}>
+                <FileText className="w-4 h-4 ml-2" /> عرض PDF
+              </Button>
+              <Button variant="outline" onClick={() => setViewContract(null)}>إغلاق</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
