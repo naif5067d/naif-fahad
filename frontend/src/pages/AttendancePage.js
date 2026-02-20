@@ -513,7 +513,7 @@ export default function AttendancePage() {
     <div className="space-y-5" data-testid="attendance-page">
       {/* الترويسة */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold">الحضور والانصراف</h1>
+        <h1 className="text-xl md:text-2xl font-bold">{lang === 'ar' ? 'الحضور والانصراف' : 'Attendance'}</h1>
         <p className="text-sm text-muted-foreground mt-1">{todayFormatted}</p>
       </div>
 
