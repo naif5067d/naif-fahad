@@ -330,6 +330,19 @@ export default function EmployeesPage() {
                     </div>
                   </td>
                   <td className="hidden sm:table-cell text-sm">{lang === 'ar' ? (e.department_ar || e.department) : e.department}</td>
+                  {/* سنوات الخدمة */}
+                  <td className="hidden md:table-cell text-center">
+                    {serviceYears !== null ? (
+                      <span className={`text-sm font-bold ${serviceYears >= 5 ? 'text-emerald-600' : 'text-blue-600'}`}>
+                        {serviceYears} {lang === 'ar' ? 'سنة' : 'yr'}
+                        <span className="text-[10px] text-muted-foreground block">
+                          {serviceYears >= 5 ? '30 يوم' : '21 يوم'}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </td>
                   <td className="hidden md:table-cell text-sm">{getSupervisorName(e)}</td>
                   <td>
                     <span className={`status-badge ${e.is_active ? 'status-executed' : 'status-rejected'}`}>
