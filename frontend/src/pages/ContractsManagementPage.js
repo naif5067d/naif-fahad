@@ -37,7 +37,8 @@ import {
   FileCheck,
   Ban,
   Archive,
-  RotateCcw
+  RotateCcw,
+  Pause
 } from 'lucide-react';
 
 const CONTRACT_STATUS = {
