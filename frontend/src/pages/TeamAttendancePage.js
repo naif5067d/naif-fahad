@@ -1870,6 +1870,105 @@ export default function TeamAttendancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Manual Attendance Dialog - للتحضير اليدوي */}
+      <Dialog open={!!manualAttendanceDialog} onOpenChange={() => setManualAttendanceDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HandMetal size={20} className="text-primary" />
+              {manualAttendanceForm.check_type === 'check_in' 
+                ? (lang === 'ar' ? 'تسجيل دخول يدوي' : 'Manual Check-in')
+                : (lang === 'ar' ? 'تسجيل خروج يدوي' : 'Manual Check-out')
+              }
+            </DialogTitle>
+          </DialogHeader>
+          
+          {manualAttendanceDialog && (
+            <div className="space-y-4 py-4">
+              {/* Employee Info */}
+              <div className="p-3 bg-muted rounded-lg flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                  {manualAttendanceDialog.employee_name_ar?.[0] || '?'}
+                </div>
+                <div>
+                  <p className="font-semibold">{manualAttendanceDialog.employee_name_ar}</p>
+                  <p className="text-xs text-muted-foreground">{manualAttendanceDialog.employee_number}</p>
+                </div>
+              </div>
+              
+              {/* Time */}
+              <div>
+                <label className="text-sm font-medium">
+                  {lang === 'ar' ? 'الوقت' : 'Time'}
+                </label>
+                <Input
+                  type="time"
+                  value={manualAttendanceForm.time}
+                  onChange={(e) => setManualAttendanceForm({...manualAttendanceForm, time: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+              
+              {/* Reason */}
+              <div>
+                <label className="text-sm font-medium">
+                  {lang === 'ar' ? 'السبب *' : 'Reason *'}
+                </label>
+                <Input
+                  value={manualAttendanceForm.reason}
+                  onChange={(e) => setManualAttendanceForm({...manualAttendanceForm, reason: e.target.value})}
+                  placeholder={lang === 'ar' ? 'سبب التسجيل اليدوي...' : 'Reason for manual record...'}
+                  className="mt-1"
+                />
+              </div>
+              
+              {/* Acknowledgment */}
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={manualAttendanceForm.supervisor_acknowledgment}
+                    onChange={(e) => setManualAttendanceForm({...manualAttendanceForm, supervisor_acknowledgment: e.target.checked})}
+                    className="mt-1"
+                  />
+                  <span className="text-sm text-amber-800">
+                    {lang === 'ar' 
+                      ? 'أقر بأنني أتحمل مسؤولية هذا التسجيل اليدوي وأؤكد صحة البيانات المدخلة.'
+                      : 'I acknowledge that I take responsibility for this manual record and confirm the accuracy of the data entered.'
+                    }
+                  </span>
+                </label>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManualAttendanceDialog(null)}>
+              {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button 
+              onClick={handleSubmitManualAttendance}
+              disabled={submittingManual || !manualAttendanceForm.reason || !manualAttendanceForm.supervisor_acknowledgment}
+              className={manualAttendanceForm.check_type === 'check_in' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}
+            >
+              {submittingManual ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : manualAttendanceForm.check_type === 'check_in' ? (
+                <>
+                  <LogIn size={16} className="me-1" />
+                  {lang === 'ar' ? 'تسجيل الدخول' : 'Record Check-in'}
+                </>
+              ) : (
+                <>
+                  <LogOut size={16} className="me-1" />
+                  {lang === 'ar' ? 'تسجيل الخروج' : 'Record Check-out'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
