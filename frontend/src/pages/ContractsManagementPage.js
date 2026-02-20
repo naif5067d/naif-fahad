@@ -475,6 +475,47 @@ export default function ContractsManagementPage() {
     setEditContract(contract);
   };
 
+  // حساب سنوات الخدمة من تاريخ التعيين
+  const calculateServiceYears = (startDate) => {
+    if (!startDate) return { years: 0, months: 0, days: 0, totalYears: 0, policyDays: 21 };
+    
+    const start = new Date(startDate);
+    const today = new Date();
+    
+    if (start > today) {
+      return { years: 0, months: 0, days: 0, totalYears: 0, policyDays: 21, future: true };
+    }
+    
+    let years = today.getFullYear() - start.getFullYear();
+    let months = today.getMonth() - start.getMonth();
+    let days = today.getDate() - start.getDate();
+    
+    if (days < 0) {
+      months--;
+      days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    const totalYears = years + (months / 12) + (days / 365);
+    const policyDays = totalYears >= 5 ? 30 : 21;
+    
+    return { years, months, days, totalYears: Math.round(totalYears * 100) / 100, policyDays };
+  };
+
+  // معالجة تغيير تاريخ البداية
+  const handleStartDateChange = (dateValue) => {
+    const serviceInfo = calculateServiceYears(dateValue);
+    setFormData(p => ({ 
+      ...p, 
+      start_date: dateValue,
+      annual_policy_days: serviceInfo.policyDays,
+      annual_leave_days: serviceInfo.policyDays
+    }));
+  };
+
   const formatDate = (dateStr) => {
     return formatGregorianHijri(dateStr).combined;
   };
