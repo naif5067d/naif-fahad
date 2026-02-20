@@ -1360,6 +1360,30 @@ export default function TeamAttendancePage() {
                   className="mt-1"
                 />
               </div>
+              
+              {/* إقرار المشرف - يظهر للمشرف فقط */}
+              {isSupervisor && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="supervisor_ack"
+                      checked={editForm.supervisor_acknowledgment}
+                      onChange={(e) => setEditForm({...editForm, supervisor_acknowledgment: e.target.checked})}
+                      className="mt-1 w-5 h-5 rounded border-amber-400"
+                    />
+                    <label htmlFor="supervisor_ack" className="text-sm text-amber-800 dark:text-amber-200">
+                      <span className="font-semibold block mb-1">
+                        {lang === 'ar' ? 'إقرار تحمل المسؤولية' : 'Responsibility Acknowledgment'}
+                      </span>
+                      {lang === 'ar' 
+                        ? `عزيزي ${user?.full_name_ar || user?.full_name || 'المشرف'}، تعديلك للحالة يعني تحملك لمسؤوليتها. طلبك سيُرسل لسلطان للموافقة.`
+                        : `Dear ${user?.full_name || 'Supervisor'}, modifying this status means you take responsibility. Your request will be sent to Sultan for approval.`
+                      }
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -1368,7 +1392,11 @@ export default function TeamAttendancePage() {
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button onClick={handleSaveEdit} disabled={loading}>
-              {loading ? <RefreshCw className="animate-spin" size={16} /> : (lang === 'ar' ? 'حفظ' : 'Save')}
+              {loading ? <RefreshCw className="animate-spin" size={16} /> : (
+                isSupervisor 
+                  ? (lang === 'ar' ? 'إرسال للموافقة' : 'Send for Approval')
+                  : (lang === 'ar' ? 'حفظ' : 'Save')
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
