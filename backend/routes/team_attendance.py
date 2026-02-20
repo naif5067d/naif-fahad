@@ -26,7 +26,7 @@ class StatusUpdateRequest(BaseModel):
 @router.get("/summary")
 async def get_team_summary(
     date: str = None,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     ملخص سريع لحضور الفريق
@@ -93,7 +93,7 @@ async def get_team_summary(
 @router.get("/daily")
 async def get_team_daily(
     date: str = None,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     جدول الحضور اليومي لجميع الموظفين
@@ -204,7 +204,7 @@ async def get_team_daily(
 @router.get("/weekly")
 async def get_team_weekly(
     date: str = None,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     جدول الحضور الأسبوعي
@@ -289,7 +289,7 @@ async def get_team_weekly(
 @router.get("/monthly")
 async def get_team_monthly(
     month: str = None,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     ملخص الحضور الشهري
@@ -368,7 +368,7 @@ async def update_employee_status(
     employee_id: str,
     date: str,
     body: StatusUpdateRequest,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     تعديل حالة الموظف (سلطان/نايف/STAS)
@@ -465,7 +465,7 @@ async def update_employee_status(
 async def get_employee_trace(
     employee_id: str,
     date: str,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     عرض العروق (Trace Evidence) لقرار الحضور
@@ -491,7 +491,7 @@ async def get_employee_attendance(
     date: Optional[str] = None,
     month: Optional[str] = None,
     year: Optional[str] = None,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     الحصول على سجل حضور موظف محدد
