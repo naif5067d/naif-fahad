@@ -575,7 +575,7 @@ export default function ExecutiveDashboard() {
                 className="relative text-[10px] uppercase tracking-[0.15em]"
                 style={{ color: THEME.text.tertiary }}
               >
-                Company Health Score
+                {lang === 'ar' ? 'مؤشر صحة الشركة' : 'Company Health Score'}
               </p>
             </div>
           </div>
