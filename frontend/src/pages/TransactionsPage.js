@@ -225,9 +225,11 @@ export default function TransactionsPage() {
       {/* الترويسة */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">المعاملات</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{lang === 'ar' ? 'المعاملات' : 'Transactions'}</h1>
           <p className="text-muted-foreground mt-1">
-            {fetchLoading ? 'جارٍ التحميل...' : `${filtered.length} معاملة`}
+            {fetchLoading 
+              ? (lang === 'ar' ? 'جارٍ التحميل...' : 'Loading...') 
+              : (lang === 'ar' ? `${filtered.length} معاملة` : `${filtered.length} transactions`)}
           </p>
         </div>
         <button
@@ -249,7 +251,7 @@ export default function TransactionsPage() {
               data-testid="search-input"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="البحث برقم المعاملة أو الموظف..."
+              placeholder={lang === 'ar' ? 'البحث برقم المعاملة أو الموظف...' : 'Search by transaction number or employee...'}
               className="ps-11 h-12 rounded-xl bg-muted/30 border-border/50 focus:border-primary text-base"
             />
           </div>
@@ -274,16 +276,16 @@ export default function TransactionsPage() {
           <div className="flex flex-col sm:flex-row gap-3 p-4 bg-muted/30 rounded-xl border border-border/50 animate-fade-in">
             <Select value={filter.status || 'all'} onValueChange={v => setFilter({...filter, status: v === 'all' ? '' : v})}>
               <SelectTrigger className="h-11 rounded-xl flex-1" data-testid="status-filter">
-                <SelectValue placeholder="الحالة" />
+                <SelectValue placeholder={lang === 'ar' ? 'الحالة' : 'Status'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="pending_supervisor">بانتظار المشرف</SelectItem>
-                <SelectItem value="pending_ops">بانتظار العمليات</SelectItem>
-                <SelectItem value="pending_finance">بانتظار المالية</SelectItem>
-                <SelectItem value="stas">بانتظار التنفيذ</SelectItem>
-                <SelectItem value="executed">منفذة</SelectItem>
-                <SelectItem value="rejected">مرفوضة</SelectItem>
+                <SelectItem value="all">{lang === 'ar' ? 'جميع الحالات' : 'All Statuses'}</SelectItem>
+                <SelectItem value="pending_supervisor">{lang === 'ar' ? 'بانتظار المشرف' : 'Pending Supervisor'}</SelectItem>
+                <SelectItem value="pending_ops">{lang === 'ar' ? 'بانتظار العمليات' : 'Pending Operations'}</SelectItem>
+                <SelectItem value="pending_finance">{lang === 'ar' ? 'بانتظار المالية' : 'Pending Finance'}</SelectItem>
+                <SelectItem value="stas">{lang === 'ar' ? 'بانتظار التنفيذ' : 'Pending Execution'}</SelectItem>
+                <SelectItem value="executed">{lang === 'ar' ? 'منفذة' : 'Executed'}</SelectItem>
+                <SelectItem value="rejected">{lang === 'ar' ? 'مرفوضة' : 'Rejected'}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filter.type || 'all'} onValueChange={v => setFilter({...filter, type: v === 'all' ? '' : v})}>
