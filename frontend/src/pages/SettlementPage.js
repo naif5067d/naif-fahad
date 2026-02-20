@@ -40,6 +40,7 @@ const SETTLEMENT_STATUS = {
 
 export default function SettlementPage() {
   const { user } = useAuth();
+  const { lang } = useLanguage();
   
   const [settlements, setSettlements] = useState([]);
   const [employees, setEmployees] = useState([]);
