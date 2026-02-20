@@ -78,6 +78,33 @@ export default function AppLayout({ children }) {
   const [alerts, setAlerts] = useState({ alerts: [], count: 0 });
   const switcherRef = useRef(null);
   const alertsRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Fullscreen handler
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error('Fullscreen error:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch(err => {
+        console.error('Exit fullscreen error:', err);
+      });
+    }
+  };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const role = user?.role || 'employee';
   const items = NAV_ITEMS[role] || NAV_ITEMS.employee;
