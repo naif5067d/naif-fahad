@@ -1331,6 +1331,22 @@ export default function ContractsManagementPage() {
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
+                        
+                        {/* Permanent Delete - لـ STAS فقط للعقود الملغية */}
+                        {['terminated', 'closed'].includes(contract.status) && user?.role === 'stas' && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => handlePermanentDelete(contract.id, contract.contract_serial)}
+                            data-testid={`permanent-delete-${contract.id}`}
+                          >
+                            <Trash2 className="w-4 h-4 ml-1" />
+                            حذف نهائي
+                          </Button>
+                        )}
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
