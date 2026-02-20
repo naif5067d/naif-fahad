@@ -126,6 +126,40 @@ export default function EmployeesPage() {
     } finally { setSavingSupervisor(false); }
   };
 
+  // فتح نافذة تعيين موظفين متعددين للمشرف
+  const openBulkSupervisorDialog = (supervisor) => {
+    // الموظفون الحاليون تحت هذا المشرف
+    const currentEmployees = employees.filter(e => e.supervisor_id === supervisor.id).map(e => e.id);
+    setSelectedEmployeesForSupervisor(currentEmployees);
+    setBulkSupervisorDialog(supervisor);
+  };
+
+  // حفظ تعيين موظفين متعددين للمشرف
+  const handleSaveBulkSupervisor = async () => {
+    if (!bulkSupervisorDialog) return;
+    setSavingSupervisor(true);
+    try {
+      await api.put(`/api/employees/bulk-supervisor`, {
+        supervisor_id: bulkSupervisorDialog.id,
+        employee_ids: selectedEmployeesForSupervisor
+      });
+      toast.success(lang === 'ar' ? `تم تعيين ${selectedEmployeesForSupervisor.length} موظف تحت المشرف` : `${selectedEmployeesForSupervisor.length} employees assigned to supervisor`);
+      setBulkSupervisorDialog(null);
+      api.get('/api/employees').then(r => setEmployees(r.data));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed');
+    } finally { setSavingSupervisor(false); }
+  };
+
+  // تبديل اختيار موظف للمشرف
+  const toggleEmployeeForSupervisor = (empId) => {
+    setSelectedEmployeesForSupervisor(prev => 
+      prev.includes(empId) 
+        ? prev.filter(id => id !== empId)
+        : [...prev, empId]
+    );
+  };
+
   // الحصول على اسم المشرف
   const getSupervisorName = (emp) => {
     if (!emp.supervisor_id) return '-';
