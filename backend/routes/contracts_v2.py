@@ -439,6 +439,11 @@ async def create_contract(
         
         "is_migrated": req.is_migrated,
         "leave_opening_balance": req.leave_opening_balance,
+        "leave_consumed": req.leave_consumed or {"annual": 0, "sick": 0, "emergency": 0},
+        
+        # رصيد الساعات
+        "permission_hours_balance": req.permission_hours_balance or (req.monthly_permission_hours * 12),  # سنوي
+        "permission_hours_consumed": req.permission_hours_consumed or 0,
         
         "supervisor_id": req.supervisor_id or employee.get("supervisor_id"),
         "notes": req.notes,
