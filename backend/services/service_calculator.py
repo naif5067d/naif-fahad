@@ -249,7 +249,12 @@ async def get_employee_service_info(employee_id: str) -> Optional[dict]:
         "end_date": end_date,
         "termination_reason": contract.get('termination_reason'),
         "service": service,
-        "wages": wages
+        "wages": wages,
+        # للعرض في اللوحة
+        "years_display": service['years_int'],
+        "years_total": service['years'],
+        "formatted_ar": service['formatted_ar'],
+        "formatted_en": service['formatted_en']
     }
 
 
