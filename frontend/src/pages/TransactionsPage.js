@@ -160,19 +160,29 @@ export default function TransactionsPage() {
     setLoading(true);
     try {
       await api.post(`/api/transactions/${actionDialog.id}/action`, { action, note });
-      toast.success(action === 'approve' ? 'تمت الموافقة بنجاح' : action === 'escalate' ? 'تم التصعيد بنجاح' : 'تم الرفض');
+      toast.success(action === 'approve' 
+        ? (lang === 'ar' ? 'تمت الموافقة بنجاح' : 'Approved successfully')
+        : action === 'escalate' 
+        ? (lang === 'ar' ? 'تم التصعيد بنجاح' : 'Escalated successfully')
+        : (lang === 'ar' ? 'تم الرفض' : 'Rejected'));
       setActionDialog(null);
       setNote('');
       fetchTxs();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'حدث خطأ');
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'حدث خطأ' : 'Error occurred'));
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusConfig = (status) => STATUS_CONFIG[status] || { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20', label: status };
-  const getTypeConfig = (type) => TYPE_CONFIG[type] || { icon: '📄', label: type };
+  const getStatusConfig = (status) => {
+    const config = STATUS_CONFIG[status] || { bg: 'bg-gray-500/10', text: 'text-gray-600', border: 'border-gray-500/20', label_ar: status, label_en: status };
+    return { ...config, label: lang === 'ar' ? config.label_ar : config.label_en };
+  };
+  const getTypeConfig = (type) => {
+    const config = TYPE_CONFIG[type] || { icon: '📄', label_ar: type, label_en: type };
+    return { ...config, label: lang === 'ar' ? config.label_ar : config.label_en };
+  };
   const getStageLabel = (stage) => STAGE_CONFIG[lang]?.[stage] || stage;
 
   // التحقق من إمكانية الموافقة
