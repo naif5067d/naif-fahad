@@ -411,14 +411,36 @@ export default function STASMirrorPage() {
     }
   };
 
-  const previewPdf = async () => {
-    if (!selectedTx) return;
+  const previewPdf = async (txId = null) => {
+    const transactionId = txId || selectedTx;
+    if (!transactionId) return;
+    
+    setPdfLoading(true);
     try {
-      const res = await api.get(`/api/transactions/${selectedTx}/pdf`, { responseType: 'blob' });
+      const res = await api.get(`/api/transactions/${transactionId}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      setPdfUrl(url);
+      setPdfPreviewOpen(true);
     } catch {
       toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'PDF preview failed');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const downloadPdf = () => {
+    if (!pdfUrl) return;
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `transaction_${selectedTx || 'document'}.pdf`;
+    link.click();
+  };
+
+  const closePdfPreview = () => {
+    setPdfPreviewOpen(false);
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(null);
     }
   };
 
