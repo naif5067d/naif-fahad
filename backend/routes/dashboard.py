@@ -25,6 +25,12 @@ async def get_dashboard_stats(user=Depends(get_current_user)):
     elif role == 'supervisor':
         emp = await db.employees.find_one({"user_id": user_id}, {"_id": 0})
         emp_id = emp['id'] if emp else None
+        
+        # رصيد الإجازات الخاص بالمشرف نفسه
+        leave_entries = await db.leave_ledger.find({"employee_id": emp_id, "leave_type": "annual"}, {"_id": 0, "days": 1, "type": 1}).to_list(1000)
+        stats['leave_balance'] = sum(e['days'] if e['type'] == 'credit' else -e['days'] for e in leave_entries)
+        
+        # فريق العمل
         direct_reports = await db.employees.find({"supervisor_id": emp_id}, {"_id": 0, "id": 1, "full_name": 1}).to_list(100)
         dr_ids = [d['id'] for d in direct_reports]
         stats['team_size'] = len(direct_reports)
