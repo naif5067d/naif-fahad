@@ -21,6 +21,7 @@ const STAT_CONFIG = {
   supervisor: [
     { key: 'pending_approvals', icon: FileText, label: 'dashboard.pendingApprovals', gradient: true },
     { key: 'team_size', icon: Users, label: 'dashboard.teamSize' },
+    { key: 'leave_balance', icon: CalendarDays, label: 'dashboard.leaveBalance', suffix: 'dashboard.days' },
   ],
   sultan: [
     { key: 'pending_approvals', icon: FileText, label: 'dashboard.pendingApprovals', gradient: true },
