@@ -94,10 +94,22 @@ async def create_deduction_proposal(
     source_records: List[str],
     calculation_formula: str,
     calculation_details: dict,
-    monthly_hours_id: Optional[str] = None
+    monthly_hours_id: Optional[str] = None,
+    skip_limit_check: bool = False
 ) -> dict:
     """إنشاء مقترح خصم جديد"""
     now = datetime.now(timezone.utc).isoformat()
+    
+    # التحقق من حد الـ 50%
+    limit_exceeded = False
+    limit_warning = ""
+    if not skip_limit_check and amount > 0:
+        can_deduct, remaining, warning = await check_deduction_limit(employee_id, month, amount)
+        if not can_deduct:
+            limit_exceeded = True
+            limit_warning = warning
+            # نضيف التحذير للمقترح بدلاً من منعه
+            explanation["تحذير_حد_الخصم"] = warning
     
     proposal = {
         "id": str(uuid.uuid4()),
