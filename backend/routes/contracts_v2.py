@@ -121,6 +121,14 @@ class ContractCreate(BaseModel):
 
 
 class ContractUpdate(BaseModel):
+    """
+    تحديث العقد - صلاحية كاملة للسلطان وستاس ونايف
+    
+    عند التعديل:
+    - العقد يعود لحالة "مسودة تصحيح" (draft_correction)
+    - يمكن تعديل كل الحقول بما فيها الأرصدة
+    - مرونة كاملة في التعديل
+    """
     employee_name: Optional[str] = None
     employee_name_ar: Optional[str] = None
     
@@ -129,27 +137,49 @@ class ContractUpdate(BaseModel):
     department: Optional[str] = None
     department_ar: Optional[str] = None
     
-    employment_type: Optional[str] = None
+    contract_category: Optional[str] = None  # employment | internship_unpaid | student_training
+    employment_type: Optional[str] = None  # unlimited | fixed_term | trial_paid | part_time
+    
+    start_date: Optional[str] = None
     end_date: Optional[str] = None
+    work_start_date: Optional[str] = None  # تاريخ المباشرة الفعلية
+    sandbox_mode: Optional[bool] = None  # وضع التجربة
     
     probation_months: Optional[int] = None
     notice_period_days: Optional[int] = None
     
+    # الراتب والبدلات
     basic_salary: Optional[float] = None
     housing_allowance: Optional[float] = None
     transport_allowance: Optional[float] = None
-    nature_of_work_allowance: Optional[float] = None  # بدل طبيعة العمل
+    nature_of_work_allowance: Optional[float] = None
     other_allowances: Optional[float] = None
     
     wage_definition: Optional[str] = None
-    leave_opening_balance: Optional[Dict[str, int]] = None
+    
+    # الإجازات السنوية
+    annual_leave_days: Optional[int] = None
+    annual_policy_days: Optional[int] = None
+    monthly_permission_hours: Optional[int] = None
+    
+    # أرصدة الإجازات (قابلة للتعديل يدوياً)
+    leave_opening_balance: Optional[Dict[str, float]] = None  # {"annual": 10, "sick": 5}
+    leave_consumed: Optional[Dict[str, float]] = None  # المستهلك
+    leave_remaining: Optional[Dict[str, float]] = None  # المتبقي
+    
+    # رصيد الساعات
+    permission_hours_balance: Optional[float] = None
+    permission_hours_consumed: Optional[float] = None
     
     supervisor_id: Optional[str] = None
     notes: Optional[str] = None
     
-    # معلومات البنك (قابلة للتعديل دائماً)
+    # معلومات البنك
     bank_name: Optional[str] = None
     bank_iban: Optional[str] = None
+    
+    # فرض إعادة العقد لمسودة تصحيح
+    force_draft_correction: Optional[bool] = None
 
 
 class SubmitToSTAS(BaseModel):
