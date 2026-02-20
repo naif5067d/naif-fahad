@@ -697,11 +697,18 @@ export default function TeamAttendancePage() {
 
       {/* Main Tabs: Attendance | Penalties */}
       <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-        <TabsList className="mb-4 w-full justify-start">
+        <TabsList className="mb-4 w-full justify-start flex-wrap">
           <TabsTrigger value="attendance" className="flex-1 md:flex-none gap-2">
             <Clock size={16} />
             {lang === 'ar' ? 'الحضور' : 'Attendance'}
           </TabsTrigger>
+          {/* تبويب التحضير اليدوي - للمشرفين فقط */}
+          {isSupervisor && (
+            <TabsTrigger value="manual-attendance" className="flex-1 md:flex-none gap-2">
+              <HandMetal size={16} />
+              {lang === 'ar' ? 'تحضير يدوي' : 'Manual Check-in'}
+            </TabsTrigger>
+          )}
           {/* تبويب العقوبات - للإدارة فقط، ليس للمشرفين */}
           {!isSupervisor && (
             <TabsTrigger value="penalties" className="flex-1 md:flex-none gap-2">
