@@ -480,30 +480,30 @@ export default function SettlementPage() {
                   <td className="p-1 text-right">{snapshot.eos?.final_amount?.toLocaleString()}</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="p-1">Leave Compensation</td>
+                  <td className="p-1">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</td>
                   <td className="p-1 text-right">{snapshot.leave?.compensation?.toLocaleString()}</td>
                 </tr>
                 <tr className="bg-emerald-50 font-bold">
-                  <td className="p-1">Total</td>
+                  <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.entitlements?.total?.toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div>
-            <div className="bg-red-600 text-white text-xs p-1 text-center">Deductions / الاستقطاعات</div>
+            <div className="bg-red-600 text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستقطاعات' : 'Deductions'}</div>
             <table className="w-full text-xs border">
               <tbody>
                 <tr className="border-b">
-                  <td className="p-1">Loans</td>
+                  <td className="p-1">{lang === 'ar' ? 'القروض' : 'Loans'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="p-1">Other</td>
+                  <td className="p-1">{lang === 'ar' ? 'أخرى' : 'Other'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
                 </tr>
                 <tr className="bg-red-50 font-bold">
-                  <td className="p-1">Total</td>
+                  <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.deductions?.total?.toLocaleString()}</td>
                 </tr>
               </tbody>
@@ -513,8 +513,8 @@ export default function SettlementPage() {
         
         {/* Net Amount */}
         <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
-          <div className="text-xs text-muted-foreground">Net Amount Payable to Employee / الصافي النهائي المستحق للموظف</div>
-          <div className="text-2xl font-bold text-primary">{snapshot.totals?.net_amount?.toLocaleString()} SAR</div>
+          <div className="text-xs text-muted-foreground">{lang === 'ar' ? 'الصافي النهائي المستحق للموظف' : 'Net Amount Payable to Employee'}</div>
+          <div className="text-2xl font-bold text-primary">{snapshot.totals?.net_amount?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}</div>
         </div>
         
         {/* Signatures placeholder */}
