@@ -1025,6 +1025,146 @@ export default function TeamAttendancePage() {
       </Tabs>
         </TabsContent>
 
+        {/* Manual Attendance Tab - Supervisors Only */}
+        {isSupervisor && (
+          <TabsContent value="manual-attendance">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HandMetal size={20} className="text-primary" />
+                  {lang === 'ar' ? 'التحضير اليدوي لموظفيك' : 'Manual Check-in for Your Team'}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {lang === 'ar' 
+                    ? 'سجّل حضور أو انصراف موظفيك يدوياً. النظام الآلي (البصمة/GPS) له الأولوية دائماً.'
+                    : 'Record check-in/out manually for your employees. Automatic system (fingerprint/GPS) always has priority.'
+                  }
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex items-center gap-3">
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-auto"
+                  />
+                  <Button variant="outline" size="icon" onClick={fetchMyTeamAttendance} disabled={loading}>
+                    <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                  </Button>
+                </div>
+                
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCw className="animate-spin text-primary" size={32} />
+                  </div>
+                ) : myTeamAttendance.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <User size={48} className="mx-auto mb-3 opacity-50" />
+                    <p>{lang === 'ar' ? 'لا يوجد موظفون تحت إشرافك' : 'No employees under your supervision'}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myTeamAttendance.map((emp) => (
+                      <div 
+                        key={emp.employee_id}
+                        className="p-4 border rounded-xl bg-muted/30 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            {emp.employee_name_ar?.[0] || '?'}
+                          </div>
+                          <div>
+                            <p className="font-semibold">{emp.employee_name_ar || emp.employee_name}</p>
+                            <p className="text-xs text-muted-foreground">{emp.employee_number} • {emp.job_title_ar}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          {/* Check-in Status */}
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الدخول' : 'Check-in'}</p>
+                            {emp.check_in ? (
+                              <div className="flex items-center gap-1">
+                                <Badge className={emp.check_in_source === 'manual_supervisor' 
+                                  ? 'bg-amber-100 text-amber-700' 
+                                  : 'bg-emerald-100 text-emerald-700'
+                                }>
+                                  <LogIn size={12} className="me-1" />
+                                  {emp.check_in.slice(11, 16)}
+                                </Badge>
+                                {emp.check_in_source === 'manual_supervisor' && (
+                                  <span className="text-xs text-amber-600">(يدوي)</span>
+                                )}
+                              </div>
+                            ) : emp.can_manual_check_in ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                onClick={() => handleOpenManualAttendance(emp, 'check_in')}
+                              >
+                                <LogIn size={14} />
+                                {lang === 'ar' ? 'تسجيل دخول' : 'Check-in'}
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </div>
+                          
+                          {/* Check-out Status */}
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الخروج' : 'Check-out'}</p>
+                            {emp.check_out ? (
+                              <div className="flex items-center gap-1">
+                                <Badge className={emp.check_out_source === 'manual_supervisor' 
+                                  ? 'bg-amber-100 text-amber-700' 
+                                  : 'bg-blue-100 text-blue-700'
+                                }>
+                                  <LogOut size={12} className="me-1" />
+                                  {emp.check_out.slice(11, 16)}
+                                </Badge>
+                                {emp.check_out_source === 'manual_supervisor' && (
+                                  <span className="text-xs text-amber-600">(يدوي)</span>
+                                )}
+                              </div>
+                            ) : emp.can_manual_check_out && emp.check_in ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="gap-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+                                onClick={() => handleOpenManualAttendance(emp, 'check_out')}
+                              >
+                                <LogOut size={14} />
+                                {lang === 'ar' ? 'تسجيل خروج' : 'Check-out'}
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Info Box */}
+                <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200">
+                  <h4 className="font-semibold text-amber-700 flex items-center gap-2 mb-2">
+                    <AlertTriangle size={16} />
+                    {lang === 'ar' ? 'تنبيه مهم' : 'Important Notice'}
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>{lang === 'ar' ? 'النظام الآلي (البصمة/GPS) له الأولوية دائماً' : 'Automatic system (fingerprint/GPS) always has priority'}</li>
+                    <li>{lang === 'ar' ? 'التحضير اليدوي يسجل باسمك ويصبح مسؤوليتك' : 'Manual check-in is recorded under your name and responsibility'}</li>
+                    <li>{lang === 'ar' ? 'لا يمكن إضافة تسجيل يدوي إذا وُجد تسجيل آلي' : 'Cannot add manual record if automatic record exists'}</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
         {/* Penalties Tab Content */}
         <TabsContent value="penalties">
           {/* Penalties Summary Cards */}
