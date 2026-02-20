@@ -290,17 +290,17 @@ export default function TransactionsPage() {
             </Select>
             <Select value={filter.type || 'all'} onValueChange={v => setFilter({...filter, type: v === 'all' ? '' : v})}>
               <SelectTrigger className="h-11 rounded-xl flex-1" data-testid="type-filter">
-                <SelectValue placeholder="النوع" />
+                <SelectValue placeholder={lang === 'ar' ? 'النوع' : 'Type'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الأنواع</SelectItem>
-                <SelectItem value="leave_request">طلب إجازة</SelectItem>
-                <SelectItem value="forget_checkin">نسيان بصمة</SelectItem>
-                <SelectItem value="field_work">مهمة خارجية</SelectItem>
-                <SelectItem value="late_excuse">تبرير تأخير</SelectItem>
-                <SelectItem value="early_leave_request">خروج مبكر</SelectItem>
-                <SelectItem value="tangible_custody">عهدة ملموسة</SelectItem>
-                <SelectItem value="finance_60">عهدة مالية</SelectItem>
+                <SelectItem value="all">{lang === 'ar' ? 'جميع الأنواع' : 'All Types'}</SelectItem>
+                <SelectItem value="leave_request">{lang === 'ar' ? 'طلب إجازة' : 'Leave Request'}</SelectItem>
+                <SelectItem value="forget_checkin">{lang === 'ar' ? 'نسيان بصمة' : 'Forgot Punch'}</SelectItem>
+                <SelectItem value="field_work">{lang === 'ar' ? 'مهمة خارجية' : 'Field Work'}</SelectItem>
+                <SelectItem value="late_excuse">{lang === 'ar' ? 'تبرير تأخير' : 'Late Excuse'}</SelectItem>
+                <SelectItem value="early_leave_request">{lang === 'ar' ? 'خروج مبكر' : 'Early Leave'}</SelectItem>
+                <SelectItem value="tangible_custody">{lang === 'ar' ? 'عهدة ملموسة' : 'Tangible Custody'}</SelectItem>
+                <SelectItem value="finance_60">{lang === 'ar' ? 'عهدة مالية' : 'Financial Custody'}</SelectItem>
               </SelectContent>
             </Select>
             {(filter.status || filter.type) && (
@@ -310,7 +310,7 @@ export default function TransactionsPage() {
                 onClick={() => setFilter({ status: '', type: '' })}
                 className="h-11 px-4"
               >
-                مسح
+                {lang === 'ar' ? 'مسح' : 'Clear'}
               </Button>
             )}
           </div>
@@ -326,8 +326,8 @@ export default function TransactionsPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border">
             <FileText size={48} className="mx-auto mb-4 text-muted-foreground/40" />
-            <p className="text-lg font-medium text-muted-foreground">لا توجد معاملات</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">جرب تغيير معايير البحث</p>
+            <p className="text-lg font-medium text-muted-foreground">{lang === 'ar' ? 'لا توجد معاملات' : 'No transactions'}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">{lang === 'ar' ? 'جرب تغيير معايير البحث' : 'Try changing search criteria'}</p>
           </div>
         ) : (
           filtered.map(tx => {
