@@ -620,8 +620,20 @@ export default function TeamAttendancePage() {
             <AlertTriangle size={16} />
             {lang === 'ar' ? 'العقوبات' : 'Penalties'}
           </TabsTrigger>
+          {/* تبويب طلبات التعديل - sultan فقط */}
+          {isSultan && (
+            <TabsTrigger value="corrections-review" className="flex-1 md:flex-none gap-2">
+              <Edit size={16} />
+              {lang === 'ar' ? 'طلبات التعديل' : 'Correction Requests'}
+              {pendingCorrections.length > 0 && (
+                <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {pendingCorrections.length}
+                </span>
+              )}
+            </TabsTrigger>
+          )}
           {/* تبويب مراجعة الخصومات - sultan/naif فقط */}
-          {['sultan', 'naif'].includes(user?.role) && (
+          {isSultan && (
             <TabsTrigger value="deductions-review" className="flex-1 md:flex-none gap-2">
               <FileWarning size={16} />
               {lang === 'ar' ? 'مراجعة الخصومات' : 'Review Deductions'}
