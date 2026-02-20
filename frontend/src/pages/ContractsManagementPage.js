@@ -42,6 +42,7 @@ import {
 
 const CONTRACT_STATUS = {
   draft: { label: 'مسودة', labelEn: 'Draft', color: 'bg-slate-500', icon: Edit },
+  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-orange-500', icon: Edit },
   pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-amber-500', icon: Clock },
   active: { label: 'نشط', labelEn: 'Active', color: 'bg-emerald-500', icon: CheckCircle },
   terminated: { label: 'منتهي', labelEn: 'Terminated', color: 'bg-red-500', icon: XCircle },
@@ -51,12 +52,14 @@ const CONTRACT_STATUS = {
 const CONTRACT_CATEGORIES = {
   employment: { label: 'توظيف', labelEn: 'Employment' },
   internship_unpaid: { label: 'تدريب غير مدفوع', labelEn: 'Unpaid Internship' },
+  student_training: { label: 'تدريب طالب', labelEn: 'Student Training' },
 };
 
 const EMPLOYMENT_TYPES = {
   unlimited: { label: 'غير محدد المدة', labelEn: 'Unlimited' },
   fixed_term: { label: 'محدد المدة', labelEn: 'Fixed Term' },
   trial_paid: { label: 'فترة تجربة مدفوعة', labelEn: 'Paid Trial' },
+  part_time: { label: 'دوام جزئي', labelEn: 'Part Time' },
 };
 
 const TERMINATION_REASONS = {
