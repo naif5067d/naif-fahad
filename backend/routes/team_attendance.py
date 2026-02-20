@@ -1,10 +1,20 @@
 """
-Team Attendance Routes - حضور الفريق (سلطان/نايف)
+Team Attendance Routes - الحضور والعقوبات
 
-يعرض:
-- جميع الموظفين مع حالتهم اليومية
-- إمكانية تغيير الحالة (غائب → حاضر)
-- فلترة يومي/أسبوعي/شهري
+نظام صلاحيات التعديل:
+─────────────────────────────────────
+│ الدور     │ الصلاحيات                │
+─────────────────────────────────────
+│ المشرف    │ يطلب تعديل → ينتظر سلطان │
+│ سلطان    │ موافقة/رفض → قرار نهائي  │
+│ STAS     │ أرشيف سنوي للمراجعة      │
+─────────────────────────────────────
+
+سير العمل:
+1. المشرف يطلب تعديل حالة موظف (مع تحذير المسؤولية)
+2. الطلب يظهر لسلطان في قائمة "بانتظار الموافقة"
+3. سلطان يوافق/يرفض/يعدل → قرار نهائي ونافذ
+4. السجل يُحفظ في أرشيف STAS السنوي
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel
@@ -12,6 +22,7 @@ from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 from database import db
 from utils.auth import get_current_user, require_roles
+import uuid
 
 router = APIRouter(prefix="/api/team-attendance", tags=["Team Attendance"])
 
@@ -21,6 +32,22 @@ class StatusUpdateRequest(BaseModel):
     reason: str
     check_in_time: Optional[str] = None  # HH:MM
     check_out_time: Optional[str] = None
+
+
+class SupervisorCorrectionRequest(BaseModel):
+    """طلب تعديل من المشرف"""
+    new_status: str
+    reason: str
+    check_in_time: Optional[str] = None
+    check_out_time: Optional[str] = None
+    supervisor_acknowledgment: bool = False  # إقرار المشرف بتحمل المسؤولية
+
+
+class CorrectionDecisionRequest(BaseModel):
+    """قرار سلطان على طلب التعديل"""
+    action: str  # approve, reject, modify
+    final_status: Optional[str] = None  # للتعديل
+    decision_note: Optional[str] = None
 
 
 @router.get("/summary")
