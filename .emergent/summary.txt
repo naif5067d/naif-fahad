@@ -1,137 +1,149 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user initially requested the development of a comprehensive HR management system, with the primary focus on creating a high-level, official Executive Dashboard. After the successful completion and testing of the dashboard, the user's latest request is to generate a complete and detailed operational report. This report must explain the entire system's functionality, data flow, and logic, from the creation of an employee contract to the final settlement process, including details on security, analytics, and potential risks.
+The user initially requested a comprehensive HR management system. After the completion of an Executive Dashboard, the user's focus shifted to addressing core functional and usability issues. The most recent requests involve:
+1.  A complete fix for language inconsistencies across the entire application, as the current mix of Arabic and English is a major point of frustration.
+2.  An investigation and correction of the Supervisor role, which currently has incorrect permissions and UI.
+3.  A UI/UX overhaul of the STAS Mirror (Operations) page to make it more modern and user-friendly.
+4.  A fix for the file preview functionality, ensuring that PDFs open in an in-app viewer instead of being downloaded directly, especially on mobile devices.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The application is a full-stack FastAPI/React HR system with modules for Attendance, Tasks, HR Requests, and Financial Custody.
-
-The **Executive Dashboard** is now fully implemented and tested. It features a sophisticated, minimalist TV Mode design, responsive layout, and displays key metrics like a Company Health Score, KPIs, dynamic charts, and an AI-generated summary.
-
-Following the dashboard's completion, a deployment health check was performed. This uncovered and led to the fixing of several critical backend  serialization issues, making the application stable and ready for deployment. The agent has now started analyzing the codebase to fulfill the user's new request for a comprehensive operational report.
+A full-stack FastAPI/React HR application with modules for Attendance, HR Requests, Financial Custody, and an Executive Dashboard. The agent has recently completed a deep analysis of the attendance and penalties system, fixing several critical backend bugs related to GPS validation and dynamic work-hour calculations. Significant effort has been made to refactor multiple frontend pages to standardize language translation, but inconsistencies remain. The agent has just started a major redesign of the  and implemented a fix for the PDF preview behavior.
 
 **Last working item**:
--   **Last item agent was working:** The agent began working on the user's new request for a comprehensive operational report. This involves a deep analysis of the entire codebase to document the system's lifecycle, from employee onboarding to final settlement. The agent started by reviewing key backend files to gather the necessary information.
+-   **Last item agent was working:** The agent was multitasking on two user requests for the :
+    1.  **UI/UX Redesign:** Rewriting the page's component structure and adding custom CSS in  to create a more modern and professional Operations dashboard.
+    2.  **PDF Preview Fix:** Implementing a modal-based PDF viewer to prevent the default browser behavior of downloading files directly.
 -   **Status:** IN PROGRESS
--   **Agent Testing Done:** N/A
--   **Which testing method agent to use?** N/A (This is a documentation task).
--   **User Testing Done:** N/A
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** Frontend testing agent. The agent must verify the new PDF preview modal works as expected and that the redesign of the  is visually correct and functional.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Critical GPS & Attendance Logic Failure (P0 - HIGHEST PRIORITY)**
--   **Issue 2: Admin Process Button Logic Not Implemented (P1)**
+-   **Issue 1: Complete Application-Wide Language Unification (P0 - HIGHEST PRIORITY)**
+-   **Issue 2: Broken Supervisor Role Permissions & UI (P0 - HIGHEST PRIORITY)**
 -   **Issue 3: Incomplete Transaction Barcode & Camera Search Feature (P2)**
--   **Issue 4: Hijri Date Format May Recur (P2)**
--   **Issue 5: Login Sessions Page Design Needs User Verification (P2)**
+-   **Issue 4: Admin Process Button Logic Not Implemented (P2)**
 
 **Issues Detail:**
--   **Issue 1: Critical GPS & Attendance Logic Failure**
-    -   **Attempted fixes:** None. This critical bug, causing a Location must be enabled error on check-out, has not been addressed in this session as priority was given to feature development.
+-   **Issue 1: Complete Application-Wide Language Unification**
+    -   **Attempted fixes:** The agent has refactored , , , , and others to use a centralized translation hook. However, hardcoded strings still exist, causing user frustration.
     -   **Next debug checklist:**
-        1.  Trace  in .
-        2.  Add detailed logging to the  endpoint in .
-        3.  Inspect  in , the likely source of the error.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a core function. Fixing it is essential for the app's viability in attendance tracking.
-    -   **Status:** NOT STARTED
+        1.  Perform a systematic, file-by-file search across the entire  directory for any remaining hardcoded Arabic or English text.
+        2.  Move all UI strings into .
+        3.  Ensure every component and page correctly uses the  hook.
+    -   **Why fix this issue and what will be achieved with the fix?** This is the user's most persistent and frustrating issue. Resolving it will provide a seamless, professional user experience and stop recurring complaints.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on other issue:** No.
+-   **Issue 2: Broken Supervisor Role Permissions & UI**
+    -   **Attempted fixes:** None. The issue was recently reported by the user.
+    -   **Next debug checklist:**
+        1.  Log in as a Supervisor ( / ).
+        2.  Examine the API calls made by the frontend dashboard and sidebar to identify the source of incorrect data (e.g., seeing a leave balance of 25).
+        3.  Review the backend endpoints (e.g., in , ) to ensure they correctly filter data based on the supervisor's role and their assigned employees.
+        4.  Review frontend components like  and  to implement a distinct UI for supervisors.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical security and functionality flaw. Supervisors should only see data for their direct reports and have a UI tailored for management tasks.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on other issue:** No.
 
 **In progress Task List**:
--   **Task 1: Generate Comprehensive Operational Report (P0 - HIGHEST PRIORITY)**
+-   **Task 1: Finalize Redesign of STAS Mirror Page (P0)**
+-   **Task 2: Test and Deploy In-App PDF Preview (P1)**
 
 **Task Detail:**
--   **Task 1: Generate Comprehensive Operational Report**
-    -   **Where to resume:** The agent has already reviewed , , , , , and . The next step is to synthesize the findings from these files and the rest of the codebase into a structured report that answers all ten sections of the user's detailed prompt.
-    -   **What will be achieved with this?** A detailed technical and operational document explaining the system's logic, data flow, security, and potential risks, providing the user with a complete as-built overview of the application.
+-   **Task 1: Finalize Redesign of STAS Mirror Page**
+    -   **Where to resume:** The agent has laid the new structural foundation in  and added base styles to . The work needs to continue by styling the content within each tab of the page to match the new, modern aesthetic.
+    -   **What will be achieved with this?** A visually appealing, professional, and user-friendly interface for the critical Operations section, as requested by the user.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** N/A.
+    -   **Should Test frontend/backend/both after fix?** Frontend.
+    -   **Blocked on something:** No.
+-   **Task 2: Test and Deploy In-App PDF Preview**
+    -   **Where to resume:** The logic for the preview modal is implemented in . It needs to be thoroughly tested on desktop and mobile to ensure it correctly intercepts the click and displays the PDF in the modal instead of triggering a download.
+    -   **What will be achieved with this?** A better user experience for file viewing that works consistently across devices.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend.
     -   **Blocked on something:** No.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   P0: Resolve critical GPS check-out bug.
-    -   P1: Implement the AI Recommendations Engine.
     -   P1: Add the Summon Employee button to the Executive Dashboard.
-    -   P2: Implement the admin manual attendance Process button.
+    -   P1: Implement the AI Recommendations Engine.
 -   **Future Tasks:**
-    -   Loans Module.
-    -   Logic to prevent salary deductions from exceeding 50%.
+    -   Implement the Loans Module.
+    -   Add logic to prevent salary deductions from exceeding 50% of the salary.
     -   Integrate Task scores into a full Annual Performance Review module.
+    -   Expose hidden backend features in the UI (e.g., ).
 
 **Completed work in this session**
--   **Executive Dashboard Implementation:** Fully designed and built a Modern Minimal Executive Style dashboard.
-    -   Implemented a standalone TV Mode by conditionally rendering the page outside the standard app layout.
-    -   Created a sophisticated dark theme, responsive design for all screen sizes, and integrated dynamic charts ().
-    -   Successfully passed comprehensive frontend and backend tests via the testing agent.
--   **Deployment Readiness & Bug Fixes:**
-    -   Ran a deployment health check and identified critical backend issues.
-    -   Fixed  serialization errors across five backend modules (, , , , ) by adding  projections to MongoDB queries.
-    -   Confirmed the application is Ready for Deployment after fixes.
--   **Documentation:** Updated  to include the specifications and completion status of the Executive Dashboard.
+-   **Attendance System Analysis & Fix:**
+    -   Provided a comprehensive report on the attendance, penalties, and contract data flows.
+    -   Fixed the critical GPS bug that blocked check-out in .
+    -   Made the monthly required work hours calculation dynamic based on work location, fixing the static  hour issue in .
+-   **Service Duration Bug Investigation:**
+    -   Diagnosed that the service duration: 0 issue was correct behavior, as it only calculates for contracts with an  status, not .
+-   **Extensive Language Unification (Phase 1):**
+    -   Refactored numerous pages (, , , , , etc.) to remove hardcoded text and use the central translation system.
+-   **Backend Feature & Data Flow Audit:**
+    -   Answered user's questions about how the system connects contracts, work locations, and employee data to calculate work hours and service duration.
 
 **Earlier issues found/mentioned but not fixed**
--   The critical GPS check-out failure ().
--   Admin Process Button Logic Not Implemented.
--   Incomplete Transaction Barcode & Camera Search Feature.
+-   The two pending issues from the original handoff remain: the **Admin Process Button Logic** and the **Transaction Barcode & Camera Search Feature**.
 
 **Known issue recurrence from previous fork**
--   **Issue:** GPS and Attendance Logic. This is a high-priority, recurring bug that remains unresolved.
+-   **Issue recurrence in previous fork:** Language Inconsistency.
 -   **Recurrence count:** High
--   **Status:** NOT STARTED
--   **Issue:** Hijri Date Format. This issue was not touched in this session and may recur in new components.
--   **Recurrence count:** Medium
--   **Status:** NOT STARTED
+-   **Status:** IN PROGRESS. This is the user's top frustration. Despite multiple rounds of fixes, the problem persists in different parts of the app. A full, systematic audit is required.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Conditional Rendering for Layouts:** Modified  to conditionally render the  outside of the main , enabling a TV Mode without the sidebar.
--   **MongoDB  Serialization:** Identified and fixed a critical backend bug where FastAPI could not serialize MongoDB's . The standard fix was to add  projections to all relevant database queries to exclude the field from the response.
--   **Deployment Health Checks:** Utilized a deployment agent to proactively scan the application for common deployment blockers, leading to the discovery and resolution of the  bugs.
--   **Responsive & Themed Design:** Employed advanced CSS, including flexbox, grid, and CSS variables, to create the dashboard's responsive, dark, and minimalist aesthetic.
+-   **Dynamic Frontend Internationalization (i18n):** Widespread refactoring to replace hardcoded strings with a  hook and a  key-value store.
+-   **In-App File Preview:** Implementation of a React modal to act as a file viewer, overriding the browser's default download behavior for a better mobile UX.
+-   **Dynamic Business Logic:** Backend was enhanced to calculate required work hours dynamically based on an employee's assigned , improving accuracy.
 
 **key DB schema**
--   **admin_custodies:** 
--   **custody_expenses:** 
--   **expense_codes:** 
--   **company_settings:** 
+-   **contracts_v2:** 
+-   **work_locations:** 
 
 **All files of reference**
--   **New/Modified Files:**
-    -    (Main UI for the new dashboard)
-    -    (Custom styling for the dashboard)
-    -    (Modified for conditional layout)
-    -    (Fixed  issue)
-    -    (Fixed  issue)
-    -    (Fixed  issue)
-    -    (Fixed  issue)
-    -    (Fixed  issue)
--   **Files with Critical Bug:**
-    -   
-    -   
+-   : The file for the ongoing UI redesign and PDF preview fix.
+-   : The central file for all UI text strings.
+-   : Contains new CSS for the  redesign.
+-   : Contains key business logic for employee data.
+-   : Contains the fix for the critical GPS bug.
 
 **Critical Info for New Agent**
--   **Your immediate priority is the user's new request: creating a comprehensive operational report.** You must analyze the codebase to produce a detailed document explaining the system's data flows, logic, and security measures, as per the user's ten-point prompt.
--   The Executive Dashboard is complete, tested, and approved.
--   A critical  serialization bug was fixed across the backend. Remember to apply the  projection to any new MongoDB queries that return data through an API endpoint.
--   The P0 GPS attendance bug is the most significant known technical debt. While the current task is documentation, this bug will need to be addressed soon.
+-   **User's #1 Priority is Language:** The user is extremely frustrated with the mix of Arabic and English. Your top priority must be a *meticulous*, page-by-page audit to fix *every* hardcoded string. The user wants 100% consistency.
+-   **Supervisor Role is Broken:** The user reported that the Supervisor role shows incorrect data and has the wrong UI. This is a critical security and functionality bug that must be addressed immediately after the language fixes.
+-   **STAS Mirror Redesign is In-Progress:** You are in the middle of a major UI overhaul for . You need to complete the redesign and test the new PDF preview modal.
+-   **NO SCREENSHOTS:** The user has explicitly requested text-only updates. Communicate all findings and progress through detailed written reports.
 
 **documents and test reports created in this job**
--    (Updated with Executive Dashboard details)
--    (Test report for the Executive Dashboard)
+-    (Updated)
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **1. User:** Requested a complete and detailed operational report explaining the entire system from employee contract to final settlement. (IN PROGRESS)
--   **2. User:** Requested a deployment health check. (COMPLETED - led to bug fixes)
+1.  **User:** Fix the STAS Mirror PDF preview (don't auto-download), and improve its primitive design. (IN PROGRESS)
+2.  **User:** Complained Attendance/Transactions pages are still in Arabic on English mode. Stated supervisor account is broken. Demanded a full app translation fix, calling the issue infuriating. (IN PROGRESS)
+3.  **User:** Requested a full audit of system logic (hours, contracts, etc.) and language inconsistencies. (COMPLETED - Report provided, fixes initiated)
+4.  **User:** Approved fixing the issues from the attendance system report. (COMPLETED)
+5.  **User:** Asked for a comprehensive review of the attendance and penalties system. (COMPLETED - Report provided)
+6.  **User:** Asked for assurance about application security. (COMPLETED - Agent responded)
 
 **Project Health Check:**
 -   **Broken:**
-    -   Core GPS check-out functionality.
+    -   Supervisor role permissions and UI.
+    -   Language consistency across the application.
 -   **Incomplete:**
+    -   The UI redesign of the .
+    -   The new in-app PDF preview functionality.
     -   Admin Process Button Logic.
     -   Transaction Barcode & Camera Search Feature.
 
@@ -139,17 +151,16 @@ Following the dashboard's completion, a deployment health check was performed. T
 -   None.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (For the Executive Dashboard feature).
+-   **Testing agent used after significant changes:** YES (For backend attendance logic fixes, all passed).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
--   **Known regressions:** The GPS check-out functionality remains broken from a previous session.
+-   **Known regressions:** The supervisor role's incorrect behavior is a newly discovered regression. Language inconsistency is a persistent, known issue.
 
 **Credentials to test flow:**
--   **Admin (CEO):**  / 
 -   **Admin (System):**  / 
--   **Admin (Manager):**  / ,  / 
--   **Accountant:**  / 
+-   **Supervisor:**  / 
 -   **Regular Employee:**  / 
 
 **What agent forgot to execute**
--   The agent correctly prioritized the user's requests for the Executive Dashboard and the deployment health check. Older, unresolved issues (GPS bug, Admin Process button, Barcode Search) were not addressed and remain in the backlog.</analysis>
+-   The agent has not yet addressed the broken supervisor role, which is a critical user complaint.
+-   The approach to fixing the language issue has been reactive rather than a single, systematic sweep of the entire frontend, leading to repeated user complaints.</analysis>

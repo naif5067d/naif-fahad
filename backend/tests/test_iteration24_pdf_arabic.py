@@ -15,7 +15,7 @@ import os
 import io
 from PyPDF2 import PdfReader
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-management-hub-9.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://language-unification.preview.emergentagent.com').rstrip('/')
 
 class TestPDFGeneration:
     """Test PDF generation for transactions"""
