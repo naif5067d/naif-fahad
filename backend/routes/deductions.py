@@ -144,28 +144,21 @@ async def get_deduction(item_id: str, user=Depends(get_current_user)):
 @router.post("")
 async def create_deduction_bonus(
     req: DeductionBonusCreate,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'mohammed'))
 ):
     """
     Create a new deduction or bonus
-    Sultan/Naif: creates, goes to STAS
-    STAS: can create and execute directly
+    ❌ المشرف لا يستطيع إنشاء عقوبات
+    
+    التسلسل الإداري:
+    1. سلطان/نايف يُنشئ → الحالة: pending_mohammed
+    2. محمد يقرر (خصم من الراتب / ترحيل للمخالصة / رفض)
+    3. STAS ينفذ القرار
     """
     # التحقق من وجود الموظف
     employee = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not employee:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
-    
-    # التحقق من عدم وجود معاملة pending للموظف
-    pending = await db.deductions_bonuses.find_one({
-        "employee_id": req.employee_id,
-        "status": "pending_stas"
-    })
-    if pending:
-        raise HTTPException(
-            status_code=400, 
-            detail="يوجد طلب خصم/مكافأة قيد المعالجة لهذا الموظف. يجب انتظار التنفيذ أولاً."
-        )
     
     # التحقق من نوع العملية
     if req.type not in ["deduction", "bonus"]:
@@ -186,28 +179,47 @@ async def create_deduction_bonus(
         "reason": req.reason,
         "month": req.month,
         "note": req.note,
-        "status": "pending_stas",
+        "status": "pending_mohammed",  # ينتظر قرار محمد
         "created_by": user["user_id"],
         "created_by_name": user.get("full_name_ar") or user.get("full_name"),
         "created_at": now,
+        # قرار محمد
+        "mohammed_decision": None,
+        "mohammed_decision_note": None,
+        "mohammed_decided_at": None,
+        "mohammed_decided_by": None,
+        # التنفيذ
         "executed_by": None,
         "executed_at": None,
         "rejected_by": None,
         "rejected_at": None,
-        "rejection_note": None
+        "rejection_note": None,
+        # للمخالصة
+        "deferred_to_settlement": False,
+        "settled_in_settlement_id": None
     }
-    
-    # إذا كان STAS يمكنه التنفيذ مباشرة
-    if user.get("role") == "stas":
-        item["status"] = "executed"
-        item["executed_by"] = user["user_id"]
-        item["executed_at"] = now
-        
-        # إضافة للسجل المالي
-        await add_to_finance_ledger(item, user)
     
     await db.deductions_bonuses.insert_one(item)
     item.pop("_id", None)
+    
+    # إرسال إشعار لمحمد
+    try:
+        from services.notification_service import create_notification
+        from models.notifications import NotificationType, NotificationPriority
+        await create_notification(
+            recipient_id="",
+            notification_type=NotificationType.ACTION_REQUIRED,
+            title="Deduction Pending Your Approval",
+            title_ar="عقوبة بانتظار موافقتك",
+            message=f"Deduction for {employee.get('full_name_ar', '')}: {req.amount} SAR",
+            message_ar=f"عقوبة على {employee.get('full_name_ar', '')}: {req.amount} ر.س - {req.reason}",
+            priority=NotificationPriority.CRITICAL,
+            recipient_role="mohammed",
+            reference_type="deduction",
+            reference_id=item["id"]
+        )
+    except:
+        pass
     
     return item
 
