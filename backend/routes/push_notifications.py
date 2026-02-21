@@ -120,7 +120,7 @@ async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends
     return {"success": True, "message": "تم تفعيل الإشعارات"}
 
 @router.post("/unsubscribe")
-async def unsubscribe_from_push(data: dict, current_user: dict = Depends(require_auth)):
+async def unsubscribe_from_push(data: dict, current_user: dict = Depends(get_current_user)):
     """Remove push subscription for a user"""
     db = get_db()
     
@@ -132,7 +132,7 @@ async def unsubscribe_from_push(data: dict, current_user: dict = Depends(require
     return {"success": True, "message": "تم إلغاء الإشعارات"}
 
 @router.get("/status")
-async def get_push_status(current_user: dict = Depends(require_auth)):
+async def get_push_status(current_user: dict = Depends(get_current_user)):
     """Get push notification status for current user"""
     db = get_db()
     
@@ -232,7 +232,7 @@ async def send_push_to_admins(title: str, body: str, url: str = "/"):
 
 # Admin endpoint to send test notification
 @router.post("/send")
-async def send_notification(data: PushMessage, current_user: dict = Depends(require_auth)):
+async def send_notification(data: PushMessage, current_user: dict = Depends(get_current_user)):
     """Send push notification (admin only)"""
     if current_user.get("role") not in ["stas", "sultan", "naif"]:
         raise HTTPException(status_code=403, detail="غير مصرح لك بإرسال الإشعارات")
@@ -263,7 +263,7 @@ async def send_notification(data: PushMessage, current_user: dict = Depends(requ
     return result
 
 @router.post("/test")
-async def send_test_notification(current_user: dict = Depends(require_auth)):
+async def send_test_notification(current_user: dict = Depends(get_current_user)):
     """Send test notification to current user"""
     result = await send_push_notification(
         current_user["id"],
