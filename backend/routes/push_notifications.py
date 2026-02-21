@@ -1,5 +1,5 @@
 # Push Notifications API for DAR AL CODE HR OS
-# Uses Firebase Cloud Messaging (FCM)
+# Uses Web Push Protocol with VAPID (Privacy-focused, no Firebase)
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -7,6 +7,10 @@ from typing import Optional
 from datetime import datetime, timezone
 import os
 import json
+import base64
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 from utils.auth import get_current_user
 
@@ -17,48 +21,59 @@ def get_db():
     from server import db
     return db
 
-# Firebase Admin SDK initialization
-firebase_initialized = False
-firebase_app = None
+# VAPID keys storage file
+VAPID_KEYS_FILE = "/app/backend/vapid_keys.json"
 
-def init_firebase():
-    global firebase_initialized, firebase_app
-    if firebase_initialized:
-        return True
+def generate_vapid_keys():
+    """Generate new VAPID key pair"""
+    private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
+    public_key = private_key.public_key()
     
-    try:
-        import firebase_admin
-        from firebase_admin import credentials, messaging
-        
-        # Check if already initialized
-        if firebase_admin._apps:
-            firebase_app = firebase_admin.get_app()
-            firebase_initialized = True
-            return True
-        
-        # Try to initialize with service account
-        service_account_path = "/app/backend/firebase-admin.json"
-        if os.path.exists(service_account_path):
-            cred = credentials.Certificate(service_account_path)
-            firebase_app = firebase_admin.initialize_app(cred)
-            firebase_initialized = True
-            print("[FCM] Firebase Admin SDK initialized with service account")
-            return True
-        else:
-            # Initialize without credentials (limited functionality)
-            firebase_app = firebase_admin.initialize_app()
-            firebase_initialized = True
-            print("[FCM] Firebase Admin SDK initialized without service account")
-            return True
-    except Exception as e:
-        print(f"[FCM] Firebase initialization failed: {e}")
-        return False
+    private_bytes = private_key.private_numbers().private_value.to_bytes(32, 'big')
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
+    )
+    
+    private_b64 = base64.urlsafe_b64encode(private_bytes).decode('utf-8').rstrip('=')
+    public_b64 = base64.urlsafe_b64encode(public_bytes).decode('utf-8').rstrip('=')
+    
+    return {
+        "private_key": private_b64,
+        "public_key": public_b64,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+def get_or_create_vapid_keys():
+    """Get existing VAPID keys or create new ones"""
+    if os.path.exists(VAPID_KEYS_FILE):
+        with open(VAPID_KEYS_FILE, 'r') as f:
+            return json.load(f)
+    
+    keys = generate_vapid_keys()
+    
+    with open(VAPID_KEYS_FILE, 'w') as f:
+        json.dump(keys, f, indent=2)
+    
+    print(f"[Push] Generated new VAPID keys")
+    return keys
+
+# Get VAPID keys at startup
+try:
+    VAPID_KEYS = get_or_create_vapid_keys()
+    print(f"[Push] VAPID keys loaded successfully")
+except Exception as e:
+    print(f"[Push] Error loading VAPID keys: {e}")
+    VAPID_KEYS = generate_vapid_keys()
+
+VAPID_CLAIMS = {
+    "sub": "mailto:admin@daralcode.com"
+}
 
 # Models
 class PushSubscription(BaseModel):
     user_id: str
-    subscription: dict  # Contains endpoint, keys (fcm_token for FCM)
-    type: Optional[str] = "fcm"  # fcm or web_push
+    subscription: dict
 
 class PushMessage(BaseModel):
     user_id: Optional[str] = None
@@ -70,55 +85,31 @@ class PushMessage(BaseModel):
     url: Optional[str] = None
     tag: Optional[str] = None
 
-# Initialize Firebase on module load
-init_firebase()
-
 # Endpoints
 @router.get("/vapid-key")
 async def get_vapid_public_key():
-    """Get Firebase config (for compatibility)"""
-    return {
-        "publicKey": "firebase",
-        "type": "fcm",
-        "projectId": "alcode-co"
-    }
+    """Get the public VAPID key for push subscriptions"""
+    return {"publicKey": VAPID_KEYS["public_key"]}
 
 @router.post("/subscribe")
 async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends(get_current_user)):
     """Save push subscription for a user"""
     db = get_db()
     
-    # Extract FCM token
-    fcm_token = None
-    if data.subscription.get("keys", {}).get("fcm_token"):
-        fcm_token = data.subscription["keys"]["fcm_token"]
-    elif data.subscription.get("endpoint", "").startswith("fcm:"):
-        fcm_token = data.subscription["endpoint"][4:]  # Remove "fcm:" prefix
-    
     subscription_doc = {
         "user_id": data.user_id,
         "endpoint": data.subscription.get("endpoint"),
-        "fcm_token": fcm_token,
         "keys": data.subscription.get("keys"),
-        "type": data.type,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
         "is_active": True
     }
     
-    # Upsert subscription (update if exists, insert if not)
-    if fcm_token:
-        db.push_subscriptions.update_one(
-            {"user_id": data.user_id, "fcm_token": fcm_token},
-            {"$set": subscription_doc},
-            upsert=True
-        )
-    else:
-        db.push_subscriptions.update_one(
-            {"user_id": data.user_id, "endpoint": data.subscription.get("endpoint")},
-            {"$set": subscription_doc},
-            upsert=True
-        )
+    db.push_subscriptions.update_one(
+        {"user_id": data.user_id, "endpoint": data.subscription.get("endpoint")},
+        {"$set": subscription_doc},
+        upsert=True
+    )
     
     return {"success": True, "message": "تم تفعيل الإشعارات"}
 
@@ -150,7 +141,13 @@ async def get_push_status(current_user: dict = Depends(get_current_user)):
     }
 
 async def send_push_notification(user_id: str, title: str, body: str, url: str = "/", tag: str = None):
-    """Send push notification to a specific user via FCM"""
+    """Send push notification to a specific user"""
+    try:
+        from pywebpush import webpush, WebPushException
+    except ImportError:
+        print("[Push] pywebpush not installed")
+        return {"sent": 0, "reason": "library_not_installed"}
+    
     db = get_db()
     
     subscriptions = list(db.push_subscriptions.find({
@@ -162,77 +159,51 @@ async def send_push_notification(user_id: str, title: str, body: str, url: str =
         return {"sent": 0, "reason": "no_subscriptions"}
     
     sent_count = 0
-    failed_tokens = []
+    failed_endpoints = []
     
-    # Try Firebase Admin SDK
-    if firebase_initialized:
+    payload = json.dumps({
+        "title": title,
+        "title_ar": title,
+        "body": body,
+        "body_ar": body,
+        "url": url,
+        "tag": tag or f"notification-{datetime.now(timezone.utc).timestamp()}"
+    })
+    
+    for sub in subscriptions:
         try:
-            from firebase_admin import messaging
+            subscription_info = {
+                "endpoint": sub["endpoint"],
+                "keys": sub["keys"]
+            }
             
-            for sub in subscriptions:
-                fcm_token = sub.get("fcm_token")
-                if not fcm_token:
-                    continue
-                
-                try:
-                    message = messaging.Message(
-                        notification=messaging.Notification(
-                            title=title,
-                            body=body
-                        ),
-                        data={
-                            "url": url,
-                            "tag": tag or f"notification-{datetime.now(timezone.utc).timestamp()}",
-                            "title": title,
-                            "body": body
-                        },
-                        token=fcm_token,
-                        android=messaging.AndroidConfig(
-                            priority="high",
-                            notification=messaging.AndroidNotification(
-                                click_action="OPEN_URL"
-                            )
-                        ),
-                        webpush=messaging.WebpushConfig(
-                            notification=messaging.WebpushNotification(
-                                title=title,
-                                body=body,
-                                icon="/icon-192.png"
-                            ),
-                            fcm_options=messaging.WebpushFCMOptions(
-                                link=url
-                            )
-                        )
-                    )
-                    
-                    response = messaging.send(message)
-                    print(f"[FCM] Message sent: {response}")
-                    sent_count += 1
-                    
-                except Exception as e:
-                    print(f"[FCM] Failed to send to token: {e}")
-                    failed_tokens.append(fcm_token)
-                    
-                    # Mark as inactive if token is invalid
-                    if "not registered" in str(e).lower() or "invalid" in str(e).lower():
-                        db.push_subscriptions.update_one(
-                            {"fcm_token": fcm_token},
-                            {"$set": {"is_active": False}}
-                        )
+            webpush(
+                subscription_info=subscription_info,
+                data=payload,
+                vapid_private_key=VAPID_KEYS["private_key"],
+                vapid_claims=VAPID_CLAIMS
+            )
+            sent_count += 1
             
-            return {"sent": sent_count, "failed": len(failed_tokens)}
+        except WebPushException as e:
+            print(f"[Push] Failed to send to {sub['endpoint']}: {e}")
+            failed_endpoints.append(sub["endpoint"])
             
+            if e.response and e.response.status_code == 410:
+                db.push_subscriptions.update_one(
+                    {"endpoint": sub["endpoint"]},
+                    {"$set": {"is_active": False}}
+                )
         except Exception as e:
-            print(f"[FCM] Error sending notifications: {e}")
-            return {"sent": 0, "reason": str(e)}
-    else:
-        return {"sent": 0, "reason": "firebase_not_initialized"}
+            print(f"[Push] Error sending notification: {e}")
+            failed_endpoints.append(sub["endpoint"])
+    
+    return {"sent": sent_count, "failed": len(failed_endpoints)}
 
 async def send_push_to_role(role: str, title: str, body: str, url: str = "/"):
     """Send push notification to all users with a specific role"""
     db = get_db()
     
-    # Get all users with this role
     users = list(db.users.find({"role": role, "is_active": True}, {"id": 1}))
     
     total_sent = 0
@@ -243,7 +214,7 @@ async def send_push_to_role(role: str, title: str, body: str, url: str = "/"):
     return {"total_sent": total_sent, "users_count": len(users)}
 
 async def send_push_to_admins(title: str, body: str, url: str = "/"):
-    """Send push notification to all admin users (stas, sultan, naif)"""
+    """Send push notification to all admin users"""
     admin_roles = ["stas", "sultan", "naif"]
     total_sent = 0
     
@@ -253,7 +224,6 @@ async def send_push_to_admins(title: str, body: str, url: str = "/"):
     
     return {"total_sent": total_sent}
 
-# Admin endpoint to send test notification
 @router.post("/send")
 async def send_notification(data: PushMessage, current_user: dict = Depends(get_current_user)):
     """Send push notification (admin only)"""
@@ -290,8 +260,8 @@ async def send_test_notification(current_user: dict = Depends(get_current_user))
     """Send test notification to current user"""
     result = await send_push_notification(
         current_user["id"],
-        "اختبار الإشعارات",
-        "هذا إشعار تجريبي من نظام دار الكود",
+        "دار الكود للاستشارات الهندسية",
+        "هذا إشعار تجريبي - Push Notifications تعمل بنجاح!",
         "/",
         "test-notification"
     )
