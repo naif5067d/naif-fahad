@@ -1,6 +1,7 @@
 // DAR AL CODE - Service Worker for PWA & Push Notifications
-const CACHE_NAME = 'dar-alcode-v1';
-const OFFLINE_URL = '/';
+// Uses Web Push API with VAPID (Privacy-focused, no Firebase)
+
+const CACHE_NAME = 'dar-alcode-v2';
 
 // Assets to cache for offline support
 const ASSETS_TO_CACHE = [
@@ -48,11 +49,9 @@ self.addEventListener('fetch', (event) => {
         return response;
       }
       return fetch(event.request).then((networkResponse) => {
-        // Don't cache if not successful
         if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
         }
-        // Cache successful responses
         const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
@@ -60,20 +59,19 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       });
     }).catch(() => {
-      // Return offline page for navigation requests
       if (event.request.mode === 'navigate') {
-        return caches.match(OFFLINE_URL);
+        return caches.match('/');
       }
     })
   );
 });
 
-// Push notification event
+// Push notification event - Web Push API
 self.addEventListener('push', (event) => {
   console.log('[SW] Push received:', event);
 
   let notificationData = {
-    title: 'DAR AL CODE',
+    title: 'دار الكود للاستشارات الهندسية',
     body: 'لديك إشعار جديد',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
@@ -89,13 +87,12 @@ self.addEventListener('push', (event) => {
       const data = event.data.json();
       notificationData = {
         ...notificationData,
-        title: data.title || data.title_ar || notificationData.title,
-        body: data.body || data.message_ar || data.message || notificationData.body,
+        title: data.title_ar || data.title || notificationData.title,
+        body: data.body_ar || data.body || data.message_ar || data.message || notificationData.body,
         tag: data.tag || data.id || notificationData.tag,
         data: { url: data.url || data.reference_url || '/' }
       };
     } catch (e) {
-      // If not JSON, use text
       notificationData.body = event.data.text();
     }
   }
@@ -112,7 +109,7 @@ self.addEventListener('push', (event) => {
       dir: 'rtl',
       lang: 'ar',
       actions: [
-        { action: 'open', title: 'فتح', icon: '/icon-192.png' },
+        { action: 'open', title: 'فتح' },
         { action: 'close', title: 'إغلاق' }
       ]
     })
@@ -129,7 +126,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already a window/tab open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.focus();
@@ -139,7 +135,6 @@ self.addEventListener('notificationclick', (event) => {
           return;
         }
       }
-      // Open a new window/tab
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
@@ -147,9 +142,4 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Notification close event
-self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification closed:', event);
-});
-
-console.log('[SW] DAR AL CODE Service Worker loaded');
+console.log('[SW] DAR AL CODE Service Worker loaded - Privacy Mode');
