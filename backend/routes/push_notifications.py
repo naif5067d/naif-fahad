@@ -1,5 +1,5 @@
 # Push Notifications API for DAR AL CODE HR OS
-# Uses Web Push Protocol with VAPID (no Firebase)
+# Uses Firebase Cloud Messaging (FCM)
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
@@ -7,10 +7,6 @@ from typing import Optional
 from datetime import datetime, timezone
 import os
 import json
-import base64
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 
 from utils.auth import get_current_user
 
@@ -21,59 +17,42 @@ def get_db():
     from server import db
     return db
 
-# VAPID keys storage file
-VAPID_KEYS_FILE = "/app/backend/vapid_keys.json"
+# Firebase Admin SDK initialization
+firebase_initialized = False
+firebase_app = None
 
-def generate_vapid_keys():
-    """Generate new VAPID key pair"""
-    # Generate EC private key
-    private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
-    public_key = private_key.public_key()
+def init_firebase():
+    global firebase_initialized, firebase_app
+    if firebase_initialized:
+        return True
     
-    # Get raw bytes
-    private_bytes = private_key.private_numbers().private_value.to_bytes(32, 'big')
-    public_bytes = public_key.public_bytes(
-        encoding=serialization.Encoding.X962,
-        format=serialization.PublicFormat.UncompressedPoint
-    )
-    
-    # Convert to URL-safe base64
-    private_b64 = base64.urlsafe_b64encode(private_bytes).decode('utf-8').rstrip('=')
-    public_b64 = base64.urlsafe_b64encode(public_bytes).decode('utf-8').rstrip('=')
-    
-    return {
-        "private_key": private_b64,
-        "public_key": public_b64,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-
-def get_or_create_vapid_keys():
-    """Get existing VAPID keys or create new ones"""
-    if os.path.exists(VAPID_KEYS_FILE):
-        with open(VAPID_KEYS_FILE, 'r') as f:
-            return json.load(f)
-    
-    # Generate new keys
-    keys = generate_vapid_keys()
-    
-    # Save keys
-    with open(VAPID_KEYS_FILE, 'w') as f:
-        json.dump(keys, f, indent=2)
-    
-    print(f"[Push] Generated new VAPID keys")
-    return keys
-
-# Get VAPID keys at startup
-try:
-    VAPID_KEYS = get_or_create_vapid_keys()
-    print(f"[Push] VAPID keys loaded successfully")
-except Exception as e:
-    print(f"[Push] Error loading VAPID keys: {e}")
-    VAPID_KEYS = generate_vapid_keys()
-
-VAPID_CLAIMS = {
-    "sub": "mailto:admin@daralcode.com"
-}
+    try:
+        import firebase_admin
+        from firebase_admin import credentials, messaging
+        
+        # Check if already initialized
+        if firebase_admin._apps:
+            firebase_app = firebase_admin.get_app()
+            firebase_initialized = True
+            return True
+        
+        # Try to initialize with service account
+        service_account_path = "/app/backend/firebase-admin.json"
+        if os.path.exists(service_account_path):
+            cred = credentials.Certificate(service_account_path)
+            firebase_app = firebase_admin.initialize_app(cred)
+            firebase_initialized = True
+            print("[FCM] Firebase Admin SDK initialized with service account")
+            return True
+        else:
+            # Initialize without credentials (limited functionality)
+            firebase_app = firebase_admin.initialize_app()
+            firebase_initialized = True
+            print("[FCM] Firebase Admin SDK initialized without service account")
+            return True
+    except Exception as e:
+        print(f"[FCM] Firebase initialization failed: {e}")
+        return False
 
 # Models
 class PushSubscription(BaseModel):
