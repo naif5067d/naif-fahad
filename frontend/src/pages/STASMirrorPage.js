@@ -1833,7 +1833,7 @@ export default function STASMirrorPage() {
         <TabsContent value="maintenance" className="mt-4 space-y-4">
           {/* Version Management */}
           <Card className="border-2 border-accent/30 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-accent/10 to-violet-50">
+            <CardHeader className="bg-gradient-to-r from-accent/10 to-accent/5">
               <CardTitle className="text-base flex items-center justify-between">
                 <span className="flex items-center gap-2 text-accent">
                   <Tag size={20} />
