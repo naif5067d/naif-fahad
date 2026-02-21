@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, User, AlertCircle, Eye, EyeOff, Globe, Loader2 } from 'lucide-react';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+
 export default function LoginPage() {
   const { login } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
@@ -16,6 +18,34 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // إعدادات الشركة
+  const [settings, setSettings] = useState({
+    logo_url: null,
+    side_image_url: null,
+    welcome_text_ar: 'أنتم الدار ونحن الكود',
+    welcome_text_en: 'You are the Home, We are the Code',
+    primary_color: '#1E3A5F',
+    secondary_color: '#A78BFA',
+    company_name_ar: 'شركة دار الأركان',
+    company_name_en: 'Dar Al Arkan'
+  });
+
+  // تحميل إعدادات الشركة (بدون مصادقة)
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/company-settings/public`);
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(prev => ({ ...prev, ...data }));
+        }
+      } catch (err) {
+        console.log('Using default settings');
+      }
+    };
+    loadSettings();
+  }, []);
 
   // تحميل بيانات "تذكرني" من localStorage
   useEffect(() => {
@@ -62,11 +92,25 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Logo & Company Name */}
           <div className="mb-10 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[hsl(var(--navy))] to-accent mx-auto mb-4 flex items-center justify-center shadow-lg shadow-[hsl(var(--navy)/0.2)]">
-              <span className="text-3xl font-bold text-white">د</span>
-            </div>
+            {settings.logo_url ? (
+              <img 
+                src={settings.logo_url} 
+                alt="Company Logo" 
+                className="w-20 h-20 mx-auto mb-4 object-contain rounded-2xl"
+              />
+            ) : (
+              <div 
+                className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+                style={{ 
+                  background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`,
+                  boxShadow: `0 10px 15px -3px ${settings.primary_color}33`
+                }}
+              >
+                <span className="text-3xl font-bold text-white">د</span>
+              </div>
+            )}
             <h1 className="text-2xl font-bold text-slate-800">
-              {lang === 'ar' ? 'دار الكود' : 'DAR AL CODE'}
+              {lang === 'ar' ? settings.company_name_ar : settings.company_name_en}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
               {lang === 'ar' ? 'للاستشارات الهندسية' : 'Engineering Consultants'}
@@ -153,7 +197,11 @@ export default function LoginPage() {
               <Button 
                 data-testid="login-submit" 
                 type="submit" 
-                className="w-full h-11 bg-gradient-to-r from-[hsl(var(--navy))] to-accent hover:from-[hsl(var(--navy-dark))] hover:to-[hsl(var(--lavender))] text-white font-medium shadow-lg shadow-[hsl(var(--navy)/0.2)]" 
+                className="w-full h-11 text-white font-medium shadow-lg" 
+                style={{ 
+                  background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`,
+                  boxShadow: `0 10px 15px -3px ${settings.primary_color}33`
+                }}
                 disabled={loading}
               >
                 {loading ? (
@@ -188,47 +236,66 @@ export default function LoginPage() {
       </div>
 
       {/* Right: Decorative panel (desktop only) */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-[hsl(var(--navy))] to-accent items-center justify-center p-12 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full" />
-          <div className="absolute bottom-20 right-20 w-48 h-48 border-4 border-white rounded-full" />
-          <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white rounded-full" />
-        </div>
+      <div 
+        className="hidden lg:flex lg:flex-1 items-center justify-center p-12 relative overflow-hidden"
+        style={{ 
+          background: settings.side_image_url 
+            ? `url(${settings.side_image_url}) center/cover no-repeat`
+            : `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`
+        }}
+      >
+        {/* Overlay for side image */}
+        {settings.side_image_url && (
+          <div className="absolute inset-0 bg-black/40" />
+        )}
+        
+        {/* Background Pattern (only if no side image) */}
+        {!settings.side_image_url && (
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full" />
+            <div className="absolute bottom-20 right-20 w-48 h-48 border-4 border-white rounded-full" />
+            <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white rounded-full" />
+          </div>
+        )}
         
         <div className="text-center max-w-md relative z-10">
-          <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur mx-auto mb-8 flex items-center justify-center border border-white/20">
-            <span className="text-4xl font-bold text-white">د</span>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR Management System'}
-          </h2>
-          <p className="text-white/80 leading-relaxed text-lg">
-            {lang === 'ar'
-              ? 'نظام متكامل لإدارة الموظفين والحضور والمعاملات المالية مع أعلى معايير الأمان والموثوقية'
-              : 'Comprehensive employee management system with attendance tracking, financial transactions, and enterprise-grade security'
-            }
+          {!settings.side_image_url && (
+            <>
+              <div className="w-24 h-24 rounded-3xl bg-white/10 backdrop-blur mx-auto mb-8 flex items-center justify-center border border-white/20">
+                <span className="text-4xl font-bold text-white">د</span>
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-4">
+                {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR Management System'}
+              </h2>
+            </>
+          )}
+          
+          {/* Welcome Text */}
+          <p className="text-white/90 leading-relaxed text-xl font-medium drop-shadow-lg">
+            {lang === 'ar' ? settings.welcome_text_ar : settings.welcome_text_en}
           </p>
           
-          {/* Features List */}
-          <div className="mt-8 grid grid-cols-2 gap-4 text-white/90 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{lang === 'ar' ? 'إدارة الحضور' : 'Attendance'}</span>
+          {/* Features List (only if no side image) */}
+          {!settings.side_image_url && (
+            <div className="mt-8 grid grid-cols-2 gap-4 text-white/90 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span>{lang === 'ar' ? 'إدارة الحضور' : 'Attendance'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span>{lang === 'ar' ? 'المعاملات' : 'Transactions'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span>{lang === 'ar' ? 'العقود' : 'Contracts'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span>{lang === 'ar' ? 'التقارير' : 'Reports'}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{lang === 'ar' ? 'المعاملات' : 'Transactions'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{lang === 'ar' ? 'العقود' : 'Contracts'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span>{lang === 'ar' ? 'التقارير' : 'Reports'}</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
