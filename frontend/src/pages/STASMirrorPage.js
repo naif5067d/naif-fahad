@@ -746,7 +746,7 @@ export default function STASMirrorPage() {
                       onChange={(e) => setSelectedEmployeeFilter(e.target.value)}
                       data-testid="employee-filter-select"
                     >
-                      <option value="all">{lang === 'ar' ? '👥 جميع الموظفين' : '👥 All Employees'}</option>
+                      <option value="all">{lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}</option>
                       {employees.map(emp => (
                         <option key={emp.id} value={emp.id}>{emp.full_name_ar || emp.full_name}</option>
                       ))}
