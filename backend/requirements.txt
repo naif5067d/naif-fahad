@@ -150,3 +150,5 @@ websockets==15.0.1
 yarl==1.22.0
 zipp==3.23.0
 zopfli==0.4.1
+cryptography==46.0.4
+pywebpush==2.3.0
