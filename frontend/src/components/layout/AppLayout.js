@@ -395,30 +395,30 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-lang" 
                 onClick={toggleLang} 
-                className="p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors flex-shrink-0"
+                className="p-2.5 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0 touch-target"
                 title={t('lang.toggle')}
               >
-                <Globe size={18} />
+                <Globe size={20} />
               </button>
 
               {/* Theme toggle */}
               <button 
                 data-testid="toggle-theme" 
                 onClick={toggleTheme} 
-                className="p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors flex-shrink-0"
+                className="p-2.5 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0 touch-target"
                 title={t('theme.toggle')}
               >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
 
               {/* Logout button */}
               <button 
                 data-testid="logout-btn" 
                 onClick={logout} 
-                className="p-2 rounded-xl hover:bg-red-50 hover:text-red-600 text-muted-foreground transition-colors flex-shrink-0"
+                className="p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors flex-shrink-0 touch-target"
                 title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
               >
-                <LogOut size={18} />
+                <LogOut size={20} />
               </button>
             </div>
           </div>
