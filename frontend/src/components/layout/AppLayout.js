@@ -47,13 +47,13 @@ const PATHS = {
 };
 
 const ROLE_COLORS = {
-  employee: { bg: '#3B82F6', text: '#3B82F6' },
-  supervisor: { bg: '#1D4ED8', text: '#1D4ED8' },
-  sultan: { bg: '#F97316', text: '#F97316' },
-  mohammed: { bg: '#DC2626', text: '#DC2626' },
-  stas: { bg: '#A78BFA', text: '#A78BFA' },
-  naif: { bg: '#22C55E', text: '#22C55E' },
-  salah: { bg: '#14B8A6', text: '#14B8A6' },
+  employee: { bg: 'hsl(217, 91%, 60%)', text: 'hsl(217, 91%, 60%)' },
+  supervisor: { bg: 'hsl(222, 47%, 24%)', text: 'hsl(222, 47%, 24%)' },
+  sultan: { bg: 'hsl(262, 83%, 76%)', text: 'hsl(262, 83%, 76%)' },
+  mohammed: { bg: 'hsl(0, 84%, 60%)', text: 'hsl(0, 84%, 60%)' },
+  stas: { bg: 'hsl(262, 83%, 76%)', text: 'hsl(262, 83%, 76%)' },
+  naif: { bg: 'hsl(160, 84%, 39%)', text: 'hsl(160, 84%, 39%)' },
+  salah: { bg: 'hsl(160, 84%, 39%)', text: 'hsl(160, 84%, 39%)' },
 };
 
 const ROLE_LABELS = {
