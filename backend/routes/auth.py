@@ -102,7 +102,7 @@ async def list_all_users(user=Depends(get_current_user)):
 
 
 @router.post("/switch/{user_id}")
-async def switch_user(user_id: str, current_user=Depends(get_current_user)):
+async def switch_user(user_id: str, request: Request, current_user=Depends(get_current_user)):
     """Switch to a user by ID - STAS only"""
     # فقط STAS يمكنه تبديل المستخدمين
     if current_user.get('role') != 'stas':
@@ -114,14 +114,47 @@ async def switch_user(user_id: str, current_user=Depends(get_current_user)):
     if not user.get('is_active', True):
         raise HTTPException(status_code=403, detail="الحساب معطل")
 
+    session_id = str(uuid.uuid4())
+    employee_id = user.get('employee_id') or user['id']
+    
     token = create_access_token({
         "user_id": user['id'],
         "role": user['role'],
         "username": user['username'],
         "full_name": user['full_name'],
-        "employee_id": user.get('employee_id'),
+        "employee_id": employee_id,
+        "session_id": session_id,
         "switched_by": current_user.get('user_id')  # تسجيل من قام بالتبديل
     })
+    
+    # تسجيل الجلسة عند التبديل
+    user_agent = request.headers.get("user-agent", "")
+    is_mobile = any(x in user_agent.lower() for x in ['mobile', 'android', 'iphone', 'ipad'])
+    browser = "Chrome" if "chrome" in user_agent.lower() else "Safari" if "safari" in user_agent.lower() else "Firefox" if "firefox" in user_agent.lower() else "Other"
+    os_name = "iOS" if "iphone" in user_agent.lower() or "ipad" in user_agent.lower() else "Android" if "android" in user_agent.lower() else "Windows" if "windows" in user_agent.lower() else "Mac" if "mac" in user_agent.lower() else "Other"
+    
+    try:
+        await db.login_sessions.insert_one({
+            "id": str(uuid.uuid4()),
+            "employee_id": employee_id,
+            "username": user['username'],
+            "role": user['role'],
+            "session_id": session_id,
+            "device_id": None,
+            "login_at": datetime.now(timezone.utc).isoformat(),
+            "logout_at": None,
+            "device_type": "mobile" if is_mobile else "desktop",
+            "device_name": os_name,
+            "browser": browser,
+            "os": os_name,
+            "is_mobile": is_mobile,
+            "status": "active",
+            "switched_by": current_user.get('user_id'),
+            "login_method": "switch"
+        })
+        logger.info(f"Switch login session created for {employee_id} by {current_user.get('user_id')}")
+    except Exception as e:
+        logger.error(f"Failed to create switch login session: {e}")
 
     return {
         "token": token,
