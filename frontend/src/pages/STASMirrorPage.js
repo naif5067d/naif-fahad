@@ -1830,34 +1830,139 @@ export default function STASMirrorPage() {
 
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="mt-4 space-y-4">
-          {/* Purge Transactions */}
-          <Card className="border border-destructive/30 shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2 text-destructive">
-                <AlertTriangle size={18} />
-                {t('stas.purgeTransactions')}
+          {/* Version Management */}
+          <Card className="border-2 border-indigo-200 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-indigo-50 to-violet-50">
+              <CardTitle className="text-base flex items-center justify-between">
+                <span className="flex items-center gap-2 text-indigo-700">
+                  <Tag size={20} />
+                  {lang === 'ar' ? 'إدارة إصدار التطبيق' : 'App Version Management'}
+                </span>
+                <span className="px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-bold">
+                  v{versionInfo?.version || '1.0.0'}
+                </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t('stas.purgeWarning')}</p>
-              <div className="flex gap-3">
-                <Input 
-                  data-testid="purge-confirm-input"
-                  placeholder={t('stas.confirmPurge')}
-                  value={purgeConfirm}
-                  onChange={e => setPurgeConfirm(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  variant="destructive" 
-                  onClick={purgeTransactions}
-                  disabled={purging || purgeConfirm !== 'CONFIRM'}
-                  data-testid="purge-transactions-btn"
-                >
-                  {purging ? <Loader2 size={14} className="animate-spin me-1" /> : <Trash2 size={14} className="me-1" />}
-                  {t('stas.purgeTransactions')}
-                </Button>
+            <CardContent className="space-y-4 pt-4">
+              {/* Current Version Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl border">
+                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الإصدار الحالي' : 'Current Version'}</p>
+                  <p className="text-2xl font-bold text-indigo-600">{versionInfo?.version || '1.0.0'}</p>
+                  {versionInfo?.updated_at && (
+                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                      <Clock size={12} />
+                      {new Date(versionInfo.updated_at).toLocaleString('ar-EG')}
+                    </p>
+                  )}
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border">
+                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'ملاحظات الإصدار' : 'Release Notes'}</p>
+                  <p className="text-sm">{lang === 'ar' ? versionInfo?.release_notes_ar : versionInfo?.release_notes_en || '-'}</p>
+                </div>
               </div>
+              
+              {/* Version History */}
+              {versionInfo?.version_history && versionInfo.version_history.length > 0 && (
+                <div className="p-4 bg-slate-50 rounded-xl border">
+                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <History size={14} />
+                    {lang === 'ar' ? 'سجل الإصدارات' : 'Version History'}
+                  </p>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {versionInfo.version_history.slice().reverse().map((v, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm px-3 py-2 bg-white rounded border">
+                        <span className="font-mono text-xs">v{v.version}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {v.updated_at ? new Date(v.updated_at).toLocaleDateString('ar-EG') : '-'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Update Version Dialog */}
+              <Dialog open={versionDialogOpen} onOpenChange={setVersionDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                    data-testid="open-version-dialog-btn"
+                  >
+                    <RefreshCw size={18} className="ml-2" />
+                    {lang === 'ar' ? 'تحديث الإصدار' : 'Update Version'}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Tag size={20} className="text-indigo-600" />
+                      {lang === 'ar' ? 'تحديث إصدار التطبيق' : 'Update App Version'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {lang === 'ar' 
+                        ? 'أدخل رقم الإصدار الجديد وملاحظات التحديث'
+                        : 'Enter the new version number and release notes'}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div>
+                      <Label className="text-base font-semibold">{lang === 'ar' ? 'رقم الإصدار' : 'Version Number'}</Label>
+                      <Input
+                        value={newVersion}
+                        onChange={(e) => setNewVersion(e.target.value)}
+                        placeholder="1.2.0"
+                        className="mt-2 text-lg font-mono"
+                        data-testid="version-number-input"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">{lang === 'ar' ? 'ملاحظات التحديث (عربي)' : 'Release Notes (Arabic)'}</Label>
+                      <Input
+                        value={releaseNotesAr}
+                        onChange={(e) => setReleaseNotesAr(e.target.value)}
+                        placeholder={lang === 'ar' ? 'ما الجديد في هذا الإصدار؟' : 'What\'s new in Arabic?'}
+                        className="mt-2"
+                        data-testid="release-notes-ar-input"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">{lang === 'ar' ? 'ملاحظات التحديث (إنجليزي)' : 'Release Notes (English)'}</Label>
+                      <Input
+                        value={releaseNotesEn}
+                        onChange={(e) => setReleaseNotesEn(e.target.value)}
+                        placeholder={lang === 'ar' ? 'What\'s new?' : 'What\'s new in this version?'}
+                        className="mt-2"
+                        dir="ltr"
+                        data-testid="release-notes-en-input"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setVersionDialogOpen(false)}
+                      className="flex-1"
+                    >
+                      {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                    </Button>
+                    <Button
+                      onClick={handleUpdateVersion}
+                      disabled={updatingVersion || !newVersion.trim()}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                      data-testid="save-version-btn"
+                    >
+                      {updatingVersion ? (
+                        <Loader2 size={16} className="animate-spin ml-2" />
+                      ) : (
+                        <CheckCircle size={16} className="ml-2" />
+                      )}
+                      {lang === 'ar' ? 'حفظ' : 'Save'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
