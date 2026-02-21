@@ -1,85 +1,76 @@
-# DAR AL CODE HR OS - Product Requirements Document
+# HR Management System - PRD
 
 ## Original Problem Statement
-Mobile-first, enterprise-grade HR operating system for Dar Al Code engineering consultancy. Strict RBAC, immutable transactions, Arabic-first UI.
+نظام إدارة موارد بشرية شامل يتضمن:
+- إدارة الموظفين والعقود
+- نظام الحضور والانصراف مع GPS
+- إدارة الإجازات والأذونات
+- نظام المعاملات والموافقات
+- لوحة تحكم إدارية (STAS Mirror)
 
-## Core Rule
-Any transaction not executed by STAS is not considered valid.
+## Core Architecture
+- **Backend**: FastAPI + MongoDB
+- **Frontend**: React + Shadcn/UI + TailwindCSS
+- **Database**: MongoDB (test_database)
+  - العقود في جدول `contracts_v2`
+  - الموظفين في جدول `employees`
 
-## Architecture
-- **Backend:** FastAPI + MongoDB + JWT RBAC
-- **Frontend:** React + Tailwind CSS + shadcn/ui
-- **Map:** react-leaflet + OpenStreetMap
-- **Push Notifications:** Web Push API with VAPID (Privacy-focused, no Firebase)
+## What's Been Implemented
 
-## Design System
-- **Colors:** 
-  - Navy: #1E3A5F (primary)
-  - Black: #0A0A0B (text)
-  - Gray: #6B7280 (muted)
-  - Lavender: #A78BFA (accent)
-- **Fonts:** Manrope (English), IBM Plex Sans Arabic (Arabic)
-- **Components:** Gradient hero cards, card-based layouts, bottom mobile nav
-- **Timezone:** Asia/Riyadh (UTC+3) for all date/time display
+### 2026-02-21
+1. **إصلاح التوقيت (P0)** ✅
+   - تحويل جميع أوقات الحضور من UTC إلى توقيت الرياض (+03:00)
+   - تعديل `/api/attendance/admin` للعرض الصحيح
 
-## Roles
-stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
+2. **إصلاح مشكلة "لا يوجد عقد نشط" (P0)** ✅
+   - **السبب الجذري**: كان الكود يبحث في `contracts_v2` بشرط `is_active: True`
+   - لكن العقود في قاعدة البيانات لديها `is_active: None`
+   - **الإصلاح**: إزالة شرط `is_active: True` من الاستعلام
+   - **الملف**: `/app/backend/utils/attendance_rules.py` (السطر 287-291)
 
----
+3. **ميزة تحديث الإصدار** ✅
+   - إضافة إدارة إصدار التطبيق في صفحة STAS Mirror
+   - استبدال "حذف المعاملات" بـ "إدارة الإصدار"
+   - API: `/api/settings/version`
 
-## Latest Implementation (2025-02-21)
+### Session Fixes
+- إعادة تعيين كلمات مرور الموظفين (المستخدمين 10 و 16)
 
-### PWA with Company Branding
-- **manifest.json**: App name "DAR ALCODE CO" with Arabic description
-- **Icons**: Official company logo on black background (192x192, 512x512, favicon)
-- **iOS Support**: apple-mobile-web-app meta tags
-- **When added to home screen**: Shows "DAR ALCODE CO" with company logo
+## Database Schema Notes
+```
+contracts_v2:
+  - status: "active" | "terminated" | "pending"
+  - is_active: قد يكون None (لا تعتمد عليه!)
+  - استخدم status: "active" للتحقق من العقد النشط
+```
 
-### Push Notifications (Privacy Mode)
-- **Web Push API** with VAPID keys (no Firebase)
-- **100% Privacy**: All data stays on your server
-- **Backend**: `/api/push/*` endpoints
-- **Service Worker**: `/sw.js` for background notifications
-- **Supported**: Desktop (all browsers) + Android + iPhone (PWA only)
+## API Endpoints
+- `POST /api/auth/login` - تسجيل الدخول
+- `POST /api/attendance/check-in` - تسجيل الحضور
+- `GET /api/attendance/admin` - سجل الحضور للإدارة
+- `GET /api/settings/version` - إصدار التطبيق
+- `PUT /api/settings/version` - تحديث الإصدار (STAS فقط)
 
-### Header Responsive Fix
-- Fixed icons disappearing on mobile viewports
-- All header controls visible on all screen sizes
+## Test Credentials
+- Admin: `stas` / `123456`
+- Employee: `16` / `123456` (محمد فوزي)
+- Employee: `10` / `123456` (وليد صابر)
 
----
+## Prioritized Backlog
 
-## Key API Endpoints
+### P0 (Critical) - COMPLETED
+- [x] إصلاح التوقيت
+- [x] إصلاح "لا يوجد عقد نشط"
 
-### Push Notifications
-- `GET /api/push/vapid-key` - Get public VAPID key
-- `POST /api/push/subscribe` - Subscribe to push
-- `POST /api/push/unsubscribe` - Unsubscribe
-- `GET /api/push/status` - Check subscription status
-- `POST /api/push/send` - Send notification (admin)
-- `POST /api/push/test` - Send test notification
+### P1 (High)
+- [ ] دمج صفحتي "ماليتي" و "الحضور/الجزاءات"
+- [ ] واجهة التقييم السنوي للأداء
 
----
+### P2 (Medium)
+- [ ] نظام القروض
+- [ ] إظهار الميزات المخفية في الواجهة
+- [ ] تحسين صلاحيات المشرفين
 
-## Collections
-
-### New Collection:
-- `push_subscriptions` - User push notification subscriptions
-
----
-
-## iPhone Instructions
-1. Open website in Safari
-2. Tap Share button (⬆️)
-3. Select "Add to Home Screen"
-4. App appears with company logo
-5. Enable notifications from inside the app
-
----
-
-## Credentials for Testing
-- STAS: `stas` / `123456`
-- All users: password `123456`
-
----
-
-Version: 37.2 (2025-02-21)
+## Known Issues
+- تحذير bcrypt في السجلات (لا يؤثر على الوظائف)
+- GPS مطلوب لتسجيل الحضور (حسب التصميم)
