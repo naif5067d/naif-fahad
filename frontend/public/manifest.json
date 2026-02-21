@@ -4,7 +4,7 @@
   "description": "نظام إدارة الموارد البشرية - دار الكود للاستشارات الهندسية",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1E3A5F",
+  "background_color": "#FFFFFF",
   "theme_color": "#1E3A5F",
   "orientation": "portrait-primary",
   "scope": "/",
