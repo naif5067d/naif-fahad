@@ -215,8 +215,7 @@ class DayResolverV2:
             if not self.contract:
                 self.contract = await db.contracts_v2.find_one({
                     "employee_id": self.employee_id,
-                    "status": "active",
-                    "is_active": True
+                    "status": "active"
                 }, {"_id": 0})
             
             # تحميل موقع العمل - البحث بطرق متعددة
