@@ -432,18 +432,22 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions */}
+      {/* Quick Actions - Company Colors */}
       <div>
         <h2 className="font-semibold mb-3">{lang === 'ar' ? 'الخدمات' : 'Services'}</h2>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
           {quickActions.map(action => {
             const Icon = action.icon;
             return (
-              <button key={action.key} onClick={() => navigate(action.path)} className="quick-action">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-1" style={{ background: `${action.color}15` }}>
-                  <Icon size={18} style={{ color: action.color }} />
+              <button 
+                key={action.key} 
+                onClick={() => navigate(action.path)} 
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-card border border-border hover:border-[hsl(var(--lavender)/0.4)] hover:bg-[hsl(var(--lavender)/0.05)] active:scale-[0.98] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[hsl(var(--navy)/0.08)] flex items-center justify-center">
+                  <Icon size={20} className="text-[hsl(var(--navy))]" />
                 </div>
-                <span className="text-[10px] font-medium text-center leading-tight">{t(`nav.${action.key}`)}</span>
+                <span className="text-[10px] font-medium text-center leading-tight text-muted-foreground">{t(`nav.${action.key}`)}</span>
               </button>
             );
           })}
