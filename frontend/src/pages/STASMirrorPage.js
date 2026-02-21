@@ -726,7 +726,7 @@ export default function STASMirrorPage() {
       </div>
 
       <Tabs defaultValue="deductions" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 h-12 p-1 bg-slate-100 rounded-xl mb-6">
+        <TabsList className="grid w-full grid-cols-7 h-12 p-1 bg-slate-100 rounded-xl mb-6">
           <TabsTrigger value="deductions" data-testid="tab-deductions" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <DollarSign size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'الخصومات' : 'Deductions'}</span>
@@ -761,6 +761,10 @@ export default function STASMirrorPage() {
           <TabsTrigger value="holidays" data-testid="tab-holidays" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <Calendar size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'العطل' : 'Holidays'}</span>
+          </TabsTrigger>
+          <TabsTrigger value="company-settings" data-testid="tab-company-settings" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Shield size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'الهوية' : 'Branding'}</span>
           </TabsTrigger>
           <TabsTrigger value="maintenance" data-testid="tab-maintenance" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <Settings size={16} />
