@@ -234,50 +234,50 @@ export default function LeavePage() {
           {isEmployee ? (
             /* ====== عرض الموظف: مختصر ====== */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* رصيد الاعتيادية */}
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5">
+              {/* رصيد الاعتيادية - ألوان الشركة */}
+              <div className="bg-[hsl(var(--navy)/0.05)] dark:bg-[hsl(var(--navy)/0.15)] border border-[hsl(var(--navy)/0.2)] rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-emerald-500 rounded-lg">
+                  <div className="p-2 bg-[hsl(var(--navy))] rounded-lg">
                     <CalendarCheck size={20} className="text-white" />
                   </div>
-                  <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                  <p className="text-sm font-semibold text-[hsl(var(--navy))] dark:text-slate-200">
                     {lang === 'ar' ? 'رصيد الاعتيادية' : 'Annual Balance'}
                   </p>
                 </div>
-                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                <p className="text-3xl font-bold text-[hsl(var(--navy))] dark:text-slate-100">
                   {balance.annual?.available ?? balance.annual?.balance ?? 0}
                   <span className="text-base font-normal ms-1">{lang === 'ar' ? 'يوم' : 'days'}</span>
                 </p>
                 {/* عرض مصدر الرصيد */}
                 {balance.annual?.is_migrated ? (
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                  <p className="text-xs text-[hsl(var(--navy)/0.7)] dark:text-slate-400 mt-1">
                     {lang === 'ar' 
                       ? `رصيد افتتاحي: ${balance.annual.opening_balance || balance.annual.earned_to_date} يوم` 
                       : `Opening balance: ${balance.annual.opening_balance || balance.annual.earned_to_date} days`}
                   </p>
                 ) : balance.annual?.earned_to_date ? (
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                  <p className="text-xs text-[hsl(var(--navy)/0.7)] dark:text-slate-400 mt-1">
                     {lang === 'ar' ? `المكتسب: ${balance.annual.earned_to_date} يوم` : `Earned: ${balance.annual.earned_to_date} days`}
                   </p>
                 ) : null}
               </div>
 
-              {/* ساعات الاستئذان المستهلكة */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+              {/* ساعات الاستئذان المستهلكة - ألوان الشركة */}
+              <div className="bg-[hsl(var(--lavender)/0.08)] dark:bg-[hsl(var(--lavender)/0.12)] border border-[hsl(var(--lavender)/0.25)] rounded-xl p-5">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-blue-500 rounded-lg">
+                  <div className="p-2 bg-[hsl(var(--lavender))] rounded-lg">
                     <Clock size={20} className="text-white" />
                   </div>
-                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                  <p className="text-sm font-semibold text-[hsl(var(--lavender))] dark:text-[hsl(var(--lavender)/0.9)]">
                     {lang === 'ar' ? 'ساعات الاستئذان المستهلكة' : 'Permission Hours Used'}
                   </p>
                 </div>
-                <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                <p className="text-3xl font-bold text-[hsl(var(--lavender))] dark:text-[hsl(var(--lavender)/0.9)]">
                   {permissionHours.used || 0}
                   <span className="text-base font-normal ms-1">/ {permissionHours.total || 2}</span>
                   <span className="text-base font-normal ms-1">{lang === 'ar' ? 'ساعات' : 'hrs'}</span>
                 </p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <p className="text-xs text-[hsl(var(--lavender)/0.7)] dark:text-[hsl(var(--lavender)/0.6)] mt-1">
                   {lang === 'ar' ? 'هذا الشهر' : 'This month'}
                 </p>
               </div>
