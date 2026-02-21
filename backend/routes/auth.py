@@ -5,6 +5,9 @@ from database import db
 from utils.auth import verify_password, create_access_token, get_current_user, hash_password
 from datetime import datetime, timezone
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
