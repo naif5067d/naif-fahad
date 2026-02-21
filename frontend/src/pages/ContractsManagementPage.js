@@ -1947,8 +1947,9 @@ export default function ContractsManagementPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                ⚠️ معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت حتى للعقود النشطة
+              <p className="text-xs text-[hsl(var(--info))] dark:text-[hsl(var(--info))] mt-2 flex items-center gap-1">
+                <AlertTriangle size={12} />
+                معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت حتى للعقود النشطة
               </p>
             </div>
 
