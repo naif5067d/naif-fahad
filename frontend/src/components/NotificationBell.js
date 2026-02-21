@@ -9,7 +9,7 @@ import {
   BellRing, BellOff
 } from 'lucide-react';
 import api from '@/lib/api';
-import fcmService from '@/services/fcmPushService';
+import pushService from '@/services/pushNotifications';
 
 // مطابقة الأيقونات
 const ICON_MAP = {
