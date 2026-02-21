@@ -315,7 +315,7 @@ export default function ContractsManagementPage() {
 
   // حذف نهائي للعقود الملغية (STAS فقط)
   const handlePermanentDelete = async (contractId, contractSerial) => {
-    if (!confirm(`⚠️ تحذير: هل تريد حذف العقد ${contractSerial} نهائياً؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+    if (!confirm(`تحذير: هل تريد حذف العقد ${contractSerial} نهائياً؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
     
     setActionLoading(true);
     try {
