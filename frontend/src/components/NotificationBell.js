@@ -5,9 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Bell, Check, CheckCheck, FileText, XCircle, CheckCircle, 
   Clock, DollarSign, AlertTriangle, Calendar, FileWarning,
-  Shield, RotateCcw, UserX, LogOut, Settings, Megaphone, X
+  Shield, RotateCcw, UserX, LogOut, Settings, Megaphone, X,
+  BellRing, BellOff
 } from 'lucide-react';
 import api from '@/lib/api';
+import pushService from '@/services/pushNotifications';
 
 // مطابقة الأيقونات
 const ICON_MAP = {
