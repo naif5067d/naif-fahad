@@ -24,14 +24,14 @@ const EVENT_CONFIG = {
   },
   rejected: {
     icon: XCircle,
-    color: 'bg-red-500',
+    color: 'bg-destructive/100',
     borderColor: 'border-red-500',
     labelEn: 'Rejected',
     labelAr: 'تم الرفض',
   },
   cancelled: {
     icon: XCircle,
-    color: 'bg-red-500',
+    color: 'bg-destructive/100',
     borderColor: 'border-red-500',
     labelEn: 'Cancelled',
     labelAr: 'تم الإلغاء',

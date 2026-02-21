@@ -33,16 +33,16 @@ export function ErrorAlert({ error, onDismiss }) {
   };
 
   return (
-    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+    <div className="bg-destructive/10 dark:bg-red-950/30 border border-destructive/30 dark:border-red-800 rounded-xl p-4 mb-4">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+        <div className="p-2 bg-destructive/15 dark:bg-red-900/50 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-destructive dark:text-destructive" />
         </div>
         <div className="flex-1">
           {/* Error Code & ID */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-xs font-mono rounded">
+            <span className="px-2 py-0.5 bg-destructive/15 dark:bg-red-900 text-destructive dark:text-red-300 text-xs font-mono rounded">
               {errorCode}
             </span>
             {errorId && (
@@ -52,7 +52,7 @@ export function ErrorAlert({ error, onDismiss }) {
                 title={lang === 'ar' ? 'نسخ رقم المرجع' : 'Copy reference number'}
               >
                 {copied ? (
-                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <CheckCircle className="w-3 h-3 text-[hsl(var(--success))]" />
                 ) : (
                   <Copy className="w-3 h-3" />
                 )}
@@ -62,20 +62,20 @@ export function ErrorAlert({ error, onDismiss }) {
           </div>
 
           {/* Message */}
-          <p className="text-red-800 dark:text-red-200 font-medium">
+          <p className="text-destructive dark:text-red-200 font-medium">
             {message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred')}
           </p>
 
           {/* Details */}
           {details && (
-            <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+            <p className="text-destructive dark:text-destructive text-sm mt-1">
               {details}
             </p>
           )}
 
           {/* Support Message */}
           {supportMessage && (
-            <p className="text-red-500 dark:text-red-500 text-xs mt-2 opacity-80">
+            <p className="text-destructive dark:text-destructive text-xs mt-2 opacity-80">
               {supportMessage}
             </p>
           )}
@@ -85,7 +85,7 @@ export function ErrorAlert({ error, onDismiss }) {
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="text-red-400 hover:text-red-600 transition-colors"
+            className="text-destructive hover:text-destructive transition-colors"
           >
             ✕
           </button>
@@ -102,10 +102,10 @@ export function SimpleError({ code, message, messageAr }) {
   const { lang } = useLanguage();
   
   return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
+    <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 dark:bg-red-950/30 border border-destructive/30 dark:border-red-800 text-destructive dark:text-destructive">
       <AlertTriangle className="w-4 h-4 flex-shrink-0" />
       <span className="text-sm">
-        <span className="font-mono text-xs bg-red-100 dark:bg-red-900 px-1 rounded me-2">{code}</span>
+        <span className="font-mono text-xs bg-destructive/15 dark:bg-red-900 px-1 rounded me-2">{code}</span>
         {lang === 'ar' ? messageAr : message}
       </span>
     </div>

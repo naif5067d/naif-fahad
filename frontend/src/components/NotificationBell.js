@@ -266,7 +266,7 @@ export default function NotificationBell() {
         {unreadCount > 0 && (
           <span 
             className={`absolute -top-1 -end-1 min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-bold text-white rounded-full transition-all ${
-              hasCritical ? 'bg-red-500 animate-pulse' : 'bg-primary'
+              hasCritical ? 'bg-destructive/100 animate-pulse' : 'bg-primary'
             }`}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -322,7 +322,7 @@ export default function NotificationBell() {
                 <button
                   onClick={handleDeleteAll}
                   disabled={loading}
-                  className="flex items-center gap-1 text-xs text-red-500 hover:underline disabled:opacity-50"
+                  className="flex items-center gap-1 text-xs text-destructive hover:underline disabled:opacity-50"
                   data-testid="delete-all-btn"
                 >
                   <X size={14} />
@@ -340,7 +340,7 @@ export default function NotificationBell() {
                 disabled={pushLoading || pushEnabled}
                 className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   pushEnabled 
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 cursor-default' 
+                    ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:bg-green-900/30 dark:text-[hsl(var(--success))] cursor-default' 
                     : 'bg-primary/10 text-primary hover:bg-primary/20'
                 }`}
                 data-testid="enable-push-btn"
@@ -382,7 +382,7 @@ export default function NotificationBell() {
                     onClick={() => handleNotificationClick(notification)}
                     className={`relative px-4 py-3 border-b border-border/50 cursor-pointer transition-all hover:bg-muted/50 ${
                       isUnread ? 'bg-primary/5' : ''
-                    } ${notification.priority === 'critical' ? 'bg-red-50/50 dark:bg-red-950/20' : ''}`}
+                    } ${notification.priority === 'critical' ? 'bg-destructive/10/50 dark:bg-red-950/20' : ''}`}
                     data-testid={`notification-item-${index}`}
                   >
                     {/* مؤشر غير مقروء */}
