@@ -354,14 +354,16 @@ async def get_admin_attendance(
             }
         if entry['type'] == 'check_in':
             grouped[key]['check_in'] = entry['timestamp']
-            grouped[key]['check_in_time'] = entry['timestamp'][11:19] if entry.get('timestamp') else None
+            # استخدام حقل time إذا كان موجوداً، وإلا استخراجه من timestamp
+            grouped[key]['check_in_time'] = entry.get('time') or (entry['timestamp'][11:19] if entry.get('timestamp') else None)
             grouped[key]['gps_valid_in'] = entry.get('gps_valid')
             grouped[key]['work_location'] = entry.get('work_location')
             grouped[key]['location_name'] = entry.get('work_location')
             grouped[key]['location_name_ar'] = entry.get('work_location')
         elif entry['type'] == 'check_out':
             grouped[key]['check_out'] = entry['timestamp']
-            grouped[key]['check_out_time'] = entry['timestamp'][11:19] if entry.get('timestamp') else None
+            # استخدام حقل time إذا كان موجوداً، وإلا استخراجه من timestamp
+            grouped[key]['check_out_time'] = entry.get('time') or (entry['timestamp'][11:19] if entry.get('timestamp') else None)
             grouped[key]['gps_valid_out'] = entry.get('gps_valid')
             grouped[key]['checkout_location_name'] = entry.get('work_location')
     
