@@ -155,7 +155,6 @@ async def upload_logo(
         raise HTTPException(status_code=400, detail="حجم الملف أكبر من 2MB")
     
     # Convert to base64 data URL
-    file_ext = file.filename.split('.')[-1].lower()
     mime_type = file.content_type
     base64_data = base64.b64encode(content).decode('utf-8')
     data_url = f"data:{mime_type};base64,{base64_data}"
