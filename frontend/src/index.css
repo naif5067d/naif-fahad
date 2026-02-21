@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safe Area Support */
+@supports (padding-top: env(safe-area-inset-top)) {
+  html {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+    --sal: env(safe-area-inset-left);
+    --sar: env(safe-area-inset-right);
+  }
+}
+
 /* Base fonts */
 body {
   margin: 0;
@@ -11,6 +21,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: contain;
 }
 
 [dir="rtl"] body, [dir="rtl"] {
