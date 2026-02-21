@@ -304,14 +304,166 @@ async def get_me(user=Depends(get_current_user)):
 
 @router.post("/change-password")
 async def change_password(req: ChangePasswordRequest, user=Depends(get_current_user)):
+    """تغيير كلمة المرور - يتطلب إعادة المصادقة"""
     db_user = await db.users.find_one({"id": user['user_id']}, {"_id": 0})
     if not verify_password(req.current_password, db_user['password_hash']):
         raise HTTPException(status_code=400, detail="كلمة المرور الحالية غير صحيحة")
+    
     await db.users.update_one(
         {"id": user['user_id']},
         {"$set": {
             "password_hash": hash_password(req.new_password),
-            "plain_password": None
+            "plain_password": None,
+            "password_changed_at": datetime.now(timezone.utc)
         }}
     )
-    return {"message": "تم تغيير كلمة المرور بنجاح"}
+    
+    # تسجيل تغيير كلمة المرور
+    await db.security_audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "employee_id": user.get('employee_id') or user['user_id'],
+        "action": "password_changed",
+        "performed_by": user['user_id'],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # إبطال جميع الجلسات الأخرى بعد تغيير كلمة المرور
+    current_session = user.get('session_id')
+    await db.user_sessions.update_many(
+        {"user_id": user['user_id'], "id": {"$ne": current_session}},
+        {"$set": {"is_active": False, "revoked_reason": "password_changed", "revoked_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "تم تغيير كلمة المرور بنجاح. تم إنهاء الجلسات الأخرى."}
+
+
+@router.post("/logout")
+async def logout(user=Depends(get_current_user)):
+    """تسجيل الخروج من الجلسة الحالية"""
+    session_id = user.get('session_id')
+    token_id = user.get('jti')
+    
+    # إبطال الجلسة
+    if session_id:
+        await db.user_sessions.update_one(
+            {"id": session_id},
+            {"$set": {"is_active": False, "revoked_reason": "logout", "revoked_at": datetime.now(timezone.utc)}}
+        )
+    
+    # إضافة التوكن للقائمة السوداء
+    if token_id:
+        await db.revoked_tokens.insert_one({
+            "token_id": token_id,
+            "user_id": user['user_id'],
+            "revoked_at": datetime.now(timezone.utc),
+            "reason": "logout"
+        })
+    
+    # تسجيل الخروج
+    await db.security_audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "employee_id": user.get('employee_id') or user['user_id'],
+        "action": "logout",
+        "session_id": session_id,
+        "performed_by": user['user_id'],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "تم تسجيل الخروج بنجاح"}
+
+
+@router.post("/logout-all")
+async def logout_all_sessions(user=Depends(get_current_user)):
+    """تسجيل الخروج من جميع الأجهزة"""
+    user_id = user['user_id']
+    
+    # الحصول على جميع الجلسات النشطة
+    active_sessions = await db.user_sessions.find(
+        {"user_id": user_id, "is_active": True}
+    ).to_list(100)
+    
+    sessions_count = len(active_sessions)
+    
+    # إبطال جميع الجلسات
+    await db.user_sessions.update_many(
+        {"user_id": user_id, "is_active": True},
+        {"$set": {"is_active": False, "revoked_reason": "logout_all", "revoked_at": datetime.now(timezone.utc)}}
+    )
+    
+    # إضافة جميع التوكنات للقائمة السوداء
+    for session in active_sessions:
+        if session.get("token_id"):
+            await db.revoked_tokens.insert_one({
+                "token_id": session["token_id"],
+                "user_id": user_id,
+                "revoked_at": datetime.now(timezone.utc),
+                "reason": "logout_all"
+            })
+    
+    # تسجيل الحدث
+    await db.security_audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "employee_id": user.get('employee_id') or user_id,
+        "action": "logout_all_sessions",
+        "sessions_revoked": sessions_count,
+        "performed_by": user_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": f"تم تسجيل الخروج من {sessions_count} جهاز",
+        "sessions_revoked": sessions_count
+    }
+
+
+@router.get("/sessions")
+async def get_active_sessions(user=Depends(get_current_user)):
+    """عرض الجلسات النشطة للمستخدم"""
+    sessions = await db.user_sessions.find(
+        {"user_id": user['user_id'], "is_active": True},
+        {"_id": 0, "fingerprint_data": 0, "token_id": 0}
+    ).to_list(20)
+    
+    current_session_id = user.get('session_id')
+    
+    for session in sessions:
+        session["is_current"] = session.get("id") == current_session_id
+        # تبسيط بصمة الجهاز للعرض
+        if session.get("device_signature"):
+            session["device_signature"] = session["device_signature"][:8] + "..."
+    
+    return {
+        "sessions": sessions,
+        "total": len(sessions)
+    }
+
+
+@router.delete("/sessions/{session_id}")
+async def revoke_session(session_id: str, user=Depends(get_current_user)):
+    """إنهاء جلسة محددة"""
+    # التحقق من أن الجلسة تخص المستخدم
+    session = await db.user_sessions.find_one({
+        "id": session_id,
+        "user_id": user['user_id'],
+        "is_active": True
+    })
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    
+    # إبطال الجلسة
+    await db.user_sessions.update_one(
+        {"id": session_id},
+        {"$set": {"is_active": False, "revoked_reason": "manual_revoke", "revoked_at": datetime.now(timezone.utc)}}
+    )
+    
+    # إضافة التوكن للقائمة السوداء
+    if session.get("token_id"):
+        await db.revoked_tokens.insert_one({
+            "token_id": session["token_id"],
+            "user_id": user['user_id'],
+            "revoked_at": datetime.now(timezone.utc),
+            "reason": "manual_revoke"
+        })
+    
+    return {"message": "تم إنهاء الجلسة"}
