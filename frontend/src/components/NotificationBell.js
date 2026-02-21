@@ -108,19 +108,16 @@ export default function NotificationBell() {
   // Check push notification status
   useEffect(() => {
     const checkPushStatus = async () => {
-      try {
-        await fcmService.initialize();
-        const status = await fcmService.getStatus();
-        setPushEnabled(status.subscribed);
-        
-        // Setup foreground message handler
-        fcmService.setupForegroundHandler((payload) => {
-          // Refresh notifications when new message arrives
-          fetchNotifications();
-          playNotificationSound();
-        });
-      } catch (e) {
-        console.log('[FCM] Status check failed:', e);
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            setPushEnabled(!!subscription);
+          }
+        } catch (e) {
+          console.log('[Push] Status check failed:', e);
+        }
       }
     };
     checkPushStatus();
@@ -130,18 +127,19 @@ export default function NotificationBell() {
   const enablePushNotifications = async () => {
     setPushLoading(true);
     try {
-      const result = await fcmService.requestPermissionAndGetToken(user?.id);
+      const result = await pushService.initialize(user?.id);
       if (result.success) {
         setPushEnabled(true);
         // Show success notification
         if (Notification.permission === 'granted') {
-          new Notification('DAR AL CODE', {
+          new Notification('دار الكود للاستشارات الهندسية', {
             body: lang === 'ar' ? 'تم تفعيل الإشعارات بنجاح' : 'Notifications enabled successfully',
-            icon: '/icon-192.png'
+            icon: '/icon-192.png',
+            dir: 'rtl'
           });
         }
       } else {
-        console.log('[FCM] Failed:', result.reason);
+        console.log('[Push] Failed:', result.reason);
         if (result.reason === 'permission_denied') {
           alert(lang === 'ar' ? 'يرجى السماح بالإشعارات من إعدادات المتصفح' : 'Please allow notifications in browser settings');
         } else {
@@ -149,7 +147,7 @@ export default function NotificationBell() {
         }
       }
     } catch (e) {
-      console.error('[FCM] Error:', e);
+      console.error('[Push] Error:', e);
       alert(lang === 'ar' ? 'حدث خطأ: ' + e.message : 'Error: ' + e.message);
     }
     setPushLoading(false);
