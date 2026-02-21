@@ -81,6 +81,25 @@ export default function AppLayout({ children }) {
   const alertsRef = useRef(null);
   const logoutRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [companyName, setCompanyName] = useState({ ar: 'دار الكود', en: 'DAR ALCODE' });
+
+  // Load company name from settings
+  useEffect(() => {
+    const loadCompanyName = async () => {
+      try {
+        const res = await api.get('/api/company-settings/public');
+        if (res.data) {
+          setCompanyName({
+            ar: res.data.company_name_ar || 'دار الكود',
+            en: res.data.company_name_en || 'DAR ALCODE'
+          });
+        }
+      } catch (err) {
+        // Use defaults
+      }
+    };
+    loadCompanyName();
+  }, []);
 
   // Check if fullscreen is supported
   const isFullscreenSupported = () => {
