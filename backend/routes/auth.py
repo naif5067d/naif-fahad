@@ -135,14 +135,19 @@ async def switch_user(user_id: str, current_user=Depends(get_current_user)):
 
 
 @router.post("/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request):
     """
-    تسجيل الدخول مع فحص الجهاز
-    - المدراء (STAS, Sultan, Naif, etc.): معفون من فحص الأجهزة
-    - الموظفون: يتم فحص الجهاز ويجب أن يكون معتمداً
+    تسجيل الدخول مع:
+    - Rate Limiting (5 محاولات / 15 دقيقة حظر)
+    - فحص تغير الجهاز
+    - جلسات محدودة المدة حسب الدور
     """
+    # التحقق من Rate Limiting
+    check_rate_limit(request)
+    
     user = await db.users.find_one({"username": req.username}, {"_id": 0})
     if not user:
+        record_failed_attempt(request)
         raise HTTPException(
             status_code=401, 
             detail={
@@ -153,6 +158,7 @@ async def login(req: LoginRequest):
         )
     
     if not verify_password(req.password, user['password_hash']):
+        record_failed_attempt(request)
         raise HTTPException(
             status_code=401, 
             detail={
@@ -185,47 +191,105 @@ async def login(req: LoginRequest):
     
     employee_id = user.get('employee_id')
     role = user.get('role', 'employee')
+    user_id = user['id']
     
-    # تسجيل الجهاز للمراقبة (بدون منع الدخول)
-    if req.fingerprint_data and employee_id:
-        from services.device_service import register_login_session
-        await register_login_session(
-            employee_id=employee_id,
-            fingerprint_data=req.fingerprint_data or {},
-            username=req.username,
-            role=role
+    # فحص تغير الجهاز (للموظفين فقط)
+    device_changed = False
+    if req.fingerprint_data and role not in EXEMPT_ROLES:
+        from services.device_service import generate_core_hardware_signature
+        current_signature = generate_core_hardware_signature(req.fingerprint_data)
+        
+        # الحصول على آخر جهاز مسجل
+        last_session = await db.user_sessions.find_one(
+            {"user_id": user_id, "is_active": True},
+            sort=[("created_at", -1)]
         )
+        
+        if last_session and last_session.get("device_signature") != current_signature:
+            device_changed = True
+            # إبطال الجلسات القديمة عند تغير الجهاز
+            await db.user_sessions.update_many(
+                {"user_id": user_id, "is_active": True},
+                {"$set": {"is_active": False, "revoked_reason": "device_changed", "revoked_at": datetime.now(timezone.utc)}}
+            )
+            # تسجيل الحدث
+            await db.security_audit_log.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id or user_id,
+                "action": "device_changed_logout",
+                "old_signature": last_session.get("device_signature", "")[:16] + "...",
+                "new_signature": current_signature[:16] + "...",
+                "ip_address": request.client.host if request.client else "unknown",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+    
+    # مسح محاولات الدخول الفاشلة
+    clear_failed_attempts(request)
+    
+    # إنشاء معرف الجلسة
+    session_id = str(uuid.uuid4())
+    token_id = str(uuid.uuid4())
+    
+    # تسجيل الجلسة الجديدة
+    device_signature = None
+    if req.fingerprint_data:
+        from services.device_service import generate_core_hardware_signature
+        device_signature = generate_core_hardware_signature(req.fingerprint_data)
+    
+    await db.user_sessions.insert_one({
+        "id": session_id,
+        "token_id": token_id,
+        "user_id": user_id,
+        "employee_id": employee_id,
+        "role": role,
+        "device_signature": device_signature,
+        "fingerprint_data": req.fingerprint_data,
+        "ip_address": request.client.host if request.client else "unknown",
+        "user_agent": request.headers.get("user-agent", ""),
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc),
+        "last_activity": datetime.now(timezone.utc)
+    })
     
     # تسجيل الدخول في سجل الأمان
     await db.security_audit_log.insert_one({
-        "id": str(__import__('uuid').uuid4()),
-        "employee_id": employee_id or user['id'],
+        "id": str(uuid.uuid4()),
+        "employee_id": employee_id or user_id,
         "action": "login_success",
-        "device_signature": req.device_signature,
-        "fingerprint_data": req.fingerprint_data,
+        "session_id": session_id,
+        "device_signature": device_signature,
+        "device_changed": device_changed,
+        "ip_address": request.client.host if request.client else "unknown",
         "details": {"username": req.username, "role": role},
-        "performed_by": user['id'],
+        "performed_by": user_id,
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
     token = create_access_token({
-        "user_id": user['id'],
+        "user_id": user_id,
         "role": role,
         "username": user['username'],
         "full_name": user['full_name'],
-        "employee_id": employee_id
-    })
+        "employee_id": employee_id,
+        "session_id": session_id,
+        "jti": token_id
+    }, role=role)
 
     return {
         "token": token,
         "user": {
-            "id": user['id'],
+            "id": user_id,
             "username": user['username'],
             "full_name": user['full_name'],
             "full_name_ar": user.get('full_name_ar', ''),
             "role": role,
             "employee_id": employee_id,
             "is_active": user.get('is_active', True)
+        },
+        "session_info": {
+            "session_id": session_id,
+            "device_changed": device_changed,
+            "expires_in_hours": 12 if role == "stas" else (8 if role in EXEMPT_ROLES else 4)
         }
     }
 
