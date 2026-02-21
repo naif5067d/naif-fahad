@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { CalendarDays, Plus, Pencil, Trash2, Loader2, Clock, CalendarCheck, AlertTriangle, FileText, Info } from 'lucide-react';
+import { CalendarDays, Plus, Pencil, Trash2, Loader2, Clock, CalendarCheck, AlertTriangle, FileText, Info, FileSignature } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
