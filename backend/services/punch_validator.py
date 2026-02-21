@@ -79,12 +79,17 @@ async def check_employee_sandbox_mode(employee_id: str) -> dict:
     }, {"_id": 0, "sandbox_mode": 1, "work_start_date": 1, "start_date": 1})
     
     if not contract:
-        # لا يوجد عقد نشط - ربما في وضع التجربة
+        # لا يوجد عقد نشط
+        error = create_error_response(
+            ErrorCode.CONTRACT_NOT_FOUND,
+            details=f"Employee ID: {employee_id}",
+            details_ar=f"رقم الموظف: {employee_id}"
+        )
         return {
             "is_sandbox": True,
             "work_start_date": None,
             "reason": "no_active_contract",
-            "message_ar": "لا يوجد عقد نشط - النظام في وضع التجربة"
+            "error": error
         }
     
     # فحص وضع التجربة الصريح
