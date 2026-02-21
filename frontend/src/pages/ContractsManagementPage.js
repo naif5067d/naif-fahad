@@ -761,15 +761,17 @@ export default function ContractsManagementPage() {
                           const info = calculateServiceYears(formData.start_date);
                           if (info.future) {
                             return (
-                              <p className="text-sm text-amber-600">
-                                ⏳ تاريخ مستقبلي - لم تبدأ الخدمة بعد
+                              <p className="text-sm text-warning flex items-center gap-1">
+                                <Clock size={14} />
+                                تاريخ مستقبلي - لم تبدأ الخدمة بعد
                               </p>
                             );
                           }
                           return (
                             <>
-                              <p className="text-sm font-bold text-primary">
-                                📅 مدة الخدمة: {info.years} سنة و {info.months} شهر
+                              <p className="text-sm font-bold text-primary flex items-center gap-1">
+                                <Calendar size={14} />
+                                مدة الخدمة: {info.years} سنة و {info.months} شهر
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 إجمالي: {info.totalYears} سنة → 
@@ -1824,7 +1826,7 @@ export default function ContractsManagementPage() {
                     <div className="mt-2 p-2 bg-primary/10 rounded text-xs">
                       {(() => {
                         const info = calculateServiceYears(formData.start_date);
-                        if (info.future) return <span className="text-amber-600">⏳ مستقبلي</span>;
+                        if (info.future) return <span className="text-warning flex items-center gap-1"><Clock size={12} /> مستقبلي</span>;
                         return (
                           <span className="font-bold text-primary">
                             {info.years} سنة → {info.policyDays} يوم
