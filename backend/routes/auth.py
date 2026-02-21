@@ -4,8 +4,65 @@ from typing import Optional
 from database import db
 from utils.auth import verify_password, create_access_token, get_current_user, hash_password
 from datetime import datetime, timezone
+import uuid
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# Rate Limiting - تتبع محاولات تسجيل الدخول
+login_attempts = {}  # {ip: {"count": int, "last_attempt": datetime, "blocked_until": datetime}}
+MAX_LOGIN_ATTEMPTS = 5
+BLOCK_DURATION_MINUTES = 15
+
+
+def check_rate_limit(request: Request) -> bool:
+    """التحقق من Rate Limiting"""
+    client_ip = request.client.host if request.client else "unknown"
+    now = datetime.now(timezone.utc)
+    
+    if client_ip in login_attempts:
+        data = login_attempts[client_ip]
+        
+        # التحقق من الحظر
+        if data.get("blocked_until") and now < data["blocked_until"]:
+            remaining = (data["blocked_until"] - now).seconds // 60
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "error": "TOO_MANY_ATTEMPTS",
+                    "message_ar": f"تم حظرك مؤقتاً. حاول بعد {remaining} دقيقة",
+                    "message_en": f"Too many attempts. Try again in {remaining} minutes"
+                }
+            )
+        
+        # إعادة تعيين إذا مر وقت كافٍ
+        if (now - data["last_attempt"]).seconds > 300:  # 5 دقائق
+            login_attempts[client_ip] = {"count": 0, "last_attempt": now}
+    
+    return True
+
+
+def record_failed_attempt(request: Request):
+    """تسجيل محاولة فاشلة"""
+    client_ip = request.client.host if request.client else "unknown"
+    now = datetime.now(timezone.utc)
+    
+    if client_ip not in login_attempts:
+        login_attempts[client_ip] = {"count": 0, "last_attempt": now}
+    
+    login_attempts[client_ip]["count"] += 1
+    login_attempts[client_ip]["last_attempt"] = now
+    
+    # حظر بعد المحاولات المسموحة
+    if login_attempts[client_ip]["count"] >= MAX_LOGIN_ATTEMPTS:
+        from datetime import timedelta
+        login_attempts[client_ip]["blocked_until"] = now + timedelta(minutes=BLOCK_DURATION_MINUTES)
+
+
+def clear_failed_attempts(request: Request):
+    """مسح المحاولات الفاشلة بعد تسجيل دخول ناجح"""
+    client_ip = request.client.host if request.client else "unknown"
+    if client_ip in login_attempts:
+        del login_attempts[client_ip]
 
 
 class LoginRequest(BaseModel):
