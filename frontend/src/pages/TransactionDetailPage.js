@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 // Status configuration
 const STATUS_CONFIG = {
-  executed: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
+  executed: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
@@ -20,10 +20,10 @@ const STATUS_CONFIG = {
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
   stas: { bg: 'bg-accent/100/10', text: 'text-accent', border: 'border-violet-500/20' },
   pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20' },
-  approve: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
-  approved: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
+  approve: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
+  approved: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   reject: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
-  pending: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-amber-500/20' },
+  pending: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
 };
 
 export default function TransactionDetailPage() {
@@ -359,7 +359,7 @@ export default function TransactionDetailPage() {
                 <Button
                   onClick={() => handleAction('approve')}
                   disabled={actionLoading}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6"
+                  className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-xl px-6"
                   data-testid="approve-btn"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <Check size={16} className="me-2" />}
@@ -488,7 +488,7 @@ export default function TransactionDetailPage() {
 
       {/* Holiday Verification Badge for Sultan/Naif - رسالة بسيطة فقط */}
       {tx.type === 'leave_request' && tx.data?.calculation_details && (user?.role === 'sultan' || user?.role === 'naif') && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+        <div className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] rounded-xl border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
           <div className="w-5 h-5 rounded-full bg-[hsl(var(--success)/0.1)]0 flex items-center justify-center">
             <span className="text-white text-xs">✓</span>
           </div>

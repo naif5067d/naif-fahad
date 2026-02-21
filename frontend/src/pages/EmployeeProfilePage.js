@@ -385,7 +385,7 @@ export default function EmployeeProfilePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{lang === 'ar' ? 'حالة اليوم' : 'Today'}</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  attendance.today_status === 'present' ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-amber-100 text-amber-700'
+                  attendance.today_status === 'present' ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'
                 }`}>
                   {lang === 'ar' ? attendance.today_status_ar : attendance.today_status}
                 </span>

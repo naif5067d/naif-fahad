@@ -286,7 +286,7 @@ export default function LeavePage() {
             /* ====== عرض الإدارة: كامل ====== */
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* رصيد الاعتيادية */}
-              <div className="bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
+              <div className="bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)] rounded-lg px-4 py-3">
                 <p className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">{lang === 'ar' ? 'الاعتيادية' : 'Annual'}</p>
                 <p className="text-xl font-bold font-mono text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">{balance.annual?.available ?? 0}</p>
                 <p className="text-[10px] text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">{lang === 'ar' ? 'يوم' : 'days'}</p>
@@ -502,8 +502,8 @@ export default function LeavePage() {
           {sickLeaveWarning && (
             <div className="space-y-4 py-2">
               {/* رسالة رسمية للموظف */}
-              <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border-2 border-[hsl(var(--warning)/0.3)]">
-                <p className="text-base font-medium text-[hsl(var(--warning))] dark:text-amber-100 mb-3">
+              <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border-2 border-[hsl(var(--warning)/0.3)]">
+                <p className="text-base font-medium text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] mb-3">
                   {lang === 'ar' 
                     ? `عزيزي ${user?.full_name?.split(' ')[0] || 'الموظف'}،` 
                     : `Dear ${user?.full_name?.split(' ')[0] || 'Employee'},`
@@ -522,7 +522,7 @@ export default function LeavePage() {
                   {sickLeaveWarning.tier_distribution?.map((tier, i) => (
                     <div key={i} className={`p-2 rounded-lg font-medium ${
                       tier.salary_percent === 100 
-                        ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-emerald-300' 
+                        ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)]' 
                         : tier.salary_percent === 50 
                           ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]' 
                           : 'bg-destructive/15 text-destructive border border-destructive/30'

@@ -645,7 +645,7 @@ export default function TeamAttendancePage() {
       {/* Summary Cards - Only for All Employees View */}
       {viewMode === 'all' && summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <Card className="border-emerald-200">
+          <Card className="border-[hsl(var(--success)/0.3)]">
             <CardContent className="p-4 text-center">
               <UserCheck className="mx-auto mb-2 text-[hsl(var(--success))]" size={24} />
               <p className="text-2xl font-bold text-[hsl(var(--success))]">{summary.present}</p>
@@ -685,7 +685,7 @@ export default function TeamAttendancePage() {
             </CardContent>
           </Card>
           
-          <Card className="border-orange-200">
+          <Card className="border-[hsl(var(--warning)/0.3)]">
             <CardContent className="p-4 text-center">
               <AlertTriangle className="mx-auto mb-2 text-[hsl(var(--warning))]" size={24} />
               <p className="text-2xl font-bold text-[hsl(var(--warning))]">{summary.not_processed}</p>
@@ -1101,7 +1101,7 @@ export default function TeamAttendancePage() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="gap-1 text-[hsl(var(--success))] border-emerald-200 hover:bg-[hsl(var(--success)/0.1)]"
+                                className="gap-1 text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)] hover:bg-[hsl(var(--success)/0.1)]"
                                 onClick={() => handleOpenManualAttendance(emp, 'check_in')}
                               >
                                 <LogIn size={14} />
@@ -1428,7 +1428,7 @@ export default function TeamAttendancePage() {
                           <div className="flex flex-col gap-2">
                             <Button 
                               size="sm" 
-                              className="bg-emerald-600 hover:bg-emerald-700"
+                              className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                               onClick={() => handleCorrectionDecision(req.id, 'approve')}
                               disabled={loading}
                             >
@@ -1703,7 +1703,7 @@ export default function TeamAttendancePage() {
               
               {/* إقرار المشرف - يظهر للمشرف فقط */}
               {isSupervisor && (
-                <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-700">
+                <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-700">
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
@@ -1781,7 +1781,7 @@ export default function TeamAttendancePage() {
                       key={idx}
                       className={`p-3 rounded-lg border ${
                         step.found 
-                          ? 'bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 border-emerald-200' 
+                          ? 'bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] border-[hsl(var(--success)/0.3)]' 
                           : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200'
                       }`}
                     >
@@ -1950,7 +1950,7 @@ export default function TeamAttendancePage() {
             <Button 
               onClick={handleSubmitManualAttendance}
               disabled={submittingManual || !manualAttendanceForm.reason || !manualAttendanceForm.supervisor_acknowledgment}
-              className={manualAttendanceForm.check_type === 'check_in' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'}
+              className={manualAttendanceForm.check_type === 'check_in' ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]' : 'bg-blue-600 hover:bg-blue-700'}
             >
               {submittingManual ? (
                 <Loader2 className="animate-spin" size={16} />

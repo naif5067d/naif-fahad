@@ -153,7 +153,7 @@ export default function LoginPage() {
               <Button 
                 data-testid="login-submit" 
                 type="submit" 
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium shadow-lg shadow-violet-200" 
+                className="w-full h-11 bg-gradient-to-r from-violet-600 to-accent hover:from-violet-700 hover:to-indigo-700 text-white font-medium shadow-lg shadow-violet-200" 
                 disabled={loading}
               >
                 {loading ? (

@@ -101,7 +101,7 @@ export default function MaintenanceTrackingPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--warning))] to-[hsl(var(--warning))] flex items-center justify-center">
             <Wrench size={24} className="text-white" />
           </div>
           <div>
@@ -114,7 +114,7 @@ export default function MaintenanceTrackingPage() {
           </div>
         </div>
         
-        <Button onClick={() => setShowCreate(true)} className="bg-amber-600 hover:bg-amber-700 gap-2">
+        <Button onClick={() => setShowCreate(true)} className="bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] gap-2">
           <Plus size={18} />
           {lang === 'ar' ? 'بطاقة جديدة' : 'New Card'}
         </Button>
@@ -490,7 +490,7 @@ function MaintenanceCardDialog({ open, onClose, card, lang, onSuccess }) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1 bg-amber-600 hover:bg-amber-700">
+            <Button type="submit" disabled={submitting} className="flex-1 bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]">
               {submitting ? '...' : (card ? (lang === 'ar' ? 'تحديث' : 'Update') : (lang === 'ar' ? 'إنشاء' : 'Create'))}
             </Button>
           </div>

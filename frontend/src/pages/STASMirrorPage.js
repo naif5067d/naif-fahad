@@ -682,7 +682,7 @@ export default function STASMirrorPage() {
                   {pendingDevices.map(device => {
                     const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
                     return (
-                      <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 transition-all shadow-sm">
+                      <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-[hsl(var(--warning)/0.3)] hover:border-orange-400 transition-all shadow-sm">
                         <div className="flex items-center gap-4">
                           <div className="w-14 h-14 rounded-xl bg-[hsl(var(--warning)/0.15)] flex items-center justify-center">
                             <DeviceIcon size={28} className="text-[hsl(var(--warning))]" />
@@ -1476,7 +1476,7 @@ export default function STASMirrorPage() {
                     <CardContent>
                       <div className="space-y-2">
                         {mirror.pre_checks?.map((c, i) => (
-                          <div key={i} className={`p-2 rounded-md ${c.status === 'WARN' ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 border border-[hsl(var(--warning)/0.3)]' : 'bg-muted/50'}`} data-testid={`check-${i}`}>
+                          <div key={i} className={`p-2 rounded-md ${c.status === 'WARN' ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border border-[hsl(var(--warning)/0.3)]' : 'bg-muted/50'}`} data-testid={`check-${i}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 {c.status === 'PASS' ? <CheckCircle size={14} className="text-[hsl(var(--success))]" /> : c.status === 'WARN' ? <AlertTriangle size={14} className="text-[hsl(var(--warning))]" /> : <XCircle size={14} className="text-red-500" />}
@@ -1717,7 +1717,7 @@ export default function STASMirrorPage() {
                           data-testid="stas-execute-btn-desktop"
                           onClick={handleExecute}
                           disabled={!mirror.all_checks_pass || executing}
-                          className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
+                          className={`w-full h-12 text-base font-semibold ${mirror.all_checks_pass && !executing ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}
                         >
                           {executing ? <><Loader2 size={18} className="me-2 animate-spin" /> {t('stas.executing')}</> : <><Shield size={18} className="me-2" /> {t('stas.execute')}</>}
                         </Button>
@@ -2025,7 +2025,7 @@ export default function STASMirrorPage() {
                   data-testid="stas-execute-btn-mobile"
                   onClick={handleExecute}
                   disabled={!mirror.all_checks_pass || executing}
-                  className={`flex-1 ${mirror.all_checks_pass && !executing ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-muted text-muted-foreground'}`}
+                  className={`flex-1 ${mirror.all_checks_pass && !executing ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white' : 'bg-muted text-muted-foreground'}`}
                 >
                   {executing ? <Loader2 size={16} className="me-1 animate-spin" /> : <Shield size={16} className="me-1" />}
                   {t('stas.execute')}

@@ -576,7 +576,7 @@ export default function FinancialCustodyPage() {
             <Button 
               onClick={handleSubmitAudit} 
               disabled={submitting} 
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] text-white"
               data-testid="submit-audit-btn"
             >
               <Send size={14} className="me-1.5" />
@@ -595,7 +595,7 @@ export default function FinancialCustodyPage() {
               <Button 
                 onClick={() => handleAudit('approve')} 
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white"
                 data-testid="approve-audit-btn"
               >
                 <Check size={14} className="me-1" />
@@ -1115,7 +1115,7 @@ export default function FinancialCustodyPage() {
           </p>
         </div>
         
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30 rounded-xl p-4 border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle size={16} className="text-[hsl(var(--success))]" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">

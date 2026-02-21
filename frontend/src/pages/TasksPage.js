@@ -117,7 +117,7 @@ export default function TasksPage() {
             <p className="text-sm text-blue-600">{lang === 'ar' ? 'إجمالي المهام' : 'Total Tasks'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold text-[hsl(var(--warning))]">
               {tasks.filter(t => t.status === 'active' || t.status === 'pending_review').length}
@@ -554,7 +554,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                   key={stage}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     s.evaluated ? 'bg-green-50 border-green-200' :
-                    s.completed ? 'bg-[hsl(var(--warning)/0.1)] border-orange-200' :
+                    s.completed ? 'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.3)]' :
                     'bg-slate-50 border-slate-200'
                   }`}
                 >

@@ -135,7 +135,7 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Yearly Deductions */}
-        <Card className="border-orange-200 dark:border-orange-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-orange-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">

@@ -1315,7 +1315,7 @@ export default function ContractsManagementPage() {
                             variant="default" 
                             size="sm" 
                             onClick={() => handleExecuteContract(contract.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                             data-testid={`execute-contract-${contract.id}`}
                           >
                             <Play className="w-4 h-4 ml-1" />
@@ -1479,7 +1479,7 @@ export default function ContractsManagementPage() {
               </Card>
               
               {/* أرصدة الإجازات */}
-              <Card className="border-emerald-200 bg-[hsl(var(--success)/0.1)]/50">
+              <Card className="border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)]/50">
                 <CardHeader className="py-3">
                   <CardTitle className="text-sm flex items-center gap-2 text-[hsl(var(--success))]">
                     <Calendar className="w-4 h-4" /> أرصدة الإجازات والساعات
@@ -1601,7 +1601,7 @@ export default function ContractsManagementPage() {
                   size="sm"
                   onClick={() => handleToggleSandbox(viewContract.id, viewContract.sandbox_mode)}
                   disabled={actionLoading}
-                  className={viewContract.sandbox_mode ? "bg-amber-600 hover:bg-amber-700" : ""}
+                  className={viewContract.sandbox_mode ? "bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]" : ""}
                 >
                   {viewContract.sandbox_mode ? (
                     <>
@@ -1634,7 +1634,7 @@ export default function ContractsManagementPage() {
                   size="sm"
                   onClick={() => handleReactivateContract(viewContract.id)}
                   disabled={actionLoading}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                 >
                   {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-1" /> : <CheckCircle className="w-4 h-4 ml-1" />}
                   إعادة التفعيل
@@ -2004,7 +2004,7 @@ export default function ContractsManagementPage() {
             </div>
 
             {/* أرصدة الإجازات والساعات - تعديل كامل */}
-            <div className="p-4 bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+            <div className="p-4 bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] rounded-lg border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
                 <Calendar className="w-4 h-4" />
                 أرصدة الإجازات والساعات (تعديل مباشر)
@@ -2099,7 +2099,7 @@ export default function ContractsManagementPage() {
             </div>
 
             {/* تاريخ المباشرة ووضع التجربة */}
-            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                 <Clock className="w-4 h-4" />
                 تاريخ المباشرة ووضع التجربة

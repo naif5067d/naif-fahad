@@ -364,7 +364,7 @@ export default function DashboardPage() {
             {announcements.pinned?.length > 0 && (
               <div className="mt-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2 mb-2">
-                  <Bell size={12} className={isManager ? 'text-[hsl(var(--warning))]' : 'text-amber-300'} />
+                  <Bell size={12} className={isManager ? 'text-[hsl(var(--warning))]' : 'text-[hsl(var(--warning)/0.6)]'} />
                   <span className="text-[10px] font-medium opacity-70 uppercase">
                     {lang === 'ar' ? 'إشعارات' : 'Notices'}
                   </span>
@@ -373,7 +373,7 @@ export default function DashboardPage() {
                   <div key={ann.id} className={`flex items-start gap-2 p-2 rounded-lg mb-1 ${
                     isManager ? 'bg-slate-800/50' : 'bg-white/10'
                   }`}>
-                    <Pin size={10} className={isManager ? 'text-[hsl(var(--warning))] mt-1' : 'text-amber-300 mt-1'} />
+                    <Pin size={10} className={isManager ? 'text-[hsl(var(--warning))] mt-1' : 'text-[hsl(var(--warning)/0.6)] mt-1'} />
                     <p className="text-xs opacity-90 leading-relaxed">
                       {lang === 'ar' ? ann.message_ar : ann.message_en}
                     </p>

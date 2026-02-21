@@ -399,7 +399,7 @@ export default function TransactionsPage() {
                         <Button
                           size="sm"
                           onClick={() => setActionDialog({ ...tx, action: 'approve' })}
-                          className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm"
+                          className="h-10 px-5 rounded-xl bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white font-medium shadow-sm"
                           data-testid={`approve-tx-${tx.ref_no}`}
                         >
                           <Check size={16} className="me-1.5" />
@@ -480,7 +480,7 @@ export default function TransactionsPage() {
                 onClick={() => handleAction(actionDialog?.action)}
                 disabled={loading}
                 className={`flex-1 h-12 rounded-xl font-semibold ${
-                  actionDialog?.action === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                  actionDialog?.action === 'approve' ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]' :
                   actionDialog?.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 
                   'bg-orange-600 hover:bg-orange-700'
                 } text-white`}

@@ -80,7 +80,7 @@ export default function AdminCustodyPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[hsl(var(--success))] to-[hsl(var(--success))] flex items-center justify-center shadow-lg">
             <Wallet size={28} className="text-white" />
           </div>
           <div>
@@ -94,7 +94,7 @@ export default function AdminCustodyPage() {
         </div>
         
         {canCreate && (
-          <Button onClick={() => setShowCreate(true)} className="bg-emerald-600 hover:bg-emerald-700 gap-2 shadow-lg">
+          <Button onClick={() => setShowCreate(true)} className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] gap-2 shadow-lg">
             <Plus size={18} />
             {lang === 'ar' ? 'عهدة جديدة' : 'New Custody'}
           </Button>
@@ -103,10 +103,10 @@ export default function AdminCustodyPage() {
 
       {/* Dashboard Summary */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-        <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <Card className="bg-gradient-to-br from-[hsl(var(--success))] to-[hsl(var(--success))] text-white">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold">{formatNumber(summary.total_amount)}</p>
-            <p className="text-xs text-emerald-100">{lang === 'ar' ? 'إجمالي العهد' : 'Total'}</p>
+            <p className="text-xs text-[hsl(var(--success))]">{lang === 'ar' ? 'إجمالي العهد' : 'Total'}</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-red-500 to-rose-600 text-white">
@@ -115,7 +115,7 @@ export default function AdminCustodyPage() {
             <p className="text-xs text-red-100">{lang === 'ar' ? 'المصروف' : 'Spent'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+        <Card className="bg-gradient-to-br from-[hsl(var(--info))] to-accent text-white">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold">{formatNumber(summary.total_remaining)}</p>
             <p className="text-xs text-blue-100">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</p>
@@ -127,7 +127,7 @@ export default function AdminCustodyPage() {
             <p className="text-xs text-purple-600">{lang === 'ar' ? 'مفتوحة' : 'Open'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--warning)/0.1)] border-orange-200">
+        <Card className="bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-[hsl(var(--warning))]">{summary.pending_audit || 0}</p>
             <p className="text-xs text-[hsl(var(--warning))]">{lang === 'ar' ? 'بانتظار التدقيق' : 'Pending'}</p>
@@ -221,7 +221,7 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-emerald-300"
+      className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-[hsl(var(--success)/0.3)]"
       onClick={onSelect}
     >
       <CardContent className="p-4">
@@ -244,7 +244,7 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
         <div className="mb-3">
           <div className="w-full bg-slate-200 rounded-full h-2">
             <div 
-              className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all"
+              className="h-2 rounded-full bg-gradient-to-r from-[hsl(var(--success))] to-teal-500 transition-all"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
@@ -362,7 +362,7 @@ function CreateCustodyDialog({ open, onClose, lang, surplus, onSuccess }) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+            <Button type="submit" disabled={submitting} className="flex-1 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]">
               {submitting ? '...' : (lang === 'ar' ? 'إنشاء' : 'Create')}
             </Button>
           </div>
@@ -509,17 +509,17 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 sticky top-0 z-10">
+        <div className="bg-gradient-to-r from-emerald-600 to-[hsl(var(--success))] text-white p-6 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">
                 {lang === 'ar' ? 'العهدة رقم' : 'Custody #'} {localCustody.custody_number}
               </h2>
-              <p className="text-emerald-100 text-sm">{localCustody.created_by_name}</p>
+              <p className="text-[hsl(var(--success))] text-sm">{localCustody.created_by_name}</p>
             </div>
             <div className="text-left">
               <p className="text-3xl font-bold">{formatNumber(localCustody.remaining)}</p>
-              <p className="text-emerald-100 text-xs">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</p>
+              <p className="text-[hsl(var(--success))] text-xs">{lang === 'ar' ? 'المتبقي' : 'Remaining'}</p>
             </div>
           </div>
           
@@ -541,7 +541,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
         <div className="p-6 space-y-6">
           {/* Add Expense Form - Excel Style */}
           {isEditable && (
-            <Card className="border-2 border-emerald-200">
+            <Card className="border-2 border-[hsl(var(--success)/0.3)]">
               <CardHeader className="bg-[hsl(var(--success)/0.1)] py-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Plus size={18} />
@@ -608,7 +608,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
                     <Button 
                       onClick={handleAddExpense} 
                       disabled={submitting}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      className="w-full bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                     >
                       <Plus size={18} />
                     </Button>

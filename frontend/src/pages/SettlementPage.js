@@ -339,7 +339,7 @@ export default function SettlementPage() {
         {auditItems.map((item, idx) => {
           const Icon = item.icon;
           const statusColors = {
-            success: 'border-emerald-200 bg-[hsl(var(--success)/0.1)]',
+            success: 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)]',
             warning: 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]',
             error: 'border-red-200 bg-red-50',
             info: 'border-blue-200 bg-blue-50',
@@ -472,7 +472,7 @@ export default function SettlementPage() {
         {/* Entitlements & Deductions */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <div className="bg-emerald-600 text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستحقاقات' : 'Entitlements'}</div>
+            <div className="bg-[hsl(var(--success))] text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستحقاقات' : 'Entitlements'}</div>
             <table className="w-full text-xs border">
               <tbody>
                 <tr className="border-b">
@@ -681,7 +681,7 @@ export default function SettlementPage() {
                             variant="default" 
                             size="sm" 
                             onClick={() => handleExecute(settlement.id)}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                           >
                             <Play className="w-4 h-4 ml-1" />
                             تنفيذ
@@ -910,7 +910,7 @@ export default function SettlementPage() {
             )}
             {viewSettlement?.status === 'pending_stas' && canExecute && (
               <Button 
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                 onClick={() => handleExecute(viewSettlement.id)}
                 disabled={actionLoading}
               >
