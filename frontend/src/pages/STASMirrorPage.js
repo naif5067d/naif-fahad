@@ -800,7 +800,7 @@ export default function STASMirrorPage() {
                 
                 {selectedEmployeeFilter === 'all' && (
                   <div className="text-center py-4 text-slate-500 bg-slate-50 rounded-lg">
-                    {lang === 'ar' ? '👆 اختر موظفاً لإدارة حسابه وأجهزته' : '👆 Select an employee to manage their account and devices'}
+                                        {lang === 'ar' ? 'اختر موظفاً لإدارة حسابه وأجهزته' : 'Select an employee to manage their account and devices'}
                   </div>
                 )}
               </CardContent>
