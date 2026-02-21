@@ -97,7 +97,7 @@ async def get_vapid_public_key():
     return {"publicKey": VAPID_KEYS["public_key"]}
 
 @router.post("/subscribe")
-async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends(require_auth)):
+async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends(get_current_user)):
     """Save push subscription for a user"""
     db = get_db()
     
