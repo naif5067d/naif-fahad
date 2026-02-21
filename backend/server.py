@@ -65,6 +65,9 @@ APP_VERSION = "21.1"
 
 app = FastAPI(title="DAR AL CODE HR OS", version=APP_VERSION, redirect_slashes=False)
 
+# Add Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
 app.include_router(auth_router)
 app.include_router(dashboard_router)
 app.include_router(employees_router)
