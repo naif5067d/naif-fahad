@@ -232,8 +232,8 @@ export default function LeavePage() {
       {/* عرض مختلف للموظف والإدارة */}
       {canRequest && (
         <>
-          {isEmployee ? (
-            /* ====== عرض الموظف: مختصر ====== */
+          {isEmployeeOrSupervisor ? (
+            /* ====== عرض الموظف/المشرف: مختصر ====== */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* رصيد الاعتيادية - ألوان الشركة */}
               <div className="bg-[hsl(var(--navy)/0.05)] dark:bg-[hsl(var(--navy)/0.15)] border border-[hsl(var(--navy)/0.2)] rounded-xl p-5">
