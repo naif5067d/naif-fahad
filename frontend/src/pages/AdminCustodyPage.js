@@ -682,7 +682,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
               <div className="flex flex-wrap gap-3">
                 {/* Send for Audit */}
                 {localCustody.status === 'open' && canCreate && (
-                  <Button onClick={handleSendForAudit} className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-[hsl(var(--warning))] gap-2">
+                  <Button onClick={handleSendForAudit} className="bg-warning hover:bg-[hsl(var(--warning))] gap-2">
                     <Send size={16} />
                     {lang === 'ar' ? 'إرسال للتدقيق' : 'Send for Audit'}
                   </Button>

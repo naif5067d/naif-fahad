@@ -25,7 +25,7 @@ import {
 // أنواع إنهاء الخدمة
 const TERMINATION_TYPES = {
   contract_expiry: { label: 'انتهاء العقد', label_en: 'Contract Expiry', color: 'bg-blue-500' },
-  resignation: { label: 'استقالة', label_en: 'Resignation', color: 'bg-[hsl(var(--warning)/0.1)]0' },
+  resignation: { label: 'استقالة', label_en: 'Resignation', color: 'bg-warning' },
   probation_termination: { label: 'إنهاء خلال التجربة', label_en: 'Probation Termination', color: 'bg-red-500' },
   mutual_agreement: { label: 'اتفاق طرفين', label_en: 'Mutual Agreement', color: 'bg-green-500' },
   termination: { label: 'إنهاء من الشركة', label_en: 'Termination by Company', color: 'bg-purple-500' },
@@ -33,8 +33,8 @@ const TERMINATION_TYPES = {
 
 // حالات المخالصة
 const SETTLEMENT_STATUS = {
-  pending_stas: { label: 'بانتظار التنفيذ', color: 'bg-[hsl(var(--warning)/0.1)]0', icon: Clock },
-  executed: { label: 'منفذة', color: 'bg-[hsl(var(--success)/0.1)]0', icon: CheckCircle },
+  pending_stas: { label: 'بانتظار التنفيذ', color: 'bg-warning', icon: Clock },
+  executed: { label: 'منفذة', color: 'bg-success', icon: CheckCircle },
   cancelled: { label: 'ملغاة', color: 'bg-red-500', icon: XCircle },
 };
 

@@ -11,19 +11,19 @@ import { toast } from 'sonner';
 
 // Status configuration
 const STATUS_CONFIG = {
-  executed: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
+  executed: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
-  pending_ops: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
+  pending_ops: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
   pending_finance: { bg: 'bg-[hsl(var(--success)/0.1)]', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success)/0.2)]' },
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
   stas: { bg: 'bg-accent/100/10', text: 'text-accent', border: 'border-accent/20' },
   pending_employee_accept: { bg: 'bg-[hsl(var(--info)/0.1)]', text: 'text-[hsl(var(--info))]', border: 'border-[hsl(var(--info)/0.2)]' },
-  approve: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
-  approved: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
+  approve: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
+  approved: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   reject: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
-  pending: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
+  pending: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
 };
 
 export default function TransactionDetailPage() {
@@ -489,7 +489,7 @@ export default function TransactionDetailPage() {
       {/* Holiday Verification Badge for Sultan/Naif - رسالة بسيطة فقط */}
       {tx.type === 'leave_request' && tx.data?.calculation_details && (user?.role === 'sultan' || user?.role === 'naif') && (
         <div className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] rounded-xl border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
-          <div className="w-5 h-5 rounded-full bg-[hsl(var(--success)/0.1)]0 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
             <span className="text-white text-xs">✓</span>
           </div>
           <span className="text-sm text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">

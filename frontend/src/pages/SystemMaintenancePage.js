@@ -451,7 +451,7 @@ export default function SystemMaintenancePage() {
                   </div>
                   
                   {/* Transaction Docs */}
-                  <div className="bg-[hsl(var(--warning)/0.1)]0/20 rounded-xl p-4 text-center">
+                  <div className="bg-warning/20 rounded-xl p-4 text-center">
                     <FileJson className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--warning))]" />
                     <div className="text-2xl font-bold">{storageInfo.totals.transaction_documents}</div>
                     <div className="text-xs text-[hsl(var(--warning))]">سجلات معاملات</div>

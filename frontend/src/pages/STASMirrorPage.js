@@ -637,7 +637,7 @@ export default function STASMirrorPage() {
             <Smartphone size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'الأجهزة' : 'Devices'}</span>
             {pendingDevices.length > 0 && (
-              <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="bg-warning text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {pendingDevices.length}
               </span>
             )}
@@ -854,7 +854,7 @@ export default function STASMirrorPage() {
                       };
                       const statusBadge = {
                         trusted: 'bg-green-500 text-white',
-                        pending: 'bg-[hsl(var(--warning)/0.1)]0 text-white',
+                        pending: 'bg-warning text-white',
                         blocked: 'bg-red-500 text-white'
                       };
                       const statusText = {

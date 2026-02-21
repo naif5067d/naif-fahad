@@ -722,7 +722,7 @@ export default function TeamAttendancePage() {
               <Edit size={16} />
               {lang === 'ar' ? 'طلبات التعديل' : 'Correction Requests'}
               {pendingCorrections.length > 0 && (
-                <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-xs px-1.5 py-0.5 rounded-full">
+                <span className="bg-warning text-white text-xs px-1.5 py-0.5 rounded-full">
                   {pendingCorrections.length}
                 </span>
               )}

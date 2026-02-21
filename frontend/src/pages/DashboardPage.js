@@ -455,7 +455,7 @@ export default function DashboardPage() {
       {/* Next Holiday */}
       {nextHoliday && (
         <div className="card-premium p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--warning)/0.1)]0/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
             <CalendarDays size={18} className="text-[hsl(var(--warning))]" />
           </div>
           <div className="flex-1 min-w-0">

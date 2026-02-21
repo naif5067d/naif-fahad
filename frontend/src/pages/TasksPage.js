@@ -606,7 +606,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                       <Button 
                         size="sm" 
                         onClick={() => { setEvaluating(stage); setRating(0); setComment(''); }}
-                        className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-[hsl(var(--warning))]"
+                        className="bg-warning hover:bg-[hsl(var(--warning))]"
                       >
                         <Star size={16} className="ml-1" />
                         {lang === 'ar' ? 'تقييم' : 'Evaluate'}

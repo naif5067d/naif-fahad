@@ -458,7 +458,7 @@ export default function WorkLocationsPage() {
                               key={v}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, grace_checkin_minutes: v }))}
-                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkin_minutes === v ? 'bg-[hsl(var(--success)/0.1)]0 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkin_minutes === v ? 'bg-success text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
                             >
                               {v}
                             </button>
@@ -505,7 +505,7 @@ export default function WorkLocationsPage() {
                               key={v}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, grace_checkout_minutes: v }))}
-                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkout_minutes === v ? 'bg-[hsl(var(--warning)/0.1)]0 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkout_minutes === v ? 'bg-warning text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
                             >
                               {v}
                             </button>

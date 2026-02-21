@@ -569,7 +569,7 @@ export default function AttendancePage() {
           )}
           
           {!gpsState.checking && gpsState.available && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(var(--success)/0.1)]0/10 border border-[hsl(var(--success))]/20 text-[hsl(var(--success))]">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-success/10 border border-[hsl(var(--success))]/20 text-[hsl(var(--success))]">
               <MapPin size={18} />
               <span className="text-sm font-medium">[GPS000] {lang === 'ar' ? 'GPS متصل ✓' : 'GPS Connected ✓'}</span>
               <span className="text-xs text-muted-foreground ms-2">
@@ -597,7 +597,7 @@ export default function AttendancePage() {
           )}
 
           {assignedLocations.length === 0 && !isAdmin && (
-            <div className="p-4 rounded-xl bg-[hsl(var(--warning)/0.1)]0/10 border border-[hsl(var(--warning))]/20">
+            <div className="p-4 rounded-xl bg-warning/10 border border-[hsl(var(--warning))]/20">
               <p className="text-sm text-[hsl(var(--warning))] flex items-center gap-2">
                 <AlertTriangle size={16} />
                 {lang === 'ar' ? 'لم يتم تعيين موقع عمل لك بعد. تواصل مع مديرك.' : 'No work location assigned yet. Contact your manager.'}
@@ -721,7 +721,7 @@ export default function AttendancePage() {
             {history.slice(0, 10).map((h, i) => (
               <div key={i} className="card-premium p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.type === 'check_in' ? 'bg-[hsl(var(--success)/0.1)]0/10' : 'bg-primary/10'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.type === 'check_in' ? 'bg-success/10' : 'bg-primary/10'}`}>
                     {h.type === 'check_in' ? (
                       <CheckCircle size={18} className="text-[hsl(var(--success))]" />
                     ) : (
