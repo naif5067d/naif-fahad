@@ -389,12 +389,12 @@ export default function DashboardPage() {
       {announcements.regular?.length > 0 && (
         <div className="space-y-2">
           {announcements.regular.map(ann => (
-            <div key={ann.id} className="flex items-start justify-between p-3 bg-blue-50 border border-blue-200 rounded-xl dark:bg-blue-950/30 dark:border-blue-800">
+            <div key={ann.id} className="flex items-start justify-between p-3 bg-[hsl(var(--info)/0.1)] border border-[hsl(var(--info)/0.2)] rounded-xl dark:bg-[hsl(var(--info)/0.15)]">
               <div className="flex items-start gap-2">
-                <Bell size={14} className="text-blue-600 mt-0.5" />
-                <p className="text-sm text-blue-900 dark:text-blue-100">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
+                <Bell size={14} className="text-[hsl(var(--info))] mt-0.5" />
+                <p className="text-sm text-foreground">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => dismissAnnouncement(ann.id)} className="text-blue-600 p-1 h-auto">
+              <Button variant="ghost" size="sm" onClick={() => dismissAnnouncement(ann.id)} className="text-[hsl(var(--info))] p-1 h-auto">
                 <X size={14} />
               </Button>
             </div>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {expiringContracts.employees.slice(0, 3).map(emp => (
               <div key={emp.employee_id} className={`p-3 rounded-xl border ${
-                emp.urgency === 'critical' ? 'border-red-200 bg-red-50' : 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]'
+                emp.urgency === 'critical' ? 'border-destructive/30 bg-destructive/10' : 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]'
               }`}>
                 <p className="font-medium text-sm truncate">{lang === 'ar' ? emp.employee_name_ar : emp.employee_name}</p>
                 <p className="text-xs text-muted-foreground">{emp.days_remaining} {lang === 'ar' ? 'يوم' : 'days'}</p>
