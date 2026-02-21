@@ -266,17 +266,17 @@ export default function MaintenanceTrackingPage() {
                         {!card.delay_info?.has_expected ? (
                           <span className="text-slate-400">-</span>
                         ) : isDelayed ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 rounded-full text-xs font-bold">
                             <AlertTriangle size={12} />
                             {lang === 'ar' ? 'نعم' : 'Yes'} ({Math.abs(card.delay_info.days_remaining)} {lang === 'ar' ? 'يوم' : 'd'})
                           </span>
                         ) : alert ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--lavender)/0.15)] text-[hsl(var(--lavender))] rounded-full text-xs font-bold">
                             <Clock size={12} />
                             {alert}
                           </span>
                         ) : (
-                          <span className="text-green-600 text-xs">
+                          <span className="text-slate-600 dark:text-slate-300 text-xs">
                             <CheckCircle size={14} className="inline" /> {card.delay_info.days_remaining} {lang === 'ar' ? 'يوم' : 'd'}
                           </span>
                         )}
@@ -284,10 +284,10 @@ export default function MaintenanceTrackingPage() {
                       <td className="p-3 text-center">
                         <div className="flex justify-center gap-1">
                           <Button size="sm" variant="ghost" onClick={() => setEditCard(card)}>
-                            <Edit size={14} className="text-blue-600" />
+                            <Edit size={14} className="text-[hsl(var(--navy))]" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => handleDelete(card.id)}>
-                            <Trash2 size={14} className="text-red-600" />
+                            <Trash2 size={14} className="text-slate-500 hover:text-slate-700" />
                           </Button>
                         </div>
                       </td>
