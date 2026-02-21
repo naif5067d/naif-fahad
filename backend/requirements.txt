@@ -152,3 +152,5 @@ zipp==3.23.0
 zopfli==0.4.1
 cryptography==46.0.4
 pywebpush==2.3.0
+limits==5.8.0
+slowapi==0.1.9
