@@ -122,6 +122,10 @@ async def update_settings(
         update_data["primary_color"] = req.primary_color
     if req.secondary_color is not None:
         update_data["secondary_color"] = req.secondary_color
+    if req.company_name_ar is not None:
+        update_data["company_name_ar"] = req.company_name_ar
+    if req.company_name_en is not None:
+        update_data["company_name_en"] = req.company_name_en
     
     await db.company_settings.update_one(
         {"key": "login_page"},
