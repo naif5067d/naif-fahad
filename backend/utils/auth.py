@@ -32,9 +32,13 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict, role: str = "employee") -> str:
+    """إنشاء توكن مع مدة صلاحية حسب الدور"""
     to_encode = data.copy()
-    to_encode["exp"] = datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS)
+    expire_hours = TOKEN_EXPIRE_HOURS.get(role, DEFAULT_TOKEN_EXPIRE)
+    to_encode["exp"] = datetime.now(timezone.utc) + timedelta(hours=expire_hours)
+    to_encode["iat"] = datetime.now(timezone.utc)  # وقت الإصدار
+    to_encode["jti"] = os.urandom(16).hex()  # معرف فريد للتوكن
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
