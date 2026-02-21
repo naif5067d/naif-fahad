@@ -55,7 +55,7 @@ export default function SettingsPage() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {theme === 'light' ? <Sun size={20} className="text-amber-500" /> : <Moon size={20} className="text-blue-400" />}
+              {theme === 'light' ? <Sun size={20} className="text-[hsl(var(--warning))]" /> : <Moon size={20} className="text-blue-400" />}
               <span className="text-sm">{theme === 'light' ? t('theme.light') : t('theme.dark')}</span>
             </div>
             <Button data-testid="settings-theme-toggle" variant="outline" size="sm" onClick={toggleTheme}>

@@ -423,7 +423,7 @@ export default function TransactionsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setActionDialog({ ...tx, action: 'escalate' })}
-                        className="h-10 rounded-xl border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] hover:border-orange-400"
+                        className="h-10 rounded-xl border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] hover:border-[hsl(var(--warning)/0.4)]"
                         data-testid={`escalate-tx-${tx.ref_no}`}
                       >
                         تصعيد
@@ -482,7 +482,7 @@ export default function TransactionsPage() {
                 className={`flex-1 h-12 rounded-xl font-semibold ${
                   actionDialog?.action === 'approve' ? 'bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]' :
                   actionDialog?.action === 'reject' ? 'bg-red-600 hover:bg-red-700' : 
-                  'bg-orange-600 hover:bg-orange-700'
+                  'bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]'
                 } text-white`}
                 data-testid="confirm-action"
               >

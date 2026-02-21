@@ -135,7 +135,7 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Yearly Deductions */}
-        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-orange-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
@@ -171,13 +171,13 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Absent Days */}
-        <Card className="border-accent/30 dark:border-violet-800">
+        <Card className="border-accent/30 dark:border-accent/30">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
                 {lang === 'ar' ? 'أيام الغياب' : 'Absent Days'}
               </span>
-              <Clock size={18} className="text-violet-500" />
+              <Clock size={18} className="text-accent" />
             </div>
             <p className="text-2xl font-bold text-accent dark:text-accent">
               {summary?.absence_summary?.total_absent_days || 0}
@@ -327,7 +327,7 @@ export default function MyFinancesPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center mt-1">
+                      <div className="w-8 h-8 rounded-full bg-[hsl(var(--warning)/0.3)] dark:bg-[hsl(var(--warning)/0.3)] flex items-center justify-center mt-1">
                         <AlertTriangle size={14} className="text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]" />
                       </div>
                       <div>

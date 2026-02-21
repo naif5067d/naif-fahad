@@ -82,7 +82,7 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/100 to-accent flex items-center justify-center">
             <ClipboardList size={24} className="text-white" />
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function TasksPage() {
         {isManager && (
           <Button 
             onClick={() => setShowCreateDialog(true)}
-            className="bg-violet-600 hover:bg-violet-700 gap-2"
+            className="bg-accent hover:bg-accent gap-2"
           >
             <Plus size={18} />
             {lang === 'ar' ? 'مهمة جديدة' : 'New Task'}
@@ -117,7 +117,7 @@ export default function TasksPage() {
             <p className="text-sm text-blue-600">{lang === 'ar' ? 'إجمالي المهام' : 'Total Tasks'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-[hsl(var(--warning)/0.3)]">
+        <Card className="bg-gradient-to-br from-[hsl(var(--warning)/0.1)] to-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold text-[hsl(var(--warning))]">
               {tasks.filter(t => t.status === 'active' || t.status === 'pending_review').length}
@@ -210,7 +210,7 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
   
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-violet-300"
+      className="cursor-pointer hover:shadow-lg transition-all border-2 hover:border-accent/30"
       onClick={onSelect}
     >
       <CardContent className="p-4">
@@ -258,7 +258,7 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
                 key={stage}
                 className={`flex-1 h-2 rounded-full ${
                   s.evaluated ? 'bg-green-500' :
-                  s.completed ? 'bg-orange-400' :
+                  s.completed ? 'bg-[hsl(var(--warning))]' :
                   'bg-slate-200'
                 }`}
                 title={`${lang === 'ar' ? 'المرحلة' : 'Stage'} ${stage}`}
@@ -410,7 +410,7 @@ function CreateTaskDialog({ open, onClose, employees, lang, onSuccess }) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={submitting} className="flex-1 bg-violet-600 hover:bg-violet-700">
+            <Button type="submit" disabled={submitting} className="flex-1 bg-accent hover:bg-accent">
               {submitting ? '...' : (lang === 'ar' ? 'إنشاء المهمة' : 'Create Task')}
             </Button>
           </div>
@@ -535,7 +535,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
             </div>
             <div className="w-full bg-slate-200 rounded-full h-4">
               <div 
-                className="h-4 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                className="h-4 rounded-full bg-gradient-to-r from-accent/100 to-accent/100 transition-all"
                 style={{ width: `${task.progress}%` }}
               />
             </div>
@@ -562,7 +562,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                         s.evaluated ? 'bg-green-500 text-white' :
-                        s.completed ? 'bg-orange-400 text-white' :
+                        s.completed ? 'bg-[hsl(var(--warning))] text-white' :
                         'bg-slate-300 text-slate-600'
                       }`}>
                         {s.evaluated ? <CheckCircle size={20} /> : stage}
@@ -596,7 +596,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                         size="sm" 
                         onClick={() => handleCompleteStage(stage)}
                         disabled={submitting}
-                        className="bg-violet-600 hover:bg-violet-700"
+                        className="bg-accent hover:bg-accent"
                       >
                         <CheckCircle size={16} className="ml-1" />
                         {lang === 'ar' ? 'تم الإنجاز' : 'Complete'}
@@ -626,7 +626,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
           {/* Evaluation Form */}
           {evaluating && (
             <div className="bg-accent/10 border-2 border-accent/30 rounded-lg p-4">
-              <h4 className="font-bold text-violet-800 mb-3">
+              <h4 className="font-bold text-accent mb-3">
                 {lang === 'ar' ? `تقييم المرحلة ${evaluating}` : `Evaluate Stage ${evaluating}`}
               </h4>
               <div className="space-y-3">
@@ -662,7 +662,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                   <Button variant="outline" onClick={() => setEvaluating(null)} className="flex-1">
                     {lang === 'ar' ? 'إلغاء' : 'Cancel'}
                   </Button>
-                  <Button onClick={handleEvaluateStage} disabled={submitting} className="flex-1 bg-violet-600 hover:bg-violet-700">
+                  <Button onClick={handleEvaluateStage} disabled={submitting} className="flex-1 bg-accent hover:bg-accent">
                     {lang === 'ar' ? 'حفظ التقييم' : 'Save Evaluation'}
                   </Button>
                 </div>

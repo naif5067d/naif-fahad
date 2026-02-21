@@ -446,7 +446,7 @@ export default function WorkLocationsPage() {
                           max="15"
                           value={formData.grace_checkin_minutes}
                           onChange={e => setFormData(p => ({ ...p, grace_checkin_minutes: parseInt(e.target.value) }))}
-                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[hsl(var(--success))]"
                           style={{
                             background: `linear-gradient(to right, #10b981 0%, #10b981 ${(formData.grace_checkin_minutes / 15) * 100}%, #e2e8f0 ${(formData.grace_checkin_minutes / 15) * 100}%, #e2e8f0 100%)`
                           }}
@@ -493,7 +493,7 @@ export default function WorkLocationsPage() {
                           max="15"
                           value={formData.grace_checkout_minutes}
                           onChange={e => setFormData(p => ({ ...p, grace_checkout_minutes: parseInt(e.target.value) }))}
-                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-orange-500"
+                          className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[hsl(var(--warning))]"
                           style={{
                             background: `linear-gradient(to right, #f97316 0%, #f97316 ${(formData.grace_checkout_minutes / 15) * 100}%, #e2e8f0 ${(formData.grace_checkout_minutes / 15) * 100}%, #e2e8f0 100%)`
                           }}
@@ -518,7 +518,7 @@ export default function WorkLocationsPage() {
 
                 {/* Early Check-in Allowance - للمخولين فقط */}
                 {canEdit && (
-                  <div className="p-4 rounded-lg bg-gradient-to-br from-violet-50 to-purple-50 border border-accent/30">
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-accent/10 to-accent/10 border border-accent/30">
                     <Label className="flex items-center gap-2 text-accent mb-3">
                       <Clock size={16} />
                       {lang === 'ar' ? 'السماح بالتبصيم قبل الدوام' : 'Early Check-in Allowance'}

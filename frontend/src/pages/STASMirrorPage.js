@@ -670,8 +670,8 @@ export default function STASMirrorPage() {
           <div className="space-y-6">
             {/* Pending Devices Alert - تنبيه الأجهزة المعلقة */}
             {pendingDevices.length > 0 && (
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl p-5 shadow-sm">
-                <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-4 text-lg">
+              <div className="bg-gradient-to-r from-[hsl(var(--warning)/0.1)] to-[hsl(var(--warning)/0.1)] border-2 border-[hsl(var(--warning)/0.3)] rounded-xl p-5 shadow-sm">
+                <h3 className="font-bold text-[hsl(var(--warning))] flex items-center gap-2 mb-4 text-lg">
                   <AlertTriangle size={22} className="text-[hsl(var(--warning))]" />
                   {lang === 'ar' ? '⚠️ أجهزة تحتاج موافقتك' : '⚠️ Devices Need Your Approval'}
                   <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-sm px-2 py-0.5 rounded-full mr-2">
@@ -682,7 +682,7 @@ export default function STASMirrorPage() {
                   {pendingDevices.map(device => {
                     const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
                     return (
-                      <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-[hsl(var(--warning)/0.3)] hover:border-orange-400 transition-all shadow-sm">
+                      <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-[hsl(var(--warning)/0.3)] hover:border-[hsl(var(--warning)/0.4)] transition-all shadow-sm">
                         <div className="flex items-center gap-4">
                           <div className="w-14 h-14 rounded-xl bg-[hsl(var(--warning)/0.15)] flex items-center justify-center">
                             <DeviceIcon size={28} className="text-[hsl(var(--warning))]" />
@@ -790,7 +790,7 @@ export default function STASMirrorPage() {
                       variant="outline"
                       onClick={() => handleResetDevices(selectedEmployeeFilter)}
                       disabled={deviceAction}
-                      className="h-12 text-base font-bold border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
+                      className="h-12 text-base font-bold border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
                       data-testid="reset-devices-btn"
                     >
                       <RotateCcw size={18} className="ml-2" />
@@ -849,7 +849,7 @@ export default function STASMirrorPage() {
                       const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
                       const statusColors = {
                         trusted: 'border-green-400 bg-green-50',
-                        pending: 'border-orange-400 bg-[hsl(var(--warning)/0.1)]',
+                        pending: 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]',
                         blocked: 'border-red-400 bg-red-50'
                       };
                       const statusBadge = {
@@ -928,7 +928,7 @@ export default function STASMirrorPage() {
                                 variant="outline"
                                 onClick={() => handleBlockDevice(device.id)}
                                 disabled={deviceAction}
-                                className="flex-1 border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
+                                className="flex-1 border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
                                 data-testid={`block-btn-${device.id}`}
                               >
                                 <XCircle size={14} className="ml-1" />
@@ -1383,7 +1383,7 @@ export default function STASMirrorPage() {
                       <Button
                         onClick={() => executeDeduction(selectedDeduction)}
                         disabled={executingDeduction === selectedDeduction.id}
-                        className="w-full bg-violet-600 hover:bg-violet-700"
+                        className="w-full bg-accent hover:bg-accent"
                       >
                         {executingDeduction === selectedDeduction.id ? (
                           <><Loader2 className="animate-spin mr-2" size={16} /> {lang === 'ar' ? 'جاري التنفيذ...' : 'Executing...'}</>
@@ -1496,7 +1496,7 @@ export default function STASMirrorPage() {
                                   <span className="font-bold">{c.sick_leave_info.current_used} / 120 {lang === 'ar' ? 'يوم' : 'days'}</span>
                                 </div>
                                 {c.sick_leave_info.tier_distribution?.map((tier, ti) => (
-                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : tier.salary_percent === 50 ? 'bg-amber-200 text-[hsl(var(--warning))]' : 'bg-red-100 text-red-800'}`}>
+                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : tier.salary_percent === 50 ? 'bg-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))]' : 'bg-red-100 text-red-800'}`}>
                                     {tier.days} {lang === 'ar' ? 'يوم' : 'days'} → {tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب' : 'Half pay') : (lang === 'ar' ? 'بدون راتب' : 'No pay')}
                                   </div>
                                 ))}
@@ -1523,10 +1523,10 @@ export default function STASMirrorPage() {
 
                   {/* Leave Calculation Details - سجل الإجازات - STAS فقط */}
                   {mirror.transaction?.type === 'leave_request' && mirror.transaction?.data?.calculation_details && (
-                    <Card className="border-2 border-violet-500/30 shadow-none" data-testid="leave-calculation-card">
+                    <Card className="border-2 border-accent/30 shadow-none" data-testid="leave-calculation-card">
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm flex items-center gap-2 text-accent dark:text-violet-300">
+                          <CardTitle className="text-sm flex items-center gap-2 text-accent dark:text-accent">
                             <Calendar size={16} />
                             {lang === 'ar' ? 'سجل حساب الإجازة' : 'Leave Calculation Record'}
                           </CardTitle>
@@ -1544,8 +1544,8 @@ export default function STASMirrorPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {/* Summary */}
-                        <div className="bg-accent/10 dark:bg-violet-900/20 rounded-lg p-3 border border-accent/30 dark:border-violet-800">
-                          <p className="text-violet-800 dark:text-violet-200 text-sm font-medium text-center">
+                        <div className="bg-accent/10 dark:bg-accent/15 rounded-lg p-3 border border-accent/30 dark:border-accent/30">
+                          <p className="text-accent dark:text-accent text-sm font-medium text-center">
                             {mirror.transaction.data.calculation_details.calculation_summary_ar}
                           </p>
                         </div>
@@ -1833,13 +1833,13 @@ export default function STASMirrorPage() {
         <TabsContent value="maintenance" className="mt-4 space-y-4">
           {/* Version Management */}
           <Card className="border-2 border-accent/30 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-violet-50">
+            <CardHeader className="bg-gradient-to-r from-accent/10 to-violet-50">
               <CardTitle className="text-base flex items-center justify-between">
                 <span className="flex items-center gap-2 text-accent">
                   <Tag size={20} />
                   {lang === 'ar' ? 'إدارة إصدار التطبيق' : 'App Version Management'}
                 </span>
-                <span className="px-3 py-1.5 bg-indigo-600 text-white rounded-full text-sm font-bold">
+                <span className="px-3 py-1.5 bg-accent text-white rounded-full text-sm font-bold">
                   v{versionInfo?.version || '1.0.0'}
                 </span>
               </CardTitle>
@@ -1887,7 +1887,7 @@ export default function STASMirrorPage() {
               <Dialog open={versionDialogOpen} onOpenChange={setVersionDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
-                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                    className="w-full h-12 bg-accent hover:bg-accent text-white font-bold"
                     data-testid="open-version-dialog-btn"
                   >
                     <RefreshCw size={18} className="ml-2" />
@@ -1951,7 +1951,7 @@ export default function STASMirrorPage() {
                     <Button
                       onClick={handleUpdateVersion}
                       disabled={updatingVersion || !newVersion.trim()}
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                      className="flex-1 bg-accent hover:bg-accent"
                       data-testid="save-version-btn"
                     >
                       {updatingVersion ? (

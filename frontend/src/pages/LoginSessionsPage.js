@@ -169,7 +169,7 @@ export default function LoginSessionsPage() {
               <select
                 value={selectedEmployee}
                 onChange={(e) => setSelectedEmployee(e.target.value)}
-                className="w-full p-3 border-2 rounded-lg text-base focus:border-indigo-500 focus:outline-none"
+                className="w-full p-3 border-2 rounded-lg text-base focus:border-accent focus:outline-none"
               >
                 <option value="">-- اختر موظف --</option>
                 {employees.map(emp => (
@@ -193,8 +193,8 @@ export default function LoginSessionsPage() {
                     onClick={() => setPeriod(opt.value)}
                     className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                       period === opt.value
-                        ? 'bg-indigo-600 text-white shadow'
-                        : 'bg-white border-2 text-slate-600 hover:border-indigo-300'
+                        ? 'bg-accent text-white shadow'
+                        : 'bg-white border-2 text-slate-600 hover:border-accent/30'
                     }`}
                   >
                     {opt.icon} {opt.label}
@@ -220,24 +220,24 @@ export default function LoginSessionsPage() {
       {selectedEmployee && (
         <>
           {/* Employee Info Bar */}
-          <div className="bg-gradient-to-l from-indigo-600 to-indigo-700 rounded-xl p-4 mb-4 text-white flex items-center justify-between">
+          <div className="bg-gradient-to-l from-accent to-accent rounded-xl p-4 mb-4 text-white flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">
                 {selectedEmp?.full_name_ar?.charAt(0) || '؟'}
               </div>
               <div>
                 <h2 className="text-lg font-bold">{selectedEmp?.full_name_ar}</h2>
-                <p className="text-indigo-200 text-sm">#{selectedEmp?.employee_number}</p>
+                <p className="text-accent/60 text-sm">#{selectedEmp?.employee_number}</p>
               </div>
             </div>
             <div className="flex items-center gap-6 text-center">
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-indigo-200">جلسة</p>
+                <p className="text-xs text-accent/60">جلسة</p>
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalHours}:{stats.totalMins.toString().padStart(2,'0')}</p>
-                <p className="text-xs text-indigo-200">ساعة</p>
+                <p className="text-xs text-accent/60">ساعة</p>
               </div>
             </div>
           </div>

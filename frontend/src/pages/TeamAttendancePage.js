@@ -1703,14 +1703,14 @@ export default function TeamAttendancePage() {
               
               {/* إقرار المشرف - يظهر للمشرف فقط */}
               {isSupervisor && (
-                <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-700">
+                <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       id="supervisor_ack"
                       checked={editForm.supervisor_acknowledgment}
                       onChange={(e) => setEditForm({...editForm, supervisor_acknowledgment: e.target.checked})}
-                      className="mt-1 w-5 h-5 rounded border-amber-400"
+                      className="mt-1 w-5 h-5 rounded border-[hsl(var(--warning)/0.3)]"
                     />
                     <label htmlFor="supervisor_ack" className="text-sm text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                       <span className="font-semibold block mb-1">
@@ -1761,8 +1761,8 @@ export default function TeamAttendancePage() {
               
               {/* Trace Summary */}
               {traceData.trace_summary && (
-                <div className="p-4 bg-accent/10 dark:bg-violet-900/20 rounded-lg border border-accent/30 dark:border-violet-800">
-                  <p className="font-medium text-accent dark:text-violet-300 mb-2">
+                <div className="p-4 bg-accent/10 dark:bg-accent/15 rounded-lg border border-accent/30 dark:border-accent/30">
+                  <p className="font-medium text-accent dark:text-accent mb-2">
                     {lang === 'ar' ? 'ملخص الفحص' : 'Check Summary'}
                   </p>
                   <p className="text-sm">{traceData.trace_summary.conclusion_ar}</p>
