@@ -52,7 +52,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  HandMetal,
+  FileSignature,
   LogIn,
   LogOut
 } from 'lucide-react';
@@ -705,7 +705,7 @@ export default function TeamAttendancePage() {
           {/* تبويب التحضير اليدوي - للمشرفين فقط */}
           {isSupervisor && (
             <TabsTrigger value="manual-attendance" className="flex-1 md:flex-none gap-2">
-              <HandMetal size={16} />
+              <FileSignature size={16} />
               {lang === 'ar' ? 'تحضير يدوي' : 'Manual Check-in'}
             </TabsTrigger>
           )}
@@ -1031,7 +1031,7 @@ export default function TeamAttendancePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <HandMetal size={20} className="text-primary" />
+                  <FileSignature size={20} className="text-primary" />
                   {lang === 'ar' ? 'التحضير اليدوي لموظفيك' : 'Manual Check-in for Your Team'}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -1876,7 +1876,7 @@ export default function TeamAttendancePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HandMetal size={20} className="text-primary" />
+              <FileSignature size={20} className="text-primary" />
               {manualAttendanceForm.check_type === 'check_in' 
                 ? (lang === 'ar' ? 'تسجيل دخول يدوي' : 'Manual Check-in')
                 : (lang === 'ar' ? 'تسجيل خروج يدوي' : 'Manual Check-out')
