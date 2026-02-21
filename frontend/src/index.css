@@ -341,7 +341,25 @@ input:focus, select:focus, textarea:focus {
   pointer-events: none;
 }
 
-/* ==================== Status Ring Animation ==================== */
+/* ==================== Border Flow Animation ==================== */
+@keyframes border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-border-flow {
+  background-size: 200% 200%;
+  animation: border-flow 3s ease infinite;
+}
+
+/* Spin slow animation */
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);
