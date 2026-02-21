@@ -57,7 +57,8 @@ def init_firebase():
 # Models
 class PushSubscription(BaseModel):
     user_id: str
-    subscription: dict  # Contains endpoint, keys (p256dh, auth)
+    subscription: dict  # Contains endpoint, keys (fcm_token for FCM)
+    type: Optional[str] = "fcm"  # fcm or web_push
 
 class PushMessage(BaseModel):
     user_id: Optional[str] = None
@@ -69,11 +70,18 @@ class PushMessage(BaseModel):
     url: Optional[str] = None
     tag: Optional[str] = None
 
+# Initialize Firebase on module load
+init_firebase()
+
 # Endpoints
 @router.get("/vapid-key")
 async def get_vapid_public_key():
-    """Get the public VAPID key for push subscriptions"""
-    return {"publicKey": VAPID_KEYS["public_key"]}
+    """Get Firebase config (for compatibility)"""
+    return {
+        "publicKey": "firebase",
+        "type": "fcm",
+        "projectId": "alcode-co"
+    }
 
 @router.post("/subscribe")
 async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends(get_current_user)):
