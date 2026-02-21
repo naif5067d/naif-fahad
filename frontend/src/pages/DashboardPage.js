@@ -229,21 +229,19 @@ export default function DashboardPage() {
       
       {/* ==================== البطاقة الرئيسية - أفقية ==================== */}
       <div className="relative" data-testid="main-card">
-        {/* الشريط المتموج حول الإطار */}
+        {/* الشريط المتموج حول الإطار - ألوان الشركة */}
         <div className={`absolute -inset-[2px] rounded-2xl bg-gradient-to-r 
-          ${statusColor === 'emerald' ? 'from-emerald-400 via-emerald-500 to-emerald-400' : ''}
-          ${statusColor === 'amber' ? 'from-amber-400 via-amber-500 to-amber-400' : ''}
-          ${statusColor === 'red' ? 'from-red-400 via-red-500 to-red-400' : ''}
-          ${statusColor === 'blue' ? 'from-blue-400 via-indigo-500 to-blue-400' : ''}
+          ${statusColor === 'navy' ? 'from-[hsl(var(--navy))] via-[hsl(222,47%,30%)] to-[hsl(var(--navy))]' : ''}
+          ${statusColor === 'lavender' ? 'from-[hsl(var(--lavender))] via-[hsl(262,83%,70%)] to-[hsl(var(--lavender))]' : ''}
           ${statusColor === 'slate' ? 'from-slate-400 via-slate-500 to-slate-400' : ''}
           animate-border-flow`} 
         />
         
-        {/* البطاقة */}
+        {/* البطاقة - ألوان الشركة */}
         <div className={`relative overflow-hidden rounded-2xl ${
           isManager 
-            ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white' 
-            : 'bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white'
+            ? 'bg-gradient-to-br from-[hsl(var(--charcoal))] via-slate-900 to-[hsl(var(--charcoal))] text-white' 
+            : 'bg-gradient-to-br from-[hsl(var(--navy))] via-[hsl(222,47%,28%)] to-[hsl(var(--navy))] text-white'
         }`}>
           
           <div className="relative p-5">
@@ -261,20 +259,20 @@ export default function DashboardPage() {
                     />
                   ) : (
                     <div className={`w-full aspect-square rounded-xl flex items-center justify-center text-4xl font-bold ${
-                      isManager ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-slate-700/50'
+                      isManager ? 'bg-[hsl(var(--navy))]' : 'bg-slate-700/50'
                     }`}>
                       {displayName?.[0] || 'U'}
                     </div>
                   )}
                   
-                  {/* نقطة الحالة */}
+                  {/* نقطة الحالة - ألوان الشركة */}
                   {showsAttendance && (
                     <span className={`absolute -bottom-1 -end-1 w-5 h-5 rounded-full border-2 ${
-                      isManager ? 'border-slate-900' : 'border-blue-700'
+                      isManager ? 'border-[hsl(var(--charcoal))]' : 'border-[hsl(var(--navy))]'
                     } ${
-                      employeeSummary?.attendance?.today_status === 'present' ? 'bg-emerald-500' :
-                      employeeSummary?.attendance?.today_status === 'late' ? 'bg-amber-500' :
-                      employeeSummary?.attendance?.today_status === 'absent' ? 'bg-red-500' : 'bg-slate-400'
+                      employeeSummary?.attendance?.today_status === 'present' ? 'bg-[hsl(var(--navy))]' :
+                      employeeSummary?.attendance?.today_status === 'late' ? 'bg-[hsl(var(--lavender))]' :
+                      employeeSummary?.attendance?.today_status === 'absent' ? 'bg-slate-500' : 'bg-slate-400'
                     }`} />
                   )}
                 </div>
