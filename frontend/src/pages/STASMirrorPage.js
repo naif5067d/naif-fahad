@@ -96,7 +96,9 @@ export default function STASMirrorPage() {
     welcome_text_ar: 'أنتم الدار ونحن الكود',
     welcome_text_en: 'You are the Home, We are the Code',
     primary_color: '#1E3A5F',
-    secondary_color: '#A78BFA'
+    secondary_color: '#A78BFA',
+    company_name_ar: 'شركة دار الأركان',
+    company_name_en: 'Dar Al Arkan'
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
