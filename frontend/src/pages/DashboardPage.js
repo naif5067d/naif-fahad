@@ -111,40 +111,41 @@ const STAT_CONFIG = {
 
 const QUICK_ACTIONS = {
   employee: [
-    { key: 'leave', icon: CalendarDays, path: '/leave', color: '#3B82F6' },
-    { key: 'attendance', icon: Clock, path: '/attendance', color: '#10B981' },
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#8B5CF6' },
+    { key: 'leave', icon: CalendarDays, path: '/leave' },
+    { key: 'attendance', icon: Clock, path: '/attendance' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
   ],
   supervisor: [
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#F97316' },
-    { key: 'leave', icon: CalendarDays, path: '/leave', color: '#3B82F6' },
-    { key: 'attendance', icon: Clock, path: '/attendance', color: '#10B981' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'leave', icon: CalendarDays, path: '/leave' },
+    { key: 'attendance', icon: Clock, path: '/attendance' },
   ],
   sultan: [
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#F97316' },
-    { key: 'employees', icon: Users, path: '/employees', color: '#3B82F6' },
-    { key: 'financialCustody', icon: Wallet, path: '/financial-custody', color: '#A78BFA' },
-    { key: 'workLocations', icon: MapPin, path: '/work-locations', color: '#10B981' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'employees', icon: Users, path: '/employees' },
+    { key: 'financialCustody', icon: Wallet, path: '/financial-custody' },
+    { key: 'maintenanceTracking', icon: Briefcase, path: '/maintenance-tracking' },
   ],
   naif: [
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#F97316' },
-    { key: 'employees', icon: Users, path: '/employees', color: '#3B82F6' },
-    { key: 'financialCustody', icon: Wallet, path: '/financial-custody', color: '#A78BFA' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'employees', icon: Users, path: '/employees' },
+    { key: 'financialCustody', icon: Wallet, path: '/financial-custody' },
+    { key: 'maintenanceTracking', icon: Briefcase, path: '/maintenance-tracking' },
   ],
   salah: [
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#14B8A6' },
-    { key: 'finance', icon: DollarSign, path: '/finance', color: '#10B981' },
-    { key: 'financialCustody', icon: Wallet, path: '/financial-custody', color: '#A78BFA' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'finance', icon: DollarSign, path: '/finance' },
+    { key: 'financialCustody', icon: Wallet, path: '/financial-custody' },
   ],
   mohammed: [
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#DC2626' },
-    { key: 'financialCustody', icon: Wallet, path: '/financial-custody', color: '#A78BFA' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'financialCustody', icon: Wallet, path: '/financial-custody' },
   ],
   stas: [
-    { key: 'stasMirror', icon: Shield, path: '/stas-mirror', color: '#A78BFA' },
-    { key: 'transactions', icon: FileText, path: '/transactions', color: '#F97316' },
-    { key: 'employees', icon: Users, path: '/employees', color: '#3B82F6' },
-    { key: 'companySettings', icon: Settings2, path: '/company-settings', color: '#64748B' },
+    { key: 'stasMirror', icon: Shield, path: '/stas-mirror' },
+    { key: 'transactions', icon: FileText, path: '/transactions' },
+    { key: 'employees', icon: Users, path: '/employees' },
+    { key: 'maintenanceTracking', icon: Briefcase, path: '/maintenance-tracking' },
   ],
 };
 
