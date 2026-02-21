@@ -111,6 +111,7 @@ export default function STASMirrorPage() {
     fetchEmployees();
     fetchMyTransactions();
     fetchVersion();
+    fetchCompanySettings();
   }, []);
 
   const fetchPending = () => {
