@@ -77,6 +77,7 @@ app.include_router(maintenance_tracking_router)
 app.include_router(admin_custody_router)
 app.include_router(analytics_router)
 app.include_router(performance_router)
+app.include_router(push_router)
 
 app.add_middleware(
     CORSMiddleware,
