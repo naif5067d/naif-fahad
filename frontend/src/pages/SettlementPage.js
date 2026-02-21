@@ -71,6 +71,7 @@ export default function SettlementPage() {
   
   const canCreate = ['sultan', 'naif', 'stas'].includes(user?.role);
   const canExecute = user?.role === 'stas';
+  const canCancel = user?.role === 'stas'; // STAS فقط يمكنه الإلغاء
 
   useEffect(() => {
     loadData();
