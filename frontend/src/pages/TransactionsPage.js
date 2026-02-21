@@ -11,45 +11,43 @@ import { formatSaudiDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-// تكوين الحالات - ألوان حسب نوع القرار
-// أخضر = منفذ/موافق | أصفر = معلق | أحمر = مرفوض/ملغي
+// تكوين الحالات - ألوان الشركة
 const STATUS_CONFIG = {
-  // منفذة - أخضر
-  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20', label_ar: 'منفذة ✓', label_en: 'Executed ✓', color: 'green' },
+  // منفذة
+  executed: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-700 dark:text-slate-200', border: 'border-slate-300', label_ar: 'منفذة', label_en: 'Executed', color: 'slate' },
   
-  // مرفوضة/ملغاة - أحمر
-  rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label_ar: 'مرفوضة ✗', label_en: 'Rejected ✗', color: 'red' },
-  cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20', label_ar: 'ملغاة ✗', label_en: 'Cancelled ✗', color: 'red' },
+  // مرفوضة/ملغاة
+  rejected: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300', label_ar: 'مرفوضة', label_en: 'Rejected', color: 'slate' },
+  cancelled: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300', label_ar: 'ملغاة', label_en: 'Cancelled', color: 'slate' },
   
-  // معادة - أزرق
-  returned: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20', label_ar: 'معادة ⟲', label_en: 'Returned ⟲', color: 'blue' },
+  // معادة
+  returned: { bg: 'bg-[hsl(var(--navy)/0.1)]', text: 'text-[hsl(var(--navy))]', border: 'border-[hsl(var(--navy)/0.2)]', label_ar: 'معادة', label_en: 'Returned', color: 'navy' },
   
-  // معلقة - أصفر/برتقالي
-  pending_supervisor: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار المشرف ⏳', label_en: 'Pending Supervisor ⏳', color: 'yellow' },
-  pending_ops: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار العمليات ⏳', label_en: 'Pending Operations ⏳', color: 'yellow' },
-  pending_finance: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار المالية ⏳', label_en: 'Pending Finance ⏳', color: 'yellow' },
-  pending_ceo: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار CEO ⏳', label_en: 'Pending CEO ⏳', color: 'yellow' },
-  stas: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار التنفيذ ⏳', label_en: 'Pending Execution ⏳', color: 'yellow' },
-  pending_employee_accept: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20', label_ar: 'بانتظار قبول الموظف ⏳', label_en: 'Pending Employee Accept ⏳', color: 'yellow' },
+  // معلقة - Lavender
+  pending_supervisor: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار المشرف', label_en: 'Pending Supervisor', color: 'lavender' },
+  pending_ops: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار العمليات', label_en: 'Pending Operations', color: 'lavender' },
+  pending_finance: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار المالية', label_en: 'Pending Finance', color: 'lavender' },
+  pending_ceo: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار CEO', label_en: 'Pending CEO', color: 'lavender' },
+  stas: { bg: 'bg-[hsl(var(--navy)/0.1)]', text: 'text-[hsl(var(--navy))]', border: 'border-[hsl(var(--navy)/0.2)]', label_ar: 'بانتظار التنفيذ', label_en: 'Pending Execution', color: 'navy' },
+  pending_employee_accept: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار قبول الموظف', label_en: 'Pending Employee Accept', color: 'lavender' },
 };
 
-// تكوين أنواع المعاملات
+// تكوين أنواع المعاملات - بدون إيموجي
 const TYPE_CONFIG = {
-  leave_request: { icon: '📅', label_ar: 'طلب إجازة', label_en: 'Leave Request' },
-  finance_60: { icon: '💰', label_ar: 'عهدة مالية', label_en: 'Financial Custody' },
-  settlement: { icon: '📊', label_ar: 'مخالصة', label_en: 'Settlement' },
-  contract: { icon: '📋', label_ar: 'عقد', label_en: 'Contract' },
-  tangible_custody: { icon: '📦', label_ar: 'عهدة ملموسة', label_en: 'Tangible Custody' },
-  tangible_custody_return: { icon: '📦', label_ar: 'إرجاع عهدة', label_en: 'Custody Return' },
-  salary_advance: { icon: '💵', label_ar: 'سلفة راتب', label_en: 'Salary Advance' },
-  letter_request: { icon: '✉️', label_ar: 'طلب خطاب', label_en: 'Letter Request' },
-  // أنواع طلبات الحضور
-  forget_checkin: { icon: '⏰', label_ar: 'نسيان بصمة', label_en: 'Forgot Punch' },
-  field_work: { icon: '🚗', label_ar: 'مهمة خارجية', label_en: 'Field Work' },
-  early_leave_request: { icon: '🚪', label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request' },
-  late_excuse: { icon: '⏱️', label_ar: 'تبرير تأخير', label_en: 'Late Excuse' },
-  add_finance_code: { icon: '🔢', label_ar: 'إضافة رمز مالي', label_en: 'Add Finance Code' },
-  warning: { icon: '⚠️', label_ar: 'إنذار', label_en: 'Warning' },
+  leave_request: { label_ar: 'طلب إجازة', label_en: 'Leave Request' },
+  finance_60: { label_ar: 'عهدة مالية', label_en: 'Financial Custody' },
+  settlement: { label_ar: 'مخالصة', label_en: 'Settlement' },
+  contract: { label_ar: 'عقد', label_en: 'Contract' },
+  tangible_custody: { label_ar: 'عهدة ملموسة', label_en: 'Tangible Custody' },
+  tangible_custody_return: { label_ar: 'إرجاع عهدة', label_en: 'Custody Return' },
+  salary_advance: { label_ar: 'سلفة راتب', label_en: 'Salary Advance' },
+  letter_request: { label_ar: 'طلب خطاب', label_en: 'Letter Request' },
+  forget_checkin: { label_ar: 'نسيان بصمة', label_en: 'Forgot Punch' },
+  field_work: { label_ar: 'مهمة خارجية', label_en: 'Field Work' },
+  early_leave_request: { label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request' },
+  late_excuse: { label_ar: 'تبرير تأخير', label_en: 'Late Excuse' },
+  add_finance_code: { label_ar: 'إضافة رمز مالي', label_en: 'Add Finance Code' },
+  warning: { label_ar: 'إنذار', label_en: 'Warning' },
 };
 
 // تكوين المراحل
