@@ -94,7 +94,7 @@ class PushMessage(BaseModel):
 @router.get("/vapid-key")
 async def get_vapid_public_key():
     """Get the public VAPID key for push subscriptions"""
-    return {"publicKey": VAPID_KEYS["public_key_b64"]}
+    return {"publicKey": VAPID_KEYS["public_key"]}
 
 @router.post("/subscribe")
 async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends(require_auth)):
