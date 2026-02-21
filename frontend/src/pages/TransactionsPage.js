@@ -35,22 +35,22 @@ const STATUS_CONFIG = {
   pending_employee_accept: { bg: 'bg-[hsl(var(--lavender)/0.1)]', text: 'text-[hsl(var(--lavender))]', border: 'border-[hsl(var(--lavender)/0.2)]', label_ar: 'بانتظار قبول الموظف', label_en: 'Pending Employee Accept', color: 'lavender' },
 };
 
-// تكوين أنواع المعاملات - بدون إيموجي
+// تكوين أنواع المعاملات - مع أيقونات Lucide
 const TYPE_CONFIG = {
-  leave_request: { label_ar: 'طلب إجازة', label_en: 'Leave Request' },
-  finance_60: { label_ar: 'عهدة مالية', label_en: 'Financial Custody' },
-  settlement: { label_ar: 'مخالصة', label_en: 'Settlement' },
-  contract: { label_ar: 'عقد', label_en: 'Contract' },
-  tangible_custody: { label_ar: 'عهدة ملموسة', label_en: 'Tangible Custody' },
-  tangible_custody_return: { label_ar: 'إرجاع عهدة', label_en: 'Custody Return' },
-  salary_advance: { label_ar: 'سلفة راتب', label_en: 'Salary Advance' },
-  letter_request: { label_ar: 'طلب خطاب', label_en: 'Letter Request' },
-  forget_checkin: { label_ar: 'نسيان بصمة', label_en: 'Forgot Punch' },
-  field_work: { label_ar: 'مهمة خارجية', label_en: 'Field Work' },
-  early_leave_request: { label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request' },
-  late_excuse: { label_ar: 'تبرير تأخير', label_en: 'Late Excuse' },
-  add_finance_code: { label_ar: 'إضافة رمز مالي', label_en: 'Add Finance Code' },
-  warning: { label_ar: 'إنذار', label_en: 'Warning' },
+  leave_request: { label_ar: 'طلب إجازة', label_en: 'Leave Request', Icon: CalendarDays },
+  finance_60: { label_ar: 'عهدة مالية', label_en: 'Financial Custody', Icon: Wallet },
+  settlement: { label_ar: 'مخالصة', label_en: 'Settlement', Icon: Receipt },
+  contract: { label_ar: 'عقد', label_en: 'Contract', Icon: FileSignature },
+  tangible_custody: { label_ar: 'عهدة ملموسة', label_en: 'Tangible Custody', Icon: Package },
+  tangible_custody_return: { label_ar: 'إرجاع عهدة', label_en: 'Custody Return', Icon: Package },
+  salary_advance: { label_ar: 'سلفة راتب', label_en: 'Salary Advance', Icon: Wallet },
+  letter_request: { label_ar: 'طلب خطاب', label_en: 'Letter Request', Icon: FileText },
+  forget_checkin: { label_ar: 'نسيان بصمة', label_en: 'Forgot Punch', Icon: Fingerprint },
+  field_work: { label_ar: 'مهمة خارجية', label_en: 'Field Work', Icon: MapPin },
+  early_leave_request: { label_ar: 'طلب خروج مبكر', label_en: 'Early Leave Request', Icon: LogOut },
+  late_excuse: { label_ar: 'تبرير تأخير', label_en: 'Late Excuse', Icon: ClockAlert },
+  add_finance_code: { label_ar: 'إضافة رمز مالي', label_en: 'Add Finance Code', Icon: Wallet },
+  warning: { label_ar: 'إنذار', label_en: 'Warning', Icon: AlertTriangle },
 };
 
 // تكوين المراحل
