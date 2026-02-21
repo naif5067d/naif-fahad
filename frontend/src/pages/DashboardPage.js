@@ -293,36 +293,36 @@ export default function DashboardPage() {
                 {/* الاسم والدور */}
                 <div className="mb-3">
                   <h2 className="text-xl font-bold truncate">{displayName}</h2>
-                  <p className={`text-sm ${isManager ? 'text-blue-300' : 'text-white/70'}`}>
+                  <p className={`text-sm ${isManager ? 'text-[hsl(var(--lavender)/0.8)]' : 'text-white/70'}`}>
                     {t(`roles.${role}`)}
                   </p>
                 </div>
                 
                 {/* الرسالة التحفيزية */}
-                <div className={`mb-4 p-3 rounded-lg ${isManager ? 'bg-slate-800/50' : 'bg-white/10'}`}>
+                <div className={`mb-4 p-3 rounded-lg ${isManager ? 'bg-[hsl(var(--navy)/0.3)]' : 'bg-white/10'}`}>
                   <div className="flex items-start gap-2">
-                    <Sparkles size={14} className={isManager ? 'text-amber-400 mt-0.5' : 'text-amber-300 mt-0.5'} />
+                    <Sparkles size={14} className="text-[hsl(var(--lavender))] mt-0.5" />
                     <p className="text-xs leading-relaxed opacity-90">{dailyMessage}</p>
                   </div>
                 </div>
                 
-                {/* الإحصائيات */}
+                {/* الإحصائيات - ألوان الشركة */}
                 {showsAttendance ? (
                   <div className="grid grid-cols-3 gap-2">
-                    <div className={`text-center p-2 rounded-lg ${isManager ? 'bg-slate-800/50' : 'bg-white/10'}`}
+                    <div className={`text-center p-2 rounded-lg cursor-pointer ${isManager ? 'bg-[hsl(var(--navy)/0.3)]' : 'bg-white/10'}`}
                          onClick={() => navigate('/leave')}>
-                      <CalendarDays size={16} className="mx-auto mb-1 text-blue-400" />
+                      <CalendarDays size={16} className="mx-auto mb-1 text-[hsl(var(--lavender))]" />
                       <p className="text-lg font-bold">{employeeSummary?.leave_details?.balance || 0}</p>
                       <p className="text-[9px] opacity-60">{lang === 'ar' ? 'إجازة' : 'Leave'}</p>
                     </div>
-                    <div className={`text-center p-2 rounded-lg ${isManager ? 'bg-slate-800/50' : 'bg-white/10'}`}
+                    <div className={`text-center p-2 rounded-lg cursor-pointer ${isManager ? 'bg-[hsl(var(--navy)/0.3)]' : 'bg-white/10'}`}
                          onClick={() => navigate('/attendance')}>
-                      <Clock size={16} className="mx-auto mb-1 text-emerald-400" />
+                      <Clock size={16} className="mx-auto mb-1 text-white/80" />
                       <p className="text-sm font-bold">{employeeSummary?.attendance?.check_in_time || '--:--'}</p>
                       <p className="text-[9px] opacity-60">{lang === 'ar' ? 'حضور' : 'In'}</p>
                     </div>
-                    <div className={`text-center p-2 rounded-lg ${isManager ? 'bg-slate-800/50' : 'bg-white/10'}`}>
-                      <Timer size={16} className="mx-auto mb-1 text-purple-400" />
+                    <div className={`text-center p-2 rounded-lg ${isManager ? 'bg-[hsl(var(--navy)/0.3)]' : 'bg-white/10'}`}>
+                      <Timer size={16} className="mx-auto mb-1 text-[hsl(var(--lavender)/0.8)]" />
                       <p className="text-lg font-bold">{employeeSummary?.attendance?.monthly_hours || 0}</p>
                       <p className="text-[9px] opacity-60">{lang === 'ar' ? 'ساعات' : 'Hrs'}</p>
                     </div>
@@ -332,8 +332,8 @@ export default function DashboardPage() {
                     {statCards.map(sc => {
                       const Icon = sc.icon;
                       return (
-                        <div key={sc.key} className="text-center p-2 bg-slate-800/50 rounded-lg">
-                          <Icon size={16} className="mx-auto mb-1 text-blue-400" />
+                        <div key={sc.key} className="text-center p-2 bg-[hsl(var(--navy)/0.3)] rounded-lg">
+                          <Icon size={16} className="mx-auto mb-1 text-[hsl(var(--lavender))]" />
                           <p className="text-lg font-bold">{stats[sc.key] ?? 0}</p>
                           <p className="text-[9px] opacity-60">{t(sc.label)}</p>
                         </div>
