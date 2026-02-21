@@ -17,7 +17,7 @@ const EVENT_CONFIG = {
   },
   approved: {
     icon: CheckCircle2,
-    color: 'bg-emerald-500',
+    color: 'bg-[hsl(var(--success)/0.1)]0',
     borderColor: 'border-emerald-500',
     labelEn: 'Approved',
     labelAr: 'تمت الموافقة',
@@ -45,7 +45,7 @@ const EVENT_CONFIG = {
   },
   escalated: {
     icon: ArrowUpCircle,
-    color: 'bg-orange-500',
+    color: 'bg-[hsl(var(--warning)/0.1)]0',
     borderColor: 'border-orange-500',
     labelEn: 'Escalated',
     labelAr: 'تم التصعيد',
