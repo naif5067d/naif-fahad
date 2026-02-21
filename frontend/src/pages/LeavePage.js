@@ -32,7 +32,8 @@ export default function LeavePage() {
   const canRequest = ['employee', 'supervisor', 'sultan', 'salah'].includes(user?.role);
   const canEditHolidays = ['sultan', 'naif', 'stas'].includes(user?.role);
   const isAdmin = ['sultan', 'naif', 'salah', 'mohammed', 'stas'].includes(user?.role);
-  const isEmployee = user?.role === 'employee';
+  // الموظف والمشرف يرون نفس العرض المختصر (رصيدهم الشخصي)
+  const isEmployeeOrSupervisor = ['employee', 'supervisor'].includes(user?.role);
 
   // أنواع الإجازات - الموظف يستطيع رفع جميع الأنواع
   // لكن لا يرى الأرصدة إلا للاعتيادية
