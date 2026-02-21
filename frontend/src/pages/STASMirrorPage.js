@@ -692,8 +692,9 @@ export default function STASMirrorPage() {
                             <p className="text-base font-medium text-orange-700">
                               {device.friendly_name || `${device.browser} - ${device.os}`}
                             </p>
-                            <p className="text-sm text-slate-500 mt-1">
-                              📅 {new Date(device.registered_at).toLocaleString('ar-EG')}
+                            <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                              <Calendar size={14} />
+                              {new Date(device.registered_at).toLocaleString('ar-EG')}
                             </p>
                           </div>
                         </div>
@@ -857,9 +858,9 @@ export default function STASMirrorPage() {
                         blocked: 'bg-red-500 text-white'
                       };
                       const statusText = {
-                        trusted: lang === 'ar' ? '✓ موثوق' : '✓ Trusted',
-                        pending: lang === 'ar' ? '⏳ معلق' : '⏳ Pending',
-                        blocked: lang === 'ar' ? '✕ محظور' : '✕ Blocked'
+                        trusted: lang === 'ar' ? 'موثوق' : 'Trusted',
+                        pending: lang === 'ar' ? 'معلق' : 'Pending',
+                        blocked: lang === 'ar' ? 'محظور' : 'Blocked'
                       };
                       
                       return (
@@ -997,10 +998,10 @@ export default function STASMirrorPage() {
                               log.action.includes('approve') ? 'text-blue-600' :
                               'text-gray-600'
                             }`}>
-                              {log.action === 'account_blocked' ? (lang === 'ar' ? '🔒 إيقاف حساب' : '🔒 Account Blocked') :
-                               log.action === 'account_unblocked' ? (lang === 'ar' ? '🔓 إلغاء إيقاف' : '🔓 Account Unblocked') :
-                               log.action === 'device_approved' ? (lang === 'ar' ? '✅ اعتماد جهاز' : '✅ Device Approved') :
-                               log.action === 'device_blocked' ? (lang === 'ar' ? '🚫 حظر جهاز' : '🚫 Device Blocked') :
+                              {log.action === 'account_blocked' ? (lang === 'ar' ? 'إيقاف حساب' : 'Account Blocked') :
+                               log.action === 'account_unblocked' ? (lang === 'ar' ? 'إلغاء إيقاف' : 'Account Unblocked') :
+                               log.action === 'device_approved' ? (lang === 'ar' ? 'اعتماد جهاز' : 'Device Approved') :
+                               log.action === 'device_blocked' ? (lang === 'ar' ? 'حظر جهاز' : 'Device Blocked') :
                                log.action.replace(/_/g, ' ')}
                             </span>
                             <span className="text-xs text-muted-foreground">
