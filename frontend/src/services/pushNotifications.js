@@ -1,6 +1,8 @@
 // Push Notifications Service for DAR AL CODE HR OS
 // Uses Web Push API (no Firebase required)
 
+import { useState, useEffect } from 'react';
+
 const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 class PushNotificationService {
@@ -215,7 +217,7 @@ export function usePushNotifications() {
       } else {
         setStatus({
           supported: support.supported,
-          permission: Notification.permission,
+          permission: typeof Notification !== 'undefined' ? Notification.permission : 'denied',
           subscribed: false,
           loading: false
         });
@@ -227,6 +229,3 @@ export function usePushNotifications() {
 
   return status;
 }
-
-// Missing import for hook
-import { useState, useEffect } from 'react';
