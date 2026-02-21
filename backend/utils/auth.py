@@ -43,11 +43,28 @@ def create_access_token(data: dict, role: str = "employee") -> str:
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """التحقق من التوكن والجلسة"""
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        # التحقق من أن الجلسة لم تُبطل
+        from database import db
+        token_id = payload.get("jti")
+        if token_id:
+            revoked = await db.revoked_tokens.find_one({"token_id": token_id})
+            if revoked:
+                raise HTTPException(status_code=401, detail="تم إنهاء هذه الجلسة")
+        
+        # التحقق من أن المستخدم لم يُحظر
+        user_id = payload.get("user_id")
+        if user_id:
+            user = await db.users.find_one({"id": user_id}, {"is_blocked": 1, "is_active": 1})
+            if user and (user.get("is_blocked") or not user.get("is_active", True)):
+                raise HTTPException(status_code=401, detail="الحساب معطل أو محظور")
+        
         return payload
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail="توكن غير صالح أو منتهي الصلاحية")
 
 
 def require_roles(*roles):
