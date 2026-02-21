@@ -287,6 +287,24 @@ async def get_employee_contracts(employee_id: str, user=Depends(get_current_user
     return contracts
 
 
+@router.get("/my/active")
+async def get_my_active_contract(user=Depends(get_current_user)):
+    """Get current user's active contract"""
+    employee_id = user.get("employee_id")
+    if not employee_id:
+        raise HTTPException(status_code=400, detail="لا يوجد موظف مرتبط بهذا الحساب")
+    
+    contract = await db.contracts_v2.find_one(
+        {"employee_id": employee_id, "status": "active"},
+        {"_id": 0}
+    )
+    
+    if not contract:
+        raise HTTPException(status_code=404, detail="لا يوجد عقد نشط")
+    
+    return contract
+
+
 # ============================================================
 # CREATE CONTRACT
 # ============================================================
