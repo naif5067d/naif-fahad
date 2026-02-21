@@ -109,8 +109,10 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail=error.get('message_ar', error['message']))
     
     emp = validation['employee']
-    now = datetime.now(timezone.utc)
-    today = now.strftime("%Y-%m-%d")
+    
+    # استخدام توقيت الرياض
+    riyadh_now = get_riyadh_now()
+    today = riyadh_now.strftime("%Y-%m-%d")
 
     # استخدام نتائج التحقق الجديدة
     work_location = punch_validation.get('work_location')
@@ -122,8 +124,10 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "employee_id": emp['id'],
         "transaction_id": None,
         "type": "check_in",
-        "timestamp": now.isoformat(),
+        "timestamp": riyadh_now.isoformat(),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "date": today,
+        "time": riyadh_now.strftime("%H:%M:%S"),
         "location": {"lat": req.latitude, "lng": req.longitude} if req.gps_available else None,
         "gps_available": req.gps_available,
         "gps_valid": gps_valid,
@@ -131,7 +135,7 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "work_location": work_location.get('name_ar', req.work_location) if work_location else req.work_location,
         "work_location_id": work_location.get('id') if work_location else None,
         "warnings": validation.get('warnings', []) + punch_validation.get('warnings', []),
-        "created_at": now.isoformat(),
+        "created_at": riyadh_now.isoformat(),
         "source": "self_checkin"
     }
     
