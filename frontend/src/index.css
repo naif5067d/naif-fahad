@@ -304,13 +304,26 @@ code { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
   justify-content: center;
 }
 
-/* iOS Safe Area Header */
+/* iOS Safe Area Header - Enhanced for all devices */
 @supports (padding-top: env(safe-area-inset-top)) {
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
   .safe-header {
-    padding-top: max(env(safe-area-inset-top), 8px);
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+}
+
+/* Force safe area on notch devices */
+@media screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
+       screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
+       screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
+       screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+       screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3),
+       screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
+       screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+  .safe-header {
+    padding-top: max(env(safe-area-inset-top), 44px) !important;
   }
 }
 
