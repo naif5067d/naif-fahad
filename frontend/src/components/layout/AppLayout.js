@@ -217,8 +217,8 @@ export default function AppLayout({ children }) {
   // Desktop sidebar content
   const sidebarContent = (
     <nav className="flex flex-col h-full">
-      {/* Logo/Brand */}
-      <div className="p-5 border-b border-border">
+      {/* Logo/Brand - Desktop only */}
+      <div className="p-5 border-b border-border hidden md:block">
         <h1 className="text-base font-bold tracking-tight text-foreground" data-testid="app-title">
           {t('app.name')}
         </h1>
