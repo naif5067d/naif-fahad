@@ -299,6 +299,19 @@ code { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
 .touch-target {
   min-height: 44px;
   min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* iOS Safe Area Header */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-header {
+    padding-top: max(env(safe-area-inset-top), 8px);
+  }
 }
 
 /* Premium input focus */
