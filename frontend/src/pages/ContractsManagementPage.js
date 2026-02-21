@@ -1227,7 +1227,7 @@ export default function ContractsManagementPage() {
                             {statusInfo.label}
                           </Badge>
                           {contract.is_migrated && (
-                            <Badge variant="outline" className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]">
+                            <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5">
                               مُهاجر
                             </Badge>
                           )}
