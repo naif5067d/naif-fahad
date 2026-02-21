@@ -2260,6 +2260,40 @@ export default function STASMirrorPage() {
               </CardContent>
             </Card>
 
+            {/* Company Name */}
+            <Card className="border border-border shadow-none md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield size={18} className="text-accent" />
+                  {lang === 'ar' ? 'اسم الشركة' : 'Company Name'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>{lang === 'ar' ? 'الاسم بالعربية' : 'Arabic Name'}</Label>
+                    <Input
+                      value={companySettings.company_name_ar}
+                      onChange={(e) => setCompanySettings(prev => ({ ...prev, company_name_ar: e.target.value }))}
+                      placeholder="شركة دار الأركان"
+                      className="mt-2"
+                      dir="rtl"
+                    />
+                  </div>
+                  <div>
+                    <Label>{lang === 'ar' ? 'الاسم بالإنجليزية' : 'English Name'}</Label>
+                    <Input
+                      value={companySettings.company_name_en}
+                      onChange={(e) => setCompanySettings(prev => ({ ...prev, company_name_en: e.target.value }))}
+                      placeholder="Dar Al Arkan"
+                      className="mt-2"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Colors */}
             <Card className="border border-border shadow-none md:col-span-2">
               <CardHeader>
