@@ -108,16 +108,19 @@ export default function NotificationBell() {
   // Check push notification status
   useEffect(() => {
     const checkPushStatus = async () => {
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        try {
-          const registration = await navigator.serviceWorker.getRegistration('/sw.js');
-          if (registration) {
-            const subscription = await registration.pushManager.getSubscription();
-            setPushEnabled(!!subscription);
-          }
-        } catch (e) {
-          console.log('[Push] Status check failed:', e);
-        }
+      try {
+        await fcmService.initialize();
+        const status = await fcmService.getStatus();
+        setPushEnabled(status.subscribed);
+        
+        // Setup foreground message handler
+        fcmService.setupForegroundHandler((payload) => {
+          // Refresh notifications when new message arrives
+          fetchNotifications();
+          playNotificationSound();
+        });
+      } catch (e) {
+        console.log('[FCM] Status check failed:', e);
       }
     };
     checkPushStatus();
@@ -127,7 +130,7 @@ export default function NotificationBell() {
   const enablePushNotifications = async () => {
     setPushLoading(true);
     try {
-      const result = await pushService.initialize(user?.id);
+      const result = await fcmService.requestPermissionAndGetToken(user?.id);
       if (result.success) {
         setPushEnabled(true);
         // Show success notification
@@ -138,11 +141,15 @@ export default function NotificationBell() {
           });
         }
       } else {
-        console.log('[Push] Failed:', result.reason);
-        alert(lang === 'ar' ? 'فشل تفعيل الإشعارات: ' + result.reason : 'Failed to enable notifications: ' + result.reason);
+        console.log('[FCM] Failed:', result.reason);
+        if (result.reason === 'permission_denied') {
+          alert(lang === 'ar' ? 'يرجى السماح بالإشعارات من إعدادات المتصفح' : 'Please allow notifications in browser settings');
+        } else {
+          alert(lang === 'ar' ? 'فشل تفعيل الإشعارات: ' + result.reason : 'Failed to enable notifications: ' + result.reason);
+        }
       }
     } catch (e) {
-      console.error('[Push] Error:', e);
+      console.error('[FCM] Error:', e);
       alert(lang === 'ar' ? 'حدث خطأ: ' + e.message : 'Error: ' + e.message);
     }
     setPushLoading(false);
