@@ -419,7 +419,7 @@ export default function AppLayout({ children }) {
                 <button 
                   data-testid="logout-btn" 
                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
-                  className="p-2 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors"
+                  className="p-2 rounded-xl hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 text-muted-foreground transition-colors"
                   title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
                 >
                   <LogOut size={18} />
@@ -446,7 +446,7 @@ export default function AppLayout({ children }) {
                         }
                         setShowLogoutMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-red-50 text-red-600 transition-colors text-start border-t border-border"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-destructive/10 text-destructive transition-colors text-start border-t border-border"
                       data-testid="logout-all-devices"
                     >
                       <Shield size={16} />
