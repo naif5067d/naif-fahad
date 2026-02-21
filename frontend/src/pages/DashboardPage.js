@@ -1,20 +1,21 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, CalendarDays, Users, Shield, DollarSign, Clock, ChevronRight, 
-  Briefcase, UserCheck, MapPin, Wallet, Settings2, Bell, Pin, X, Award, 
+  Briefcase, MapPin, Wallet, Settings2, Bell, Pin, X, Award, 
   CheckCircle2, AlertTriangle as AlertTriangleIcon, Timer, TrendingDown,
-  AlertCircle, Sparkles, ArrowUpRight, Calendar, Crown, Star
+  AlertCircle, Sparkles
 } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import api from '@/lib/api';
 
-// ==================== رسائل تحفيزية يومية ====================
+// ==================== رسائل تحفيزية حسب الدور ====================
 const MOTIVATIONAL_MESSAGES = {
+  // رسائل الموظفين العاديين
   employee: {
     ar: [
       "أنت جزء مهم من نجاحنا، استمر في التميز!",
@@ -32,54 +33,84 @@ const MOTIVATIONAL_MESSAGES = {
       "Your work makes a difference, thank you for your efforts!",
       "Excellence is not a goal but a habit, and you prove it daily!",
       "Positivity starts with you, and you inspire the team!",
-      "Success comes to those who pursue it, and you're on the right path!",
+      "Success comes to those who pursue it, you're on the right path!",
       "Be proud of what you accomplish, you create real value!",
       "Passion for work is the secret to excellence, keep your passion!",
     ]
   },
+  // رسائل المشرفين المعيّنين
   supervisor: {
     ar: [
-      "قيادتك تُلهم الفريق، شكراً لإدارتك المتميزة!",
+      "قيادتك تُلهم فريقك، شكراً لإشرافك المتميز!",
       "المشرف الناجح يصنع فرقاً ناجحاً، وأنت مثال حي!",
-      "حكمتك في الإدارة تُحدث فارقاً حقيقياً!",
-      "أنت ركيزة الفريق، واصل دعمك المميز!",
+      "حكمتك في التوجيه تُحدث فارقاً حقيقياً!",
+      "أنت ركيزة الفريق، واصل دعمك ورعايتك!",
+      "إشرافك الحكيم يُثمر نتائج رائعة، استمر!",
+      "الفريق يثق بقيادتك، وأنت جدير بهذه الثقة!",
     ],
     en: [
-      "Your leadership inspires the team, thank you for your management!",
+      "Your leadership inspires your team, thank you for your supervision!",
       "A successful supervisor creates a successful team, you're a living example!",
-      "Your wisdom in management makes a real difference!",
-      "You are the team's pillar, continue your distinguished support!",
+      "Your wisdom in guidance makes a real difference!",
+      "You are the team's pillar, continue your support and care!",
+      "Your wise supervision yields great results, keep going!",
+      "The team trusts your leadership, and you deserve that trust!",
     ]
   },
-  admin: {
+  // رسائل المدراء (سلطان، نايف، محمد، صلاح، ستاس)
+  manager: {
     ar: [
       "بفضل قيادتكم الحكيمة، نتقدم نحو النجاح!",
       "رؤيتكم الثاقبة تُشكّل مستقبلنا المشرق!",
       "شكراً لإلهامكم المستمر وتوجيهاتكم الحكيمة!",
       "أنتم القدوة في التميز والإبداع!",
+      "قراراتكم الصائبة تقود الفريق للنجاح!",
+      "إدارتكم المتميزة هي سر تفوقنا!",
+      "نفخر بالعمل تحت قيادتكم الملهمة!",
     ],
     en: [
       "With your wise leadership, we advance towards success!",
       "Your insightful vision shapes our bright future!",
       "Thank you for your continuous inspiration and wise guidance!",
       "You are the role model in excellence and creativity!",
+      "Your sound decisions lead the team to success!",
+      "Your distinguished management is the secret of our excellence!",
+      "We are proud to work under your inspiring leadership!",
     ]
   }
 };
 
-// الحصول على رسالة اليوم
-const getDailyMessage = (category, lang) => {
+// الحصول على رسالة اليوم حسب الدور
+const getDailyMessage = (role, lang) => {
+  let category = 'employee';
+  if (['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(role)) {
+    category = 'manager';
+  } else if (role === 'supervisor') {
+    category = 'supervisor';
+  }
+  
   const messages = MOTIVATIONAL_MESSAGES[category]?.[lang] || MOTIVATIONAL_MESSAGES.employee[lang];
   const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
   return messages[dayOfYear % messages.length];
 };
 
-// ==================== التحية حسب الوقت ====================
+// التحية حسب الوقت
 const getGreeting = (lang) => {
   const hour = new Date().getHours();
   if (hour < 12) return lang === 'ar' ? 'صباح الخير' : 'Good morning';
   if (hour < 17) return lang === 'ar' ? 'مساء الخير' : 'Good afternoon';
   return lang === 'ar' ? 'مساء الخير' : 'Good evening';
+};
+
+// لون الحالة للشريط
+const getStatusColor = (status, isManager) => {
+  if (isManager) return 'blue'; // المدراء دائماً أزرق
+  switch (status) {
+    case 'present': return 'emerald';
+    case 'late': return 'amber';
+    case 'absent': return 'red';
+    default: return 'slate';
+  }
 };
 
 const STAT_CONFIG = {
@@ -167,43 +198,6 @@ const STATUS_COLORS = {
   pending_employee_accept: { bg: '#3B82F620', text: '#3B82F6' },
 };
 
-// ==================== مكون صورة مع شريط الحالة الدوار ====================
-const StatusRingAvatar = ({ photoUrl, name, status, isAdmin }) => {
-  // تحديد لون الشريط
-  const getRingColor = () => {
-    if (isAdmin) return 'from-blue-400 via-blue-500 to-blue-600'; // أزرق للإدارة
-    switch (status) {
-      case 'present': return 'from-emerald-400 via-emerald-500 to-emerald-600';
-      case 'late': return 'from-amber-400 via-amber-500 to-amber-600';
-      case 'absent': return 'from-red-400 via-red-500 to-red-600';
-      default: return 'from-gray-400 via-gray-500 to-gray-600';
-    }
-  };
-
-  return (
-    <div className="relative">
-      {/* الشريط الدوار */}
-      <div className={`absolute -inset-1 bg-gradient-to-r ${getRingColor()} rounded-2xl animate-spin-slow opacity-75 blur-sm`} />
-      <div className={`absolute -inset-1 bg-gradient-to-r ${getRingColor()} rounded-2xl animate-spin-slow`} />
-      
-      {/* الصورة */}
-      <div className="relative">
-        {photoUrl ? (
-          <img 
-            src={photoUrl}
-            alt={name}
-            className="w-20 h-20 rounded-2xl object-cover ring-2 ring-white/50"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-3xl font-bold text-white ring-2 ring-white/50">
-            {name?.[0] || 'U'}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default function DashboardPage() {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
@@ -216,12 +210,13 @@ export default function DashboardPage() {
   const [expiringContracts, setExpiringContracts] = useState({ employees: [], summary: {} });
 
   const role = user?.role || 'employee';
-  // الإدارة العليا - ليسوا موظفين (ستاس، محمد، صلاح، نايف)
-  const isExecutive = ['stas', 'mohammed', 'salah', 'naif'].includes(role);
-  // سلطان يُعامل كموظف (له حضور)
+  // المدراء: ستاس، محمد، صلاح، نايف، سلطان
+  const isManager = ['stas', 'mohammed', 'salah', 'naif', 'sultan'].includes(role);
+  // من يظهر له الحضور (الموظفين + المشرفين + سلطان)
+  const showsAttendance = !!user?.employee_id || role === 'sultan';
+  // من لا يظهر له الحضور (ستاس، محمد، صلاح، نايف)
+  const noAttendance = ['stas', 'mohammed', 'salah', 'naif'].includes(role);
   const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
-  // البطاقة تظهر لكل من لديه employee_id (موظفين + سلطان)
-  const hasEmployeeCard = !!user?.employee_id && !isExecutive;
   
   const [employeeSummary, setEmployeeSummary] = useState(null);
   const [loadingEmployeeSummary, setLoadingEmployeeSummary] = useState(false);
@@ -239,14 +234,15 @@ export default function DashboardPage() {
         .catch(() => {});
     }
     
-    if (hasEmployeeCard && user?.employee_id) {
+    // جلب ملخص الموظف لمن يظهر له الحضور
+    if (showsAttendance && user?.employee_id) {
       setLoadingEmployeeSummary(true);
       api.get(`/api/employees/${user.employee_id}/summary`)
         .then(r => setEmployeeSummary(r.data))
         .catch((err) => console.log('Employee summary error:', err))
         .finally(() => setLoadingEmployeeSummary(false));
     }
-  }, [isAdmin, hasEmployeeCard, user?.employee_id]);
+  }, [isAdmin, showsAttendance, user?.employee_id]);
 
   const dismissAnnouncement = async (id) => {
     try {
@@ -269,112 +265,37 @@ export default function DashboardPage() {
     return t(`stages.${stage}`) || stage;
   };
 
-  // تحديد فئة الرسالة
-  const messageCategory = isExecutive ? 'admin' : (role === 'supervisor' ? 'supervisor' : 'employee');
-  const dailyMessage = getDailyMessage(messageCategory, lang);
+  // رسالة اليوم حسب الدور
+  const dailyMessage = getDailyMessage(role, lang);
+  
+  // لون الشريط
+  const statusColor = getStatusColor(
+    employeeSummary?.attendance?.today_status,
+    noAttendance // المدراء بدون حضور = أزرق دائماً
+  );
 
   return (
     <div className="space-y-6" data-testid="dashboard-page">
       
-      {/* ==================== بطاقة الإدارة العليا (ستاس/محمد/صلاح/نايف) ==================== */}
-      {isExecutive && (
-        <div className="relative overflow-hidden rounded-2xl" data-testid="executive-card">
-          {/* الخلفية الفضية الفخمة مع الأطراف الزرقاء المضيئة */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900" />
+      {/* ==================== البطاقة الرئيسية الموحدة ==================== */}
+      <div className="relative" data-testid="main-card">
+        {/* الشريط المتموج حول الإطار */}
+        <div className={`absolute -inset-[2px] rounded-2xl bg-gradient-to-r 
+          ${statusColor === 'emerald' ? 'from-emerald-400 via-emerald-500 to-emerald-400' : ''}
+          ${statusColor === 'amber' ? 'from-amber-400 via-amber-500 to-amber-400' : ''}
+          ${statusColor === 'red' ? 'from-red-400 via-red-500 to-red-400' : ''}
+          ${statusColor === 'blue' ? 'from-blue-400 via-blue-500 to-blue-400' : ''}
+          ${statusColor === 'slate' ? 'from-slate-400 via-slate-500 to-slate-400' : ''}
+          animate-border-flow opacity-80`} 
+        />
+        
+        {/* البطاقة الداخلية */}
+        <div className={`relative overflow-hidden rounded-2xl ${
+          noAttendance 
+            ? 'bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900' 
+            : 'bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800'
+        } ${noAttendance ? 'text-slate-800 dark:text-white' : 'text-white'}`}>
           
-          {/* الأطراف الزرقاء المضيئة */}
-          <div className="absolute inset-0">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
-          </div>
-          
-          {/* الإطار الذهبي/الفضي */}
-          <div className="absolute inset-0 border-2 border-blue-300/30 dark:border-blue-500/20 rounded-2xl" />
-          <div className="absolute inset-[2px] border border-slate-200/50 dark:border-slate-700/50 rounded-2xl" />
-          
-          <div className="relative p-6 md:p-8">
-            {/* التاج والزخرفة */}
-            <div className="flex justify-center mb-4">
-              <div className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500/10 via-blue-400/20 to-blue-500/10 rounded-full border border-blue-300/30">
-                <Crown size={16} className="text-blue-500" />
-                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                  {t(`roles.${role}`)}
-                </span>
-                <Crown size={16} className="text-blue-500 transform scale-x-[-1]" />
-              </div>
-            </div>
-            
-            {/* الصورة مع الإضاءة الزرقاء */}
-            <div className="flex justify-center mb-6">
-              <StatusRingAvatar 
-                photoUrl={user?.photo_url}
-                name={displayName}
-                isAdmin={true}
-              />
-            </div>
-            
-            {/* الاسم */}
-            <div className="text-center mb-4">
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-1">
-                {displayName}
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {getGreeting(lang)}
-              </p>
-            </div>
-            
-            {/* الرسالة التحفيزية */}
-            <div className="text-center mb-6 px-4">
-              <div className="inline-flex items-start gap-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                <Sparkles size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {dailyMessage}
-                </p>
-              </div>
-            </div>
-            
-            {/* الإحصائيات */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {statCards.map(sc => {
-                const Icon = sc.icon;
-                return (
-                  <div key={sc.key} className="text-center p-3 bg-white/50 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
-                    <Icon size={20} className="mx-auto mb-2 text-blue-500" />
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats[sc.key] ?? 0}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {t(sc.label)}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* إشعارات ستاس المثبتة */}
-            {announcements.pinned.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Bell size={14} className="text-blue-500" />
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {lang === 'ar' ? 'إشعارات مهمة' : 'Important Notices'}
-                  </span>
-                </div>
-                {announcements.pinned.map(ann => (
-                  <div key={ann.id} className="flex items-start gap-2 p-3 bg-blue-50/50 dark:bg-blue-950/30 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                    <Pin size={14} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== بطاقة الموظفين والمشرفين وسلطان ==================== */}
-      {!isExecutive && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 text-white" data-testid="employee-unified-card">
           {/* نمط الخلفية */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
@@ -384,150 +305,215 @@ export default function DashboardPage() {
           <div className="relative p-6">
             {/* التحية والرسالة التحفيزية */}
             <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-sm mb-2">
-                <Sparkles size={14} className="text-amber-300" />
-                <span className="text-xs text-white/90">
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full backdrop-blur-sm mb-2 ${
+                noAttendance ? 'bg-blue-500/10' : 'bg-white/10'
+              }`}>
+                <Sparkles size={14} className={noAttendance ? 'text-blue-500' : 'text-amber-300'} />
+                <span className={`text-xs ${noAttendance ? 'text-blue-600 dark:text-blue-400' : 'text-white/90'}`}>
                   {getGreeting(lang)} {lang === 'ar' ? 'يا' : ''} {displayName?.split(' ')[0]}!
                 </span>
               </div>
-              <p className="text-sm text-white/80 max-w-md mx-auto leading-relaxed">
+              <p className={`text-sm max-w-md mx-auto leading-relaxed ${
+                noAttendance ? 'text-slate-600 dark:text-slate-300' : 'text-white/80'
+              }`}>
                 {dailyMessage}
               </p>
             </div>
             
             {/* الصف الرئيسي - الصورة والبيانات */}
             <div className="flex items-start gap-4 mb-6">
-              {/* الصورة مع شريط الحالة */}
-              <StatusRingAvatar 
-                photoUrl={employeeSummary?.employee?.photo_url || user?.photo_url}
-                name={displayName}
-                status={employeeSummary?.attendance?.today_status || 'unknown'}
-                isAdmin={false}
-              />
+              {/* الصورة */}
+              <div className="relative">
+                {(employeeSummary?.employee?.photo_url || user?.photo_url) ? (
+                  <img 
+                    src={employeeSummary?.employee?.photo_url || user?.photo_url}
+                    alt={displayName}
+                    className="w-20 h-20 rounded-2xl object-cover ring-2 ring-white/30"
+                  />
+                ) : (
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold ring-2 ring-white/30 ${
+                    noAttendance 
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' 
+                      : 'bg-gradient-to-br from-slate-700 to-slate-800 text-white'
+                  }`}>
+                    {displayName?.[0] || 'U'}
+                  </div>
+                )}
+                {/* نقطة الحالة */}
+                {showsAttendance && (
+                  <span className={`absolute -bottom-1 -end-1 w-5 h-5 rounded-full border-2 ${
+                    noAttendance ? 'border-white' : 'border-blue-700'
+                  } ${
+                    employeeSummary?.attendance?.today_status === 'present' ? 'bg-emerald-500' :
+                    employeeSummary?.attendance?.today_status === 'late' ? 'bg-amber-500' :
+                    employeeSummary?.attendance?.today_status === 'absent' ? 'bg-red-500' : 'bg-slate-400'
+                  }`} />
+                )}
+              </div>
               
               {/* البيانات */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl font-bold truncate">{displayName}</h3>
-                <p className="text-sm text-white/70 truncate">
-                  {lang === 'ar' ? employeeSummary?.contract?.job_title_ar : employeeSummary?.contract?.job_title}
+                <p className={`text-sm truncate ${noAttendance ? 'text-slate-500 dark:text-slate-400' : 'text-white/70'}`}>
+                  {t(`roles.${role}`)}
                 </p>
-                <p className="text-xs text-white/50">
-                  {lang === 'ar' ? employeeSummary?.contract?.department_ar : employeeSummary?.contract?.department}
-                </p>
+                {showsAttendance && employeeSummary?.contract && (
+                  <p className={`text-xs ${noAttendance ? 'text-slate-400' : 'text-white/50'}`}>
+                    {lang === 'ar' ? employeeSummary.contract.department_ar : employeeSummary.contract.department}
+                  </p>
+                )}
                 
-                {/* حالة اليوم */}
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{
-                  background: employeeSummary?.attendance?.today_status === 'present' ? '#10B98130' :
-                              employeeSummary?.attendance?.today_status === 'late' ? '#F5940030' :
-                              employeeSummary?.attendance?.today_status === 'absent' ? '#EF444430' : '#64748B30'
-                }}>
-                  {employeeSummary?.attendance?.today_status === 'present' && <CheckCircle2 size={12} />}
-                  {employeeSummary?.attendance?.today_status === 'late' && <Clock size={12} />}
-                  {employeeSummary?.attendance?.today_status === 'absent' && <X size={12} />}
-                  <span>
-                    {employeeSummary?.attendance?.today_status === 'present' ? (lang === 'ar' ? 'حاضر' : 'Present') :
-                     employeeSummary?.attendance?.today_status === 'late' ? (lang === 'ar' ? 'متأخر' : 'Late') :
-                     employeeSummary?.attendance?.today_status === 'absent' ? (lang === 'ar' ? 'غائب' : 'Absent') :
-                     (lang === 'ar' ? 'لم يُسجل بعد' : 'Not yet')}
-                  </span>
-                </div>
+                {/* حالة اليوم (للموظفين والمشرفين وسلطان فقط) */}
+                {showsAttendance && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{
+                    background: employeeSummary?.attendance?.today_status === 'present' ? '#10B98130' :
+                                employeeSummary?.attendance?.today_status === 'late' ? '#F5940030' :
+                                employeeSummary?.attendance?.today_status === 'absent' ? '#EF444430' : '#64748B30'
+                  }}>
+                    {employeeSummary?.attendance?.today_status === 'present' && <CheckCircle2 size={12} />}
+                    {employeeSummary?.attendance?.today_status === 'late' && <Clock size={12} />}
+                    {employeeSummary?.attendance?.today_status === 'absent' && <X size={12} />}
+                    <span>
+                      {employeeSummary?.attendance?.today_status === 'present' ? (lang === 'ar' ? 'حاضر' : 'Present') :
+                       employeeSummary?.attendance?.today_status === 'late' ? (lang === 'ar' ? 'متأخر' : 'Late') :
+                       employeeSummary?.attendance?.today_status === 'absent' ? (lang === 'ar' ? 'غائب' : 'Absent') :
+                       (lang === 'ar' ? 'لم يُسجل بعد' : 'Not yet')}
+                    </span>
+                  </div>
+                )}
               </div>
               
-              {/* سنوات الخبرة */}
-              <div className="text-center px-3 py-2 bg-white/10 rounded-xl backdrop-blur-sm">
-                <Award size={20} className="mx-auto text-amber-400 mb-1" />
-                <p className="text-lg font-bold">{employeeSummary?.service_info?.years_display || '0'}</p>
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">
-                  {lang === 'ar' ? 'سنوات' : 'Years'}
-                </p>
-              </div>
+              {/* سنوات الخبرة (للموظفين والمشرفين وسلطان) */}
+              {showsAttendance && (
+                <div className={`text-center px-3 py-2 rounded-xl backdrop-blur-sm ${
+                  noAttendance ? 'bg-blue-500/10' : 'bg-white/10'
+                }`}>
+                  <Award size={20} className={`mx-auto mb-1 ${noAttendance ? 'text-blue-500' : 'text-amber-400'}`} />
+                  <p className="text-lg font-bold">{employeeSummary?.service_info?.years_display || '0'}</p>
+                  <p className={`text-[9px] uppercase tracking-wider ${noAttendance ? 'text-slate-400' : 'text-white/60'}`}>
+                    {lang === 'ar' ? 'سنوات' : 'Years'}
+                  </p>
+                </div>
+              )}
             </div>
             
             {/* الإحصائيات السريعة */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
-              <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
-                   onClick={() => navigate('/leave')}>
-                <CalendarDays size={18} className="mx-auto mb-1 text-blue-300" />
-                <p className="text-xl font-bold">{employeeSummary?.leave_details?.balance || stats.leave_balance || 0}</p>
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">
-                  {lang === 'ar' ? 'رصيد الإجازة' : 'Leave'}
-                </p>
+            {showsAttendance ? (
+              /* للموظفين والمشرفين وسلطان - إحصائيات الحضور */
+              <div className="grid grid-cols-4 gap-3 mb-4">
+                <div className={`text-center p-3 rounded-xl backdrop-blur-sm hover:opacity-80 transition-colors cursor-pointer ${
+                  noAttendance ? 'bg-blue-500/5' : 'bg-white/10'
+                }`} onClick={() => navigate('/leave')}>
+                  <CalendarDays size={18} className={`mx-auto mb-1 ${noAttendance ? 'text-blue-500' : 'text-blue-300'}`} />
+                  <p className="text-xl font-bold">{employeeSummary?.leave_details?.balance || stats.leave_balance || 0}</p>
+                  <p className={`text-[9px] uppercase tracking-wider ${noAttendance ? 'text-slate-400' : 'text-white/60'}`}>
+                    {lang === 'ar' ? 'رصيد الإجازة' : 'Leave'}
+                  </p>
+                </div>
+                
+                <div className={`text-center p-3 rounded-xl backdrop-blur-sm hover:opacity-80 transition-colors cursor-pointer ${
+                  noAttendance ? 'bg-blue-500/5' : 'bg-white/10'
+                }`} onClick={() => navigate('/attendance')}>
+                  <Clock size={18} className={`mx-auto mb-1 ${noAttendance ? 'text-emerald-500' : 'text-emerald-300'}`} />
+                  <p className="text-sm font-bold">
+                    {employeeSummary?.attendance?.check_in_time || '--:--'}
+                  </p>
+                  <p className={`text-[9px] uppercase tracking-wider ${noAttendance ? 'text-slate-400' : 'text-white/60'}`}>
+                    {lang === 'ar' ? 'وقت الحضور' : 'Check-in'}
+                  </p>
+                </div>
+                
+                <div className={`text-center p-3 rounded-xl backdrop-blur-sm ${
+                  noAttendance ? 'bg-blue-500/5' : 'bg-white/10'
+                }`}>
+                  <Timer size={18} className={`mx-auto mb-1 ${noAttendance ? 'text-purple-500' : 'text-purple-300'}`} />
+                  <p className="text-xl font-bold">{employeeSummary?.attendance?.monthly_hours || 0}</p>
+                  <p className={`text-[9px] uppercase tracking-wider ${noAttendance ? 'text-slate-400' : 'text-white/60'}`}>
+                    {lang === 'ar' ? 'ساعات الشهر' : 'Hours'}
+                  </p>
+                </div>
+                
+                <div className={`text-center p-3 rounded-xl backdrop-blur-sm hover:opacity-80 transition-colors cursor-pointer ${
+                  noAttendance ? 'bg-blue-500/5' : 'bg-white/10'
+                }`} onClick={() => navigate('/transactions')}>
+                  <FileText size={18} className={`mx-auto mb-1 ${noAttendance ? 'text-orange-500' : 'text-orange-300'}`} />
+                  <p className="text-xl font-bold">{employeeSummary?.pending_transactions || stats.pending_transactions || 0}</p>
+                  <p className={`text-[9px] uppercase tracking-wider ${noAttendance ? 'text-slate-400' : 'text-white/60'}`}>
+                    {lang === 'ar' ? 'معاملات' : 'Pending'}
+                  </p>
+                </div>
               </div>
-              
-              <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
-                   onClick={() => navigate('/attendance')}>
-                <Clock size={18} className="mx-auto mb-1 text-emerald-300" />
-                <p className="text-sm font-bold">
-                  {employeeSummary?.attendance?.check_in_time || '--:--'}
-                </p>
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">
-                  {lang === 'ar' ? 'وقت الحضور' : 'Check-in'}
-                </p>
+            ) : (
+              /* للمدراء بدون حضور - إحصائيات إدارية فقط */
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {statCards.map(sc => {
+                  const Icon = sc.icon;
+                  return (
+                    <div key={sc.key} className="text-center p-3 bg-blue-500/5 rounded-xl backdrop-blur-sm">
+                      <Icon size={20} className="mx-auto mb-2 text-blue-500" />
+                      <p className="text-2xl font-bold">{stats[sc.key] ?? 0}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        {t(sc.label)}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-              
-              <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-                <Timer size={18} className="mx-auto mb-1 text-purple-300" />
-                <p className="text-xl font-bold">{employeeSummary?.attendance?.monthly_hours || 0}</p>
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">
-                  {lang === 'ar' ? 'ساعات الشهر' : 'Hours'}
-                </p>
-              </div>
-              
-              <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
-                   onClick={() => navigate('/transactions')}>
-                <FileText size={18} className="mx-auto mb-1 text-orange-300" />
-                <p className="text-xl font-bold">{employeeSummary?.pending_transactions || stats.pending_transactions || 0}</p>
-                <p className="text-[9px] text-white/60 uppercase tracking-wider">
-                  {lang === 'ar' ? 'معاملات' : 'Pending'}
-                </p>
-              </div>
-            </div>
+            )}
             
-            {/* أشرطة التقدم */}
-            <div className="space-y-3 p-4 bg-white/5 rounded-xl backdrop-blur-sm">
-              {/* ساعات العمل الشهرية */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-white/70 flex items-center gap-1.5">
-                    <Timer size={12} className="text-emerald-400" />
-                    {lang === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Hours'}
-                  </span>
-                  <span className="text-xs font-mono text-white/90">
-                    {employeeSummary?.attendance?.monthly_hours || 0} / {employeeSummary?.attendance?.required_monthly_hours || 176}
-                  </span>
+            {/* أشرطة التقدم (للموظفين والمشرفين وسلطان فقط) */}
+            {showsAttendance && (
+              <div className={`space-y-3 p-4 rounded-xl backdrop-blur-sm ${
+                noAttendance ? 'bg-blue-500/5' : 'bg-white/5'
+              }`}>
+                {/* ساعات العمل الشهرية */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-xs flex items-center gap-1.5 ${noAttendance ? 'text-slate-500' : 'text-white/70'}`}>
+                      <Timer size={12} className={noAttendance ? 'text-emerald-500' : 'text-emerald-400'} />
+                      {lang === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Hours'}
+                    </span>
+                    <span className={`text-xs font-mono ${noAttendance ? 'text-slate-600' : 'text-white/90'}`}>
+                      {employeeSummary?.attendance?.monthly_hours || 0} / {employeeSummary?.attendance?.required_monthly_hours || 176}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={Math.min(100, ((employeeSummary?.attendance?.monthly_hours || 0) / (employeeSummary?.attendance?.required_monthly_hours || 176)) * 100)} 
+                    className={`h-2 ${noAttendance ? 'bg-slate-200 dark:bg-slate-700' : 'bg-white/10'}`}
+                  />
                 </div>
-                <Progress 
-                  value={Math.min(100, ((employeeSummary?.attendance?.monthly_hours || 0) / (employeeSummary?.attendance?.required_monthly_hours || 176)) * 100)} 
-                  className="h-2 bg-white/10"
-                />
-              </div>
-              
-              {/* ساعات النقص */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-white/70 flex items-center gap-1.5">
-                    <TrendingDown size={12} className="text-amber-400" />
-                    {lang === 'ar' ? 'ساعات النقص' : 'Deficit Hours'}
-                  </span>
-                  <span className="text-xs font-mono text-white/90">
-                    {employeeSummary?.attendance?.deficit_hours || 0} / 8
-                  </span>
+                
+                {/* ساعات النقص */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-xs flex items-center gap-1.5 ${noAttendance ? 'text-slate-500' : 'text-white/70'}`}>
+                      <TrendingDown size={12} className={noAttendance ? 'text-amber-500' : 'text-amber-400'} />
+                      {lang === 'ar' ? 'ساعات النقص' : 'Deficit Hours'}
+                    </span>
+                    <span className={`text-xs font-mono ${noAttendance ? 'text-slate-600' : 'text-white/90'}`}>
+                      {employeeSummary?.attendance?.deficit_hours || 0} / 8
+                    </span>
+                  </div>
+                  <Progress 
+                    value={Math.min(100, ((employeeSummary?.attendance?.deficit_hours || 0) / 8) * 100)} 
+                    className={`h-2 ${(employeeSummary?.attendance?.deficit_hours || 0) >= 6 ? 'bg-red-500/30' : (noAttendance ? 'bg-slate-200 dark:bg-slate-700' : 'bg-white/10')}`}
+                  />
                 </div>
-                <Progress 
-                  value={Math.min(100, ((employeeSummary?.attendance?.deficit_hours || 0) / 8) * 100)} 
-                  className={`h-2 ${(employeeSummary?.attendance?.deficit_hours || 0) >= 6 ? 'bg-red-500/30' : 'bg-white/10'}`}
-                />
               </div>
-            </div>
+            )}
             
             {/* تاريخ انتهاء العقد */}
-            {employeeSummary?.contract?.end_date && (
-              <div className="mt-4 flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl">
-                <div className="flex items-center gap-2 text-white/70">
+            {showsAttendance && employeeSummary?.contract?.end_date && (
+              <div className={`mt-4 flex items-center justify-between text-sm p-3 rounded-xl ${
+                noAttendance ? 'bg-blue-500/5' : 'bg-white/5'
+              }`}>
+                <div className={`flex items-center gap-2 ${noAttendance ? 'text-slate-500' : 'text-white/70'}`}>
                   <Briefcase size={14} />
                   <span>{lang === 'ar' ? 'انتهاء العقد' : 'Contract ends'}</span>
                 </div>
-                <span className="font-medium text-white/90">{employeeSummary.contract.end_date}</span>
+                <span className={`font-medium ${noAttendance ? 'text-slate-700 dark:text-slate-300' : 'text-white/90'}`}>
+                  {employeeSummary.contract.end_date}
+                </span>
               </div>
             )}
             
@@ -535,19 +521,23 @@ export default function DashboardPage() {
             {announcements.pinned.length > 0 && (
               <div className="mt-4 space-y-2">
                 {announcements.pinned.map(ann => (
-                  <div key={ann.id} className="flex items-start gap-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-                    <Pin size={14} className="text-amber-300 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-white/90">{lang === 'ar' ? ann.message_ar : ann.message_en}</p>
+                  <div key={ann.id} className={`flex items-start gap-2 p-3 rounded-lg backdrop-blur-sm ${
+                    noAttendance ? 'bg-blue-500/10' : 'bg-white/10'
+                  }`}>
+                    <Pin size={14} className={noAttendance ? 'text-blue-500 mt-0.5 flex-shrink-0' : 'text-amber-300 mt-0.5 flex-shrink-0'} />
+                    <p className={`text-sm ${noAttendance ? 'text-slate-700 dark:text-slate-300' : 'text-white/90'}`}>
+                      {lang === 'ar' ? ann.message_ar : ann.message_en}
+                    </p>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-      )}
+      </div>
       
       {/* Loading state */}
-      {loadingEmployeeSummary && !isExecutive && (
+      {loadingEmployeeSummary && showsAttendance && (
         <div className="card-premium rounded-2xl p-8 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
