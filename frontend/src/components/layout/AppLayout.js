@@ -337,7 +337,7 @@ export default function AppLayout({ children }) {
                   </button>
 
                   {switcherOpen && (
-                    <div className="absolute top-full mt-2 end-0 w-72 md:w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
+                    <div className="absolute top-full mt-2 end-0 w-72 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
                       <div className="px-4 py-3 border-b border-border bg-muted/30">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                           {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
