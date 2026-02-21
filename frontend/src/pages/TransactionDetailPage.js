@@ -11,19 +11,19 @@ import { toast } from 'sonner';
 
 // Status configuration
 const STATUS_CONFIG = {
-  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  executed: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
   rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
-  pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20' },
+  pending_ops: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-orange-500/20' },
   pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20' },
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
-  stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20' },
+  stas: { bg: 'bg-accent/100/10', text: 'text-accent', border: 'border-violet-500/20' },
   pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20' },
-  approve: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
-  approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  approve: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
+  approved: { bg: 'bg-[hsl(var(--success)/0.1)]0/10', text: 'text-[hsl(var(--success))]', border: 'border-emerald-500/20' },
   reject: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
-  pending: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
+  pending: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-amber-500/20' },
 };
 
 export default function TransactionDetailPage() {
@@ -488,15 +488,15 @@ export default function TransactionDetailPage() {
 
       {/* Holiday Verification Badge for Sultan/Naif - رسالة بسيطة فقط */}
       {tx.type === 'leave_request' && tx.data?.calculation_details && (user?.role === 'sultan' || user?.role === 'naif') && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
-          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+        <div className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+          <div className="w-5 h-5 rounded-full bg-[hsl(var(--success)/0.1)]0 flex items-center justify-center">
             <span className="text-white text-xs">✓</span>
           </div>
-          <span className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
+          <span className="text-sm text-[hsl(var(--success))] dark:text-emerald-300 font-medium">
             {lang === 'ar' ? 'تم التحقق من الإجازات الرسمية' : 'Public holidays verified'}
           </span>
           {tx.data.calculation_details.excluded_holidays?.length > 0 && (
-            <span className="text-xs text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs text-[hsl(var(--success))] dark:text-emerald-400">
               ({tx.data.calculation_details.excluded_holidays.length} {lang === 'ar' ? 'مستثناة' : 'excluded'})
             </span>
           )}

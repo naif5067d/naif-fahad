@@ -426,8 +426,8 @@ export default function WorkLocationsPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                            <span className="text-emerald-600 text-lg">↓</span>
+                          <div className="w-8 h-8 rounded-full bg-[hsl(var(--success)/0.15)] flex items-center justify-center">
+                            <span className="text-[hsl(var(--success))] text-lg">↓</span>
                           </div>
                           <div>
                             <p className="font-medium text-sm">{lang === 'ar' ? 'الدخول' : 'Check-in'}</p>
@@ -436,7 +436,7 @@ export default function WorkLocationsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-emerald-600">{formData.grace_checkin_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
+                        <div className="text-2xl font-bold text-[hsl(var(--success))]">{formData.grace_checkin_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
                       </div>
                       
                       <div className="relative">
@@ -458,7 +458,7 @@ export default function WorkLocationsPage() {
                               key={v}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, grace_checkin_minutes: v }))}
-                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkin_minutes === v ? 'bg-emerald-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkin_minutes === v ? 'bg-[hsl(var(--success)/0.1)]0 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
                             >
                               {v}
                             </button>
@@ -473,8 +473,8 @@ export default function WorkLocationsPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                            <span className="text-orange-600 text-lg">↑</span>
+                          <div className="w-8 h-8 rounded-full bg-[hsl(var(--warning)/0.15)] flex items-center justify-center">
+                            <span className="text-[hsl(var(--warning))] text-lg">↑</span>
                           </div>
                           <div>
                             <p className="font-medium text-sm">{lang === 'ar' ? 'الخروج' : 'Check-out'}</p>
@@ -483,7 +483,7 @@ export default function WorkLocationsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-2xl font-bold text-orange-600">{formData.grace_checkout_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
+                        <div className="text-2xl font-bold text-[hsl(var(--warning))]">{formData.grace_checkout_minutes}<span className="text-sm font-normal text-muted-foreground ms-1">{lang === 'ar' ? 'د' : 'm'}</span></div>
                       </div>
                       
                       <div className="relative">
@@ -505,7 +505,7 @@ export default function WorkLocationsPage() {
                               key={v}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, grace_checkout_minutes: v }))}
-                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkout_minutes === v ? 'bg-orange-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.grace_checkout_minutes === v ? 'bg-[hsl(var(--warning)/0.1)]0 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
                             >
                               {v}
                             </button>
@@ -519,11 +519,11 @@ export default function WorkLocationsPage() {
                 {/* Early Check-in Allowance - للمخولين فقط */}
                 {canEdit && (
                   <div className="p-4 rounded-lg bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200">
-                    <Label className="flex items-center gap-2 text-violet-700 mb-3">
+                    <Label className="flex items-center gap-2 text-accent mb-3">
                       <Clock size={16} />
                       {lang === 'ar' ? 'السماح بالتبصيم قبل الدوام' : 'Early Check-in Allowance'}
                     </Label>
-                    <p className="text-xs text-violet-600 mb-3">
+                    <p className="text-xs text-accent mb-3">
                       {lang === 'ar' 
                         ? 'يسمح للموظفين بالتبصيم قبل وقت الدوام الرسمي. القيمة 0 تعني لا تبصيم قبل الدوام.'
                         : 'Allow employees to check-in before official work start. Value 0 means no early check-in.'}
@@ -531,14 +531,14 @@ export default function WorkLocationsPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-violet-600">
+                          <span className="text-xs text-accent">
                             {formData.allow_early_checkin_minutes === 0 
                               ? (lang === 'ar' ? 'لا يُسمح بالتبصيم المبكر' : 'No early check-in allowed')
                               : (lang === 'ar' 
                                   ? `التبصيم يفتح قبل الدوام بـ ${formData.allow_early_checkin_minutes} دقيقة`
                                   : `Check-in opens ${formData.allow_early_checkin_minutes} min before work`)}
                           </span>
-                          <div className="text-2xl font-bold text-violet-600">
+                          <div className="text-2xl font-bold text-accent">
                             {formData.allow_early_checkin_minutes}
                             <span className="text-sm font-normal text-muted-foreground ms-1">
                               {lang === 'ar' ? 'د' : 'm'}
@@ -563,7 +563,7 @@ export default function WorkLocationsPage() {
                               key={v}
                               type="button"
                               onClick={() => setFormData(p => ({ ...p, allow_early_checkin_minutes: v }))}
-                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.allow_early_checkin_minutes === v ? 'bg-violet-500 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
+                              className={`text-[10px] px-2 py-0.5 rounded-full transition-all ${formData.allow_early_checkin_minutes === v ? 'bg-accent/100 text-white' : 'text-muted-foreground hover:bg-slate-200'}`}
                             >
                               {v === 0 ? (lang === 'ar' ? 'لا' : 'No') : v}
                             </button>
@@ -657,7 +657,7 @@ export default function WorkLocationsPage() {
                     <MapPin size={16} className="text-primary" />
                     {lang === 'ar' ? loc.name_ar : loc.name}
                     {loc.ramadan_hours_active && (
-                      <span className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                      <span className="text-xs px-1.5 py-0.5 bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded">
                         🌙 {lang === 'ar' ? 'رمضان' : 'Ramadan'}
                       </span>
                     )}
@@ -693,12 +693,12 @@ export default function WorkLocationsPage() {
                   {(loc.grace_checkin_minutes > 0 || loc.grace_checkout_minutes > 0) && (
                     <div className="flex items-center gap-2 text-xs">
                       {loc.grace_checkin_minutes > 0 && (
-                        <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] rounded flex items-center gap-1">
                           <span>↓</span>{loc.grace_checkin_minutes}{lang === 'ar' ? 'د' : 'm'}
                         </span>
                       )}
                       {loc.grace_checkout_minutes > 0 && (
-                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded flex items-center gap-1">
                           <span>↑</span>{loc.grace_checkout_minutes}{lang === 'ar' ? 'د' : 'm'}
                         </span>
                       )}
@@ -706,7 +706,7 @@ export default function WorkLocationsPage() {
                   )}
                   {/* Ramadan Hours Info */}
                   {loc.ramadan_hours_active && (
-                    <div className="flex items-center gap-2 text-amber-600">
+                    <div className="flex items-center gap-2 text-[hsl(var(--warning))]">
                       <span>🌙</span>
                       <span className="text-xs">{loc.ramadan_work_start || '09:00'} - {loc.ramadan_work_end || '15:00'} ({loc.ramadan_daily_hours || 6}h)</span>
                     </div>
@@ -738,7 +738,7 @@ export default function WorkLocationsPage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
+                        className="w-full text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
                         onClick={() => handleDeactivateRamadan(loc.id)}
                         data-testid={`deactivate-ramadan-${loc.id}`}
                       >
@@ -748,7 +748,7 @@ export default function WorkLocationsPage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
+                        className="w-full text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
                         onClick={() => openRamadanDialog(loc)}
                         data-testid={`activate-ramadan-${loc.id}`}
                       >
@@ -796,11 +796,11 @@ export default function WorkLocationsPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-sm font-medium text-amber-800">
+            <div className="p-3 bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.3)]">
+              <p className="text-sm font-medium text-[hsl(var(--warning))]">
                 {lang === 'ar' ? 'الموقع:' : 'Location:'} {ramadanDialog && (lang === 'ar' ? ramadanDialog.name_ar : ramadanDialog.name)}
               </p>
-              <p className="text-xs text-amber-600 mt-1">
+              <p className="text-xs text-[hsl(var(--warning))] mt-1">
                 {lang === 'ar' ? 'الدوام الحالي:' : 'Current hours:'} {ramadanDialog?.work_start} - {ramadanDialog?.work_end}
               </p>
             </div>

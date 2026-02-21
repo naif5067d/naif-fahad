@@ -308,7 +308,7 @@ export default function EmployeesPage() {
                 <tr 
                   key={e.id} 
                   data-testid={`emp-row-${e.employee_number}`}
-                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-amber-50') : ''}`}
+                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-[hsl(var(--warning)/0.1)]') : ''}`}
                 >
                   <td className="font-mono text-xs">{e.employee_number}</td>
                   <td className="text-sm font-medium">
@@ -319,7 +319,7 @@ export default function EmployeesPage() {
                       {isExpiring && (
                         <span 
                           className={`text-[10px] px-1.5 py-0.5 rounded ${
-                            isCritical ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                            isCritical ? 'bg-red-100 text-red-700' : 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'
                           }`}
                           title={lang === 'ar' ? `ينتهي العقد خلال ${expiryStatus.days_remaining} يوم` : `Contract expires in ${expiryStatus.days_remaining} days`}
                         >
@@ -333,7 +333,7 @@ export default function EmployeesPage() {
                   {/* سنوات الخدمة */}
                   <td className="hidden md:table-cell text-center">
                     {serviceYears !== null ? (
-                      <span className={`text-sm font-bold ${serviceYears >= 5 ? 'text-emerald-600' : 'text-blue-600'}`}>
+                      <span className={`text-sm font-bold ${serviceYears >= 5 ? 'text-[hsl(var(--success))]' : 'text-blue-600'}`}>
                         {serviceYears} {lang === 'ar' ? 'سنة' : 'yr'}
                         <span className="text-[10px] text-muted-foreground block">
                           {serviceYears >= 5 ? '30 يوم' : '21 يوم'}
@@ -546,7 +546,7 @@ export default function EmployeesPage() {
                         </span>
                       </div>
                       {emp.supervisor_id && (
-                        <span className="text-xs text-amber-600">
+                        <span className="text-xs text-[hsl(var(--warning))]">
                           {lang === 'ar' ? 'لديه مشرف' : 'Has supervisor'}
                         </span>
                       )}
@@ -590,7 +590,7 @@ export default function EmployeesPage() {
                   {lang === 'ar' ? 'يوجد حساب مستخدم' : 'User account exists'}
                 </p>
               ) : (
-                <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                <p className="text-xs text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-2 py-1 rounded">
                   {lang === 'ar' ? 'لا يوجد حساب - سيتم إنشاؤه' : 'No account - will be created'}
                 </p>
               )}

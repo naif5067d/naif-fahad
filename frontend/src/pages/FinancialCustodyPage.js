@@ -37,8 +37,8 @@ const STATUS_MAP = {
 
 const STATUS_STYLES = {
   open: 'bg-blue-50 text-blue-700 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-300',
-  pending_audit: 'bg-amber-50 text-amber-700 ring-amber-300 dark:bg-amber-950/50 dark:text-amber-300',
-  approved: 'bg-emerald-50 text-emerald-700 ring-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300',
+  pending_audit: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-amber-300 dark:bg-amber-950/50 dark:text-amber-300',
+  approved: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300',
   executed: 'bg-purple-50 text-purple-700 ring-purple-300 dark:bg-purple-950/50 dark:text-purple-300',
   closed: 'bg-slate-100 text-slate-600 ring-slate-300 dark:bg-slate-800 dark:text-slate-400',
 };
@@ -541,7 +541,7 @@ export default function FinancialCustodyPage() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                 {lang === 'ar' ? 'المتبقي' : 'Remaining'}
               </p>
-              <p className="text-2xl font-bold font-mono text-emerald-600">{selected.remaining.toLocaleString()}</p>
+              <p className="text-2xl font-bold font-mono text-[hsl(var(--success))]">{selected.remaining.toLocaleString()}</p>
             </div>
           </div>
 
@@ -652,7 +652,7 @@ export default function FinancialCustodyPage() {
             </h3>
             <div className="flex items-center gap-3">
               {canSalahEdit && (
-                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                <span className="text-xs text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-2 py-1 rounded">
                   {lang === 'ar' ? 'يمكنك التعديل' : 'You can edit'}
                 </span>
               )}
@@ -703,7 +703,7 @@ export default function FinancialCustodyPage() {
                     return (
                       <tr 
                         key={exp.id} 
-                        className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors ${isEditing ? 'bg-amber-50 dark:bg-amber-950/20' : ''}`}
+                        className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors ${isEditing ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/20' : ''}`}
                         data-testid={`expense-row-${i}`}
                       >
                         <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
@@ -727,7 +727,7 @@ export default function FinancialCustodyPage() {
                             <span className="text-sm">
                               {exp.description}
                               {exp.edited_by && (
-                                <span className="ms-1.5 text-[10px] text-amber-600 bg-amber-50 px-1.5 rounded">
+                                <span className="ms-1.5 text-[10px] text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-1.5 rounded">
                                   {lang === 'ar' ? 'معدّل' : 'edited'}
                                 </span>
                               )}
@@ -760,7 +760,7 @@ export default function FinancialCustodyPage() {
                                   <button 
                                     onClick={() => handleEditExpense(exp.id)}
                                     disabled={submitting}
-                                    className="p-1.5 rounded-md text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-all"
+                                    className="p-1.5 rounded-md text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] dark:hover:bg-emerald-950/50 transition-all"
                                     title={lang === 'ar' ? 'حفظ' : 'Save'}
                                   >
                                     <Save size={14} />
@@ -778,7 +778,7 @@ export default function FinancialCustodyPage() {
                                   {canSalahEdit && (
                                     <button 
                                       onClick={() => startEditExpense(exp)}
-                                      className="p-1.5 rounded-md text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-all"
+                                      className="p-1.5 rounded-md text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] dark:hover:bg-amber-950/50 transition-all"
                                       title={lang === 'ar' ? 'تعديل' : 'Edit'}
                                       data-testid={`edit-expense-${i}`}
                                     >
@@ -816,7 +816,7 @@ export default function FinancialCustodyPage() {
                     <td className="px-3 py-3 text-end font-mono text-red-700 dark:text-red-400">
                       -{selected.spent.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3 text-end font-mono text-emerald-700 dark:text-emerald-400">
+                    <td className="px-3 py-3 text-end font-mono text-[hsl(var(--success))] dark:text-emerald-400">
                       {selected.remaining.toLocaleString()}
                     </td>
                     {(isEditable || canSalahEdit) && <td></td>}
@@ -858,13 +858,13 @@ export default function FinancialCustodyPage() {
               <div className="w-40">
                 <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
                   {lang === 'ar' ? 'اسم الحساب' : 'Account'}
-                  {codeInfo?.found && <CheckCircle size={10} className="text-emerald-500" />}
+                  {codeInfo?.found && <CheckCircle size={10} className="text-[hsl(var(--success))]" />}
                 </Label>
                 <div className="h-10 px-3 flex items-center bg-slate-100 dark:bg-slate-800 rounded-md text-sm font-medium">
                   {codeInfo?.found 
                     ? (lang === 'ar' ? codeInfo.code.name_ar : codeInfo.code.name_en)
                     : codeInfo && !codeInfo.found
-                      ? <span className="text-amber-600">{lang === 'ar' ? 'كود جديد' : 'New code'}</span>
+                      ? <span className="text-[hsl(var(--warning))]">{lang === 'ar' ? 'كود جديد' : 'New code'}</span>
                       : <span className="text-muted-foreground">-</span>
                   }
                 </div>
@@ -917,11 +917,11 @@ export default function FinancialCustodyPage() {
             </div>
             
             <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4">
-              <span>{lang === 'ar' ? 'المتبقي:' : 'Remaining:'} <strong className="text-emerald-600">{selected.remaining.toLocaleString()}</strong></span>
+              <span>{lang === 'ar' ? 'المتبقي:' : 'Remaining:'} <strong className="text-[hsl(var(--success))]">{selected.remaining.toLocaleString()}</strong></span>
               {expForm.amount && (
                 <span>
                   {lang === 'ar' ? 'بعد الإضافة:' : 'After adding:'} 
-                  <strong className={`ms-1 ${(selected.remaining - parseFloat(expForm.amount || 0)) < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  <strong className={`ms-1 ${(selected.remaining - parseFloat(expForm.amount || 0)) < 0 ? 'text-red-600' : 'text-[hsl(var(--success))]'}`}>
                     {(selected.remaining - parseFloat(expForm.amount || 0)).toLocaleString()}
                   </strong>
                 </span>
@@ -1117,19 +1117,19 @@ export default function FinancialCustodyPage() {
         
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle size={16} className="text-emerald-500" />
+            <CheckCircle size={16} className="text-[hsl(var(--success))]" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">
               {lang === 'ar' ? 'المتبقي' : 'Remaining'}
             </span>
           </div>
-          <p className="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-300">
+          <p className="text-2xl font-bold font-mono text-[hsl(var(--success))] dark:text-emerald-300">
             {(summary.total_remaining || 0).toLocaleString()}
           </p>
         </div>
         
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/50 dark:to-amber-900/30 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/50 dark:to-amber-900/30 rounded-xl p-4 border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={16} className="text-amber-500" />
+            <AlertTriangle size={16} className="text-[hsl(var(--warning))]" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">
               {lang === 'ar' ? 'بانتظار التدقيق' : 'Pending'}
             </span>
@@ -1245,7 +1245,7 @@ export default function FinancialCustodyPage() {
                     <td className="px-4 py-3 text-end font-mono text-sm text-red-600">
                       {c.spent.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-end font-mono text-sm font-semibold text-emerald-600">
+                    <td className="px-4 py-3 text-end font-mono text-sm font-semibold text-[hsl(var(--success))]">
                       {c.remaining.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-center">

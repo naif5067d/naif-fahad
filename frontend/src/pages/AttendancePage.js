@@ -500,12 +500,12 @@ export default function AttendancePage() {
   // الحصول على لون الحالة
   const getStatusColor = (status) => {
     const colors = {
-      executed: 'bg-emerald-100 text-emerald-700',
+      executed: 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]',
       rejected: 'bg-red-100 text-red-700',
       cancelled: 'bg-red-100 text-red-700',
       pending_supervisor: 'bg-blue-100 text-blue-700',
-      pending_ops: 'bg-orange-100 text-orange-700',
-      stas: 'bg-violet-100 text-violet-700',
+      pending_ops: 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]',
+      stas: 'bg-accent/15 text-accent',
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
@@ -569,7 +569,7 @@ export default function AttendancePage() {
           )}
           
           {!gpsState.checking && gpsState.available && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(var(--success)/0.1)]0/10 border border-emerald-500/20 text-[hsl(var(--success))]">
               <MapPin size={18} />
               <span className="text-sm font-medium">[GPS000] {lang === 'ar' ? 'GPS متصل ✓' : 'GPS Connected ✓'}</span>
               <span className="text-xs text-muted-foreground ms-2">
@@ -597,8 +597,8 @@ export default function AttendancePage() {
           )}
 
           {assignedLocations.length === 0 && !isAdmin && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <p className="text-sm text-amber-600 flex items-center gap-2">
+            <div className="p-4 rounded-xl bg-[hsl(var(--warning)/0.1)]0/10 border border-amber-500/20">
+              <p className="text-sm text-[hsl(var(--warning))] flex items-center gap-2">
                 <AlertTriangle size={16} />
                 {lang === 'ar' ? 'لم يتم تعيين موقع عمل لك بعد. تواصل مع مديرك.' : 'No work location assigned yet. Contact your manager.'}
               </p>
@@ -662,7 +662,7 @@ export default function AttendancePage() {
                     </SelectItem>
                     <SelectItem value="Project">
                       <div className="flex items-center gap-2">
-                        <Navigation size={14} className="text-amber-500" />
+                        <Navigation size={14} className="text-[hsl(var(--warning))]" />
                         {lang === 'ar' ? 'المشروع' : 'Project'}
                       </div>
                     </SelectItem>
@@ -721,9 +721,9 @@ export default function AttendancePage() {
             {history.slice(0, 10).map((h, i) => (
               <div key={i} className="card-premium p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.type === 'check_in' ? 'bg-emerald-500/10' : 'bg-primary/10'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${h.type === 'check_in' ? 'bg-[hsl(var(--success)/0.1)]0/10' : 'bg-primary/10'}`}>
                     {h.type === 'check_in' ? (
-                      <CheckCircle size={18} className="text-emerald-500" />
+                      <CheckCircle size={18} className="text-[hsl(var(--success))]" />
                     ) : (
                       <XCircle size={18} className="text-primary" />
                     )}
@@ -738,7 +738,7 @@ export default function AttendancePage() {
                 <div className="text-end">
                   <p className="text-sm font-mono font-semibold">{formatSaudiTime(h.timestamp)}</p>
                   {(h.gps_status === 'valid' || h.gps_valid === true || h.gps_available === true) ? (
-                    <span className="text-[10px] text-emerald-500">● GPS ✓</span>
+                    <span className="text-[10px] text-[hsl(var(--success))]">● GPS ✓</span>
                   ) : (
                     <span className="text-[10px] text-muted-foreground">○ {lang === 'ar' ? 'بدون GPS' : 'No GPS'}</span>
                   )}

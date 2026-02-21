@@ -342,12 +342,12 @@ export default function SystemMaintenancePage() {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="flex items-center justify-between p-4 bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.3)]">
                 <div className="flex items-center gap-3">
-                  <Pin className="w-5 h-5 text-amber-600" />
+                  <Pin className="w-5 h-5 text-[hsl(var(--warning))]" />
                   <div>
-                    <Label className="text-amber-800 font-medium">إشعار مثبت (هام)</Label>
-                    <p className="text-xs text-amber-600">يظهر دائماً تحت الترحيب ولا يمكن إخفاؤه</p>
+                    <Label className="text-[hsl(var(--warning))] font-medium">إشعار مثبت (هام)</Label>
+                    <p className="text-xs text-[hsl(var(--warning))]">يظهر دائماً تحت الترحيب ولا يمكن إخفاؤه</p>
                   </div>
                 </div>
                 <Switch
@@ -389,12 +389,12 @@ export default function SystemMaintenancePage() {
                     <div 
                       key={ann.id} 
                       className={`p-4 rounded-lg border flex items-start justify-between ${
-                        ann.is_pinned ? 'bg-amber-50 border-amber-200' : 'bg-muted/30'
+                        ann.is_pinned ? 'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.3)]' : 'bg-muted/30'
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         {ann.is_pinned ? (
-                          <Pin className="w-5 h-5 text-amber-600 mt-0.5" />
+                          <Pin className="w-5 h-5 text-[hsl(var(--warning))] mt-0.5" />
                         ) : (
                           <Bell className="w-5 h-5 text-muted-foreground mt-0.5" />
                         )}
@@ -408,7 +408,7 @@ export default function SystemMaintenancePage() {
                             <span>•</span>
                             <span>{formatDate(ann.created_at)}</span>
                             {ann.is_pinned && (
-                              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-100">مثبت</Badge>
+                              <Badge variant="outline" className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.15)]">مثبت</Badge>
                             )}
                           </div>
                         </div>
@@ -451,7 +451,7 @@ export default function SystemMaintenancePage() {
                   </div>
                   
                   {/* Transaction Docs */}
-                  <div className="bg-orange-500/20 rounded-xl p-4 text-center">
+                  <div className="bg-[hsl(var(--warning)/0.1)]0/20 rounded-xl p-4 text-center">
                     <FileJson className="w-6 h-6 mx-auto mb-2 text-orange-300" />
                     <div className="text-2xl font-bold">{storageInfo.totals.transaction_documents}</div>
                     <div className="text-xs text-orange-200">سجلات معاملات</div>
@@ -675,7 +675,7 @@ export default function SystemMaintenancePage() {
             <div className="grid md:grid-cols-2 gap-4">
               {/* Transaction Collections */}
               <div>
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-2 text-orange-700">
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2 text-[hsl(var(--warning))]">
                   <FileJson className="w-4 h-4" />
                   سجلات المعاملات (قابلة للحذف)
                 </h4>
@@ -685,7 +685,7 @@ export default function SystemMaintenancePage() {
                     .map(([name, info]) => (
                       <div 
                         key={name} 
-                        className="flex items-center justify-between p-2 bg-orange-50 rounded text-sm"
+                        className="flex items-center justify-between p-2 bg-[hsl(var(--warning)/0.1)] rounded text-sm"
                       >
                         <span className="font-mono text-xs">{name}</span>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">

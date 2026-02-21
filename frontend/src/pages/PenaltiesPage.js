@@ -115,16 +115,16 @@ export default function PenaltiesPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-amber-200">
+          <Card className="border-[hsl(var(--warning)/0.3)]">
             <CardContent className="p-4 text-center">
-              <p className="text-3xl font-bold text-amber-600">{report.summary.total_deficit_hours?.toFixed(1)}</p>
+              <p className="text-3xl font-bold text-[hsl(var(--warning))]">{report.summary.total_deficit_hours?.toFixed(1)}</p>
               <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'ساعات نقص' : 'Deficit Hours'}</p>
             </CardContent>
           </Card>
           
           <Card className="border-violet-200">
             <CardContent className="p-4 text-center">
-              <p className="text-3xl font-bold text-violet-600">{formatCurrency(report.summary.total_deduction_amount)}</p>
+              <p className="text-3xl font-bold text-accent">{formatCurrency(report.summary.total_deduction_amount)}</p>
               <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم' : 'Total Deduction'}</p>
             </CardContent>
           </Card>
@@ -132,15 +132,15 @@ export default function PenaltiesPage() {
       )}
 
       {/* Rules Info */}
-      <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200">
+      <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)]">
         <CardContent className="p-4">
           <h3 className="font-bold flex items-center gap-2 mb-3">
-            <AlertTriangle className="text-amber-600" size={20} />
+            <AlertTriangle className="text-[hsl(var(--warning))]" size={20} />
             {lang === 'ar' ? 'قواعد الخصم' : 'Deduction Rules'}
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="font-medium text-amber-700">{lang === 'ar' ? 'الغياب:' : 'Absence:'}</p>
+              <p className="font-medium text-[hsl(var(--warning))]">{lang === 'ar' ? 'الغياب:' : 'Absence:'}</p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
                 <li>{lang === 'ar' ? 'يوم غياب = خصم يوم' : '1 day absence = 1 day deduction'}</li>
                 <li>{lang === 'ar' ? '3 أيام متصلة = إنذار أول' : '3 consecutive days = First warning'}</li>
@@ -149,7 +149,7 @@ export default function PenaltiesPage() {
               </ul>
             </div>
             <div>
-              <p className="font-medium text-amber-700">{lang === 'ar' ? 'التأخير والخروج المبكر:' : 'Late & Early Leave:'}</p>
+              <p className="font-medium text-[hsl(var(--warning))]">{lang === 'ar' ? 'التأخير والخروج المبكر:' : 'Late & Early Leave:'}</p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
                 <li>{lang === 'ar' ? 'يحسب بالدقائق' : 'Calculated in minutes'}</li>
                 <li>{lang === 'ar' ? 'يجمع شهرياً' : 'Accumulated monthly'}</li>
@@ -210,7 +210,7 @@ export default function PenaltiesPage() {
                       {/* Deficit */}
                       {emp.deficit?.total_deficit_hours > 0 && (
                         <div className="text-center">
-                          <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+                          <Badge variant="outline" className="text-xs text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]">
                             <Clock size={12} className="mr-1" />
                             {emp.deficit.total_deficit_hours} {lang === 'ar' ? 'ساعة' : 'hrs'}
                           </Badge>
@@ -220,7 +220,7 @@ export default function PenaltiesPage() {
                       {/* Total Deduction */}
                       {emp.total_deduction_days > 0 && (
                         <div className="text-center">
-                          <Badge className="bg-violet-100 text-violet-700 text-xs">
+                          <Badge className="bg-accent/15 text-accent text-xs">
                             <TrendingDown size={12} className="mr-1" />
                             {emp.total_deduction_days} {lang === 'ar' ? 'يوم خصم' : 'days'}
                           </Badge>
@@ -267,8 +267,8 @@ export default function PenaltiesPage() {
                         </div>
                         
                         {/* Deficit Details */}
-                        <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
-                          <h4 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
+                        <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg">
+                          <h4 className="font-medium text-[hsl(var(--warning))] mb-2 flex items-center gap-2">
                             <Clock size={16} />
                             {lang === 'ar' ? 'نقص الساعات' : 'Hours Deficit'}
                           </h4>
@@ -282,18 +282,18 @@ export default function PenaltiesPage() {
                       </div>
                       
                       {/* Summary */}
-                      <div className="mt-4 p-3 bg-violet-50 dark:bg-violet-900/10 rounded-lg">
+                      <div className="mt-4 p-3 bg-accent/10 dark:bg-violet-900/10 rounded-lg">
                         <div className="flex justify-between items-center">
                           <div>
                             <p className="font-medium">{lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}</p>
-                            <p className="text-2xl font-bold text-violet-700">
+                            <p className="text-2xl font-bold text-accent">
                               {emp.total_deduction_days} {lang === 'ar' ? 'يوم' : 'days'}
                             </p>
                           </div>
                           {emp.total_deduction_amount > 0 && (
                             <div className="text-left">
                               <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'المبلغ:' : 'Amount:'}</p>
-                              <p className="text-xl font-bold text-violet-700">
+                              <p className="text-xl font-bold text-accent">
                                 {formatCurrency(emp.total_deduction_amount)}
                               </p>
                             </div>
@@ -355,12 +355,12 @@ export default function PenaltiesPage() {
                       </td>
                       <td className="p-2 text-center">
                         {day.late_minutes > 0 && (
-                          <span className="text-amber-600">{day.late_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
+                          <span className="text-[hsl(var(--warning))]">{day.late_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
                         )}
                       </td>
                       <td className="p-2 text-center">
                         {day.early_leave_minutes > 0 && (
-                          <span className="text-amber-600">{day.early_leave_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
+                          <span className="text-[hsl(var(--warning))]">{day.early_leave_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
                         )}
                       </td>
                     </tr>

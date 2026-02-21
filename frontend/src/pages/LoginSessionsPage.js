@@ -148,7 +148,7 @@ export default function LoginSessionsPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-          <FileSpreadsheet className="text-indigo-600" size={28} />
+          <FileSpreadsheet className="text-accent" size={28} />
           {lang === 'ar' ? 'سجل الدخول والخروج' : 'Login Sessions'}
         </h1>
         <p className="text-slate-500 mt-1">
@@ -259,7 +259,7 @@ export default function LoginSessionsPage() {
             <div className="overflow-x-auto">
               {loading ? (
                 <div className="py-16 text-center">
-                  <RefreshCw size={32} className="animate-spin text-indigo-500 mx-auto" />
+                  <RefreshCw size={32} className="animate-spin text-accent mx-auto" />
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="py-16 text-center">

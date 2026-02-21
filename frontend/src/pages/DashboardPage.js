@@ -364,7 +364,7 @@ export default function DashboardPage() {
             {announcements.pinned?.length > 0 && (
               <div className="mt-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2 mb-2">
-                  <Bell size={12} className={isManager ? 'text-amber-400' : 'text-amber-300'} />
+                  <Bell size={12} className={isManager ? 'text-[hsl(var(--warning))]' : 'text-amber-300'} />
                   <span className="text-[10px] font-medium opacity-70 uppercase">
                     {lang === 'ar' ? 'إشعارات' : 'Notices'}
                   </span>
@@ -373,7 +373,7 @@ export default function DashboardPage() {
                   <div key={ann.id} className={`flex items-start gap-2 p-2 rounded-lg mb-1 ${
                     isManager ? 'bg-slate-800/50' : 'bg-white/10'
                   }`}>
-                    <Pin size={10} className={isManager ? 'text-amber-400 mt-1' : 'text-amber-300 mt-1'} />
+                    <Pin size={10} className={isManager ? 'text-[hsl(var(--warning))] mt-1' : 'text-amber-300 mt-1'} />
                     <p className="text-xs opacity-90 leading-relaxed">
                       {lang === 'ar' ? ann.message_ar : ann.message_en}
                     </p>
@@ -407,9 +407,9 @@ export default function DashboardPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Bell size={16} className="text-amber-500" />
+              <Bell size={16} className="text-[hsl(var(--warning))]" />
               <h2 className="font-semibold">{lang === 'ar' ? 'عقود قاربت على الانتهاء' : 'Expiring Contracts'}</h2>
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] px-2 py-0.5 rounded-full">
                 {expiringContracts.summary.total}
               </span>
             </div>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {expiringContracts.employees.slice(0, 3).map(emp => (
               <div key={emp.employee_id} className={`p-3 rounded-xl border ${
-                emp.urgency === 'critical' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'
+                emp.urgency === 'critical' ? 'border-red-200 bg-red-50' : 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]'
               }`}>
                 <p className="font-medium text-sm truncate">{lang === 'ar' ? emp.employee_name_ar : emp.employee_name}</p>
                 <p className="text-xs text-muted-foreground">{emp.days_remaining} {lang === 'ar' ? 'يوم' : 'days'}</p>
@@ -455,8 +455,8 @@ export default function DashboardPage() {
       {/* Next Holiday */}
       {nextHoliday && (
         <div className="card-premium p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <CalendarDays size={18} className="text-amber-500" />
+          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--warning)/0.1)]0/10 flex items-center justify-center">
+            <CalendarDays size={18} className="text-[hsl(var(--warning))]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] text-muted-foreground">{t('dashboard.nextHoliday')}</p>

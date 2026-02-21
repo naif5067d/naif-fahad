@@ -637,7 +637,7 @@ export default function STASMirrorPage() {
             <Smartphone size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'الأجهزة' : 'Devices'}</span>
             {pendingDevices.length > 0 && (
-              <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {pendingDevices.length}
               </span>
             )}
@@ -672,9 +672,9 @@ export default function STASMirrorPage() {
             {pendingDevices.length > 0 && (
               <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl p-5 shadow-sm">
                 <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-4 text-lg">
-                  <AlertTriangle size={22} className="text-orange-600" />
+                  <AlertTriangle size={22} className="text-[hsl(var(--warning))]" />
                   {lang === 'ar' ? '⚠️ أجهزة تحتاج موافقتك' : '⚠️ Devices Need Your Approval'}
-                  <span className="bg-orange-500 text-white text-sm px-2 py-0.5 rounded-full mr-2">
+                  <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-sm px-2 py-0.5 rounded-full mr-2">
                     {pendingDevices.length}
                   </span>
                 </h3>
@@ -684,12 +684,12 @@ export default function STASMirrorPage() {
                     return (
                       <div key={device.id} className="flex items-center justify-between bg-white p-4 rounded-xl border-2 border-orange-200 hover:border-orange-400 transition-all shadow-sm">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-xl bg-orange-100 flex items-center justify-center">
-                            <DeviceIcon size={28} className="text-orange-600" />
+                          <div className="w-14 h-14 rounded-xl bg-[hsl(var(--warning)/0.15)] flex items-center justify-center">
+                            <DeviceIcon size={28} className="text-[hsl(var(--warning))]" />
                           </div>
                           <div>
                             <p className="font-bold text-lg text-slate-800">{device.employee_name_ar || device.employee_id}</p>
-                            <p className="text-base font-medium text-orange-700">
+                            <p className="text-base font-medium text-[hsl(var(--warning))]">
                               {device.friendly_name || `${device.browser} - ${device.os}`}
                             </p>
                             <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
@@ -790,7 +790,7 @@ export default function STASMirrorPage() {
                       variant="outline"
                       onClick={() => handleResetDevices(selectedEmployeeFilter)}
                       disabled={deviceAction}
-                      className="h-12 text-base font-bold border-orange-300 text-orange-700 hover:bg-orange-50"
+                      className="h-12 text-base font-bold border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
                       data-testid="reset-devices-btn"
                     >
                       <RotateCcw size={18} className="ml-2" />
@@ -849,12 +849,12 @@ export default function STASMirrorPage() {
                       const DeviceIcon = device.is_mobile ? Smartphone : device.is_tablet ? Tablet : Monitor;
                       const statusColors = {
                         trusted: 'border-green-400 bg-green-50',
-                        pending: 'border-orange-400 bg-orange-50',
+                        pending: 'border-orange-400 bg-[hsl(var(--warning)/0.1)]',
                         blocked: 'border-red-400 bg-red-50'
                       };
                       const statusBadge = {
                         trusted: 'bg-green-500 text-white',
-                        pending: 'bg-orange-500 text-white',
+                        pending: 'bg-[hsl(var(--warning)/0.1)]0 text-white',
                         blocked: 'bg-red-500 text-white'
                       };
                       const statusText = {
@@ -874,11 +874,11 @@ export default function STASMirrorPage() {
                             <div className="flex items-center gap-3">
                               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                                 device.status === 'trusted' ? 'bg-green-100' :
-                                device.status === 'pending' ? 'bg-orange-100' : 'bg-red-100'
+                                device.status === 'pending' ? 'bg-[hsl(var(--warning)/0.15)]' : 'bg-red-100'
                               }`}>
                                 <DeviceIcon size={24} className={
                                   device.status === 'trusted' ? 'text-green-600' :
-                                  device.status === 'pending' ? 'text-orange-600' : 'text-red-600'
+                                  device.status === 'pending' ? 'text-[hsl(var(--warning))]' : 'text-red-600'
                                 } />
                               </div>
                               <div>
@@ -928,7 +928,7 @@ export default function STASMirrorPage() {
                                 variant="outline"
                                 onClick={() => handleBlockDevice(device.id)}
                                 disabled={deviceAction}
-                                className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50"
+                                className="flex-1 border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)]"
                                 data-testid={`block-btn-${device.id}`}
                               >
                                 <XCircle size={14} className="ml-1" />
@@ -1121,7 +1121,7 @@ export default function STASMirrorPage() {
                   {lang === 'ar' ? 'الخصومات المقترحة' : 'Deduction Proposals'}
                 </CardTitle>
                 <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                  <span className="px-3 py-1 bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded-full text-sm">
                     {lang === 'ar' ? 'معلقة' : 'Pending'}: {pendingDeductions.length}
                   </span>
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
@@ -1176,7 +1176,7 @@ export default function STASMirrorPage() {
                           <td className="p-3 text-center">
                             <span className={`px-2 py-1 rounded-full text-xs ${
                               d.status === 'pending' 
-                                ? 'bg-orange-100 text-orange-700' 
+                                ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' 
                                 : 'bg-green-100 text-green-700'
                             }`}>
                               {d.status === 'pending' 
@@ -1262,9 +1262,9 @@ export default function STASMirrorPage() {
                   {/* Trace Log Toggle */}
                   <button
                     onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
-                    className="w-full p-3 bg-violet-50 rounded flex items-center justify-between hover:bg-violet-100 transition-colors"
+                    className="w-full p-3 bg-accent/10 rounded flex items-center justify-between hover:bg-accent/15 transition-colors"
                   >
-                    <span className="font-semibold text-violet-700 flex items-center gap-2">
+                    <span className="font-semibold text-accent flex items-center gap-2">
                       <Eye size={16} />
                       {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log'}
                       {deductionTrace.length > 0 && <span className="text-xs">({deductionTrace.length})</span>}
@@ -1371,8 +1371,8 @@ export default function STASMirrorPage() {
                     
                     {/* رسالة للـ STAS عندما يكون الخصم معلق */}
                     {selectedDeduction.status === 'pending' && user?.role === 'stas' && (
-                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-center">
-                        <p className="text-sm text-amber-700">
+                      <div className="p-3 bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.3)] text-center">
+                        <p className="text-sm text-[hsl(var(--warning))]">
                           {lang === 'ar' ? 'بانتظار مراجعة المدير (سلطان/نايف)' : 'Waiting for manager review (Sultan/Naif)'}
                         </p>
                       </div>
@@ -1466,9 +1466,9 @@ export default function STASMirrorPage() {
                   <Card className="border border-border shadow-none" data-testid="pre-checks-card">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        {mirror.all_checks_pass ? <CheckCircle size={16} className="text-emerald-500" /> : <XCircle size={16} className="text-red-500" />}
+                        {mirror.all_checks_pass ? <CheckCircle size={16} className="text-[hsl(var(--success))]" /> : <XCircle size={16} className="text-red-500" />}
                         {t('stas.preChecks')}
-                        <span className={`ms-auto text-xs ${mirror.all_checks_pass ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <span className={`ms-auto text-xs ${mirror.all_checks_pass ? 'text-[hsl(var(--success))]' : 'text-red-600'}`}>
                           {mirror.all_checks_pass ? t('stas.allPass') : t('stas.hasFails')}
                         </span>
                       </CardTitle>
@@ -1476,13 +1476,13 @@ export default function STASMirrorPage() {
                     <CardContent>
                       <div className="space-y-2">
                         {mirror.pre_checks?.map((c, i) => (
-                          <div key={i} className={`p-2 rounded-md ${c.status === 'WARN' ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200' : 'bg-muted/50'}`} data-testid={`check-${i}`}>
+                          <div key={i} className={`p-2 rounded-md ${c.status === 'WARN' ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 border border-[hsl(var(--warning)/0.3)]' : 'bg-muted/50'}`} data-testid={`check-${i}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                {c.status === 'PASS' ? <CheckCircle size={14} className="text-emerald-500" /> : c.status === 'WARN' ? <AlertTriangle size={14} className="text-amber-500" /> : <XCircle size={14} className="text-red-500" />}
+                                {c.status === 'PASS' ? <CheckCircle size={14} className="text-[hsl(var(--success))]" /> : c.status === 'WARN' ? <AlertTriangle size={14} className="text-[hsl(var(--warning))]" /> : <XCircle size={14} className="text-red-500" />}
                                 <span className="text-sm">{lang === 'ar' ? c.name_ar : c.name}</span>
                               </div>
-                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-emerald-600' : c.status === 'WARN' ? 'text-amber-600' : 'text-red-600'}`}>
+                              <span className={`text-xs font-bold ${c.status === 'PASS' ? 'text-[hsl(var(--success))]' : c.status === 'WARN' ? 'text-[hsl(var(--warning))]' : 'text-red-600'}`}>
                                 {c.status === 'PASS' ? (lang === 'ar' ? 'نجح' : 'PASS') : c.status === 'WARN' ? (lang === 'ar' ? 'تحذير' : 'WARN') : (lang === 'ar' ? 'فشل' : 'FAIL')}
                               </span>
                             </div>
@@ -1490,13 +1490,13 @@ export default function STASMirrorPage() {
                             
                             {/* عرض تفاصيل الإجازة المرضية */}
                             {c.sick_leave_info && (
-                              <div className="mt-2 p-2 bg-amber-100 dark:bg-amber-900/30 rounded text-xs space-y-1">
+                              <div className="mt-2 p-2 bg-[hsl(var(--warning)/0.15)] dark:bg-amber-900/30 rounded text-xs space-y-1">
                                 <div className="flex justify-between">
                                   <span>{lang === 'ar' ? 'الاستهلاك الحالي:' : 'Current usage:'}</span>
                                   <span className="font-bold">{c.sick_leave_info.current_used} / 120 {lang === 'ar' ? 'يوم' : 'days'}</span>
                                 </div>
                                 {c.sick_leave_info.tier_distribution?.map((tier, ti) => (
-                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-emerald-100 text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-200 text-amber-900' : 'bg-red-100 text-red-800'}`}>
+                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-[hsl(var(--success)/0.15)] text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-200 text-[hsl(var(--warning))]' : 'bg-red-100 text-red-800'}`}>
                                     {tier.days} {lang === 'ar' ? 'يوم' : 'days'} → {tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب' : 'Half pay') : (lang === 'ar' ? 'بدون راتب' : 'No pay')}
                                   </div>
                                 ))}
@@ -1526,13 +1526,13 @@ export default function STASMirrorPage() {
                     <Card className="border-2 border-violet-500/30 shadow-none" data-testid="leave-calculation-card">
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                          <CardTitle className="text-sm flex items-center gap-2 text-accent dark:text-violet-300">
                             <Calendar size={16} />
                             {lang === 'ar' ? 'سجل حساب الإجازة' : 'Leave Calculation Record'}
                           </CardTitle>
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                             mirror.transaction.data.calculation_details.calculation_valid 
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                              ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:bg-emerald-900/30 dark:text-emerald-400' 
                               : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                           }`}>
                             {mirror.transaction.data.calculation_details.calculation_valid 
@@ -1544,7 +1544,7 @@ export default function STASMirrorPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {/* Summary */}
-                        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-lg p-3 border border-violet-200 dark:border-violet-800">
+                        <div className="bg-accent/10 dark:bg-violet-900/20 rounded-lg p-3 border border-violet-200 dark:border-violet-800">
                           <p className="text-violet-800 dark:text-violet-200 text-sm font-medium text-center">
                             {mirror.transaction.data.calculation_details.calculation_summary_ar}
                           </p>
@@ -1556,13 +1556,13 @@ export default function STASMirrorPage() {
                             <p className="text-xl font-bold">{mirror.transaction.data.calculation_details.total_calendar_days}</p>
                             <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'تقويمي' : 'Calendar'}</p>
                           </div>
-                          <div className="flex-1 min-w-[80px] bg-emerald-100 dark:bg-emerald-900/30 rounded-lg p-3 text-center">
-                            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{mirror.transaction.data.calculation_details.working_days}</p>
-                            <p className="text-[10px] text-emerald-600">{lang === 'ar' ? 'عمل' : 'Work'}</p>
+                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--success)/0.15)] dark:bg-emerald-900/30 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-[hsl(var(--success))] dark:text-emerald-400">{mirror.transaction.data.calculation_details.working_days}</p>
+                            <p className="text-[10px] text-[hsl(var(--success))]">{lang === 'ar' ? 'عمل' : 'Work'}</p>
                           </div>
-                          <div className="flex-1 min-w-[80px] bg-amber-100 dark:bg-amber-900/30 rounded-lg p-3 text-center">
-                            <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{mirror.transaction.data.calculation_details.excluded_fridays?.length || 0}</p>
-                            <p className="text-[10px] text-amber-600">{lang === 'ar' ? 'جمعة' : 'Fri'}</p>
+                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--warning)/0.15)] dark:bg-amber-900/30 rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">{mirror.transaction.data.calculation_details.excluded_fridays?.length || 0}</p>
+                            <p className="text-[10px] text-[hsl(var(--warning))]">{lang === 'ar' ? 'جمعة' : 'Fri'}</p>
                           </div>
                           <div className="flex-1 min-w-[80px] bg-red-100 dark:bg-red-900/30 rounded-lg p-3 text-center">
                             <p className="text-xl font-bold text-red-700 dark:text-red-400">{mirror.transaction.data.calculation_details.excluded_holidays?.length || 0}</p>
@@ -1590,7 +1590,7 @@ export default function STASMirrorPage() {
 
                         {/* No holidays */}
                         {(!mirror.transaction.data.calculation_details.excluded_holidays || mirror.transaction.data.calculation_details.excluded_holidays.length === 0) && (
-                          <div className="text-center text-xs text-emerald-600 py-2">
+                          <div className="text-center text-xs text-[hsl(var(--success))] py-2">
                             {lang === 'ar' ? 'لا توجد إجازات رسمية ضمن الفترة' : 'No public holidays in period'}
                           </div>
                         )}
@@ -1708,7 +1708,7 @@ export default function STASMirrorPage() {
                   {/* Desktop Execute Button - منع التنفيذ المكرر */}
                   <div className="hidden md:block space-y-2">
                     {mirror.transaction?.status === 'executed' ? (
-                      <div className="w-full h-12 text-base font-semibold bg-emerald-100 text-emerald-700 rounded-md flex items-center justify-center gap-2">
+                      <div className="w-full h-12 text-base font-semibold bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] rounded-md flex items-center justify-center gap-2">
                         <CheckCircle size={18} /> {lang === 'ar' ? 'تم التنفيذ مسبقاً' : 'Already Executed'}
                       </div>
                     ) : (
@@ -1832,10 +1832,10 @@ export default function STASMirrorPage() {
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="mt-4 space-y-4">
           {/* Version Management */}
-          <Card className="border-2 border-indigo-200 shadow-sm">
+          <Card className="border-2 border-accent/30 shadow-sm">
             <CardHeader className="bg-gradient-to-r from-indigo-50 to-violet-50">
               <CardTitle className="text-base flex items-center justify-between">
-                <span className="flex items-center gap-2 text-indigo-700">
+                <span className="flex items-center gap-2 text-accent">
                   <Tag size={20} />
                   {lang === 'ar' ? 'إدارة إصدار التطبيق' : 'App Version Management'}
                 </span>
@@ -1849,7 +1849,7 @@ export default function STASMirrorPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl border">
                   <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الإصدار الحالي' : 'Current Version'}</p>
-                  <p className="text-2xl font-bold text-indigo-600">{versionInfo?.version || '1.0.0'}</p>
+                  <p className="text-2xl font-bold text-accent">{versionInfo?.version || '1.0.0'}</p>
                   {versionInfo?.updated_at && (
                     <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                       <Clock size={12} />
@@ -1897,7 +1897,7 @@ export default function STASMirrorPage() {
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                      <Tag size={20} className="text-indigo-600" />
+                      <Tag size={20} className="text-accent" />
                       {lang === 'ar' ? 'تحديث إصدار التطبيق' : 'Update App Version'}
                     </DialogTitle>
                     <DialogDescription>
@@ -2016,7 +2016,7 @@ export default function STASMirrorPage() {
               <FileText size={16} className="me-1" /> {t('common.preview')}
             </Button>
             {mirror.transaction?.status === 'executed' ? (
-              <div className="flex-1 h-10 bg-emerald-100 text-emerald-700 rounded-md flex items-center justify-center gap-1 text-sm font-medium">
+              <div className="flex-1 h-10 bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] rounded-md flex items-center justify-center gap-1 text-sm font-medium">
                 <CheckCircle size={14} /> {lang === 'ar' ? 'تم التنفيذ' : 'Executed'}
               </div>
             ) : (

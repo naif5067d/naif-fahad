@@ -423,7 +423,7 @@ export default function TransactionsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setActionDialog({ ...tx, action: 'escalate' })}
-                        className="h-10 rounded-xl border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400"
+                        className="h-10 rounded-xl border-orange-300 text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] hover:border-orange-400"
                         data-testid={`escalate-tx-${tx.ref_no}`}
                       >
                         تصعيد

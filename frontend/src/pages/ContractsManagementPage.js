@@ -43,9 +43,9 @@ import {
 
 const CONTRACT_STATUS = {
   draft: { label: 'مسودة', labelEn: 'Draft', color: 'bg-slate-500', icon: Edit },
-  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-orange-500', icon: Edit },
-  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-amber-500', icon: Clock },
-  active: { label: 'نشط', labelEn: 'Active', color: 'bg-emerald-500', icon: CheckCircle },
+  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-[hsl(var(--warning)/0.1)]0', icon: Edit },
+  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-[hsl(var(--warning)/0.1)]0', icon: Clock },
+  active: { label: 'نشط', labelEn: 'Active', color: 'bg-[hsl(var(--success)/0.1)]0', icon: CheckCircle },
   terminated: { label: 'منتهي', labelEn: 'Terminated', color: 'bg-red-500', icon: XCircle },
   closed: { label: 'مغلق', labelEn: 'Closed', color: 'bg-gray-600', icon: Archive },
 };
@@ -775,7 +775,7 @@ export default function ContractsManagementPage() {
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 إجمالي: {info.totalYears} سنة → 
-                                <span className={`font-bold mr-1 ${info.policyDays === 30 ? 'text-emerald-600' : 'text-blue-600'}`}>
+                                <span className={`font-bold mr-1 ${info.policyDays === 30 ? 'text-[hsl(var(--success))]' : 'text-blue-600'}`}>
                                   {info.policyDays} يوم إجازة سنوية
                                 </span>
                               </p>
@@ -796,10 +796,10 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* تاريخ المباشرة ووضع التجربة */}
-                <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="grid grid-cols-2 gap-4 p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/30 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
                   <div>
                     <Label className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-amber-600" />
+                      <Calendar className="w-4 h-4 text-[hsl(var(--warning))]" />
                       تاريخ المباشرة الفعلية
                     </Label>
                     <Input 
@@ -996,8 +996,8 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {formData.is_migrated && (
-                  <div className="space-y-3 bg-amber-50 p-4 rounded-lg border border-amber-200">
-                    <h4 className="font-medium text-sm text-amber-800">أرصدة افتتاحية (للموظف المُهاجر)</h4>
+                  <div className="space-y-3 bg-[hsl(var(--warning)/0.1)] p-4 rounded-lg border border-[hsl(var(--warning)/0.3)]">
+                    <h4 className="font-medium text-sm text-[hsl(var(--warning))]">أرصدة افتتاحية (للموظف المُهاجر)</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-xs">رصيد الإجازة السنوية (بالكسور)</Label>
@@ -1051,7 +1051,7 @@ export default function ContractsManagementPage() {
                     </div>
                     
                     {/* الأرصدة المستهلكة - للتعديل الكامل */}
-                    <h4 className="font-medium text-sm text-amber-800 mt-4">الأرصدة المستهلكة (للتصحيح)</h4>
+                    <h4 className="font-medium text-sm text-[hsl(var(--warning))] mt-4">الأرصدة المستهلكة (للتصحيح)</h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label className="text-xs">سنوية مستهلكة</Label>
@@ -1227,7 +1227,7 @@ export default function ContractsManagementPage() {
                             {statusInfo.label}
                           </Badge>
                           {contract.is_migrated && (
-                            <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            <Badge variant="outline" className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]">
                               مُهاجر
                             </Badge>
                           )}
@@ -1302,7 +1302,7 @@ export default function ContractsManagementPage() {
                             variant="outline" 
                             size="sm" 
                             onClick={() => handleSubmitToSTAS(contract.id)}
-                            className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                            className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
                           >
                             <Send className="w-4 h-4 ml-1" />
                             إرسال لـ STAS
@@ -1389,7 +1389,7 @@ export default function ContractsManagementPage() {
                   {CONTRACT_STATUS[viewContract.status]?.label}
                 </Badge>
                 {viewContract.is_migrated && (
-                  <Badge variant="outline" className="text-amber-600">مُهاجر</Badge>
+                  <Badge variant="outline" className="text-[hsl(var(--warning))]">مُهاجر</Badge>
                 )}
                 <Badge variant="outline">V{viewContract.version}</Badge>
               </div>
@@ -1479,9 +1479,9 @@ export default function ContractsManagementPage() {
               </Card>
               
               {/* أرصدة الإجازات */}
-              <Card className="border-emerald-200 bg-emerald-50/50">
+              <Card className="border-emerald-200 bg-[hsl(var(--success)/0.1)]/50">
                 <CardHeader className="py-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
+                  <CardTitle className="text-sm flex items-center gap-2 text-[hsl(var(--success))]">
                     <Calendar className="w-4 h-4" /> أرصدة الإجازات والساعات
                   </CardTitle>
                 </CardHeader>
@@ -1698,12 +1698,12 @@ export default function ContractsManagementPage() {
               />
             </div>
             
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
-              <p className="flex items-center gap-2 text-amber-700">
+            <div className="bg-[hsl(var(--warning)/0.1)] border border-[hsl(var(--warning)/0.3)] rounded-lg p-3 text-sm">
+              <p className="flex items-center gap-2 text-[hsl(var(--warning))]">
                 <AlertTriangle className="w-4 h-4" />
                 <strong>تنبيه:</strong>
               </p>
-              <ul className="list-disc list-inside text-amber-600 mt-1 text-xs">
+              <ul className="list-disc list-inside text-[hsl(var(--warning))] mt-1 text-xs">
                 <li>سيتم إيقاف الحضور والطلبات للموظف</li>
                 <li>سيبقى الحساب نشطاً حتى إتمام المخالصة</li>
                 <li>هذا الإجراء لا يمكن التراجع عنه</li>
@@ -1912,7 +1912,7 @@ export default function ContractsManagementPage() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded text-sm">
+                <div className="mt-3 p-2 bg-[hsl(var(--success)/0.15)] dark:bg-emerald-900/30 rounded text-sm">
                   <span className="font-semibold">إجمالي الراتب: </span>
                   {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.nature_of_work_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
                 </div>
@@ -2004,8 +2004,8 @@ export default function ContractsManagementPage() {
             </div>
 
             {/* أرصدة الإجازات والساعات - تعديل كامل */}
-            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+            <div className="p-4 bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--success))] dark:text-emerald-300">
                 <Calendar className="w-4 h-4" />
                 أرصدة الإجازات والساعات (تعديل مباشر)
               </h3>
@@ -2093,14 +2093,14 @@ export default function ContractsManagementPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+              <p className="text-xs text-[hsl(var(--success))] dark:text-emerald-400 mt-2">
                 ⚠️ هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
               </p>
             </div>
 
             {/* تاريخ المباشرة ووضع التجربة */}
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-amber-300">
                 <Clock className="w-4 h-4" />
                 تاريخ المباشرة ووضع التجربة
               </h3>

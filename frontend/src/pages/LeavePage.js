@@ -286,10 +286,10 @@ export default function LeavePage() {
             /* ====== عرض الإدارة: كامل ====== */
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* رصيد الاعتيادية */}
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">{lang === 'ar' ? 'الاعتيادية' : 'Annual'}</p>
+              <div className="bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-4 py-3">
+                <p className="text-xs text-[hsl(var(--success))] dark:text-emerald-300 font-medium">{lang === 'ar' ? 'الاعتيادية' : 'Annual'}</p>
                 <p className="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-200">{balance.annual?.available ?? 0}</p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">{lang === 'ar' ? 'يوم' : 'days'}</p>
+                <p className="text-[10px] text-[hsl(var(--success))] dark:text-emerald-400">{lang === 'ar' ? 'يوم' : 'days'}</p>
               </div>
               
               {/* الإجازات المستهلكة للإدارة */}
@@ -440,7 +440,7 @@ export default function LeavePage() {
                           <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(startDate).combined}</td>
                           <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(endDate).combined}</td>
                           <td className="px-3 py-2 text-sm text-center">
-                            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">
+                            <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] text-xs font-medium">
                               {days.length}
                             </span>
                           </td>
@@ -493,7 +493,7 @@ export default function LeavePage() {
       <Dialog open={showSickWarningDialog} onOpenChange={setShowSickWarningDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-amber-600">
+            <DialogTitle className="flex items-center gap-2 text-[hsl(var(--warning))]">
               <AlertTriangle className="w-5 h-5" />
               {lang === 'ar' ? 'تنبيه رسمي - المادة 117' : 'Official Notice - Article 117'}
             </DialogTitle>
@@ -502,15 +502,15 @@ export default function LeavePage() {
           {sickLeaveWarning && (
             <div className="space-y-4 py-2">
               {/* رسالة رسمية للموظف */}
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-2 border-amber-300">
-                <p className="text-base font-medium text-amber-900 dark:text-amber-100 mb-3">
+              <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border-2 border-[hsl(var(--warning)/0.3)]">
+                <p className="text-base font-medium text-[hsl(var(--warning))] dark:text-amber-100 mb-3">
                   {lang === 'ar' 
                     ? `عزيزي ${user?.full_name?.split(' ')[0] || 'الموظف'}،` 
                     : `Dear ${user?.full_name?.split(' ')[0] || 'Employee'},`
                   }
                 </p>
                 
-                <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                <p className="text-sm text-[hsl(var(--warning))] dark:text-amber-200 mb-3">
                   {lang === 'ar'
                     ? `بناءً على طلبك للإجازة المرضية (${sickLeaveWarning.requested_days || 0} يوم)، واستهلاكك الحالي (${sickLeaveWarning.current_used || 0} يوم من 120 يوم)، سيتم تطبيق الخصم التالي حسب المادة 117 من نظام العمل السعودي:`
                     : `Based on your sick leave request (${sickLeaveWarning.requested_days || 0} days), and your current usage (${sickLeaveWarning.current_used || 0} of 120 days), the following deduction will apply according to Article 117 of Saudi Labor Law:`
@@ -522,9 +522,9 @@ export default function LeavePage() {
                   {sickLeaveWarning.tier_distribution?.map((tier, i) => (
                     <div key={i} className={`p-2 rounded-lg font-medium ${
                       tier.salary_percent === 100 
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                        ? 'bg-[hsl(var(--success)/0.15)] text-emerald-800 border border-emerald-300' 
                         : tier.salary_percent === 50 
-                          ? 'bg-amber-100 text-amber-900 border border-amber-400' 
+                          ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]' 
                           : 'bg-red-100 text-red-800 border border-red-300'
                     }`}>
                       <span className="font-bold">{tier.days} {lang === 'ar' ? 'يوم' : 'days'}</span>

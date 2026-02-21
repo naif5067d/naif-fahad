@@ -141,9 +141,9 @@ export default function MyFinancesPage() {
               <span className="text-sm text-muted-foreground">
                 {lang === 'ar' ? 'خصومات السنة' : 'Yearly Deductions'}
               </span>
-              <Calendar size={18} className="text-orange-500" />
+              <Calendar size={18} className="text-[hsl(var(--warning))]" />
             </div>
-            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <p className="text-2xl font-bold text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
               {formatCurrency(summary?.yearly_deductions?.total)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -153,15 +153,15 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Warnings */}
-        <Card className="border-amber-200 dark:border-amber-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
                 {lang === 'ar' ? 'الإنذارات' : 'Warnings'}
               </span>
-              <AlertTriangle size={18} className="text-amber-500" />
+              <AlertTriangle size={18} className="text-[hsl(var(--warning))]" />
             </div>
-            <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <p className="text-2xl font-bold text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
               {summary?.warnings_count || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -179,7 +179,7 @@ export default function MyFinancesPage() {
               </span>
               <Clock size={18} className="text-violet-500" />
             </div>
-            <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+            <p className="text-2xl font-bold text-accent dark:text-violet-400">
               {summary?.absence_summary?.total_absent_days || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -310,10 +310,10 @@ export default function MyFinancesPage() {
 
       {/* Warnings List */}
       {warnings.length > 0 && (
-        <Card className="border-amber-200 dark:border-amber-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle size={18} className="text-amber-500" />
+              <AlertTriangle size={18} className="text-[hsl(var(--warning))]" />
               {lang === 'ar' ? 'سجل الإنذارات' : 'Warnings Record'}
             </CardTitle>
           </CardHeader>
@@ -322,27 +322,27 @@ export default function MyFinancesPage() {
               {warnings.map((w, idx) => (
                 <div 
                   key={w.id || idx}
-                  className="p-4 border rounded-xl bg-amber-50 dark:bg-amber-950/20"
+                  className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/20"
                   data-testid={`warning-${w.id}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center mt-1">
-                        <AlertTriangle size={14} className="text-amber-700 dark:text-amber-300" />
+                        <AlertTriangle size={14} className="text-[hsl(var(--warning))] dark:text-amber-300" />
                       </div>
                       <div>
-                        <p className="font-semibold text-amber-800 dark:text-amber-200">
+                        <p className="font-semibold text-[hsl(var(--warning))] dark:text-amber-200">
                           {w.warning_type_ar || getWarningTypeLabel(w.warning_type)}
                         </p>
-                        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        <p className="text-sm text-[hsl(var(--warning))] dark:text-amber-300 mt-1">
                           {w.reason_ar || w.reason}
                         </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                        <p className="text-xs text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] mt-2">
                           {formatDate(w.executed_at)}
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="border-amber-300 text-amber-700 dark:text-amber-300">
+                    <Badge variant="outline" className="border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] dark:text-amber-300">
                       {w.violation_type_ar || w.violation_type}
                     </Badge>
                   </div>

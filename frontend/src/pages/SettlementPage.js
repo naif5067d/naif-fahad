@@ -25,7 +25,7 @@ import {
 // أنواع إنهاء الخدمة
 const TERMINATION_TYPES = {
   contract_expiry: { label: 'انتهاء العقد', label_en: 'Contract Expiry', color: 'bg-blue-500' },
-  resignation: { label: 'استقالة', label_en: 'Resignation', color: 'bg-amber-500' },
+  resignation: { label: 'استقالة', label_en: 'Resignation', color: 'bg-[hsl(var(--warning)/0.1)]0' },
   probation_termination: { label: 'إنهاء خلال التجربة', label_en: 'Probation Termination', color: 'bg-red-500' },
   mutual_agreement: { label: 'اتفاق طرفين', label_en: 'Mutual Agreement', color: 'bg-green-500' },
   termination: { label: 'إنهاء من الشركة', label_en: 'Termination by Company', color: 'bg-purple-500' },
@@ -33,8 +33,8 @@ const TERMINATION_TYPES = {
 
 // حالات المخالصة
 const SETTLEMENT_STATUS = {
-  pending_stas: { label: 'بانتظار التنفيذ', color: 'bg-amber-500', icon: Clock },
-  executed: { label: 'منفذة', color: 'bg-emerald-500', icon: CheckCircle },
+  pending_stas: { label: 'بانتظار التنفيذ', color: 'bg-[hsl(var(--warning)/0.1)]0', icon: Clock },
+  executed: { label: 'منفذة', color: 'bg-[hsl(var(--success)/0.1)]0', icon: CheckCircle },
   cancelled: { label: 'ملغاة', color: 'bg-red-500', icon: XCircle },
 };
 
@@ -339,8 +339,8 @@ export default function SettlementPage() {
         {auditItems.map((item, idx) => {
           const Icon = item.icon;
           const statusColors = {
-            success: 'border-emerald-200 bg-emerald-50',
-            warning: 'border-amber-200 bg-amber-50',
+            success: 'border-emerald-200 bg-[hsl(var(--success)/0.1)]',
+            warning: 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)]',
             error: 'border-red-200 bg-red-50',
             info: 'border-blue-200 bg-blue-50',
             final: 'border-primary bg-primary/5'
@@ -459,7 +459,7 @@ export default function SettlementPage() {
                 <td className="p-1 text-right bg-gray-50" dir="rtl">بدل نقل</td>
                 <td className="p-1 text-right" dir="rtl">{snapshot.wages?.transport?.toLocaleString()}</td>
               </tr>
-              <tr className="bg-emerald-50 font-bold">
+              <tr className="bg-[hsl(var(--success)/0.1)] font-bold">
                 <td className="p-1 text-left">{snapshot.wages?.last_wage?.toLocaleString()}</td>
                 <td className="p-1 text-left">Total Salary</td>
                 <td className="p-1 text-right" dir="rtl">إجمالي الراتب</td>
@@ -483,7 +483,7 @@ export default function SettlementPage() {
                   <td className="p-1">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</td>
                   <td className="p-1 text-right">{snapshot.leave?.compensation?.toLocaleString()}</td>
                 </tr>
-                <tr className="bg-emerald-50 font-bold">
+                <tr className="bg-[hsl(var(--success)/0.1)] font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.entitlements?.total?.toLocaleString()}</td>
                 </tr>
@@ -657,7 +657,7 @@ export default function SettlementPage() {
                             <Calendar className="w-3 h-3" />
                             آخر يوم: {formatDate(settlement.last_working_day)}
                           </span>
-                          <span className="flex items-center gap-1 font-bold text-emerald-600">
+                          <span className="flex items-center gap-1 font-bold text-[hsl(var(--success))]">
                             <DollarSign className="w-3 h-3" />
                             صافي: {formatCurrency(snapshot.totals?.net_amount)}
                           </span>

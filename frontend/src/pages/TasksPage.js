@@ -62,7 +62,7 @@ export default function TasksPage() {
   const getStatusBadge = (task) => {
     const statusMap = {
       active: { label: lang === 'ar' ? 'قيد العمل' : 'Active', color: 'bg-blue-100 text-blue-700' },
-      pending_review: { label: lang === 'ar' ? 'بانتظار التقييم' : 'Pending Review', color: 'bg-orange-100 text-orange-700' },
+      pending_review: { label: lang === 'ar' ? 'بانتظار التقييم' : 'Pending Review', color: 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' },
       completed: { label: lang === 'ar' ? 'تم الإنجاز' : 'Completed', color: 'bg-green-100 text-green-700' },
       closed: { label: lang === 'ar' ? 'مغلقة' : 'Closed', color: 'bg-slate-100 text-slate-700' }
     };
@@ -119,10 +119,10 @@ export default function TasksPage() {
         </Card>
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-orange-700">
+            <p className="text-3xl font-bold text-[hsl(var(--warning))]">
               {tasks.filter(t => t.status === 'active' || t.status === 'pending_review').length}
             </p>
-            <p className="text-sm text-orange-600">{lang === 'ar' ? 'قيد العمل' : 'In Progress'}</p>
+            <p className="text-sm text-[hsl(var(--warning))]">{lang === 'ar' ? 'قيد العمل' : 'In Progress'}</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
@@ -237,12 +237,12 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
         <div className="mb-3">
           <div className="flex items-center justify-between text-sm mb-1">
             <span className="text-slate-600">{lang === 'ar' ? 'نسبة الإنجاز' : 'Progress'}</span>
-            <span className="font-bold text-violet-600">{progress}%</span>
+            <span className="font-bold text-accent">{progress}%</span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-3">
             <div 
               className={`h-3 rounded-full transition-all ${
-                progress === 100 ? 'bg-green-500' : 'bg-violet-500'
+                progress === 100 ? 'bg-green-500' : 'bg-accent/100'
               }`}
               style={{ width: `${progress}%` }}
             />
@@ -319,7 +319,7 @@ function CreateTaskDialog({ open, onClose, employees, lang, onSuccess }) {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus size={20} className="text-violet-600" />
+            <Plus size={20} className="text-accent" />
             {lang === 'ar' ? 'إنشاء مهمة جديدة' : 'Create New Task'}
           </DialogTitle>
         </DialogHeader>
@@ -502,7 +502,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ClipboardList size={20} className="text-violet-600" />
+            <ClipboardList size={20} className="text-accent" />
             {lang === 'ar' ? task.title : task.title_en}
           </DialogTitle>
         </DialogHeader>
@@ -531,7 +531,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium">{lang === 'ar' ? 'نسبة الإنجاز' : 'Progress'}</span>
-              <span className="text-xl font-bold text-violet-600">{task.progress}%</span>
+              <span className="text-xl font-bold text-accent">{task.progress}%</span>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-4">
               <div 
@@ -554,7 +554,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                   key={stage}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     s.evaluated ? 'bg-green-50 border-green-200' :
-                    s.completed ? 'bg-orange-50 border-orange-200' :
+                    s.completed ? 'bg-[hsl(var(--warning)/0.1)] border-orange-200' :
                     'bg-slate-50 border-slate-200'
                   }`}
                 >
@@ -606,14 +606,14 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                       <Button 
                         size="sm" 
                         onClick={() => { setEvaluating(stage); setRating(0); setComment(''); }}
-                        className="bg-orange-500 hover:bg-orange-600"
+                        className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-orange-600"
                       >
                         <Star size={16} className="ml-1" />
                         {lang === 'ar' ? 'تقييم' : 'Evaluate'}
                       </Button>
                     )}
                     {s.completed && !s.evaluated && !isManager && (
-                      <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                      <span className="text-xs text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.15)] px-2 py-1 rounded">
                         {lang === 'ar' ? 'بانتظار التقييم' : 'Awaiting Review'}
                       </span>
                     )}
@@ -625,7 +625,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
 
           {/* Evaluation Form */}
           {evaluating && (
-            <div className="bg-violet-50 border-2 border-violet-200 rounded-lg p-4">
+            <div className="bg-accent/10 border-2 border-violet-200 rounded-lg p-4">
               <h4 className="font-bold text-violet-800 mb-3">
                 {lang === 'ar' ? `تقييم المرحلة ${evaluating}` : `Evaluate Stage ${evaluating}`}
               </h4>

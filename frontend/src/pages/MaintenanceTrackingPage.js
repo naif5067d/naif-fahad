@@ -379,7 +379,7 @@ function MaintenanceCardDialog({ open, onClose, card, lang, onSuccess }) {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wrench size={20} className="text-amber-600" />
+            <Wrench size={20} className="text-[hsl(var(--warning))]" />
             {card 
               ? (lang === 'ar' ? 'تعديل البطاقة' : 'Edit Card')
               : (lang === 'ar' ? 'بطاقة صيانة جديدة' : 'New Maintenance Card')

@@ -127,29 +127,29 @@ export default function AdminCustodyPage() {
             <p className="text-xs text-purple-600">{lang === 'ar' ? 'مفتوحة' : 'Open'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-50 border-orange-200">
+        <Card className="bg-[hsl(var(--warning)/0.1)] border-orange-200">
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-orange-700">{summary.pending_audit || 0}</p>
-            <p className="text-xs text-orange-600">{lang === 'ar' ? 'بانتظار التدقيق' : 'Pending'}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--warning))]">{summary.pending_audit || 0}</p>
+            <p className="text-xs text-[hsl(var(--warning))]">{lang === 'ar' ? 'بانتظار التدقيق' : 'Pending'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-amber-700">{formatNumber(summary.total_surplus)}</p>
-            <p className="text-xs text-amber-600">{lang === 'ar' ? 'فائض' : 'Surplus'}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--warning))]">{formatNumber(summary.total_surplus)}</p>
+            <p className="text-xs text-[hsl(var(--warning))]">{lang === 'ar' ? 'فائض' : 'Surplus'}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Surplus Alert */}
       {surplus.total_surplus > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-6 flex items-center gap-3">
-          <AlertTriangle className="text-amber-600" size={24} />
+        <div className="bg-[hsl(var(--warning)/0.1)] border-2 border-[hsl(var(--warning)/0.3)] rounded-xl p-4 mb-6 flex items-center gap-3">
+          <AlertTriangle className="text-[hsl(var(--warning))]" size={24} />
           <div>
-            <p className="font-bold text-amber-800">
+            <p className="font-bold text-[hsl(var(--warning))]">
               {lang === 'ar' ? 'يوجد فائض من عهد سابقة!' : 'Surplus available from previous custodies!'}
             </p>
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-[hsl(var(--warning))]">
               {lang === 'ar' 
                 ? `إجمالي الفائض: ${formatNumber(surplus.total_surplus)} ريال - يمكن ترحيله للعهدة الجديدة`
                 : `Total surplus: ${formatNumber(surplus.total_surplus)} SAR - Can be carried forward`
@@ -227,8 +227,8 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <span className="text-2xl font-bold text-emerald-700">#{custody.custody_number}</span>
+            <div className="w-12 h-12 rounded-xl bg-[hsl(var(--success)/0.15)] flex items-center justify-center">
+              <span className="text-2xl font-bold text-[hsl(var(--success))]">#{custody.custody_number}</span>
             </div>
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-bold ${status.color}`}>
@@ -253,7 +253,7 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
         {/* Amounts */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-lg font-bold text-emerald-700">{formatNumber(custody.total_amount)}</p>
+            <p className="text-lg font-bold text-[hsl(var(--success))]">{formatNumber(custody.total_amount)}</p>
             <p className="text-xs text-slate-500">{lang === 'ar' ? 'الإجمالي' : 'Total'}</p>
           </div>
           <div>
@@ -267,7 +267,7 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
         </div>
 
         {custody.surplus_from && (
-          <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+          <div className="mt-2 text-xs text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-2 py-1 rounded">
             {lang === 'ar' ? `يتضمن ترحيل ${formatNumber(custody.surplus_amount)} من عهدة ${custody.surplus_from}` : `Includes ${formatNumber(custody.surplus_amount)} carried from #${custody.surplus_from}`}
           </div>
         )}
@@ -310,7 +310,7 @@ function CreateCustodyDialog({ open, onClose, lang, surplus, onSuccess }) {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="text-emerald-600" />
+            <Plus className="text-[hsl(var(--success))]" />
             {lang === 'ar' ? 'إنشاء عهدة جديدة' : 'Create New Custody'}
           </DialogTitle>
         </DialogHeader>
@@ -542,7 +542,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
           {/* Add Expense Form - Excel Style */}
           {isEditable && (
             <Card className="border-2 border-emerald-200">
-              <CardHeader className="bg-emerald-50 py-3">
+              <CardHeader className="bg-[hsl(var(--success)/0.1)] py-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Plus size={18} />
                   {lang === 'ar' ? 'إضافة مصروف' : 'Add Expense'}
@@ -650,7 +650,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
                   ) : (
                     activeExpenses.map((exp, idx) => (
                       <tr key={exp.id} className={`border-b ${idx % 2 ? 'bg-slate-50' : ''}`}>
-                        <td className="p-3 font-mono font-bold text-emerald-700 text-center">{exp.code}</td>
+                        <td className="p-3 font-mono font-bold text-[hsl(var(--success))] text-center">{exp.code}</td>
                         <td className="p-3 font-medium">{lang === 'ar' ? exp.code_name_ar : exp.code_name_en}</td>
                         <td className="p-3 text-slate-600">{exp.description}</td>
                         <td className="p-3 font-mono font-bold text-red-600">{formatNumber(exp.amount)}</td>
@@ -682,7 +682,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
               <div className="flex flex-wrap gap-3">
                 {/* Send for Audit */}
                 {localCustody.status === 'open' && canCreate && (
-                  <Button onClick={handleSendForAudit} className="bg-orange-500 hover:bg-orange-600 gap-2">
+                  <Button onClick={handleSendForAudit} className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-orange-600 gap-2">
                     <Send size={16} />
                     {lang === 'ar' ? 'إرسال للتدقيق' : 'Send for Audit'}
                   </Button>
