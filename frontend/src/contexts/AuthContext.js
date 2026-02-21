@@ -143,16 +143,62 @@ export function AuthProvider({ children }) {
     init();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const logout = () => {
+  const logout = useCallback(async () => {
+    try {
+      // إرسال طلب تسجيل الخروج للسيرفر
+      await api.post('/api/auth/logout');
+    } catch (e) {
+      console.log('Logout API call failed, proceeding with local logout');
+    }
     localStorage.removeItem('hr_token');
     delete api.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
     setAllUsers([]);
-  };
+  }, []);
+
+  const logoutAllDevices = useCallback(async () => {
+    try {
+      const res = await api.post('/api/auth/logout-all');
+      // تسجيل الخروج محلياً أيضاً
+      localStorage.removeItem('hr_token');
+      delete api.defaults.headers.common['Authorization'];
+      setToken(null);
+      setUser(null);
+      setAllUsers([]);
+      return res.data;
+    } catch (e) {
+      console.error('Logout all failed:', e);
+      throw e;
+    }
+  }, []);
+
+  const getActiveSessions = useCallback(async () => {
+    try {
+      const res = await api.get('/api/auth/sessions');
+      return res.data;
+    } catch (e) {
+      console.error('Get sessions failed:', e);
+      return { sessions: [], total: 0 };
+    }
+  }, []);
+
+  const revokeSession = useCallback(async (sessionId) => {
+    try {
+      await api.delete(`/api/auth/sessions/${sessionId}`);
+      return true;
+    } catch (e) {
+      console.error('Revoke session failed:', e);
+      return false;
+    }
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, allUsers, switchUser, fetchAllUsers, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, token, loading, allUsers, 
+      switchUser, fetchAllUsers, login, logout,
+      logoutAllDevices, getActiveSessions, revokeSession
+    }}>
       {children}
     </AuthContext.Provider>
   );
