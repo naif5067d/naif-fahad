@@ -349,8 +349,8 @@ export default function TransactionsPage() {
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3">
                       {/* أيقونة النوع */}
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-xl flex-shrink-0">
-                        {typeConfig.icon}
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {typeConfig.Icon && <typeConfig.Icon size={24} className="text-primary" />}
                       </div>
                       {/* النوع والرقم المرجعي */}
                       <div>
