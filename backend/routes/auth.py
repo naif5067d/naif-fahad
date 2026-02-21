@@ -365,6 +365,7 @@ async def logout(user=Depends(get_current_user)):
     """تسجيل الخروج من الجلسة الحالية"""
     session_id = user.get('session_id')
     token_id = user.get('jti')
+    employee_id = user.get('employee_id') or user['user_id']
     
     # إبطال الجلسة
     if session_id:
@@ -372,6 +373,13 @@ async def logout(user=Depends(get_current_user)):
             {"id": session_id},
             {"$set": {"is_active": False, "revoked_reason": "logout", "revoked_at": datetime.now(timezone.utc)}}
         )
+    
+    # تحديث login_sessions بوقت الخروج
+    await db.login_sessions.update_one(
+        {"employee_id": employee_id, "status": "active"},
+        {"$set": {"logout_at": datetime.now(timezone.utc).isoformat(), "status": "completed"}},
+        sort=[("login_at", -1)]
+    )
     
     # إضافة التوكن للقائمة السوداء
     if token_id:
@@ -385,7 +393,7 @@ async def logout(user=Depends(get_current_user)):
     # تسجيل الخروج
     await db.security_audit_log.insert_one({
         "id": str(uuid.uuid4()),
-        "employee_id": user.get('employee_id') or user['user_id'],
+        "employee_id": employee_id,
         "action": "logout",
         "session_id": session_id,
         "performed_by": user['user_id'],
