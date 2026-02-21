@@ -156,3 +156,95 @@ async def delete_company_logo(user=Depends(get_current_user)):
     )
     
     return {"message": "Logo deleted successfully"}
+
+
+# ==================== إدارة إصدار التطبيق ====================
+
+class VersionUpdate(BaseModel):
+    version: str
+    release_notes_en: Optional[str] = None
+    release_notes_ar: Optional[str] = None
+
+
+@router.get("/version")
+async def get_app_version(user=Depends(get_current_user)):
+    """Get current app version - accessible to all authenticated users"""
+    version_info = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    if not version_info:
+        # Return default version
+        return {
+            "type": "app_version",
+            "version": "1.0.0",
+            "release_notes_en": "Initial release",
+            "release_notes_ar": "الإصدار الأول",
+            "updated_at": None,
+            "updated_by": None
+        }
+    return version_info
+
+
+@router.put("/version")
+async def update_app_version(body: VersionUpdate, user=Depends(get_current_user)):
+    """Update app version - STAS only"""
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه تحديث إصدار التطبيق")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    update_data = {
+        "type": "app_version",
+        "version": body.version,
+        "release_notes_en": body.release_notes_en or "",
+        "release_notes_ar": body.release_notes_ar or "",
+        "updated_at": now,
+        "updated_by": user.get('user_id')
+    }
+    
+    existing = await db.settings.find_one({"type": "app_version"})
+    
+    if existing:
+        # حفظ تاريخ الإصدارات السابقة
+        version_history = existing.get("version_history", [])
+        version_history.append({
+            "version": existing.get("version"),
+            "updated_at": existing.get("updated_at"),
+            "updated_by": existing.get("updated_by")
+        })
+        update_data["version_history"] = version_history[-10:]  # احتفاظ بآخر 10 إصدارات
+        
+        await db.settings.update_one(
+            {"type": "app_version"},
+            {"$set": update_data}
+        )
+    else:
+        update_data["version_history"] = []
+        await db.settings.insert_one(update_data)
+    
+    result = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    return result
+
+
+@router.post("/version/check-update")
+async def check_for_update(user=Depends(get_current_user)):
+    """
+    Check if client needs to update.
+    يتحقق من وجود تحديث للتطبيق
+    """
+    version_info = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    if not version_info:
+        return {
+            "update_available": False,
+            "current_version": "1.0.0",
+            "message_en": "No updates available",
+            "message_ar": "لا توجد تحديثات متاحة"
+        }
+    
+    return {
+        "update_available": True,
+        "current_version": version_info.get("version", "1.0.0"),
+        "release_notes_en": version_info.get("release_notes_en", ""),
+        "release_notes_ar": version_info.get("release_notes_ar", ""),
+        "updated_at": version_info.get("updated_at"),
+        "message_en": f"Version {version_info.get('version', '1.0.0')} is available",
+        "message_ar": f"الإصدار {version_info.get('version', '1.0.0')} متاح"
+    }
