@@ -43,11 +43,11 @@ import {
 
 const CONTRACT_STATUS = {
   draft: { label: 'مسودة', labelEn: 'Draft', color: 'bg-slate-500', icon: Edit },
-  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-warning', icon: Edit },
-  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-warning', icon: Clock },
-  active: { label: 'نشط', labelEn: 'Active', color: 'bg-success', icon: CheckCircle },
+  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-[hsl(var(--warning))]', icon: Edit },
+  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-[hsl(var(--warning))]', icon: Clock },
+  active: { label: 'نشط', labelEn: 'Active', color: 'bg-[hsl(var(--success))]', icon: CheckCircle },
   terminated: { label: 'منتهي', labelEn: 'Terminated', color: 'bg-destructive', icon: XCircle },
-  closed: { label: 'مغلق', labelEn: 'Closed', color: 'bg-muted-foreground', icon: Archive },
+  closed: { label: 'مغلق', labelEn: 'Closed', color: 'bg-slate-500', icon: Archive },
 };
 
 const CONTRACT_CATEGORIES = {
