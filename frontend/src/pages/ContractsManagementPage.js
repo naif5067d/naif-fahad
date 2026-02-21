@@ -1389,7 +1389,7 @@ export default function ContractsManagementPage() {
                   {CONTRACT_STATUS[viewContract.status]?.label}
                 </Badge>
                 {viewContract.is_migrated && (
-                  <Badge variant="outline" className="text-[hsl(var(--warning))]">مُهاجر</Badge>
+                  <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5">مُهاجر</Badge>
                 )}
                 <Badge variant="outline">V{viewContract.version}</Badge>
               </div>
