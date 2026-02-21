@@ -31,6 +31,8 @@ class CompanySettingsUpdate(BaseModel):
     welcome_text_en: Optional[str] = None
     primary_color: Optional[str] = None  # hex color
     secondary_color: Optional[str] = None  # hex color
+    company_name_ar: Optional[str] = None
+    company_name_en: Optional[str] = None
     
 
 # ============================================================
