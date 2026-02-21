@@ -63,18 +63,18 @@ import { toast } from 'sonner';
 const EXEMPT_ROLES = ['stas', 'mohammed', 'salah', 'naif'];
 
 const STATUS_COLORS = {
-  'PRESENT': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  'ABSENT': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  'LATE': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  'ON_LEAVE': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  'ON_ADMIN_LEAVE': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  'WEEKEND': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  'HOLIDAY': 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-  'ON_MISSION': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-  'NOT_REGISTERED': 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  'UNKNOWN': 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  'NOT_PROCESSED': 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  'PERMISSION': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+  'PRESENT': 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.2)]',
+  'ABSENT': 'bg-destructive/15 text-destructive dark:bg-destructive/20',
+  'LATE': 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]',
+  'ON_LEAVE': 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.2)]',
+  'ON_ADMIN_LEAVE': 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.2)]',
+  'WEEKEND': 'bg-muted text-muted-foreground',
+  'HOLIDAY': 'bg-accent/15 text-accent dark:bg-accent/20',
+  'ON_MISSION': 'bg-[hsl(var(--navy)/0.15)] text-[hsl(var(--navy))] dark:bg-[hsl(var(--navy)/0.2)]',
+  'NOT_REGISTERED': 'bg-muted text-muted-foreground',
+  'UNKNOWN': 'bg-muted text-muted-foreground',
+  'NOT_PROCESSED': 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]',
+  'PERMISSION': 'bg-accent/15 text-accent dark:bg-accent/20'
 };
 
 const STATUS_AR = {
