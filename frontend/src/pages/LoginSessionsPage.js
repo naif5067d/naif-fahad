@@ -287,7 +287,7 @@ export default function LoginSessionsPage() {
                           <td colSpan={7} className="p-2 font-bold text-primary flex items-center gap-2">
                             <Calendar size={16} />
                             {formatFullDate(dateSessions[0]?.login_at)}
-                            <span className="font-normal text-indigo-500 mr-2">
+                            <span className="font-normal text-primary/60 mr-2">
                               ({dateSessions.length} جلسة)
                             </span>
                           </td>
