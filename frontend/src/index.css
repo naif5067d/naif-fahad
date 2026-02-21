@@ -310,20 +310,24 @@ code { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
     padding-top: env(safe-area-inset-top);
   }
   .safe-header {
-    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-top: env(safe-area-inset-top);
   }
 }
 
-/* Force safe area on notch devices */
-@media screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
-       screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
-       screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
-       screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
-       screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3),
-       screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
-       screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+/* Mobile safe header - ensure content is visible */
+@media (max-width: 768px) {
   .safe-header {
-    padding-top: max(env(safe-area-inset-top), 44px) !important;
+    padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  }
+}
+
+/* Force safe area on all iPhone models with notch/Dynamic Island */
+@supports (-webkit-touch-callout: none) {
+  /* iOS detection */
+  @media (max-width: 430px) and (min-height: 700px) {
+    .safe-header {
+      padding-top: max(env(safe-area-inset-top), 47px) !important;
+    }
   }
 }
 
