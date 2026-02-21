@@ -115,10 +115,10 @@ export default function LoginSessionsPage() {
   }, [sessions]);
 
   const periodOptions = [
-    { value: 'daily', label: 'يومي', icon: '📅' },
-    { value: 'weekly', label: 'أسبوعي', icon: '📆' },
-    { value: 'monthly', label: 'شهري', icon: '🗓️' },
-    { value: 'yearly', label: 'سنوي', icon: '📊' },
+    { value: 'daily', label: 'يومي', iconName: 'Calendar' },
+    { value: 'weekly', label: 'أسبوعي', iconName: 'CalendarDays' },
+    { value: 'monthly', label: 'شهري', iconName: 'CalendarRange' },
+    { value: 'yearly', label: 'سنوي', iconName: 'BarChart3' },
   ];
 
   const selectedEmp = employees.find(e => e.id === selectedEmployee);
@@ -283,9 +283,10 @@ export default function LoginSessionsPage() {
                     {Object.entries(groupedByDate).map(([date, dateSessions], gIdx) => (
                       <>
                         {/* Date Row */}
-                        <tr key={`d-${gIdx}`} className="bg-indigo-50 border-b-2 border-indigo-200">
-                          <td colSpan={7} className="p-2 font-bold text-indigo-700">
-                            📅 {formatFullDate(dateSessions[0]?.login_at)}
+                        <tr key={`d-${gIdx}`} className="bg-primary/5 border-b-2 border-primary/20">
+                          <td colSpan={7} className="p-2 font-bold text-primary flex items-center gap-2">
+                            <Calendar size={16} />
+                            {formatFullDate(dateSessions[0]?.login_at)}
                             <span className="font-normal text-indigo-500 mr-2">
                               ({dateSessions.length} جلسة)
                             </span>
