@@ -112,6 +112,42 @@ export default function STASMirrorPage() {
     api.get('/api/stas/users/archived').then(r => setArchivedUsers(r.data)).catch(() => {});
   };
 
+  // === Version Management Functions ===
+  const fetchVersion = async () => {
+    try {
+      const res = await api.get('/api/settings/version');
+      setVersionInfo(res.data);
+      setNewVersion(res.data.version || '1.0.0');
+      setReleaseNotesAr(res.data.release_notes_ar || '');
+      setReleaseNotesEn(res.data.release_notes_en || '');
+    } catch (err) {
+      console.error('Failed to fetch version:', err);
+    }
+  };
+
+  const handleUpdateVersion = async () => {
+    if (!newVersion.trim()) {
+      toast.error(lang === 'ar' ? 'يرجى إدخال رقم الإصدار' : 'Please enter version number');
+      return;
+    }
+    
+    setUpdatingVersion(true);
+    try {
+      await api.put('/api/settings/version', {
+        version: newVersion.trim(),
+        release_notes_ar: releaseNotesAr.trim(),
+        release_notes_en: releaseNotesEn.trim()
+      });
+      toast.success(lang === 'ar' ? 'تم تحديث الإصدار بنجاح' : 'Version updated successfully');
+      setVersionDialogOpen(false);
+      fetchVersion();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل تحديث الإصدار' : 'Failed to update version'));
+    } finally {
+      setUpdatingVersion(false);
+    }
+  };
+
   // === My Transactions Functions ===
   const fetchMyTransactions = async () => {
     try {
