@@ -647,8 +647,8 @@ export default function TeamAttendancePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           <Card className="border-emerald-200">
             <CardContent className="p-4 text-center">
-              <UserCheck className="mx-auto mb-2 text-emerald-500" size={24} />
-              <p className="text-2xl font-bold text-emerald-600">{summary.present}</p>
+              <UserCheck className="mx-auto mb-2 text-[hsl(var(--success))]" size={24} />
+              <p className="text-2xl font-bold text-[hsl(var(--success))]">{summary.present}</p>
               <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'حاضر' : 'Present'}</p>
             </CardContent>
           </Card>
@@ -661,10 +661,10 @@ export default function TeamAttendancePage() {
             </CardContent>
           </Card>
           
-          <Card className="border-amber-200">
+          <Card className="border-[hsl(var(--warning)/0.3)]">
             <CardContent className="p-4 text-center">
-              <Clock className="mx-auto mb-2 text-amber-500" size={24} />
-              <p className="text-2xl font-bold text-amber-600">{summary.late}</p>
+              <Clock className="mx-auto mb-2 text-[hsl(var(--warning))]" size={24} />
+              <p className="text-2xl font-bold text-[hsl(var(--warning))]">{summary.late}</p>
               <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'متأخر' : 'Late'}</p>
             </CardContent>
           </Card>
@@ -687,8 +687,8 @@ export default function TeamAttendancePage() {
           
           <Card className="border-orange-200">
             <CardContent className="p-4 text-center">
-              <AlertTriangle className="mx-auto mb-2 text-orange-500" size={24} />
-              <p className="text-2xl font-bold text-orange-600">{summary.not_processed}</p>
+              <AlertTriangle className="mx-auto mb-2 text-[hsl(var(--warning))]" size={24} />
+              <p className="text-2xl font-bold text-[hsl(var(--warning))]">{summary.not_processed}</p>
               <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'غير محلل' : 'Pending'}</p>
             </CardContent>
           </Card>
@@ -722,7 +722,7 @@ export default function TeamAttendancePage() {
               <Edit size={16} />
               {lang === 'ar' ? 'طلبات التعديل' : 'Correction Requests'}
               {pendingCorrections.length > 0 && (
-                <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-xs px-1.5 py-0.5 rounded-full">
                   {pendingCorrections.length}
                 </span>
               )}
@@ -797,7 +797,7 @@ export default function TeamAttendancePage() {
                           {/* Quick Check Icon */}
                           <td className="p-3 text-center">
                             {['PRESENT', 'LATE', 'ON_LEAVE', 'ON_MISSION', 'HOLIDAY', 'WEEKEND', 'PERMISSION'].includes(emp.final_status) ? (
-                              <CheckCircle className="text-emerald-500 mx-auto" size={20} />
+                              <CheckCircle className="text-[hsl(var(--success))] mx-auto" size={20} />
                             ) : emp.final_status === 'ABSENT' ? (
                               <XCircle className="text-red-500 mx-auto" size={20} />
                             ) : (
@@ -835,7 +835,7 @@ export default function TeamAttendancePage() {
                           </td>
                           <td className="p-3 text-center">
                             {emp.late_minutes > 0 && (
-                              <span className="text-amber-600 font-medium">{emp.late_minutes} د</span>
+                              <span className="text-[hsl(var(--warning))] font-medium">{emp.late_minutes} د</span>
                             )}
                           </td>
                           <td className="p-3 text-center">
@@ -910,20 +910,20 @@ export default function TeamAttendancePage() {
                             <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
                           </td>
                           <td className="p-3 text-center">
-                            <span className="text-emerald-600 font-bold">{emp.total_present}</span>
+                            <span className="text-[hsl(var(--success))] font-bold">{emp.total_present}</span>
                           </td>
                           <td className="p-3 text-center">
                             <span className={emp.total_absent > 0 ? 'text-red-600 font-bold' : ''}>{emp.total_absent}</span>
                           </td>
                           <td className="p-3 text-center">
-                            <span className={emp.total_late > 0 ? 'text-amber-600 font-bold' : ''}>{emp.total_late}</span>
+                            <span className={emp.total_late > 0 ? 'text-[hsl(var(--warning))] font-bold' : ''}>{emp.total_late}</span>
                           </td>
                           <td className="p-3 text-center">
                             <span className="text-blue-600">{emp.total_leave}</span>
                           </td>
                           <td className="p-3 text-center">
                             {emp.total_late_minutes > 0 && (
-                              <span className="text-amber-600">{emp.total_late_minutes} د</span>
+                              <span className="text-[hsl(var(--warning))]">{emp.total_late_minutes} د</span>
                             )}
                           </td>
                         </tr>
@@ -972,17 +972,17 @@ export default function TeamAttendancePage() {
                             <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
                           </td>
                           <td className="p-3 text-center">
-                            <span className="text-emerald-600 font-bold">{emp.total_present}</span>
+                            <span className="text-[hsl(var(--success))] font-bold">{emp.total_present}</span>
                           </td>
                           <td className="p-3 text-center">
                             <span className={emp.total_absent > 0 ? 'text-red-600 font-bold' : ''}>{emp.total_absent}</span>
                           </td>
                           <td className="p-3 text-center">
-                            <span className={emp.total_late > 0 ? 'text-amber-600 font-bold' : ''}>{emp.total_late}</span>
+                            <span className={emp.total_late > 0 ? 'text-[hsl(var(--warning))] font-bold' : ''}>{emp.total_late}</span>
                           </td>
                           <td className="p-3 text-center">
                             {emp.total_late_minutes > 0 && (
-                              <span className="text-amber-600">{emp.total_late_minutes} د</span>
+                              <span className="text-[hsl(var(--warning))]">{emp.total_late_minutes} د</span>
                             )}
                           </td>
                           <td className="p-3 text-center">
@@ -1087,21 +1087,21 @@ export default function TeamAttendancePage() {
                             {emp.check_in ? (
                               <div className="flex items-center gap-1">
                                 <Badge className={emp.check_in_source === 'manual_supervisor' 
-                                  ? 'bg-amber-100 text-amber-700' 
-                                  : 'bg-emerald-100 text-emerald-700'
+                                  ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' 
+                                  : 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]'
                                 }>
                                   <LogIn size={12} className="me-1" />
                                   {emp.check_in.slice(11, 16)}
                                 </Badge>
                                 {emp.check_in_source === 'manual_supervisor' && (
-                                  <span className="text-xs text-amber-600">(يدوي)</span>
+                                  <span className="text-xs text-[hsl(var(--warning))]">(يدوي)</span>
                                 )}
                               </div>
                             ) : emp.can_manual_check_in ? (
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                className="gap-1 text-[hsl(var(--success))] border-emerald-200 hover:bg-[hsl(var(--success)/0.1)]"
                                 onClick={() => handleOpenManualAttendance(emp, 'check_in')}
                               >
                                 <LogIn size={14} />
@@ -1118,14 +1118,14 @@ export default function TeamAttendancePage() {
                             {emp.check_out ? (
                               <div className="flex items-center gap-1">
                                 <Badge className={emp.check_out_source === 'manual_supervisor' 
-                                  ? 'bg-amber-100 text-amber-700' 
+                                  ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' 
                                   : 'bg-blue-100 text-blue-700'
                                 }>
                                   <LogOut size={12} className="me-1" />
                                   {emp.check_out.slice(11, 16)}
                                 </Badge>
                                 {emp.check_out_source === 'manual_supervisor' && (
-                                  <span className="text-xs text-amber-600">(يدوي)</span>
+                                  <span className="text-xs text-[hsl(var(--warning))]">(يدوي)</span>
                                 )}
                               </div>
                             ) : emp.can_manual_check_out && emp.check_in ? (
@@ -1149,8 +1149,8 @@ export default function TeamAttendancePage() {
                 )}
                 
                 {/* Info Box */}
-                <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200">
-                  <h4 className="font-semibold text-amber-700 flex items-center gap-2 mb-2">
+                <div className="mt-6 p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-xl border border-[hsl(var(--warning)/0.3)]">
+                  <h4 className="font-semibold text-[hsl(var(--warning))] flex items-center gap-2 mb-2">
                     <AlertTriangle size={16} />
                     {lang === 'ar' ? 'تنبيه مهم' : 'Important Notice'}
                   </h4>
@@ -1184,16 +1184,16 @@ export default function TeamAttendancePage() {
                 </CardContent>
               </Card>
               
-              <Card className="border-amber-200">
+              <Card className="border-[hsl(var(--warning)/0.3)]">
                 <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-bold text-amber-600">{penaltiesReport.summary.total_deficit_hours?.toFixed(1) || 0}</p>
+                  <p className="text-3xl font-bold text-[hsl(var(--warning))]">{penaltiesReport.summary.total_deficit_hours?.toFixed(1) || 0}</p>
                   <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'ساعات نقص' : 'Deficit Hours'}</p>
                 </CardContent>
               </Card>
               
               <Card className="border-violet-200">
                 <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-bold text-violet-600">
+                  <p className="text-3xl font-bold text-accent">
                     {penaltiesReport.summary.total_deduction_amount?.toFixed(0) || 0} ر.س
                   </p>
                   <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم' : 'Total Deduction'}</p>
@@ -1203,15 +1203,15 @@ export default function TeamAttendancePage() {
           )}
 
           {/* Rules Info */}
-          <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 mb-6">
+          <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)] mb-6">
             <CardContent className="p-4">
               <h3 className="font-bold flex items-center gap-2 mb-3">
-                <AlertTriangle className="text-amber-600" size={20} />
+                <AlertTriangle className="text-[hsl(var(--warning))]" size={20} />
                 {lang === 'ar' ? 'قواعد الخصم' : 'Deduction Rules'}
               </h3>
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="font-medium text-amber-700">{lang === 'ar' ? 'الغياب:' : 'Absence:'}</p>
+                  <p className="font-medium text-[hsl(var(--warning))]">{lang === 'ar' ? 'الغياب:' : 'Absence:'}</p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
                     <li>{lang === 'ar' ? 'يوم غياب = خصم يوم' : '1 day absence = 1 day deduction'}</li>
                     <li>{lang === 'ar' ? '3 أيام متصلة = إنذار أول' : '3 consecutive = 1st warning'}</li>
@@ -1220,7 +1220,7 @@ export default function TeamAttendancePage() {
                   </ul>
                 </div>
                 <div>
-                  <p className="font-medium text-amber-700">{lang === 'ar' ? 'التأخير والخروج المبكر:' : 'Late & Early Leave:'}</p>
+                  <p className="font-medium text-[hsl(var(--warning))]">{lang === 'ar' ? 'التأخير والخروج المبكر:' : 'Late & Early Leave:'}</p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-1 mr-2">
                     <li>{lang === 'ar' ? 'يحسب بالدقائق' : 'Calculated in minutes'}</li>
                     <li>{lang === 'ar' ? 'يجمع شهرياً' : 'Accumulated monthly'}</li>
@@ -1286,7 +1286,7 @@ export default function TeamAttendancePage() {
                           
                           {/* Deficit */}
                           {emp.deficit?.total_deficit_hours > 0 && (
-                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+                            <Badge variant="outline" className="text-xs text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]">
                               <Clock size={12} className="mr-1" />
                               {emp.deficit.total_deficit_hours} {lang === 'ar' ? 'ساعة' : 'hrs'}
                             </Badge>
@@ -1294,7 +1294,7 @@ export default function TeamAttendancePage() {
                           
                           {/* Total Deduction */}
                           {emp.total_deduction_days > 0 && (
-                            <Badge className="bg-violet-100 text-violet-700 text-xs">
+                            <Badge className="bg-accent/15 text-accent text-xs">
                               <TrendingDown size={12} className="mr-1" />
                               {emp.total_deduction_days} {lang === 'ar' ? 'يوم خصم' : 'days'}
                             </Badge>
@@ -1329,8 +1329,8 @@ export default function TeamAttendancePage() {
                             </div>
                             
                             {/* Deficit Details */}
-                            <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
-                              <h4 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
+                            <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg">
+                              <h4 className="font-medium text-[hsl(var(--warning))] mb-2 flex items-center gap-2">
                                 <Clock size={16} />
                                 {lang === 'ar' ? 'نقص الساعات' : 'Hours Deficit'}
                               </h4>
@@ -1344,18 +1344,18 @@ export default function TeamAttendancePage() {
                           </div>
                           
                           {/* Summary */}
-                          <div className="mt-4 p-3 bg-violet-50 dark:bg-violet-900/10 rounded-lg">
+                          <div className="mt-4 p-3 bg-accent/10 dark:bg-violet-900/10 rounded-lg">
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium">{lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}</p>
-                                <p className="text-2xl font-bold text-violet-700">
+                                <p className="text-2xl font-bold text-accent">
                                   {emp.total_deduction_days} {lang === 'ar' ? 'يوم' : 'days'}
                                 </p>
                               </div>
                               {emp.total_deduction_amount > 0 && (
                                 <div className="text-left">
                                   <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'المبلغ:' : 'Amount:'}</p>
-                                  <p className="text-xl font-bold text-violet-700">
+                                  <p className="text-xl font-bold text-accent">
                                     {emp.total_deduction_amount?.toFixed(2) || 0} ر.س
                                   </p>
                                 </div>
@@ -1378,20 +1378,20 @@ export default function TeamAttendancePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Edit size={20} className="text-amber-500" />
+                  <Edit size={20} className="text-[hsl(var(--warning))]" />
                   {lang === 'ar' ? 'طلبات تعديل الحضور من المشرفين' : 'Attendance Correction Requests from Supervisors'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {pendingCorrections.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <CheckCircle size={40} className="mx-auto mb-3 text-emerald-500" />
+                    <CheckCircle size={40} className="mx-auto mb-3 text-[hsl(var(--success))]" />
                     <p>{lang === 'ar' ? 'لا توجد طلبات تعديل معلقة' : 'No pending correction requests'}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {pendingCorrections.map((req) => (
-                      <div key={req.id} className="p-4 border rounded-xl bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800">
+                      <div key={req.id} className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1470,7 +1470,7 @@ export default function TeamAttendancePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileWarning size={20} className="text-orange-500" />
+                  <FileWarning size={20} className="text-[hsl(var(--warning))]" />
                   {lang === 'ar' ? 'مراجعة الخصومات المقترحة' : 'Review Deduction Proposals'}
                   <span className="text-sm font-normal text-muted-foreground">
                     ({pendingDeductions.length} {lang === 'ar' ? 'بانتظار المراجعة' : 'pending'})
@@ -1498,8 +1498,8 @@ export default function TeamAttendancePage() {
                             onClick={() => loadDeductionTrace(d)}
                             className={`w-full text-right p-4 rounded-lg border transition-all ${
                               selectedDeduction?.id === d.id 
-                                ? 'border-orange-500 bg-orange-50' 
-                                : 'border-border hover:border-orange-300 hover:bg-orange-50/50'
+                                ? 'border-orange-500 bg-[hsl(var(--warning)/0.1)]' 
+                                : 'border-border hover:border-orange-300 hover:bg-[hsl(var(--warning)/0.1)]/50'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -1546,9 +1546,9 @@ export default function TeamAttendancePage() {
                           <div className="border rounded-lg overflow-hidden">
                             <button
                               onClick={() => setExpandedDeduction(expandedDeduction === selectedDeduction.id ? null : selectedDeduction.id)}
-                              className="w-full p-3 bg-violet-50 flex items-center justify-between hover:bg-violet-100"
+                              className="w-full p-3 bg-accent/10 flex items-center justify-between hover:bg-accent/15"
                             >
-                              <span className="font-semibold text-violet-700 flex items-center gap-2">
+                              <span className="font-semibold text-accent flex items-center gap-2">
                                 <Eye size={16} />
                                 {lang === 'ar' ? 'العروق - سجل الفحوصات' : 'Trace Log'}
                                 {deductionTrace.length > 0 && <span className="text-xs">({deductionTrace.length})</span>}
@@ -1703,7 +1703,7 @@ export default function TeamAttendancePage() {
               
               {/* إقرار المشرف - يظهر للمشرف فقط */}
               {isSupervisor && (
-                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
+                <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-700">
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
@@ -1712,7 +1712,7 @@ export default function TeamAttendancePage() {
                       onChange={(e) => setEditForm({...editForm, supervisor_acknowledgment: e.target.checked})}
                       className="mt-1 w-5 h-5 rounded border-amber-400"
                     />
-                    <label htmlFor="supervisor_ack" className="text-sm text-amber-800 dark:text-amber-200">
+                    <label htmlFor="supervisor_ack" className="text-sm text-[hsl(var(--warning))] dark:text-amber-200">
                       <span className="font-semibold block mb-1">
                         {lang === 'ar' ? 'إقرار تحمل المسؤولية' : 'Responsibility Acknowledgment'}
                       </span>
@@ -1761,8 +1761,8 @@ export default function TeamAttendancePage() {
               
               {/* Trace Summary */}
               {traceData.trace_summary && (
-                <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
-                  <p className="font-medium text-violet-700 dark:text-violet-300 mb-2">
+                <div className="p-4 bg-accent/10 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                  <p className="font-medium text-accent dark:text-violet-300 mb-2">
                     {lang === 'ar' ? 'ملخص الفحص' : 'Check Summary'}
                   </p>
                   <p className="text-sm">{traceData.trace_summary.conclusion_ar}</p>
@@ -1781,7 +1781,7 @@ export default function TeamAttendancePage() {
                       key={idx}
                       className={`p-3 rounded-lg border ${
                         step.found 
-                          ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' 
+                          ? 'bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 border-emerald-200' 
                           : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200'
                       }`}
                     >
@@ -1924,7 +1924,7 @@ export default function TeamAttendancePage() {
               </div>
               
               {/* Acknowledgment */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200">
+              <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg border border-[hsl(var(--warning)/0.3)]">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1932,7 +1932,7 @@ export default function TeamAttendancePage() {
                     onChange={(e) => setManualAttendanceForm({...manualAttendanceForm, supervisor_acknowledgment: e.target.checked})}
                     className="mt-1"
                   />
-                  <span className="text-sm text-amber-800">
+                  <span className="text-sm text-[hsl(var(--warning))]">
                     {lang === 'ar' 
                       ? 'أقر بأنني أتحمل مسؤولية هذا التسجيل اليدوي وأؤكد صحة البيانات المدخلة.'
                       : 'I acknowledge that I take responsibility for this manual record and confirm the accuracy of the data entered.'
