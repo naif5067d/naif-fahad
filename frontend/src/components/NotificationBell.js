@@ -327,6 +327,36 @@ export default function NotificationBell() {
             </div>
           </div>
           
+          {/* زر تفعيل الإشعارات الفورية */}
+          {'serviceWorker' in navigator && 'PushManager' in window && (
+            <div className="px-3 py-2 border-b border-border bg-muted/20">
+              <button
+                onClick={enablePushNotifications}
+                disabled={pushLoading || pushEnabled}
+                className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  pushEnabled 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 cursor-default' 
+                    : 'bg-primary/10 text-primary hover:bg-primary/20'
+                }`}
+                data-testid="enable-push-btn"
+              >
+                {pushLoading ? (
+                  <span className="animate-spin">⏳</span>
+                ) : pushEnabled ? (
+                  <>
+                    <BellRing size={16} />
+                    <span>{lang === 'ar' ? 'الإشعارات الفورية مفعّلة' : 'Push notifications enabled'}</span>
+                  </>
+                ) : (
+                  <>
+                    <BellOff size={16} />
+                    <span>{lang === 'ar' ? 'تفعيل الإشعارات الفورية' : 'Enable push notifications'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+          
           {/* قائمة الإشعارات */}
           <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
