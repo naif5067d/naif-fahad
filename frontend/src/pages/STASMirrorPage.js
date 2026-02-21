@@ -89,6 +89,19 @@ export default function STASMirrorPage() {
   const [updatingVersion, setUpdatingVersion] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
 
+  // === Company Settings State ===
+  const [companySettings, setCompanySettings] = useState({
+    logo_url: null,
+    side_image_url: null,
+    welcome_text_ar: 'أنتم الدار ونحن الكود',
+    welcome_text_en: 'You are the Home, We are the Code',
+    primary_color: '#1E3A5F',
+    secondary_color: '#A78BFA'
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingSideImage, setUploadingSideImage] = useState(false);
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
