@@ -689,14 +689,16 @@ export default function SettlementPage() {
                           </Button>
                         )}
                         
-                        {settlement.status === 'pending_stas' && canCreate && (
+                        {settlement.status === 'pending_stas' && canCancel && (
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleCancel(settlement.id)}
+                            data-testid={`cancel-settlement-${settlement.id}`}
                           >
-                            <Ban className="w-4 h-4" />
+                            <Ban className="w-4 h-4 ml-1" />
+                            إلغاء
                           </Button>
                         )}
                       </div>
