@@ -71,9 +71,9 @@ const getGreeting = (lang) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'present': return 'emerald';
-    case 'late': return 'amber';
-    case 'absent': return 'red';
+    case 'present': return 'navy';
+    case 'late': return 'lavender';
+    case 'absent': return 'slate';
     default: return 'slate';
   }
 };
