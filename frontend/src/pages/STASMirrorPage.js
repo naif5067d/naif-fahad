@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText, DollarSign, Clock, User, ChevronDown, ChevronUp, RefreshCw, Smartphone, Tablet, Monitor, Laptop, Download, X, Maximize2, ExternalLink } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Link2, Loader2, Eye, Calendar, Trash2, AlertTriangle, Settings, UserX, RotateCcw, FileText, DollarSign, Clock, User, ChevronDown, ChevronUp, RefreshCw, Smartphone, Tablet, Monitor, Laptop, Download, X, Maximize2, ExternalLink, Tag, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
 import { toast } from 'sonner';
