@@ -264,6 +264,29 @@ async def login(req: LoginRequest, request: Request):
         "performed_by": user_id,
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
+    
+    # تسجيل في login_sessions لصفحة سجل الدخول
+    user_agent = request.headers.get("user-agent", "")
+    is_mobile = any(x in user_agent.lower() for x in ['mobile', 'android', 'iphone', 'ipad'])
+    browser = "Chrome" if "chrome" in user_agent.lower() else "Safari" if "safari" in user_agent.lower() else "Firefox" if "firefox" in user_agent.lower() else "Other"
+    os_name = "iOS" if "iphone" in user_agent.lower() or "ipad" in user_agent.lower() else "Android" if "android" in user_agent.lower() else "Windows" if "windows" in user_agent.lower() else "Mac" if "mac" in user_agent.lower() else "Other"
+    
+    await db.login_sessions.insert_one({
+        "id": str(uuid.uuid4()),
+        "employee_id": employee_id or user_id,
+        "username": req.username,
+        "role": role,
+        "session_id": session_id,
+        "device_id": device_signature[:16] if device_signature else None,
+        "login_at": datetime.now(timezone.utc).isoformat(),
+        "logout_at": None,
+        "device_type": "mobile" if is_mobile else "desktop",
+        "device_name": os_name,
+        "browser": browser,
+        "os": os_name,
+        "is_mobile": is_mobile,
+        "status": "active"
+    })
 
     token = create_access_token({
         "user_id": user_id,
