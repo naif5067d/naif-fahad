@@ -7,9 +7,30 @@ from utils.attendance_rules import validate_check_in, validate_check_out
 from services.punch_validator import validate_full_punch, haversine_distance
 from services.device_service import check_account_blocked, validate_device
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import uuid
 
 router = APIRouter(prefix="/api/attendance", tags=["attendance"])
+
+# توقيت الرياض
+RIYADH_TZ = ZoneInfo("Asia/Riyadh")
+
+def get_riyadh_now():
+    """الحصول على الوقت الحالي بتوقيت الرياض"""
+    return datetime.now(RIYADH_TZ)
+
+def utc_to_riyadh(dt):
+    """تحويل UTC إلى توقيت الرياض"""
+    if dt is None:
+        return None
+    if isinstance(dt, str):
+        try:
+            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+        except:
+            return dt
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(RIYADH_TZ)
 
 
 class CheckInRequest(BaseModel):
