@@ -148,6 +148,12 @@ async def get_push_status(current_user: dict = Depends(require_auth)):
 
 async def send_push_notification(user_id: str, title: str, body: str, url: str = "/", tag: str = None):
     """Send push notification to a specific user"""
+    try:
+        from pywebpush import webpush, WebPushException
+    except ImportError:
+        print("[Push] pywebpush not installed")
+        return {"sent": 0, "reason": "library_not_installed"}
+    
     db = get_db()
     
     subscriptions = list(db.push_subscriptions.find({
