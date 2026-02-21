@@ -150,13 +150,7 @@ async def get_push_status(current_user: dict = Depends(get_current_user)):
     }
 
 async def send_push_notification(user_id: str, title: str, body: str, url: str = "/", tag: str = None):
-    """Send push notification to a specific user"""
-    try:
-        from pywebpush import webpush, WebPushException
-    except ImportError:
-        print("[Push] pywebpush not installed")
-        return {"sent": 0, "reason": "library_not_installed"}
-    
+    """Send push notification to a specific user via FCM"""
     db = get_db()
     
     subscriptions = list(db.push_subscriptions.find({
@@ -168,45 +162,71 @@ async def send_push_notification(user_id: str, title: str, body: str, url: str =
         return {"sent": 0, "reason": "no_subscriptions"}
     
     sent_count = 0
-    failed_endpoints = []
+    failed_tokens = []
     
-    payload = json.dumps({
-        "title": title,
-        "body": body,
-        "url": url,
-        "tag": tag or f"notification-{datetime.now(timezone.utc).timestamp()}"
-    })
-    
-    for sub in subscriptions:
+    # Try Firebase Admin SDK
+    if firebase_initialized:
         try:
-            subscription_info = {
-                "endpoint": sub["endpoint"],
-                "keys": sub["keys"]
-            }
+            from firebase_admin import messaging
             
-            webpush(
-                subscription_info=subscription_info,
-                data=payload,
-                vapid_private_key=VAPID_KEYS["private_key"],
-                vapid_claims=VAPID_CLAIMS
-            )
-            sent_count += 1
+            for sub in subscriptions:
+                fcm_token = sub.get("fcm_token")
+                if not fcm_token:
+                    continue
+                
+                try:
+                    message = messaging.Message(
+                        notification=messaging.Notification(
+                            title=title,
+                            body=body
+                        ),
+                        data={
+                            "url": url,
+                            "tag": tag or f"notification-{datetime.now(timezone.utc).timestamp()}",
+                            "title": title,
+                            "body": body
+                        },
+                        token=fcm_token,
+                        android=messaging.AndroidConfig(
+                            priority="high",
+                            notification=messaging.AndroidNotification(
+                                click_action="OPEN_URL"
+                            )
+                        ),
+                        webpush=messaging.WebpushConfig(
+                            notification=messaging.WebpushNotification(
+                                title=title,
+                                body=body,
+                                icon="/icon-192.png"
+                            ),
+                            fcm_options=messaging.WebpushFCMOptions(
+                                link=url
+                            )
+                        )
+                    )
+                    
+                    response = messaging.send(message)
+                    print(f"[FCM] Message sent: {response}")
+                    sent_count += 1
+                    
+                except Exception as e:
+                    print(f"[FCM] Failed to send to token: {e}")
+                    failed_tokens.append(fcm_token)
+                    
+                    # Mark as inactive if token is invalid
+                    if "not registered" in str(e).lower() or "invalid" in str(e).lower():
+                        db.push_subscriptions.update_one(
+                            {"fcm_token": fcm_token},
+                            {"$set": {"is_active": False}}
+                        )
             
-        except WebPushException as e:
-            print(f"[Push] Failed to send to {sub['endpoint']}: {e}")
-            failed_endpoints.append(sub["endpoint"])
+            return {"sent": sent_count, "failed": len(failed_tokens)}
             
-            # Mark subscription as inactive if endpoint is gone (410 Gone)
-            if e.response and e.response.status_code == 410:
-                db.push_subscriptions.update_one(
-                    {"endpoint": sub["endpoint"]},
-                    {"$set": {"is_active": False}}
-                )
         except Exception as e:
-            print(f"[Push] Error sending notification: {e}")
-            failed_endpoints.append(sub["endpoint"])
-    
-    return {"sent": sent_count, "failed": len(failed_endpoints)}
+            print(f"[FCM] Error sending notifications: {e}")
+            return {"sent": 0, "reason": str(e)}
+    else:
+        return {"sent": 0, "reason": "firebase_not_initialized"}
 
 async def send_push_to_role(role: str, title: str, body: str, url: str = "/"):
     """Send push notification to all users with a specific role"""
