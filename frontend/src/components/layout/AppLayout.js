@@ -413,15 +413,49 @@ export default function AppLayout({ children }) {
                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
               </button>
 
-              {/* Logout button */}
-              <button 
-                data-testid="logout-btn" 
-                onClick={logout} 
-                className="p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors flex-shrink-0 touch-target"
-                title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
-              >
-                <LogOut size={20} />
-              </button>
+              {/* Logout button with dropdown */}
+              <div className="relative" ref={logoutRef}>
+                <button 
+                  data-testid="logout-btn" 
+                  onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                  onContextMenu={(e) => { e.preventDefault(); setShowLogoutMenu(true); }}
+                  className="p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors flex-shrink-0 touch-target"
+                  title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
+                >
+                  <LogOut size={20} />
+                </button>
+                
+                {/* Logout Menu */}
+                {showLogoutMenu && (
+                  <div className="absolute top-full mt-2 end-0 w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in z-50">
+                    <button
+                      onClick={() => { logout(); setShowLogoutMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-start"
+                      data-testid="logout-current"
+                    >
+                      <LogOut size={16} />
+                      <span>{lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}</span>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(lang === 'ar' ? 'سيتم تسجيل خروجك من جميع الأجهزة. هل تريد المتابعة؟' : 'You will be logged out from all devices. Continue?')) {
+                          try {
+                            await logoutAllDevices();
+                          } catch (e) {
+                            alert(lang === 'ar' ? 'حدث خطأ' : 'Error occurred');
+                          }
+                        }
+                        setShowLogoutMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-red-50 text-red-600 transition-colors text-start border-t border-border"
+                      data-testid="logout-all-devices"
+                    >
+                      <Shield size={16} />
+                      <span>{lang === 'ar' ? 'الخروج من جميع الأجهزة' : 'Logout all devices'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
