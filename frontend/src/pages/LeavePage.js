@@ -557,10 +557,11 @@ export default function LeavePage() {
               
               {/* طلب التوقيع */}
               <div className="p-3 bg-[hsl(var(--info)/0.1)] dark:bg-blue-900/20 rounded-lg border border-[hsl(var(--info)/0.3)] text-center">
-                <p className="text-sm font-medium text-[hsl(var(--info))] dark:text-blue-200">
+                <p className="text-sm font-medium text-[hsl(var(--info))] dark:text-blue-200 flex items-center justify-center gap-2">
+                  <FileSignature size={16} />
                   {lang === 'ar' 
-                    ? '✍️ بالضغط على "توقيع وتقديم"، أوافق على تطبيق الخصم المذكور أعلاه.'
-                    : '✍️ By clicking "Sign & Submit", I agree to the above deduction.'
+                    ? 'بالضغط على "توقيع وتقديم"، أوافق على تطبيق الخصم المذكور أعلاه.'
+                    : 'By clicking "Sign & Submit", I agree to the above deduction.'
                   }
                 </p>
               </div>
@@ -573,10 +574,11 @@ export default function LeavePage() {
             </Button>
             <Button 
               onClick={handleConfirmSickLeave} 
-              className="w-full sm:w-auto bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))]"
+              className="w-full sm:w-auto bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] gap-2"
               data-testid="sign-submit-sick-leave"
             >
-              {lang === 'ar' ? '✍️ توقيع وتقديم الطلب' : '✍️ Sign & Submit Request'}
+              <FileSignature size={16} />
+              {lang === 'ar' ? 'توقيع وتقديم الطلب' : 'Sign & Submit Request'}
             </Button>
           </DialogFooter>
         </DialogContent>
