@@ -197,6 +197,9 @@ export default function AppLayout({ children }) {
       if (alertsRef.current && !alertsRef.current.contains(e.target)) {
         setAlertsOpen(false);
       }
+      if (logoutRef.current && !logoutRef.current.contains(e.target)) {
+        setShowLogoutMenu(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
