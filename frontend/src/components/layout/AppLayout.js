@@ -286,23 +286,23 @@ export default function AppLayout({ children }) {
 
       {/* Main content */}
       <div className="md:ms-64 pb-20 md:pb-0">
-        {/* Top header */}
-        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border">
-          <div className="flex items-center justify-between px-3 md:px-6 h-14 md:h-16">
+        {/* Top header - with safe area for iPhone notch/Dynamic Island */}
+        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex items-center justify-between px-3 md:px-6 h-16 md:h-16">
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-2 -ms-2 rounded-lg hover:bg-muted touch-target" 
+              className="md:hidden p-2.5 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80 touch-target" 
               onClick={() => setSidebarOpen(true)} 
               data-testid="open-sidebar"
             >
-              <Menu size={22} />
+              <Menu size={24} />
             </button>
             
             {/* Page title (desktop) */}
             <div className="hidden md:block" />
 
             {/* Right side controls - Always visible on all screens */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {/* Fullscreen Toggle Button - Hidden on mobile (not supported) */}
               <button 
                 data-testid="toggle-fullscreen" 
