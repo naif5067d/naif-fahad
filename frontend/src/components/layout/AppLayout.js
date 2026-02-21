@@ -239,7 +239,7 @@ export default function AppLayout({ children }) {
       {/* Logo/Brand - Desktop only */}
       <div className="p-5 border-b border-border hidden md:block">
         <h1 className="text-base font-bold tracking-tight text-foreground" data-testid="app-title">
-          {t('app.name')}
+          {lang === 'ar' ? companyName.ar : companyName.en}
         </h1>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t('app.company')}</p>
       </div>
