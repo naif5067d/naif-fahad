@@ -224,14 +224,17 @@ async def check_public_holiday(check_date: str = None) -> dict:
         holiday = await db.holidays.find_one({"date": check_date}, {"_id": 0})
     
     if holiday:
+        # التأكد من وجود اسم للعطلة
+        holiday_name = holiday.get("name_ar") or holiday.get("name") or "عطلة رسمية"
+        
         return {
             "is_holiday": True,
-            "holiday_name": holiday.get("name"),
-            "holiday_name_ar": holiday.get("name_ar") or holiday.get("name"),
+            "holiday_name": holiday.get("name") or holiday_name,
+            "holiday_name_ar": holiday_name,
             "error": {
                 "code": "error.public_holiday",
-                "message": f"Today is a public holiday: {holiday.get('name')}",
-                "message_ar": f"اليوم عطلة رسمية: {holiday.get('name_ar') or holiday.get('name')}"
+                "message": f"Today is a public holiday: {holiday.get('name') or 'Official Holiday'}",
+                "message_ar": f"اليوم عطلة رسمية: {holiday_name}"
             }
         }
     
