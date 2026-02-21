@@ -122,40 +122,40 @@ export default function MaintenanceTrackingPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
-        <Card className="bg-slate-100">
+        <Card className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-slate-700">{stats.total || 0}</p>
+            <p className="text-2xl font-bold text-slate-700 dark:text-slate-200">{stats.total || 0}</p>
             <p className="text-xs text-slate-500">{lang === 'ar' ? 'الكل' : 'Total'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-[hsl(var(--navy)/0.08)] border-[hsl(var(--navy)/0.2)]">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-blue-700">{stats.new || 0}</p>
-            <p className="text-xs text-blue-600">{lang === 'ar' ? 'جديد' : 'New'}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--navy))]">{stats.new || 0}</p>
+            <p className="text-xs text-[hsl(var(--navy)/0.7)]">{lang === 'ar' ? 'جديد' : 'New'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-50 border-orange-200">
+        <Card className="bg-[hsl(var(--lavender)/0.1)] border-[hsl(var(--lavender)/0.3)]">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-orange-700">{stats.in_progress || 0}</p>
-            <p className="text-xs text-orange-600">{lang === 'ar' ? 'تحت الصيانة' : 'In Progress'}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--lavender))]">{stats.in_progress || 0}</p>
+            <p className="text-xs text-[hsl(var(--lavender)/0.8)]">{lang === 'ar' ? 'تحت الصيانة' : 'In Progress'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-green-700">{stats.ready || 0}</p>
-            <p className="text-xs text-green-600">{lang === 'ar' ? 'جاهز' : 'Ready'}</p>
+            <p className="text-2xl font-bold text-slate-700 dark:text-slate-200">{stats.ready || 0}</p>
+            <p className="text-xs text-slate-500">{lang === 'ar' ? 'جاهز' : 'Ready'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-red-700">{stats.delayed || 0}</p>
-            <p className="text-xs text-red-600">{lang === 'ar' ? 'متأخر' : 'Delayed'}</p>
+            <p className="text-2xl font-bold text-slate-600 dark:text-slate-300">{stats.delayed || 0}</p>
+            <p className="text-xs text-slate-500">{lang === 'ar' ? 'متأخر' : 'Delayed'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="bg-[hsl(var(--navy)/0.05)] border-[hsl(var(--navy)/0.15)]">
           <CardContent className="p-3 text-center">
-            <p className="text-2xl font-bold text-purple-700">{(stats.total_cost || 0).toLocaleString()}</p>
-            <p className="text-xs text-purple-600">{lang === 'ar' ? 'التكلفة' : 'Cost'}</p>
+            <p className="text-2xl font-bold text-[hsl(var(--navy))]">{(stats.total_cost || 0).toLocaleString()}</p>
+            <p className="text-xs text-[hsl(var(--navy)/0.6)]">{lang === 'ar' ? 'التكلفة' : 'Cost'}</p>
           </CardContent>
         </Card>
       </div>
