@@ -2094,8 +2094,9 @@ export default function ContractsManagementPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))] mt-2">
-                ⚠️ هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
+              <p className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))] mt-2 flex items-center gap-1">
+                <AlertTriangle size={12} />
+                هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
               </p>
             </div>
 
