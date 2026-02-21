@@ -66,7 +66,7 @@ const ROLE_LABELS_AR = {
 };
 
 export default function AppLayout({ children }) {
-  const { user, allUsers, switchUser, fetchAllUsers, logout } = useAuth();
+  const { user, allUsers, switchUser, fetchAllUsers, logout, logoutAllDevices } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -76,8 +76,10 @@ export default function AppLayout({ children }) {
   const [switching, setSwitching] = useState(false);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [alerts, setAlerts] = useState({ alerts: [], count: 0 });
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const switcherRef = useRef(null);
   const alertsRef = useRef(null);
+  const logoutRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Check if fullscreen is supported
