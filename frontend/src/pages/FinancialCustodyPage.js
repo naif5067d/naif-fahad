@@ -37,8 +37,8 @@ const STATUS_MAP = {
 
 const STATUS_STYLES = {
   open: 'bg-blue-50 text-blue-700 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-300',
-  pending_audit: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-amber-300 dark:bg-amber-950/50 dark:text-[hsl(var(--warning))]',
-  approved: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-emerald-300 dark:bg-emerald-950/50 dark:text-[hsl(var(--success))]',
+  pending_audit: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-[hsl(var(--warning)/0.3)] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]',
+  approved: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-[hsl(var(--success)/0.3)] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]',
   executed: 'bg-purple-50 text-purple-700 ring-purple-300 dark:bg-purple-950/50 dark:text-purple-300',
   closed: 'bg-slate-100 text-slate-600 ring-slate-300 dark:bg-slate-800 dark:text-slate-400',
 };
@@ -703,7 +703,7 @@ export default function FinancialCustodyPage() {
                     return (
                       <tr 
                         key={exp.id} 
-                        className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors ${isEditing ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/20' : ''}`}
+                        className={`hover:bg-[hsl(var(--info)/0.1)] dark:hover:bg-[hsl(var(--info)/0.1)] transition-colors ${isEditing ? 'bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.1)]' : ''}`}
                         data-testid={`expense-row-${i}`}
                       >
                         <td className="px-3 py-2.5 text-xs text-muted-foreground font-mono">{i + 1}</td>
@@ -760,7 +760,7 @@ export default function FinancialCustodyPage() {
                                   <button 
                                     onClick={() => handleEditExpense(exp.id)}
                                     disabled={submitting}
-                                    className="p-1.5 rounded-md text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] dark:hover:bg-emerald-950/50 transition-all"
+                                    className="p-1.5 rounded-md text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] dark:hover:bg-[hsl(var(--success)/0.15)] transition-all"
                                     title={lang === 'ar' ? 'حفظ' : 'Save'}
                                   >
                                     <Save size={14} />
@@ -778,7 +778,7 @@ export default function FinancialCustodyPage() {
                                   {canSalahEdit && (
                                     <button 
                                       onClick={() => startEditExpense(exp)}
-                                      className="p-1.5 rounded-md text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] dark:hover:bg-amber-950/50 transition-all"
+                                      className="p-1.5 rounded-md text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] dark:hover:bg-[hsl(var(--warning)/0.15)] transition-all"
                                       title={lang === 'ar' ? 'تعديل' : 'Edit'}
                                       data-testid={`edit-expense-${i}`}
                                     >
@@ -1115,7 +1115,7 @@ export default function FinancialCustodyPage() {
           </p>
         </div>
         
-        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30 rounded-xl p-4 border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
+        <div className="bg-gradient-to-br from-[hsl(var(--success)/0.1)] to-[hsl(var(--success)/0.15)] dark:from-[hsl(var(--success)/0.15)] dark:to-[hsl(var(--success)/0.1)] rounded-xl p-4 border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle size={16} className="text-[hsl(var(--success))]" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -1127,7 +1127,7 @@ export default function FinancialCustodyPage() {
           </p>
         </div>
         
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/50 dark:to-amber-900/30 rounded-xl p-4 border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+        <div className="bg-gradient-to-br from-[hsl(var(--warning)/0.1)] to-[hsl(var(--warning)/0.15)] dark:from-[hsl(var(--warning)/0.15)] dark:to-[hsl(var(--warning)/0.1)] rounded-xl p-4 border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={16} className="text-[hsl(var(--warning))]" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">

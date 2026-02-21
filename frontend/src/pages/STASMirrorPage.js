@@ -1544,7 +1544,7 @@ export default function STASMirrorPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {/* Summary */}
-                        <div className="bg-accent/10 dark:bg-violet-900/20 rounded-lg p-3 border border-violet-200 dark:border-violet-800">
+                        <div className="bg-accent/10 dark:bg-violet-900/20 rounded-lg p-3 border border-accent/30 dark:border-violet-800">
                           <p className="text-violet-800 dark:text-violet-200 text-sm font-medium text-center">
                             {mirror.transaction.data.calculation_details.calculation_summary_ar}
                           </p>

@@ -796,7 +796,7 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* تاريخ المباشرة ووضع التجربة */}
-                <div className="grid grid-cols-2 gap-4 p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/30 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+                <div className="grid grid-cols-2 gap-4 p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
                   <div>
                     <Label className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-[hsl(var(--warning))]" />
@@ -2099,7 +2099,7 @@ export default function ContractsManagementPage() {
             </div>
 
             {/* تاريخ المباشرة ووضع التجربة */}
-            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
               <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                 <Clock className="w-4 h-4" />
                 تاريخ المباشرة ووضع التجربة

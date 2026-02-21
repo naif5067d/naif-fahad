@@ -801,7 +801,7 @@ export default function TeamAttendancePage() {
                             ) : emp.final_status === 'ABSENT' ? (
                               <XCircle className="text-red-500 mx-auto" size={20} />
                             ) : (
-                              <AlertTriangle className="text-orange-400 mx-auto" size={18} />
+                              <AlertTriangle className="text-[hsl(var(--warning))] mx-auto" size={18} />
                             )}
                           </td>
                           {viewMode === 'all' && (
@@ -1191,7 +1191,7 @@ export default function TeamAttendancePage() {
                 </CardContent>
               </Card>
               
-              <Card className="border-violet-200">
+              <Card className="border-accent/30">
                 <CardContent className="p-4 text-center">
                   <p className="text-3xl font-bold text-accent">
                     {penaltiesReport.summary.total_deduction_amount?.toFixed(0) || 0} ر.س
@@ -1391,7 +1391,7 @@ export default function TeamAttendancePage() {
                 ) : (
                   <div className="space-y-4">
                     {pendingCorrections.map((req) => (
-                      <div key={req.id} className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+                      <div key={req.id} className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1498,8 +1498,8 @@ export default function TeamAttendancePage() {
                             onClick={() => loadDeductionTrace(d)}
                             className={`w-full text-right p-4 rounded-lg border transition-all ${
                               selectedDeduction?.id === d.id 
-                                ? 'border-orange-500 bg-[hsl(var(--warning)/0.1)]' 
-                                : 'border-border hover:border-orange-300 hover:bg-[hsl(var(--warning)/0.1)]/50'
+                                ? 'border-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)]' 
+                                : 'border-border hover:border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]/50'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-2">
@@ -1761,7 +1761,7 @@ export default function TeamAttendancePage() {
               
               {/* Trace Summary */}
               {traceData.trace_summary && (
-                <div className="p-4 bg-accent/10 dark:bg-violet-900/20 rounded-lg border border-violet-200 dark:border-violet-800">
+                <div className="p-4 bg-accent/10 dark:bg-violet-900/20 rounded-lg border border-accent/30 dark:border-violet-800">
                   <p className="font-medium text-accent dark:text-violet-300 mb-2">
                     {lang === 'ar' ? 'ملخص الفحص' : 'Check Summary'}
                   </p>

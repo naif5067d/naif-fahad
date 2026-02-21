@@ -606,7 +606,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                       <Button 
                         size="sm" 
                         onClick={() => { setEvaluating(stage); setRating(0); setComment(''); }}
-                        className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-orange-600"
+                        className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-[hsl(var(--warning))]"
                       >
                         <Star size={16} className="ml-1" />
                         {lang === 'ar' ? 'تقييم' : 'Evaluate'}
@@ -625,7 +625,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
 
           {/* Evaluation Form */}
           {evaluating && (
-            <div className="bg-accent/10 border-2 border-violet-200 rounded-lg p-4">
+            <div className="bg-accent/10 border-2 border-accent/30 rounded-lg p-4">
               <h4 className="font-bold text-violet-800 mb-3">
                 {lang === 'ar' ? `تقييم المرحلة ${evaluating}` : `Evaluate Stage ${evaluating}`}
               </h4>
@@ -700,7 +700,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                 <div>
                   <h4 className="font-bold">{lang === 'ar' ? 'الدرجة النهائية' : 'Final Score'}</h4>
                   {task.delay_info?.delayed && (
-                    <p className="text-sm text-orange-300 mt-1">
+                    <p className="text-sm text-[hsl(var(--warning))] mt-1">
                       {lang === 'ar' 
                         ? `تأخير ${task.delay_info.days} يوم (-${task.delay_info.penalty}%)`
                         : `Delayed ${task.delay_info.days} days (-${task.delay_info.penalty}%)`

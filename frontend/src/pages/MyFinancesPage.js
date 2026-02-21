@@ -153,7 +153,7 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Warnings */}
-        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
@@ -171,7 +171,7 @@ export default function MyFinancesPage() {
         </Card>
 
         {/* Absent Days */}
-        <Card className="border-violet-200 dark:border-violet-800">
+        <Card className="border-accent/30 dark:border-violet-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">
@@ -310,7 +310,7 @@ export default function MyFinancesPage() {
 
       {/* Warnings List */}
       {warnings.length > 0 && (
-        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+        <Card className="border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle size={18} className="text-[hsl(var(--warning))]" />
@@ -322,7 +322,7 @@ export default function MyFinancesPage() {
               {warnings.map((w, idx) => (
                 <div 
                   key={w.id || idx}
-                  className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-amber-950/20"
+                  className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.1)]"
                   data-testid={`warning-${w.id}`}
                 >
                   <div className="flex items-start justify-between">

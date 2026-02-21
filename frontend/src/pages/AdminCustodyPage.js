@@ -109,7 +109,7 @@ export default function AdminCustodyPage() {
             <p className="text-xs text-[hsl(var(--success))]">{lang === 'ar' ? 'إجمالي العهد' : 'Total'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-red-500 to-rose-600 text-white">
+        <Card className="bg-gradient-to-br from-destructive to-destructive text-white">
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold">{formatNumber(summary.total_spent)}</p>
             <p className="text-xs text-red-100">{lang === 'ar' ? 'المصروف' : 'Spent'}</p>
@@ -244,7 +244,7 @@ function CustodyCard({ custody, lang, onSelect, getStatusInfo, formatNumber, for
         <div className="mb-3">
           <div className="w-full bg-slate-200 rounded-full h-2">
             <div 
-              className="h-2 rounded-full bg-gradient-to-r from-[hsl(var(--success))] to-teal-500 transition-all"
+              className="h-2 rounded-full bg-gradient-to-r from-[hsl(var(--success))] to-[hsl(var(--success))] transition-all"
               style={{ width: `${Math.min(progress, 100)}%` }}
             />
           </div>
@@ -509,7 +509,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-[hsl(var(--success))] text-white p-6 sticky top-0 z-10">
+        <div className="bg-gradient-to-r from-[hsl(var(--success))] to-[hsl(var(--success))] text-white p-6 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">
@@ -529,7 +529,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
               <span>{lang === 'ar' ? 'المصروف' : 'Spent'}: {formatNumber(localCustody.spent)}</span>
               <span>{lang === 'ar' ? 'الإجمالي' : 'Total'}: {formatNumber(localCustody.total_amount)}</span>
             </div>
-            <div className="w-full bg-emerald-800 rounded-full h-3">
+            <div className="w-full bg-[hsl(var(--success))] rounded-full h-3">
               <div 
                 className="h-3 rounded-full bg-white transition-all"
                 style={{ width: `${(localCustody.spent / localCustody.total_amount) * 100}%` }}
@@ -682,7 +682,7 @@ function CustodyDetailPage({ custody, expenseCodes, lang, role, canCreate, canAu
               <div className="flex flex-wrap gap-3">
                 {/* Send for Audit */}
                 {localCustody.status === 'open' && canCreate && (
-                  <Button onClick={handleSendForAudit} className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-orange-600 gap-2">
+                  <Button onClick={handleSendForAudit} className="bg-[hsl(var(--warning)/0.1)]0 hover:bg-[hsl(var(--warning))] gap-2">
                     <Send size={16} />
                     {lang === 'ar' ? 'إرسال للتدقيق' : 'Send for Audit'}
                   </Button>

@@ -122,7 +122,7 @@ export default function PenaltiesPage() {
             </CardContent>
           </Card>
           
-          <Card className="border-violet-200">
+          <Card className="border-accent/30">
             <CardContent className="p-4 text-center">
               <p className="text-3xl font-bold text-accent">{formatCurrency(report.summary.total_deduction_amount)}</p>
               <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم' : 'Total Deduction'}</p>

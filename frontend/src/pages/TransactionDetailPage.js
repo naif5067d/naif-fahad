@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
   rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
-  pending_ops: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-orange-500/20' },
+  pending_ops: { bg: 'bg-[hsl(var(--warning)/0.1)]0/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
   pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20' },
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
   stas: { bg: 'bg-accent/100/10', text: 'text-accent', border: 'border-violet-500/20' },

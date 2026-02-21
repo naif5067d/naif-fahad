@@ -411,7 +411,7 @@ export default function WorkLocationsPage() {
 
                 {/* Grace Period - مدة السماح - Modern Design */}
                 <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 overflow-hidden">
-                  <div className="px-4 py-3 bg-gradient-to-r from-[hsl(var(--success))] to-teal-500 text-white">
+                  <div className="px-4 py-3 bg-gradient-to-r from-[hsl(var(--success))] to-[hsl(var(--success))] text-white">
                     <div className="flex items-center gap-2">
                       <Clock size={18} />
                       <span className="font-semibold">{lang === 'ar' ? 'مدة السماح' : 'Grace Period'}</span>
@@ -518,7 +518,7 @@ export default function WorkLocationsPage() {
 
                 {/* Early Check-in Allowance - للمخولين فقط */}
                 {canEdit && (
-                  <div className="p-4 rounded-lg bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200">
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-violet-50 to-purple-50 border border-accent/30">
                     <Label className="flex items-center gap-2 text-accent mb-3">
                       <Clock size={16} />
                       {lang === 'ar' ? 'السماح بالتبصيم قبل الدوام' : 'Early Check-in Allowance'}
