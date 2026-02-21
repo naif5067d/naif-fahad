@@ -2108,6 +2108,225 @@ export default function STASMirrorPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* === Company Settings Tab === */}
+        <TabsContent value="company-settings" className="mt-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Logo Upload */}
+            <Card className="border border-border shadow-none">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield size={18} className="text-accent" />
+                  {lang === 'ar' ? 'شعار الشركة' : 'Company Logo'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  {companySettings.logo_url ? (
+                    <div className="relative">
+                      <img 
+                        src={companySettings.logo_url} 
+                        alt="Logo" 
+                        className="w-24 h-24 object-contain rounded-xl border border-border"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeleteLogo}
+                        className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full bg-destructive text-white hover:bg-destructive"
+                      >
+                        <X size={12} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground">
+                      <Shield size={32} />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/png,image/svg+xml,image/jpeg"
+                      onChange={handleUploadLogo}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('logo-upload')?.click()}
+                      disabled={uploadingLogo}
+                    >
+                      {uploadingLogo ? <Loader2 size={16} className="animate-spin ml-2" /> : null}
+                      {lang === 'ar' ? 'رفع شعار' : 'Upload Logo'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      PNG, SVG, JPG - {lang === 'ar' ? 'حد أقصى 2MB' : 'Max 2MB'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Side Image Upload */}
+            <Card className="border border-border shadow-none">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Maximize2 size={18} className="text-accent" />
+                  {lang === 'ar' ? 'الصورة الجانبية' : 'Side Image'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  {companySettings.side_image_url ? (
+                    <div className="relative">
+                      <img 
+                        src={companySettings.side_image_url} 
+                        alt="Side" 
+                        className="w-32 h-24 object-cover rounded-xl border border-border"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeleteSideImage}
+                        className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full bg-destructive text-white hover:bg-destructive"
+                      >
+                        <X size={12} />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-32 h-24 rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground">
+                      <Maximize2 size={32} />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleUploadSideImage}
+                      className="hidden"
+                      id="side-image-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('side-image-upload')?.click()}
+                      disabled={uploadingSideImage}
+                    >
+                      {uploadingSideImage ? <Loader2 size={16} className="animate-spin ml-2" /> : null}
+                      {lang === 'ar' ? 'رفع صورة' : 'Upload Image'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      PNG, JPG, WEBP - {lang === 'ar' ? 'حد أقصى 5MB' : 'Max 5MB'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Welcome Text */}
+            <Card className="border border-border shadow-none md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText size={18} className="text-accent" />
+                  {lang === 'ar' ? 'عبارة الترحيب' : 'Welcome Message'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>{lang === 'ar' ? 'العبارة بالعربية' : 'Arabic Text'}</Label>
+                    <Input
+                      value={companySettings.welcome_text_ar}
+                      onChange={(e) => setCompanySettings(prev => ({ ...prev, welcome_text_ar: e.target.value }))}
+                      placeholder="أنتم الدار ونحن الكود"
+                      className="mt-2"
+                      dir="rtl"
+                    />
+                  </div>
+                  <div>
+                    <Label>{lang === 'ar' ? 'العبارة بالإنجليزية' : 'English Text'}</Label>
+                    <Input
+                      value={companySettings.welcome_text_en}
+                      onChange={(e) => setCompanySettings(prev => ({ ...prev, welcome_text_en: e.target.value }))}
+                      placeholder="You are the Home, We are the Code"
+                      className="mt-2"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Colors */}
+            <Card className="border border-border shadow-none md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Settings size={18} className="text-accent" />
+                  {lang === 'ar' ? 'ألوان صفحة الدخول' : 'Login Page Colors'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>{lang === 'ar' ? 'اللون الأساسي (Navy)' : 'Primary Color (Navy)'}</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="color"
+                        value={companySettings.primary_color}
+                        onChange={(e) => setCompanySettings(prev => ({ ...prev, primary_color: e.target.value }))}
+                        className="w-12 h-12 rounded-lg border border-border cursor-pointer"
+                      />
+                      <Input
+                        value={companySettings.primary_color}
+                        onChange={(e) => setCompanySettings(prev => ({ ...prev, primary_color: e.target.value }))}
+                        placeholder="#1E3A5F"
+                        className="flex-1 font-mono"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>{lang === 'ar' ? 'اللون الثانوي (Lavender)' : 'Secondary Color (Lavender)'}</Label>
+                    <div className="flex items-center gap-3 mt-2">
+                      <input
+                        type="color"
+                        value={companySettings.secondary_color}
+                        onChange={(e) => setCompanySettings(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        className="w-12 h-12 rounded-lg border border-border cursor-pointer"
+                      />
+                      <Input
+                        value={companySettings.secondary_color}
+                        onChange={(e) => setCompanySettings(prev => ({ ...prev, secondary_color: e.target.value }))}
+                        placeholder="#A78BFA"
+                        className="flex-1 font-mono"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Preview */}
+                <div className="mt-4 p-4 rounded-xl border border-border">
+                  <p className="text-sm text-muted-foreground mb-3">{lang === 'ar' ? 'معاينة:' : 'Preview:'}</p>
+                  <div 
+                    className="h-16 rounded-lg flex items-center justify-center text-white font-bold"
+                    style={{ background: `linear-gradient(135deg, ${companySettings.primary_color}, ${companySettings.secondary_color})` }}
+                  >
+                    {companySettings.welcome_text_ar}
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={handleSaveCompanySettings}
+                  disabled={savingSettings}
+                  className="w-full mt-4"
+                >
+                  {savingSettings ? <Loader2 size={16} className="animate-spin ml-2" /> : <CheckCircle size={16} className="ml-2" />}
+                  {lang === 'ar' ? 'حفظ الإعدادات' : 'Save Settings'}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Mobile Decision Bar - Fixed at bottom - منع التنفيذ المكرر */}
