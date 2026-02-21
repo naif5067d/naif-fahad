@@ -61,10 +61,10 @@ export default function TasksPage() {
 
   const getStatusBadge = (task) => {
     const statusMap = {
-      active: { label: lang === 'ar' ? 'قيد العمل' : 'Active', color: 'bg-blue-100 text-blue-700' },
+      active: { label: lang === 'ar' ? 'قيد العمل' : 'Active', color: 'bg-info/15 text-info' },
       pending_review: { label: lang === 'ar' ? 'بانتظار التقييم' : 'Pending Review', color: 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]' },
-      completed: { label: lang === 'ar' ? 'تم الإنجاز' : 'Completed', color: 'bg-green-100 text-green-700' },
-      closed: { label: lang === 'ar' ? 'مغلقة' : 'Closed', color: 'bg-slate-100 text-slate-700' }
+      completed: { label: lang === 'ar' ? 'تم الإنجاز' : 'Completed', color: 'bg-success/15 text-success' },
+      closed: { label: lang === 'ar' ? 'مغلقة' : 'Closed', color: 'bg-muted text-foreground' }
     };
     const s = statusMap[task.status] || statusMap.active;
     return <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.color}`}>{s.label}</span>;
@@ -78,18 +78,18 @@ export default function TasksPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 pb-24" data-testid="tasks-page">
+    <div className="min-h-screen bg-background p-4 md:p-6 pb-24" data-testid="tasks-page">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/100 to-accent flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-accent flex items-center justify-center">
             <ClipboardList size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">
+            <h1 className="text-2xl font-bold text-foreground">
               {lang === 'ar' ? 'المهام' : 'Tasks'}
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {isManager 
                 ? (lang === 'ar' ? 'إدارة مهام الموظفين' : 'Manage employee tasks')
                 : (lang === 'ar' ? 'مهامي المكلّف بها' : 'My assigned tasks')
@@ -113,7 +113,7 @@ export default function TasksPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-blue-700">{tasks.length}</p>
+            <p className="text-3xl font-bold text-info">{tasks.length}</p>
             <p className="text-sm text-blue-600">{lang === 'ar' ? 'إجمالي المهام' : 'Total Tasks'}</p>
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export default function TasksPage() {
         </Card>
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-green-700">
+            <p className="text-3xl font-bold text-success">
               {tasks.filter(t => t.status === 'closed').length}
             </p>
             <p className="text-sm text-green-600">{lang === 'ar' ? 'مكتملة' : 'Completed'}</p>
@@ -155,12 +155,12 @@ export default function TasksPage() {
       {/* Tasks List */}
       <div className="space-y-4">
         {loading ? (
-          <Card><CardContent className="py-12 text-center text-slate-500">جاري التحميل...</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">جاري التحميل...</CardContent></Card>
         ) : filteredTasks.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <ClipboardList size={48} className="mx-auto text-slate-300 mb-4" />
-              <p className="text-slate-500">{lang === 'ar' ? 'لا توجد مهام' : 'No tasks'}</p>
+              <ClipboardList size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">{lang === 'ar' ? 'لا توجد مهام' : 'No tasks'}</p>
             </CardContent>
           </Card>
         ) : (
@@ -216,9 +216,9 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h3 className="font-bold text-lg text-slate-800">{lang === 'ar' ? task.title : task.title_en}</h3>
+            <h3 className="font-bold text-lg text-foreground">{lang === 'ar' ? task.title : task.title_en}</h3>
             {isManager && (
-              <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                 <User size={14} />
                 {task.employee_name}
               </p>
@@ -226,7 +226,7 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
           </div>
           <div className="flex flex-col items-end gap-2">
             {getStatusBadge(task)}
-            <span className="text-xs text-slate-500 flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar size={12} />
               {formatDate(task.due_date)}
             </span>
@@ -236,7 +236,7 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
         {/* Progress Bar */}
         <div className="mb-3">
           <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-slate-600">{lang === 'ar' ? 'نسبة الإنجاز' : 'Progress'}</span>
+            <span className="text-muted-foreground">{lang === 'ar' ? 'نسبة الإنجاز' : 'Progress'}</span>
             <span className="font-bold text-accent">{progress}%</span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-3">
@@ -274,7 +274,7 @@ function TaskCard({ task, lang, isManager, onSelect, getStatusBadge, formatDate 
             {lang === 'ar' ? `الوزن: ${task.weight}%` : `Weight: ${task.weight}%`}
           </span>
           {task.final_score && (
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+            <span className="text-xs bg-success/15 text-success px-2 py-1 rounded-full flex items-center gap-1">
               <Star size={12} />
               {task.final_score.final_score}/5
             </span>
@@ -400,7 +400,7 @@ function CreateTaskDialog({ open, onClose, employees, lang, onSuccess }) {
                 value={form.weight}
                 onChange={(e) => setForm({...form, weight: parseInt(e.target.value) || 10})}
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {lang === 'ar' ? 'نسبة من التقييم السنوي' : 'Percentage of annual evaluation'}
               </p>
             </div>
@@ -509,14 +509,14 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
 
         <div className="space-y-6">
           {/* Task Info */}
-          <div className="bg-slate-50 rounded-lg p-4">
-            <p className="text-slate-700">{lang === 'ar' ? task.description : task.description_en}</p>
+          <div className="bg-background rounded-lg p-4">
+            <p className="text-foreground">{lang === 'ar' ? task.description : task.description_en}</p>
             <div className="flex flex-wrap gap-4 mt-4 text-sm">
-              <span className="flex items-center gap-1 text-slate-600">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 <User size={14} />
                 {task.employee_name}
               </span>
-              <span className="flex items-center gap-1 text-slate-600">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 <Calendar size={14} />
                 {formatDate(task.due_date)}
               </span>
@@ -535,7 +535,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
             </div>
             <div className="w-full bg-slate-200 rounded-full h-4">
               <div 
-                className="h-4 rounded-full bg-gradient-to-r from-accent/100 to-accent/100 transition-all"
+                className="h-4 rounded-full bg-gradient-to-r from-accent to-accent/100 transition-all"
                 style={{ width: `${task.progress}%` }}
               />
             </div>
@@ -543,7 +543,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
 
           {/* Stages */}
           <div className="space-y-3">
-            <h4 className="font-bold text-slate-800">{lang === 'ar' ? 'المراحل' : 'Stages'}</h4>
+            <h4 className="font-bold text-foreground">{lang === 'ar' ? 'المراحل' : 'Stages'}</h4>
             {[1, 2, 3, 4].map(stage => {
               const s = task.stages?.[stage - 1] || {};
               const canComplete = !isManager && !s.completed && stage === nextStageToComplete && task.status !== 'closed';
@@ -555,7 +555,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                   className={`p-4 rounded-lg border-2 transition-all ${
                     s.evaluated ? 'bg-green-50 border-green-200' :
                     s.completed ? 'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.3)]' :
-                    'bg-slate-50 border-slate-200'
+                    'bg-background border-border'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -563,7 +563,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                         s.evaluated ? 'bg-green-500 text-white' :
                         s.completed ? 'bg-[hsl(var(--warning))] text-white' :
-                        'bg-slate-300 text-slate-600'
+                        'bg-slate-300 text-muted-foreground'
                       }`}>
                         {s.evaluated ? <CheckCircle size={20} /> : stage}
                       </div>
@@ -578,12 +578,12 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                                 <Star 
                                   key={star} 
                                   size={16} 
-                                  className={star <= s.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}
+                                  className={star <= s.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50'}
                                 />
                               ))}
                             </div>
                             {s.comment && (
-                              <span className="text-xs text-slate-500">"{s.comment}"</span>
+                              <span className="text-xs text-muted-foreground">"{s.comment}"</span>
                             )}
                           </div>
                         )}
@@ -640,8 +640,8 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                         onClick={() => setRating(r)}
                         className={`w-12 h-12 rounded-lg border-2 font-bold text-lg transition-all ${
                           rating === r 
-                            ? 'bg-yellow-400 border-yellow-500 text-white' 
-                            : 'bg-white border-slate-200 hover:border-yellow-300'
+                            ? 'bg-warning border-warning text-white' 
+                            : 'bg-white border-border hover:border-warning/50'
                         }`}
                       >
                         {r}
@@ -710,7 +710,7 @@ function TaskDetailDialog({ open, onClose, task, lang, isManager, onUpdate }) {
                 </div>
                 <div className="text-center">
                   <p className="text-4xl font-bold">{task.final_score.final_score}</p>
-                  <p className="text-sm text-slate-300">{lang === 'ar' ? 'من 5' : 'out of 5'}</p>
+                  <p className="text-sm text-muted-foreground/50">{lang === 'ar' ? 'من 5' : 'out of 5'}</p>
                 </div>
               </div>
             </div>
