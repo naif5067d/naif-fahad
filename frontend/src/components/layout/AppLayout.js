@@ -288,7 +288,7 @@ export default function AppLayout({ children }) {
       <div className="md:ms-64 pb-20 md:pb-0">
         {/* Top header */}
         <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border">
-          <div className="flex items-center justify-between px-4 md:px-6 h-16">
+          <div className="flex items-center justify-between px-3 md:px-6 h-14 md:h-16">
             {/* Mobile menu button */}
             <button 
               className="md:hidden p-2 -ms-2 rounded-lg hover:bg-muted touch-target" 
@@ -301,19 +301,19 @@ export default function AppLayout({ children }) {
             {/* Page title (desktop) */}
             <div className="hidden md:block" />
 
-            {/* Right side controls */}
-            <div className="flex items-center gap-2">
-              {/* Fullscreen Toggle Button */}
+            {/* Right side controls - Always visible */}
+            <div className="flex items-center gap-1 md:gap-2">
+              {/* Fullscreen Toggle Button - Hidden on mobile (not supported) */}
               <button 
                 data-testid="toggle-fullscreen" 
                 onClick={toggleFullscreen} 
-                className="p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                className="hidden md:flex p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
                 title={isFullscreen ? (lang === 'ar' ? 'إلغاء ملء الشاشة' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
               >
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>
 
-              {/* Notification Bell - For ALL users */}
+              {/* Notification Bell - For ALL users - Always visible */}
               <NotificationBell />
 
               {/* User Switcher - STAS ONLY */}
@@ -322,20 +322,20 @@ export default function AppLayout({ children }) {
                   <button
                     data-testid="user-switcher-btn"
                     onClick={() => setSwitcherOpen(!switcherOpen)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
+                    className="flex items-center gap-1 md:gap-2.5 px-2 md:px-3 py-1.5 md:py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
                   >
                     <div 
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
                       style={{ background: colors.bg }}
                     >
                       {lang === 'ar' ? 'س' : 'S'}
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{displayName}</span>
+                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px] md:max-w-[120px]">{displayName}</span>
                     <ChevronDown size={14} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {switcherOpen && (
-                    <div className="absolute top-full mt-2 end-0 w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
+                    <div className="absolute top-full mt-2 end-0 w-72 md:w-80 bg-card border border-border rounded-2xl shadow-xl overflow-hidden animate-fade-in z-50" data-testid="user-switcher-dropdown">
                       <div className="px-4 py-3 border-b border-border bg-muted/30">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                           {lang === 'ar' ? 'تبديل المستخدم' : 'Switch User'}
