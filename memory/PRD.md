@@ -10,7 +10,7 @@ Any transaction not executed by STAS is not considered valid.
 - **Backend:** FastAPI + MongoDB + JWT RBAC
 - **Frontend:** React + Tailwind CSS + shadcn/ui
 - **Map:** react-leaflet + OpenStreetMap
-- **Push Notifications:** Web Push API with VAPID (no Firebase)
+- **Push Notifications:** Web Push API with VAPID (Privacy-focused, no Firebase)
 
 ## Design System
 - **Colors:** 
@@ -27,62 +27,24 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 
 ---
 
-## Latest Implementation (2026-02-21)
+## Latest Implementation (2025-02-21)
 
-### PWA & Push Notifications System
-- **manifest.json**: App name "DAR ALCODE CO", Arabic description
-- **Icons**: Professional company logo (192x192, 512x512)
-- **Service Worker**: `/sw.js` for background push notifications
-- **Push API**: `/api/push/*` endpoints with local VAPID keys
-- **Privacy**: No data goes to Firebase/Google
+### PWA with Company Branding
+- **manifest.json**: App name "DAR ALCODE CO" with Arabic description
+- **Icons**: Official company logo on black background (192x192, 512x512, favicon)
+- **iOS Support**: apple-mobile-web-app meta tags
+- **When added to home screen**: Shows "DAR ALCODE CO" with company logo
+
+### Push Notifications (Privacy Mode)
+- **Web Push API** with VAPID keys (no Firebase)
+- **100% Privacy**: All data stays on your server
+- **Backend**: `/api/push/*` endpoints
+- **Service Worker**: `/sw.js` for background notifications
+- **Supported**: Desktop (all browsers) + Android + iPhone (PWA only)
 
 ### Header Responsive Fix
 - Fixed icons disappearing on mobile viewports
-- Added `flex-shrink-0` to prevent icon collapse
-- All header controls (notifications, user switcher, language, theme, logout) now visible on all screen sizes
-
----
-
-## Implemented Features
-
-### Phase 1-37: All Previous Phases ✅
-(See CHANGELOG.md for detailed history)
-
-### Key Systems:
-1. **Authentication**: JWT-based with Device Fingerprinting
-2. **Attendance**: GPS validation, multi-location support
-3. **Contracts V2**: Full lifecycle with sandbox mode
-4. **Settlement**: End-of-service calculation
-5. **Financial Custody**: Admin expense tracking (60 codes)
-6. **Tasks**: 4-stage evaluation system
-7. **Notifications**: Bell + Push (Web Push API)
-8. **PWA**: Installable app with company branding
-
----
-
-## Pending Issues
-
-### P2: Transaction Deletion Logic
-- Current implementation is unsafe
-- Needs user clarification on:
-  - Who can delete?
-  - Which statuses are deletable?
-  - Should we rollback executed transactions?
-
----
-
-## Upcoming Tasks (P1)
-
-1. **Merge Finance Pages**: MyFinances + Attendance/Penalties
-2. **Annual Performance Review UI**
-3. **Print Penalty Letterhead**
-4. **Summon Employee Button (Executive Dashboard)**
-
-## Future Tasks (P2)
-
-1. Loans Module
-2. CEO Dashboard Enhancements
-3. Task Annual Summary Exposure
+- All header controls visible on all screen sizes
 
 ---
 
@@ -96,9 +58,6 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 - `POST /api/push/send` - Send notification (admin)
 - `POST /api/push/test` - Send test notification
 
-### All Other APIs
-(See previous PRD sections)
-
 ---
 
 ## Collections
@@ -106,16 +65,21 @@ stas, mohammed (CEO), sultan, naif, salah, supervisor1, employee1/2
 ### New Collection:
 - `push_subscriptions` - User push notification subscriptions
 
-### Protected Collections:
-users, employees, contracts, contracts_v2, work_locations, settings, etc.
+---
+
+## iPhone Instructions
+1. Open website in Safari
+2. Tap Share button (⬆️)
+3. Select "Add to Home Screen"
+4. App appears with company logo
+5. Enable notifications from inside the app
 
 ---
 
 ## Credentials for Testing
 - STAS: `stas` / `123456`
-- Sultan: `sultan` / `123456`
 - All users: password `123456`
 
 ---
 
-Version: 37.1 (2026-02-21)
+Version: 37.2 (2025-02-21)
