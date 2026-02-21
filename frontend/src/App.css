@@ -3,16 +3,16 @@
   @apply inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset;
 }
 .status-executed {
-  @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20;
+  @apply bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.15)];
 }
 .status-rejected {
-  @apply bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20;
+  @apply bg-destructive/10 text-destructive ring-destructive/20 dark:bg-destructive/15;
 }
 .status-pending {
-  @apply bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20;
+  @apply bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.15)];
 }
 .status-created {
-  @apply bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20;
+  @apply bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))] ring-[hsl(var(--info)/0.2)] dark:bg-[hsl(var(--info)/0.15)];
 }
 
 /* Table styles */
