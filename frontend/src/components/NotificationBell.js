@@ -101,7 +101,52 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const [lastCount, setLastCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
   const bellRef = useRef(null);
+  
+  // Check push notification status
+  useEffect(() => {
+    const checkPushStatus = async () => {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+          if (registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            setPushEnabled(!!subscription);
+          }
+        } catch (e) {
+          console.log('[Push] Status check failed:', e);
+        }
+      }
+    };
+    checkPushStatus();
+  }, [user?.id]);
+  
+  // Enable push notifications
+  const enablePushNotifications = async () => {
+    setPushLoading(true);
+    try {
+      const result = await pushService.initialize(user?.id);
+      if (result.success) {
+        setPushEnabled(true);
+        // Show success notification
+        if (Notification.permission === 'granted') {
+          new Notification('DAR AL CODE', {
+            body: lang === 'ar' ? 'تم تفعيل الإشعارات بنجاح' : 'Notifications enabled successfully',
+            icon: '/icon-192.png'
+          });
+        }
+      } else {
+        console.log('[Push] Failed:', result.reason);
+        alert(lang === 'ar' ? 'فشل تفعيل الإشعارات: ' + result.reason : 'Failed to enable notifications: ' + result.reason);
+      }
+    } catch (e) {
+      console.error('[Push] Error:', e);
+      alert(lang === 'ar' ? 'حدث خطأ: ' + e.message : 'Error: ' + e.message);
+    }
+    setPushLoading(false);
+  };
   
   // جلب الإشعارات
   const fetchNotifications = useCallback(async () => {
