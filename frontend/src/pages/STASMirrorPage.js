@@ -81,6 +81,14 @@ export default function STASMirrorPage() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  // === Version Management State ===
+  const [versionInfo, setVersionInfo] = useState(null);
+  const [newVersion, setNewVersion] = useState('');
+  const [releaseNotesAr, setReleaseNotesAr] = useState('');
+  const [releaseNotesEn, setReleaseNotesEn] = useState('');
+  const [updatingVersion, setUpdatingVersion] = useState(false);
+  const [versionDialogOpen, setVersionDialogOpen] = useState(false);
+
   useEffect(() => {
     fetchPending();
     fetchHolidays();
@@ -89,6 +97,7 @@ export default function STASMirrorPage() {
     fetchDevices();
     fetchEmployees();
     fetchMyTransactions();
+    fetchVersion();
   }, []);
 
   const fetchPending = () => {
