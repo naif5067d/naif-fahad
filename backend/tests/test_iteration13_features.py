@@ -12,7 +12,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://hr-timezone-fix.preview.emergentagent.com")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://theme-enforcement.preview.emergentagent.com")
 
 # Test user IDs
 STAS_USER_ID = "fedffe24-ec69-5c65-809d-5d24f8a16b9d"
