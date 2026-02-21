@@ -62,7 +62,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Logo & Company Name */}
           <div className="mb-10 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 mx-auto mb-4 flex items-center justify-center shadow-lg shadow-violet-200">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[hsl(var(--navy))] to-accent mx-auto mb-4 flex items-center justify-center shadow-lg shadow-[hsl(var(--navy)/0.2)]">
               <span className="text-3xl font-bold text-white">د</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-800">
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600" data-testid="login-error">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive" data-testid="login-error">
                   <AlertCircle size={16} />
                   <span>{error}</span>
                 </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
                     data-testid="login-username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="ps-10 h-11 border-slate-200 focus:border-violet-500 focus:ring-violet-500"
+                    className="ps-10 h-11 border-border focus:border-accent focus:ring-accent"
                     placeholder={lang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username'}
                     autoComplete="username"
                     required
@@ -121,7 +121,7 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="ps-10 pe-10 h-11 border-slate-200 focus:border-violet-500 focus:ring-violet-500"
+                    className="ps-10 pe-10 h-11 border-border focus:border-accent focus:ring-accent"
                     placeholder={lang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password'}
                     autoComplete="current-password"
                     required
@@ -143,7 +143,7 @@ export default function LoginPage() {
                   id="remember" 
                   checked={rememberMe} 
                   onCheckedChange={setRememberMe}
-                  className="border-slate-300 data-[state=checked]:bg-violet-600"
+                  className="border-border data-[state=checked]:bg-accent"
                 />
                 <Label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer">
                   {lang === 'ar' ? 'تذكرني' : 'Remember me'}
@@ -153,7 +153,7 @@ export default function LoginPage() {
               <Button 
                 data-testid="login-submit" 
                 type="submit" 
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-accent hover:from-violet-700 hover:to-indigo-700 text-white font-medium shadow-lg shadow-violet-200" 
+                className="w-full h-11 bg-gradient-to-r from-[hsl(var(--navy))] to-accent hover:from-[hsl(var(--navy-dark))] hover:to-[hsl(var(--lavender))] text-white font-medium shadow-lg shadow-[hsl(var(--navy)/0.2)]" 
                 disabled={loading}
               >
                 {loading ? (
@@ -170,7 +170,7 @@ export default function LoginPage() {
             <button 
               data-testid="login-lang-toggle" 
               onClick={toggleLang} 
-              className="flex items-center gap-2 text-sm text-slate-500 hover:text-violet-600 transition-colors"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
             >
               <Globe size={16} />
               {lang === 'ar' ? 'English' : 'العربية'}
@@ -188,7 +188,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right: Decorative panel (desktop only) */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-violet-600 to-indigo-700 items-center justify-center p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-[hsl(var(--navy))] to-accent items-center justify-center p-12 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full" />
