@@ -6,7 +6,7 @@ import {
   Bell, Check, CheckCheck, FileText, XCircle, CheckCircle, 
   Clock, DollarSign, AlertTriangle, Calendar, FileWarning,
   Shield, RotateCcw, UserX, LogOut, Settings, Megaphone, X,
-  BellRing, BellOff
+  BellRing, BellOff, Loader2
 } from 'lucide-react';
 import api from '@/lib/api';
 import pushService from '@/services/pushNotifications';
