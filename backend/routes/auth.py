@@ -287,6 +287,46 @@ async def login(req: LoginRequest, request: Request):
         "last_activity": datetime.now(timezone.utc)
     })
     
+    # استخراج معلومات الجهاز
+    user_agent = request.headers.get("user-agent", "")
+    is_mobile = any(x in user_agent.lower() for x in ['mobile', 'android', 'iphone', 'ipad'])
+    browser = "Chrome" if "chrome" in user_agent.lower() else "Safari" if "safari" in user_agent.lower() else "Firefox" if "firefox" in user_agent.lower() else "Other"
+    os_name = "iOS" if "iphone" in user_agent.lower() or "ipad" in user_agent.lower() else "Android" if "android" in user_agent.lower() else "Windows" if "windows" in user_agent.lower() else "Mac" if "mac" in user_agent.lower() else "Other"
+    device_id = device_signature[:16] if device_signature else str(uuid.uuid4())[:16]
+    
+    # تسجيل الجهاز في employee_devices لإدارة الأجهزة
+    try:
+        existing_device = await db.employee_devices.find_one({
+            "employee_id": employee_id,
+            "device_id": device_id
+        })
+        
+        if not existing_device:
+            await db.employee_devices.insert_one({
+                "id": str(uuid.uuid4()),
+                "employee_id": employee_id,
+                "device_id": device_id,
+                "device_name": f"{os_name} - {browser}",
+                "device_type": "mobile" if is_mobile else "desktop",
+                "os": os_name,
+                "browser": browser,
+                "is_mobile": is_mobile,
+                "status": "approved",
+                "first_login": datetime.now(timezone.utc).isoformat(),
+                "last_login": datetime.now(timezone.utc).isoformat(),
+                "login_count": 1,
+                "user_agent": user_agent,
+                "ip_address": request.client.host if request.client else "unknown"
+            })
+            logger.info(f"New device registered for {employee_id}: {device_id}")
+        else:
+            await db.employee_devices.update_one(
+                {"id": existing_device["id"]},
+                {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}, "$inc": {"login_count": 1}}
+            )
+    except Exception as e:
+        logger.error(f"Failed to register device: {e}")
+    
     # تسجيل الدخول في سجل الأمان
     await db.security_audit_log.insert_one({
         "id": str(uuid.uuid4()),
@@ -302,11 +342,6 @@ async def login(req: LoginRequest, request: Request):
     })
     
     # تسجيل في login_sessions لصفحة سجل الدخول
-    user_agent = request.headers.get("user-agent", "")
-    is_mobile = any(x in user_agent.lower() for x in ['mobile', 'android', 'iphone', 'ipad'])
-    browser = "Chrome" if "chrome" in user_agent.lower() else "Safari" if "safari" in user_agent.lower() else "Firefox" if "firefox" in user_agent.lower() else "Other"
-    os_name = "iOS" if "iphone" in user_agent.lower() or "ipad" in user_agent.lower() else "Android" if "android" in user_agent.lower() else "Windows" if "windows" in user_agent.lower() else "Mac" if "mac" in user_agent.lower() else "Other"
-    
     try:
         await db.login_sessions.insert_one({
             "id": str(uuid.uuid4()),
@@ -314,7 +349,7 @@ async def login(req: LoginRequest, request: Request):
             "username": req.username,
             "role": role,
             "session_id": session_id,
-            "device_id": device_signature[:16] if device_signature else None,
+            "device_id": device_id,
             "login_at": datetime.now(timezone.utc).isoformat(),
             "logout_at": None,
             "device_type": "mobile" if is_mobile else "desktop",
