@@ -292,23 +292,23 @@ export default function AppLayout({ children }) {
       {/* Main content */}
       <div className="md:ms-64 pb-20 md:pb-0">
         {/* Top header - with safe area for iPhone notch/Dynamic Island */}
-        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-          <div className="flex items-center justify-between px-3 md:px-6 h-16 md:h-16">
+        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header">
+          <div className="flex items-center justify-between px-3 md:px-6 h-14 md:h-16">
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-2.5 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80 touch-target" 
+              className="md:hidden p-2 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80" 
               onClick={() => setSidebarOpen(true)} 
               data-testid="open-sidebar"
             >
-              <Menu size={24} />
+              <Menu size={22} />
             </button>
             
             {/* Page title (desktop) */}
             <div className="hidden md:block" />
 
-            {/* Right side controls - Always visible on all screens */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Fullscreen Toggle Button - Hidden on mobile (not supported) */}
+            {/* Right side controls */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Fullscreen Toggle - Desktop only */}
               <button 
                 data-testid="toggle-fullscreen" 
                 onClick={toggleFullscreen} 
@@ -318,27 +318,25 @@ export default function AppLayout({ children }) {
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>
 
-              {/* Notification Bell - For ALL users - ALWAYS visible */}
-              <div className="flex-shrink-0">
-                <NotificationBell />
-              </div>
+              {/* Notification Bell - ALWAYS visible */}
+              <NotificationBell />
 
               {/* User Switcher - STAS ONLY */}
               {role === 'stas' ? (
-                <div className="relative flex-shrink-0" ref={switcherRef}>
+                <div className="relative" ref={switcherRef}>
                   <button
                     data-testid="user-switcher-btn"
                     onClick={() => setSwitcherOpen(!switcherOpen)}
-                    className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-xl hover:bg-muted border border-border transition-all"
+                    className="flex items-center gap-1.5 px-1.5 sm:px-2 py-1.5 text-sm rounded-xl hover:bg-muted border border-border transition-all"
                   >
                     <div 
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                       style={{ background: colors.bg }}
                     >
                       {lang === 'ar' ? 'س' : 'S'}
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px]">{displayName}</span>
-                    <ChevronDown size={14} className={`text-muted-foreground transition-transform flex-shrink-0 ${switcherOpen ? 'rotate-180' : ''}`} />
+                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[80px]">{displayName}</span>
+                    <ChevronDown size={12} className={`text-muted-foreground transition-transform flex-shrink-0 ${switcherOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {switcherOpen && (
@@ -384,15 +382,15 @@ export default function AppLayout({ children }) {
                   )}
                 </div>
               ) : (
-                /* Regular user profile indicator (non-STAS) */
-                <div className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-xl border border-border flex-shrink-0">
+                /* Regular user profile indicator */
+                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-xl border border-border">
                   <div 
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                     style={{ background: colors.bg }}
                   >
                     {(user?.full_name || 'U')[0]}
                   </div>
-                  <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px]">{displayName}</span>
+                  <span className="text-sm font-medium truncate max-w-[80px]">{displayName}</span>
                 </div>
               )}
 
@@ -400,35 +398,33 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-lang" 
                 onClick={toggleLang} 
-                className="p-2.5 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0 touch-target"
+                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors"
                 title={t('lang.toggle')}
               >
-                <Globe size={20} />
+                <Globe size={18} />
               </button>
 
               {/* Theme toggle */}
               <button 
                 data-testid="toggle-theme" 
                 onClick={toggleTheme} 
-                className="p-2.5 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0 touch-target"
+                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors"
                 title={t('theme.toggle')}
               >
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
               </button>
 
-              {/* Logout button with dropdown */}
+              {/* Logout button */}
               <div className="relative" ref={logoutRef}>
                 <button 
                   data-testid="logout-btn" 
                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
-                  onContextMenu={(e) => { e.preventDefault(); setShowLogoutMenu(true); }}
-                  className="p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors flex-shrink-0 touch-target"
+                  className="p-2 rounded-xl hover:bg-red-50 hover:text-red-600 active:bg-red-100 text-muted-foreground transition-colors"
                   title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
                 >
-                  <LogOut size={20} />
+                  <LogOut size={18} />
                 </button>
                 
-                {/* Logout Menu */}
                 {showLogoutMenu && (
                   <div className="absolute top-full mt-2 end-0 w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-fade-in z-50">
                     <button
