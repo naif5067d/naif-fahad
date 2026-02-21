@@ -673,8 +673,8 @@ export default function STASMirrorPage() {
               <div className="bg-gradient-to-r from-[hsl(var(--warning)/0.1)] to-[hsl(var(--warning)/0.1)] border-2 border-[hsl(var(--warning)/0.3)] rounded-xl p-5 shadow-sm">
                 <h3 className="font-bold text-[hsl(var(--warning))] flex items-center gap-2 mb-4 text-lg">
                   <AlertTriangle size={22} className="text-[hsl(var(--warning))]" />
-                  {lang === 'ar' ? '⚠️ أجهزة تحتاج موافقتك' : '⚠️ Devices Need Your Approval'}
-                  <span className="bg-[hsl(var(--warning)/0.1)]0 text-white text-sm px-2 py-0.5 rounded-full mr-2">
+                  {lang === 'ar' ? 'أجهزة تحتاج موافقتك' : 'Devices Need Your Approval'}
+                  <span className="bg-[hsl(var(--warning))] text-white text-sm px-2 py-0.5 rounded-full mr-2">
                     {pendingDevices.length}
                   </span>
                 </h3>
