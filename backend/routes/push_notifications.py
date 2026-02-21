@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 
-from utils.auth import require_auth
+from utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/push", tags=["Push Notifications"])
 
