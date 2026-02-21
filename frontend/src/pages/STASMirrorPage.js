@@ -181,7 +181,9 @@ export default function STASMirrorPage() {
         welcome_text_ar: companySettings.welcome_text_ar,
         welcome_text_en: companySettings.welcome_text_en,
         primary_color: companySettings.primary_color,
-        secondary_color: companySettings.secondary_color
+        secondary_color: companySettings.secondary_color,
+        company_name_ar: companySettings.company_name_ar,
+        company_name_en: companySettings.company_name_en
       });
       toast.success(lang === 'ar' ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully');
     } catch (err) {
