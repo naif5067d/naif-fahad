@@ -10,17 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   Wallet, Plus, Send, CheckCircle, XCircle, Play, Lock, 
   FileSpreadsheet, Trash2, AlertTriangle, RefreshCw, Clock,
-  ChevronRight, Download, Info
+  ChevronRight, Download, Info, FolderOpen, Archive
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 const STATUS_MAP = {
-  open: { label_ar: 'مفتوحة', label_en: 'Open', color: 'bg-blue-100 text-blue-700', icon: '📂' },
-  pending_audit: { label_ar: 'بانتظار التدقيق', label_en: 'Pending Audit', color: 'bg-orange-100 text-orange-700', icon: '⏳' },
-  approved: { label_ar: 'معتمدة', label_en: 'Approved', color: 'bg-green-100 text-green-700', icon: '✅' },
-  executed: { label_ar: 'منفذة', label_en: 'Executed', color: 'bg-purple-100 text-purple-700', icon: '🔒' },
-  closed: { label_ar: 'مغلقة', label_en: 'Closed', color: 'bg-slate-100 text-slate-600', icon: '📦' },
+  open: { label_ar: 'مفتوحة', label_en: 'Open', color: 'bg-info/10 text-info', iconName: 'FolderOpen' },
+  pending_audit: { label_ar: 'بانتظار التدقيق', label_en: 'Pending Audit', color: 'bg-warning/10 text-warning', iconName: 'Clock' },
+  approved: { label_ar: 'معتمدة', label_en: 'Approved', color: 'bg-success/10 text-success', iconName: 'CheckCircle' },
+  executed: { label_ar: 'منفذة', label_en: 'Executed', color: 'bg-accent/20 text-accent', iconName: 'Lock' },
+  closed: { label_ar: 'مغلقة', label_en: 'Closed', color: 'bg-muted text-muted-foreground', iconName: 'Archive' },
 };
 
 export default function AdminCustodyPage() {

@@ -305,7 +305,7 @@ export default function NotificationBell() {
                 title={lang === 'ar' ? 'اختبار الصوت' : 'Test sound'}
                 data-testid="test-sound-btn"
               >
-                🔔
+                <Bell size={14} />
               </button>
               {unreadCount > 0 && (
                 <button
@@ -346,7 +346,7 @@ export default function NotificationBell() {
                 data-testid="enable-push-btn"
               >
                 {pushLoading ? (
-                  <span className="animate-spin">⏳</span>
+                  <Loader2 size={16} className="animate-spin" />
                 ) : pushEnabled ? (
                   <>
                     <BellRing size={16} />
