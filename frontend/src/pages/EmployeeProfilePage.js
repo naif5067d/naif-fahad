@@ -292,8 +292,8 @@ export default function EmployeeProfilePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{lang === 'ar' ? 'الحالة' : 'Status'}</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  contract.status === 'active' ? 'bg-green-100 text-green-700' : 
-                  contract.status === 'terminated' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
+                  contract.status === 'active' ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 
+                  contract.status === 'terminated' ? 'bg-destructive/15 text-destructive' : 'bg-gray-100 text-gray-700'
                 }`}>
                   {lang === 'ar' ? (
                     contract.status === 'active' ? 'نشط' : 
@@ -324,7 +324,7 @@ export default function EmployeeProfilePage() {
               {serviceInfo.eos_amount && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'EOS'}</span>
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-[hsl(var(--success))]">
                     {serviceInfo.eos_amount?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
                   </span>
                 </div>
@@ -385,7 +385,7 @@ export default function EmployeeProfilePage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{lang === 'ar' ? 'حالة اليوم' : 'Today'}</span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  attendance.today_status === 'present' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  attendance.today_status === 'present' ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-amber-100 text-amber-700'
                 }`}>
                   {lang === 'ar' ? attendance.today_status_ar : attendance.today_status}
                 </span>

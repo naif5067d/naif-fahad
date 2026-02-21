@@ -158,18 +158,18 @@ export default function ContractsPage() {
                       </div>
                       {settlementPreview.deduction_details?.length > 0 && (
                         <div className="border-t pt-2 mt-2">
-                          <p className="text-xs font-semibold text-red-600 mb-1">{lang === 'ar' ? 'الخصومات المسجلة:' : 'Recorded Deductions:'}</p>
+                          <p className="text-xs font-semibold text-destructive mb-1">{lang === 'ar' ? 'الخصومات المسجلة:' : 'Recorded Deductions:'}</p>
                           {settlementPreview.deduction_details.map((d, i) => (
                             <div key={i} className="text-xs flex justify-between text-muted-foreground">
                               <span>{d.reason || d.date}</span>
-                              <span className="text-red-600">-{d.amount} SAR</span>
+                              <span className="text-destructive">-{d.amount} SAR</span>
                             </div>
                           ))}
                         </div>
                       )}
                       <div className="border-t pt-2 flex justify-between font-bold">
                         <span>{lang === 'ar' ? 'صافي المخالصة:' : 'Net Settlement:'}</span>
-                        <span className="text-green-600">{settlementPreview.net_settlement?.toLocaleString()} SAR</span>
+                        <span className="text-[hsl(var(--success))]">{settlementPreview.net_settlement?.toLocaleString()} SAR</span>
                       </div>
                     </div>
                   )}
@@ -195,15 +195,15 @@ export default function ContractsPage() {
                       <Input type="number" value={sForm.other_payments} onChange={e => setSForm(f => ({ ...f, other_payments: e.target.value }))} />
                     </div>
                     <div className="col-span-2">
-                      <Label className="text-red-600">{lang === 'ar' ? 'الخصومات' : 'Deductions'}</Label>
-                      <Input type="number" value={sForm.deductions} onChange={e => setSForm(f => ({ ...f, deductions: e.target.value }))} className="border-red-200" />
+                      <Label className="text-destructive">{lang === 'ar' ? 'الخصومات' : 'Deductions'}</Label>
+                      <Input type="number" value={sForm.deductions} onChange={e => setSForm(f => ({ ...f, deductions: e.target.value }))} className="border-destructive/30" />
                     </div>
                   </div>
 
                   {/* صافي المخالصة */}
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-200 flex justify-between items-center">
+                  <div className="p-3 bg-[hsl(var(--success)/0.1)] rounded-lg border border-[hsl(var(--success)/0.3)] flex justify-between items-center">
                     <span className="font-semibold">{lang === 'ar' ? 'الإجمالي:' : 'Total:'}</span>
-                    <span className="text-xl font-bold text-green-700">
+                    <span className="text-xl font-bold text-[hsl(var(--success))]">
                       {(parseFloat(sForm.final_salary || 0) + parseFloat(sForm.leave_encashment || 0) + parseFloat(sForm.eos_amount || 0) + parseFloat(sForm.other_payments || 0) - parseFloat(sForm.deductions || 0)).toLocaleString()} SAR
                     </span>
                   </div>

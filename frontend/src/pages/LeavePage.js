@@ -302,10 +302,10 @@ export default function LeavePage() {
               ))}
               
               {/* ساعات الاستئذان */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
-                <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">{lang === 'ar' ? 'الاستئذان' : 'Permission'}</p>
-                <p className="text-xl font-bold font-mono text-blue-800 dark:text-blue-200">{permissionHours.used}/{permissionHours.total}</p>
-                <p className="text-[10px] text-blue-600 dark:text-blue-400">{lang === 'ar' ? 'ساعات' : 'hours'}</p>
+              <div className="bg-[hsl(var(--info)/0.1)] dark:bg-blue-900/20 border border-[hsl(var(--info)/0.3)] dark:border-blue-800 rounded-lg px-4 py-3">
+                <p className="text-xs text-[hsl(var(--info))] dark:text-blue-300 font-medium">{lang === 'ar' ? 'الاستئذان' : 'Permission'}</p>
+                <p className="text-xl font-bold font-mono text-[hsl(var(--info))] dark:text-blue-200">{permissionHours.used}/{permissionHours.total}</p>
+                <p className="text-[10px] text-[hsl(var(--info))] dark:text-[hsl(var(--info))]">{lang === 'ar' ? 'ساعات' : 'hours'}</p>
               </div>
             </div>
           )}
@@ -344,7 +344,7 @@ export default function LeavePage() {
             {/* رفع ملف للإجازة المرضية - إلزامي */}
             {form.leave_type === 'sick' && (
               <div className="sm:col-span-2">
-                <Label className="text-red-600">
+                <Label className="text-destructive">
                   {lang === 'ar' ? '* ملف التقرير الطبي (PDF)' : '* Medical Report (PDF)'}
                 </Label>
                 <Input 
@@ -459,7 +459,7 @@ export default function LeavePage() {
                                     });
                                     setAddHolidayOpen(true);
                                   }} 
-                                  className="text-blue-400 hover:text-blue-600 p-1"
+                                  className="text-[hsl(var(--info))] hover:text-[hsl(var(--info))] p-1"
                                   title={lang === 'ar' ? 'تعديل' : 'Edit'}
                                 >
                                   <Pencil size={13} />
@@ -470,7 +470,7 @@ export default function LeavePage() {
                                       days.forEach(d => handleDeleteHoliday(d.id));
                                     }
                                   }} 
-                                  className="text-red-400 hover:text-red-600 p-1"
+                                  className="text-destructive hover:text-destructive p-1"
                                   title={lang === 'ar' ? 'حذف' : 'Delete'}
                                 >
                                   <Trash2 size={13} />
@@ -525,7 +525,7 @@ export default function LeavePage() {
                         ? 'bg-[hsl(var(--success)/0.15)] text-emerald-800 border border-emerald-300' 
                         : tier.salary_percent === 50 
                           ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]' 
-                          : 'bg-red-100 text-red-800 border border-red-300'
+                          : 'bg-destructive/15 text-destructive border border-destructive/30'
                     }`}>
                       <span className="font-bold">{tier.days} {lang === 'ar' ? 'يوم' : 'days'}</span>
                       <span className="mx-2">→</span>
@@ -556,8 +556,8 @@ export default function LeavePage() {
               </div>
               
               {/* طلب التوقيع */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-300 text-center">
-                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <div className="p-3 bg-[hsl(var(--info)/0.1)] dark:bg-blue-900/20 rounded-lg border border-[hsl(var(--info)/0.3)] text-center">
+                <p className="text-sm font-medium text-[hsl(var(--info))] dark:text-blue-200">
                   {lang === 'ar' 
                     ? '✍️ بالضغط على "توقيع وتقديم"، أوافق على تطبيق الخصم المذكور أعلاه.'
                     : '✍️ By clicking "Sign & Submit", I agree to the above deduction.'
@@ -573,7 +573,7 @@ export default function LeavePage() {
             </Button>
             <Button 
               onClick={handleConfirmSickLeave} 
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:w-auto bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))]"
               data-testid="sign-submit-sick-leave"
             >
               {lang === 'ar' ? '✍️ توقيع وتقديم الطلب' : '✍️ Sign & Submit Request'}
