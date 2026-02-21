@@ -162,6 +162,95 @@ export default function STASMirrorPage() {
     }
   };
 
+  // === Company Settings Functions ===
+  const fetchCompanySettings = async () => {
+    try {
+      const res = await api.get('/api/company-settings');
+      setCompanySettings(prev => ({ ...prev, ...res.data }));
+    } catch (err) {
+      console.error('Failed to fetch company settings:', err);
+    }
+  };
+
+  const handleSaveCompanySettings = async () => {
+    setSavingSettings(true);
+    try {
+      await api.put('/api/company-settings', {
+        welcome_text_ar: companySettings.welcome_text_ar,
+        welcome_text_en: companySettings.welcome_text_en,
+        primary_color: companySettings.primary_color,
+        secondary_color: companySettings.secondary_color
+      });
+      toast.success(lang === 'ar' ? 'تم حفظ الإعدادات بنجاح' : 'Settings saved successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل حفظ الإعدادات' : 'Failed to save settings'));
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleUploadLogo = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingLogo(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await api.post('/api/company-settings/upload-logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setCompanySettings(prev => ({ ...prev, logo_url: res.data.logo_url }));
+      toast.success(lang === 'ar' ? 'تم رفع الشعار بنجاح' : 'Logo uploaded successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل رفع الشعار' : 'Failed to upload logo'));
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleUploadSideImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingSideImage(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await api.post('/api/company-settings/upload-side-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setCompanySettings(prev => ({ ...prev, side_image_url: res.data.side_image_url }));
+      toast.success(lang === 'ar' ? 'تم رفع الصورة الجانبية بنجاح' : 'Side image uploaded successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل رفع الصورة' : 'Failed to upload image'));
+    } finally {
+      setUploadingSideImage(false);
+    }
+  };
+
+  const handleDeleteLogo = async () => {
+    try {
+      await api.delete('/api/company-settings/logo');
+      setCompanySettings(prev => ({ ...prev, logo_url: null }));
+      toast.success(lang === 'ar' ? 'تم حذف الشعار' : 'Logo deleted');
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل حذف الشعار' : 'Failed to delete logo');
+    }
+  };
+
+  const handleDeleteSideImage = async () => {
+    try {
+      await api.delete('/api/company-settings/side-image');
+      setCompanySettings(prev => ({ ...prev, side_image_url: null }));
+      toast.success(lang === 'ar' ? 'تم حذف الصورة' : 'Image deleted');
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل حذف الصورة' : 'Failed to delete image');
+    }
+  };
+
   // === My Transactions Functions ===
   const fetchMyTransactions = async () => {
     try {
