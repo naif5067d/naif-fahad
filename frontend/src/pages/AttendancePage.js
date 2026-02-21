@@ -14,6 +14,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { formatErrorForToast } from '@/components/ErrorAlert';
 
 // Fix Leaflet default icons
 delete L.Icon.Default.prototype._getIconUrl;
