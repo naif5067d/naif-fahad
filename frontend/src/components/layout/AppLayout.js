@@ -320,20 +320,20 @@ export default function AppLayout({ children }) {
 
               {/* User Switcher - STAS ONLY */}
               {role === 'stas' ? (
-                <div className="relative" ref={switcherRef}>
+                <div className="relative flex-shrink-0" ref={switcherRef}>
                   <button
                     data-testid="user-switcher-btn"
                     onClick={() => setSwitcherOpen(!switcherOpen)}
-                    className="flex items-center gap-1 md:gap-2.5 px-2 md:px-3 py-1.5 md:py-2 text-sm rounded-xl hover:bg-muted border border-border transition-all touch-target"
+                    className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-xl hover:bg-muted border border-border transition-all"
                   >
                     <div 
-                      className="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                       style={{ background: colors.bg }}
                     >
                       {lang === 'ar' ? 'س' : 'S'}
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px] md:max-w-[120px]">{displayName}</span>
-                    <ChevronDown size={14} className={`text-muted-foreground transition-transform ${switcherOpen ? 'rotate-180' : ''}`} />
+                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px]">{displayName}</span>
+                    <ChevronDown size={14} className={`text-muted-foreground transition-transform flex-shrink-0 ${switcherOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {switcherOpen && (
