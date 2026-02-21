@@ -7,7 +7,18 @@ import os
 
 SECRET_KEY = os.environ.get('JWT_SECRET', 'dar-al-code-hr-os-2026-x9k2m')
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_HOURS = 24
+
+# مدة الجلسة حسب الدور (بالساعات)
+TOKEN_EXPIRE_HOURS = {
+    "stas": 12,      # المدير العام
+    "mohammed": 8,   # الرئيس التنفيذي
+    "sultan": 8,     # مدير العمليات
+    "naif": 8,       # المدير المالي
+    "salah": 8,      # المدقق
+    "supervisor": 6, # المشرفين
+    "employee": 4    # الموظفين - أقصر مدة
+}
+DEFAULT_TOKEN_EXPIRE = 4  # الافتراضي 4 ساعات
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
