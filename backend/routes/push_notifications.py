@@ -88,21 +88,37 @@ async def subscribe_to_push(data: PushSubscription, current_user: dict = Depends
     """Save push subscription for a user"""
     db = get_db()
     
+    # Extract FCM token
+    fcm_token = None
+    if data.subscription.get("keys", {}).get("fcm_token"):
+        fcm_token = data.subscription["keys"]["fcm_token"]
+    elif data.subscription.get("endpoint", "").startswith("fcm:"):
+        fcm_token = data.subscription["endpoint"][4:]  # Remove "fcm:" prefix
+    
     subscription_doc = {
         "user_id": data.user_id,
         "endpoint": data.subscription.get("endpoint"),
+        "fcm_token": fcm_token,
         "keys": data.subscription.get("keys"),
+        "type": data.type,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
         "is_active": True
     }
     
     # Upsert subscription (update if exists, insert if not)
-    db.push_subscriptions.update_one(
-        {"user_id": data.user_id, "endpoint": data.subscription.get("endpoint")},
-        {"$set": subscription_doc},
-        upsert=True
-    )
+    if fcm_token:
+        db.push_subscriptions.update_one(
+            {"user_id": data.user_id, "fcm_token": fcm_token},
+            {"$set": subscription_doc},
+            upsert=True
+        )
+    else:
+        db.push_subscriptions.update_one(
+            {"user_id": data.user_id, "endpoint": data.subscription.get("endpoint")},
+            {"$set": subscription_doc},
+            upsert=True
+        )
     
     return {"success": True, "message": "تم تفعيل الإشعارات"}
 
