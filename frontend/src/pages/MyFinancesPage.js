@@ -179,7 +179,7 @@ export default function MyFinancesPage() {
               </span>
               <Clock size={18} className="text-violet-500" />
             </div>
-            <p className="text-2xl font-bold text-accent dark:text-violet-400">
+            <p className="text-2xl font-bold text-accent dark:text-accent">
               {summary?.absence_summary?.total_absent_days || 0}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -328,13 +328,13 @@ export default function MyFinancesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-800 flex items-center justify-center mt-1">
-                        <AlertTriangle size={14} className="text-[hsl(var(--warning))] dark:text-amber-300" />
+                        <AlertTriangle size={14} className="text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]" />
                       </div>
                       <div>
-                        <p className="font-semibold text-[hsl(var(--warning))] dark:text-amber-200">
+                        <p className="font-semibold text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                           {w.warning_type_ar || getWarningTypeLabel(w.warning_type)}
                         </p>
-                        <p className="text-sm text-[hsl(var(--warning))] dark:text-amber-300 mt-1">
+                        <p className="text-sm text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] mt-1">
                           {w.reason_ar || w.reason}
                         </p>
                         <p className="text-xs text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] mt-2">
@@ -342,7 +342,7 @@ export default function MyFinancesPage() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] dark:text-amber-300">
+                    <Badge variant="outline" className="border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                       {w.violation_type_ar || w.violation_type}
                     </Badge>
                   </div>

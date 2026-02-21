@@ -1490,13 +1490,13 @@ export default function STASMirrorPage() {
                             
                             {/* عرض تفاصيل الإجازة المرضية */}
                             {c.sick_leave_info && (
-                              <div className="mt-2 p-2 bg-[hsl(var(--warning)/0.15)] dark:bg-amber-900/30 rounded text-xs space-y-1">
+                              <div className="mt-2 p-2 bg-[hsl(var(--warning)/0.15)] dark:bg-[hsl(var(--warning)/0.2)] rounded text-xs space-y-1">
                                 <div className="flex justify-between">
                                   <span>{lang === 'ar' ? 'الاستهلاك الحالي:' : 'Current usage:'}</span>
                                   <span className="font-bold">{c.sick_leave_info.current_used} / 120 {lang === 'ar' ? 'يوم' : 'days'}</span>
                                 </div>
                                 {c.sick_leave_info.tier_distribution?.map((tier, ti) => (
-                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-[hsl(var(--success)/0.15)] text-emerald-800' : tier.salary_percent === 50 ? 'bg-amber-200 text-[hsl(var(--warning))]' : 'bg-red-100 text-red-800'}`}>
+                                  <div key={ti} className={`p-1 rounded ${tier.salary_percent === 100 ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : tier.salary_percent === 50 ? 'bg-amber-200 text-[hsl(var(--warning))]' : 'bg-red-100 text-red-800'}`}>
                                     {tier.days} {lang === 'ar' ? 'يوم' : 'days'} → {tier.salary_percent === 100 ? (lang === 'ar' ? 'براتب كامل' : 'Full pay') : tier.salary_percent === 50 ? (lang === 'ar' ? 'نصف راتب' : 'Half pay') : (lang === 'ar' ? 'بدون راتب' : 'No pay')}
                                   </div>
                                 ))}
@@ -1532,7 +1532,7 @@ export default function STASMirrorPage() {
                           </CardTitle>
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                             mirror.transaction.data.calculation_details.calculation_valid 
-                              ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:bg-emerald-900/30 dark:text-emerald-400' 
+                              ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.2)] dark:text-[hsl(var(--success))]' 
                               : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                           }`}>
                             {mirror.transaction.data.calculation_details.calculation_valid 
@@ -1556,11 +1556,11 @@ export default function STASMirrorPage() {
                             <p className="text-xl font-bold">{mirror.transaction.data.calculation_details.total_calendar_days}</p>
                             <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'تقويمي' : 'Calendar'}</p>
                           </div>
-                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--success)/0.15)] dark:bg-emerald-900/30 rounded-lg p-3 text-center">
-                            <p className="text-xl font-bold text-[hsl(var(--success))] dark:text-emerald-400">{mirror.transaction.data.calculation_details.working_days}</p>
+                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)] rounded-lg p-3 text-center">
+                            <p className="text-xl font-bold text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">{mirror.transaction.data.calculation_details.working_days}</p>
                             <p className="text-[10px] text-[hsl(var(--success))]">{lang === 'ar' ? 'عمل' : 'Work'}</p>
                           </div>
-                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--warning)/0.15)] dark:bg-amber-900/30 rounded-lg p-3 text-center">
+                          <div className="flex-1 min-w-[80px] bg-[hsl(var(--warning)/0.15)] dark:bg-[hsl(var(--warning)/0.2)] rounded-lg p-3 text-center">
                             <p className="text-xl font-bold text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">{mirror.transaction.data.calculation_details.excluded_fridays?.length || 0}</p>
                             <p className="text-[10px] text-[hsl(var(--warning))]">{lang === 'ar' ? 'جمعة' : 'Fri'}</p>
                           </div>

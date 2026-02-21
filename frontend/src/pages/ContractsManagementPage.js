@@ -1912,7 +1912,7 @@ export default function ContractsManagementPage() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 p-2 bg-[hsl(var(--success)/0.15)] dark:bg-emerald-900/30 rounded text-sm">
+                <div className="mt-3 p-2 bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)] rounded text-sm">
                   <span className="font-semibold">إجمالي الراتب: </span>
                   {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.nature_of_work_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
                 </div>
@@ -2005,7 +2005,7 @@ export default function ContractsManagementPage() {
 
             {/* أرصدة الإجازات والساعات - تعديل كامل */}
             <div className="p-4 bg-[hsl(var(--success)/0.1)] dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--success))] dark:text-emerald-300">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
                 <Calendar className="w-4 h-4" />
                 أرصدة الإجازات والساعات (تعديل مباشر)
               </h3>
@@ -2093,14 +2093,14 @@ export default function ContractsManagementPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-[hsl(var(--success))] dark:text-emerald-400 mt-2">
+              <p className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))] mt-2">
                 ⚠️ هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
               </p>
             </div>
 
             {/* تاريخ المباشرة ووضع التجربة */}
             <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/20 rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-amber-300">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                 <Clock className="w-4 h-4" />
                 تاريخ المباشرة ووضع التجربة
               </h3>

@@ -132,7 +132,7 @@ export default function PenaltiesPage() {
       )}
 
       {/* Rules Info */}
-      <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)]">
+      <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)]">
         <CardContent className="p-4">
           <h3 className="font-bold flex items-center gap-2 mb-3">
             <AlertTriangle className="text-[hsl(var(--warning))]" size={20} />
@@ -267,7 +267,7 @@ export default function PenaltiesPage() {
                         </div>
                         
                         {/* Deficit Details */}
-                        <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg">
+                        <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg">
                           <h4 className="font-medium text-[hsl(var(--warning))] mb-2 flex items-center gap-2">
                             <Clock size={16} />
                             {lang === 'ar' ? 'نقص الساعات' : 'Hours Deficit'}
@@ -282,7 +282,7 @@ export default function PenaltiesPage() {
                       </div>
                       
                       {/* Summary */}
-                      <div className="mt-4 p-3 bg-accent/10 dark:bg-violet-900/10 rounded-lg">
+                      <div className="mt-4 p-3 bg-accent/10 dark:bg-accent/15 rounded-lg">
                         <div className="flex justify-between items-center">
                           <div>
                             <p className="font-medium">{lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}</p>

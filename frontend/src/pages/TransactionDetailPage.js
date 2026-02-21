@@ -492,11 +492,11 @@ export default function TransactionDetailPage() {
           <div className="w-5 h-5 rounded-full bg-[hsl(var(--success)/0.1)]0 flex items-center justify-center">
             <span className="text-white text-xs">✓</span>
           </div>
-          <span className="text-sm text-[hsl(var(--success))] dark:text-emerald-300 font-medium">
+          <span className="text-sm text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">
             {lang === 'ar' ? 'تم التحقق من الإجازات الرسمية' : 'Public holidays verified'}
           </span>
           {tx.data.calculation_details.excluded_holidays?.length > 0 && (
-            <span className="text-xs text-[hsl(var(--success))] dark:text-emerald-400">
+            <span className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
               ({tx.data.calculation_details.excluded_holidays.length} {lang === 'ar' ? 'مستثناة' : 'excluded'})
             </span>
           )}

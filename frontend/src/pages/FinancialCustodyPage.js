@@ -37,8 +37,8 @@ const STATUS_MAP = {
 
 const STATUS_STYLES = {
   open: 'bg-blue-50 text-blue-700 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-300',
-  pending_audit: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-amber-300 dark:bg-amber-950/50 dark:text-amber-300',
-  approved: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300',
+  pending_audit: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] ring-amber-300 dark:bg-amber-950/50 dark:text-[hsl(var(--warning))]',
+  approved: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] ring-emerald-300 dark:bg-emerald-950/50 dark:text-[hsl(var(--success))]',
   executed: 'bg-purple-50 text-purple-700 ring-purple-300 dark:bg-purple-950/50 dark:text-purple-300',
   closed: 'bg-slate-100 text-slate-600 ring-slate-300 dark:bg-slate-800 dark:text-slate-400',
 };
@@ -816,7 +816,7 @@ export default function FinancialCustodyPage() {
                     <td className="px-3 py-3 text-end font-mono text-red-700 dark:text-red-400">
                       -{selected.spent.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3 text-end font-mono text-[hsl(var(--success))] dark:text-emerald-400">
+                    <td className="px-3 py-3 text-end font-mono text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
                       {selected.remaining.toLocaleString()}
                     </td>
                     {(isEditable || canSalahEdit) && <td></td>}
@@ -1122,7 +1122,7 @@ export default function FinancialCustodyPage() {
               {lang === 'ar' ? 'المتبقي' : 'Remaining'}
             </span>
           </div>
-          <p className="text-2xl font-bold font-mono text-[hsl(var(--success))] dark:text-emerald-300">
+          <p className="text-2xl font-bold font-mono text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
             {(summary.total_remaining || 0).toLocaleString()}
           </p>
         </div>

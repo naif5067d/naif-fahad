@@ -1149,7 +1149,7 @@ export default function TeamAttendancePage() {
                 )}
                 
                 {/* Info Box */}
-                <div className="mt-6 p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-xl border border-[hsl(var(--warning)/0.3)]">
+                <div className="mt-6 p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-xl border border-[hsl(var(--warning)/0.3)]">
                   <h4 className="font-semibold text-[hsl(var(--warning))] flex items-center gap-2 mb-2">
                     <AlertTriangle size={16} />
                     {lang === 'ar' ? 'تنبيه مهم' : 'Important Notice'}
@@ -1203,7 +1203,7 @@ export default function TeamAttendancePage() {
           )}
 
           {/* Rules Info */}
-          <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)] mb-6">
+          <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)] mb-6">
             <CardContent className="p-4">
               <h3 className="font-bold flex items-center gap-2 mb-3">
                 <AlertTriangle className="text-[hsl(var(--warning))]" size={20} />
@@ -1329,7 +1329,7 @@ export default function TeamAttendancePage() {
                             </div>
                             
                             {/* Deficit Details */}
-                            <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg">
+                            <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg">
                               <h4 className="font-medium text-[hsl(var(--warning))] mb-2 flex items-center gap-2">
                                 <Clock size={16} />
                                 {lang === 'ar' ? 'نقص الساعات' : 'Hours Deficit'}
@@ -1344,7 +1344,7 @@ export default function TeamAttendancePage() {
                           </div>
                           
                           {/* Summary */}
-                          <div className="mt-4 p-3 bg-accent/10 dark:bg-violet-900/10 rounded-lg">
+                          <div className="mt-4 p-3 bg-accent/10 dark:bg-accent/15 rounded-lg">
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="font-medium">{lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}</p>
@@ -1391,7 +1391,7 @@ export default function TeamAttendancePage() {
                 ) : (
                   <div className="space-y-4">
                     {pendingCorrections.map((req) => (
-                      <div key={req.id} className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
+                      <div key={req.id} className="p-4 border rounded-xl bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)] dark:border-amber-800">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1712,7 +1712,7 @@ export default function TeamAttendancePage() {
                       onChange={(e) => setEditForm({...editForm, supervisor_acknowledgment: e.target.checked})}
                       className="mt-1 w-5 h-5 rounded border-amber-400"
                     />
-                    <label htmlFor="supervisor_ack" className="text-sm text-[hsl(var(--warning))] dark:text-amber-200">
+                    <label htmlFor="supervisor_ack" className="text-sm text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                       <span className="font-semibold block mb-1">
                         {lang === 'ar' ? 'إقرار تحمل المسؤولية' : 'Responsibility Acknowledgment'}
                       </span>
@@ -1924,7 +1924,7 @@ export default function TeamAttendancePage() {
               </div>
               
               {/* Acknowledgment */}
-              <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-amber-900/10 rounded-lg border border-[hsl(var(--warning)/0.3)]">
+              <div className="p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)]">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
