@@ -39,6 +39,7 @@ from routes.maintenance_tracking import router as maintenance_tracking_router
 from routes.admin_custody import router as admin_custody_router
 from routes.analytics import router as analytics_router
 from routes.performance import router as performance_router
+from routes.push_notifications import router as push_router
 from seed import seed_database
 
 # App Version
