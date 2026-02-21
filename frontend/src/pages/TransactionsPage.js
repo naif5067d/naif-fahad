@@ -181,7 +181,7 @@ export default function TransactionsPage() {
     return { ...config, label: lang === 'ar' ? config.label_ar : config.label_en };
   };
   const getTypeConfig = (type) => {
-    const config = TYPE_CONFIG[type] || { icon: '📄', label_ar: type, label_en: type };
+    const config = TYPE_CONFIG[type] || { Icon: FileText, label_ar: type, label_en: type };
     return { ...config, label: lang === 'ar' ? config.label_ar : config.label_en };
   };
   const getStageLabel = (stage) => STAGE_CONFIG[lang]?.[stage] || stage;
