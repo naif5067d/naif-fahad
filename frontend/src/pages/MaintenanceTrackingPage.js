@@ -21,10 +21,10 @@ const ASSET_TYPES = [
 ];
 
 const STATUSES = [
-  { value: 'new', label_ar: 'جديد', label_en: 'New', color: 'bg-blue-100 text-blue-700', icon: '🆕' },
-  { value: 'in_progress', label_ar: 'تحت الصيانة', label_en: 'In Progress', color: 'bg-orange-100 text-orange-700', icon: '🔧' },
-  { value: 'ready', label_ar: 'جاهز للاستلام', label_en: 'Ready', color: 'bg-green-100 text-green-700', icon: '✅' },
-  { value: 'closed', label_ar: 'مغلق', label_en: 'Closed', color: 'bg-slate-100 text-slate-600', icon: '📦' },
+  { value: 'new', label_ar: 'جديد', label_en: 'New', color: 'bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]' },
+  { value: 'in_progress', label_ar: 'تحت الصيانة', label_en: 'In Progress', color: 'bg-[hsl(var(--lavender)/0.15)] text-[hsl(var(--lavender))]' },
+  { value: 'ready', label_ar: 'جاهز للاستلام', label_en: 'Ready', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+  { value: 'closed', label_ar: 'مغلق', label_en: 'Closed', color: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400' },
 ];
 
 export default function MaintenanceTrackingPage() {
