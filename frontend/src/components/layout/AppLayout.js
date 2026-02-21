@@ -380,14 +380,14 @@ export default function AppLayout({ children }) {
                 </div>
               ) : (
                 /* Regular user profile indicator (non-STAS) */
-                <div className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl border border-border">
+                <div className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-xl border border-border flex-shrink-0">
                   <div 
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                     style={{ background: colors.bg }}
                   >
                     {(user?.full_name || 'U')[0]}
                   </div>
-                  <span className="hidden sm:inline text-sm font-medium truncate max-w-[120px]">{displayName}</span>
+                  <span className="hidden sm:inline text-sm font-medium truncate max-w-[100px]">{displayName}</span>
                 </div>
               )}
 
