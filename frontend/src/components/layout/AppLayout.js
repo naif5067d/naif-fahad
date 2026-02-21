@@ -301,20 +301,22 @@ export default function AppLayout({ children }) {
             {/* Page title (desktop) */}
             <div className="hidden md:block" />
 
-            {/* Right side controls - Always visible */}
-            <div className="flex items-center gap-1 md:gap-2">
+            {/* Right side controls - Always visible on all screens */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Fullscreen Toggle Button - Hidden on mobile (not supported) */}
               <button 
                 data-testid="toggle-fullscreen" 
                 onClick={toggleFullscreen} 
-                className="hidden md:flex p-2.5 rounded-xl hover:bg-muted text-muted-foreground transition-colors touch-target"
+                className="hidden md:flex p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
                 title={isFullscreen ? (lang === 'ar' ? 'إلغاء ملء الشاشة' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
               >
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>
 
-              {/* Notification Bell - For ALL users - Always visible */}
-              <NotificationBell />
+              {/* Notification Bell - For ALL users - ALWAYS visible */}
+              <div className="flex-shrink-0">
+                <NotificationBell />
+              </div>
 
               {/* User Switcher - STAS ONLY */}
               {role === 'stas' ? (
