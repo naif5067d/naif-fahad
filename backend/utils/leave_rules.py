@@ -328,7 +328,13 @@ async def validate_leave_request(
         return {"valid": False, "errors": errors, "calculation_details": calculation_details}
     
     # Check balance - لكل نوع إجازة قواعد مختلفة
-    balance = await get_leave_balance(employee_id, leave_type)
+    # استخدام Pro-Rata للإجازة السنوية بدلاً من leave_ledger
+    if leave_type == 'annual':
+        from services.hr_policy import calculate_pro_rata_entitlement
+        pro_rata = await calculate_pro_rata_entitlement(employee_id)
+        balance = pro_rata.get('available_balance', 0)
+    else:
+        balance = await get_leave_balance(employee_id, leave_type)
     
     # الإجازة المرضية: لا يُمنع إلا عند تجاوز 120 يوم
     # من 0-120 يُسمح له بالطلب مع عرض تحذير بالخصم
