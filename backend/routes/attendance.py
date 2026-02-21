@@ -327,6 +327,30 @@ async def get_admin_attendance(
     employees = await db.employees.find({"is_active": True}, {"_id": 0}).to_list(200)
     emp_map = {e['id']: e for e in employees}
     
+    # دالة مساعدة لاستخراج الوقت بتوقيت الرياض
+    def extract_riyadh_time(entry):
+        """استخراج الوقت بتوقيت الرياض من timestamp"""
+        # أولاً: استخدام حقل time إذا كان موجوداً (سجل بالطريقة الجديدة)
+        if entry.get('time'):
+            return entry['time']
+        
+        # ثانياً: تحويل timestamp إلى توقيت الرياض
+        timestamp = entry.get('timestamp')
+        if not timestamp:
+            return None
+            
+        try:
+            # تحويل من سلسلة نصية إلى datetime
+            riyadh_dt = utc_to_riyadh(timestamp)
+            if riyadh_dt:
+                return riyadh_dt.strftime("%H:%M:%S")
+        except:
+            # إذا فشل التحويل، استخراج الوقت مباشرة
+            if len(timestamp) > 19:
+                return timestamp[11:19]
+        
+        return None
+    
     # Build summary
     grouped = {}
     for entry in entries:
@@ -353,17 +377,19 @@ async def get_admin_attendance(
                 "checkout_location_name": None,
             }
         if entry['type'] == 'check_in':
-            grouped[key]['check_in'] = entry['timestamp']
-            # استخدام حقل time إذا كان موجوداً، وإلا استخراجه من timestamp
-            grouped[key]['check_in_time'] = entry.get('time') or (entry['timestamp'][11:19] if entry.get('timestamp') else None)
+            # تحويل timestamp إلى توقيت الرياض
+            riyadh_ts = utc_to_riyadh(entry['timestamp'])
+            grouped[key]['check_in'] = riyadh_ts.isoformat() if riyadh_ts else entry['timestamp']
+            grouped[key]['check_in_time'] = extract_riyadh_time(entry)
             grouped[key]['gps_valid_in'] = entry.get('gps_valid')
             grouped[key]['work_location'] = entry.get('work_location')
             grouped[key]['location_name'] = entry.get('work_location')
             grouped[key]['location_name_ar'] = entry.get('work_location')
         elif entry['type'] == 'check_out':
-            grouped[key]['check_out'] = entry['timestamp']
-            # استخدام حقل time إذا كان موجوداً، وإلا استخراجه من timestamp
-            grouped[key]['check_out_time'] = entry.get('time') or (entry['timestamp'][11:19] if entry.get('timestamp') else None)
+            # تحويل timestamp إلى توقيت الرياض
+            riyadh_ts = utc_to_riyadh(entry['timestamp'])
+            grouped[key]['check_out'] = riyadh_ts.isoformat() if riyadh_ts else entry['timestamp']
+            grouped[key]['check_out_time'] = extract_riyadh_time(entry)
             grouped[key]['gps_valid_out'] = entry.get('gps_valid')
             grouped[key]['checkout_location_name'] = entry.get('work_location')
     
