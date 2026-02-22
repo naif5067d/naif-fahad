@@ -10,7 +10,7 @@ export const translations = {
       custody: "Tangible Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
-      attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance"
+      attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
@@ -171,7 +171,7 @@ export const translations = {
       custody: "العهد الملموسة", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
-      attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة"
+      attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
