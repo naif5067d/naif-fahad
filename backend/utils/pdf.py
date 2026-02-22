@@ -703,38 +703,89 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         outer.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
         elements.append(outer)
     
-    # ============ FOOTER WITH SEARCH BARCODE ============
+    # ============ FOOTER WITH TEAR-OFF SECTION (قسم القص) ============
     elements.append(Spacer(1, 4*mm))
-    footer_line = Table([['']], colWidths=[CONTENT_WIDTH], rowHeights=[0.5])
-    footer_line.setStyle(TableStyle([('LINEABOVE', (0, 0), (-1, 0), 0.5, BORDER_GRAY)]))
-    elements.append(footer_line)
     
-    # باركود للبحث السريع (للمسح بالكاميرا)
-    search_barcode = create_barcode_image(ref_no, width=45, height=10)
-    if search_barcode:
-        barcode_table = Table([
-            [search_barcode],
-            [make_ltr_para(ref_no, styles['small'])]
-        ], colWidths=[50*mm])
-        barcode_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
+    # خط فاصل مع علامة القص
+    scissor_text = "✂️ قص هنا" if lang == 'ar' else "✂️ Cut Here"
+    scissor_line = Table([
+        [make_para(f"- - - - - - - - - {scissor_text} - - - - - - - - -", styles['small'])]
+    ], colWidths=[CONTENT_WIDTH])
+    scissor_line.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('TEXTCOLOR', (0, 0), (-1, -1), TEXT_GRAY),
+    ]))
+    elements.append(scissor_line)
+    elements.append(Spacer(1, 2*mm))
+    
+    # إنشاء 2 QR codes
+    # QR 1: للتحقق (يحتوي على رقم المعاملة)
+    verify_qr = create_qr_image(f"VERIFY-{ref_no}", size=18)
+    # QR 2: للمعاملة (يحتوي على رقم المعاملة + التاريخ)
+    tx_qr = create_qr_image(ref_no, size=18)
+    
+    # معلومات المعاملة المختصرة
+    emp_name = ""
+    if employee:
+        emp_name = employee.get('full_name_ar' if lang == 'ar' else 'full_name', '')[:30]
+    
+    type_label = labels.get(transaction.get('type', ''), transaction.get('type', ''))
+    status_text = labels.get(transaction.get('status', ''), transaction.get('status', ''))
+    status_color = colors.HexColor('#16a34a') if transaction.get('status') == 'executed' else colors.HexColor('#f59e0b')
+    
+    # بناء جدول القص مع QR يمين ويسار
+    tear_off_content = []
+    
+    # QR على اليمين + معلومات في الوسط + QR على اليسار
+    center_info = Table([
+        [make_para(ref_no, ParagraphStyle('ref_big', fontName='Helvetica-Bold', fontSize=12, alignment=TA_CENTER, textColor=NAVY))],
+        [make_para(emp_name, styles['cell_center']) if emp_name else make_para('-', styles['cell_center'])],
+        [make_para(type_label, styles['small'])],
+        [make_para(status_text, ParagraphStyle('status', parent=styles['small'], textColor=status_color))],
+    ], colWidths=[60*mm], rowHeights=[6*mm, 5*mm, 4*mm, 4*mm])
+    center_info.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    
+    # QR Labels
+    qr_label_1 = "QR التحقق" if lang == 'ar' else "Verify QR"
+    qr_label_2 = "QR المعاملة" if lang == 'ar' else "Transaction QR"
+    
+    if verify_qr and tx_qr:
+        qr_left = Table([
+            [verify_qr],
+            [make_para(qr_label_1, styles['small'])]
+        ], colWidths=[22*mm], rowHeights=[20*mm, 4*mm])
+        qr_left.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
         
-        footer_content = Table([
-            [barcode_table, make_ltr_para(f"DAR AL CODE HR OS | {format_saudi_time(datetime.now(timezone.utc).isoformat())}", styles['small'])]
-        ], colWidths=[55*mm, CONTENT_WIDTH - 55*mm])
-        footer_content.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements.append(Spacer(1, 1*mm))
-        elements.append(footer_content)
+        qr_right = Table([
+            [tx_qr],
+            [make_para(qr_label_2, styles['small'])]
+        ], colWidths=[22*mm], rowHeights=[20*mm, 4*mm])
+        qr_right.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
+        
+        tear_off_table = Table([
+            [qr_left, center_info, qr_right]
+        ], colWidths=[30*mm, 110*mm, 30*mm])
     else:
-        footer_text = f"DAR AL CODE HR OS | {integrity_id} | {format_saudi_time(datetime.now(timezone.utc).isoformat())}"
-        elements.append(Spacer(1, 1*mm))
-        elements.append(make_ltr_para(footer_text, styles['small']))
+        tear_off_table = Table([
+            [center_info]
+        ], colWidths=[CONTENT_WIDTH])
+    
+    tear_off_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOX', (0, 0), (-1, -1), 1, BORDER_GRAY),
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_GRAY),
+        ('ROUNDEDCORNERS', [3, 3, 3, 3]),
+    ]))
+    elements.append(tear_off_table)
+    
+    # Footer text
+    elements.append(Spacer(1, 2*mm))
+    footer_text = f"DAR AL CODE HR OS | {integrity_id}"
+    elements.append(make_ltr_para(footer_text, styles['small']))
     
     # Build PDF
     doc.build(elements)
