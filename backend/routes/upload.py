@@ -68,8 +68,8 @@ async def get_uploaded_file(filename: str):
     return FileResponse(file_path, media_type="application/pdf", filename=filename)
 
 
-# ATS CV files directory
-ATS_UPLOAD_DIR = "/app/uploads/ats_cv"
+# ATS CV files directory - ISOLATED from main app
+ATS_UPLOAD_DIR = "/app/ats_storage/cv_files"
 os.makedirs(ATS_UPLOAD_DIR, exist_ok=True)
 
 
