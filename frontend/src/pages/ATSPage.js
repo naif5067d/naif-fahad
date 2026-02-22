@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 import { 
   Briefcase, Plus, Users, Eye, Link2, Trash2, Archive, 
