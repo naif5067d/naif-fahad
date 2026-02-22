@@ -494,10 +494,18 @@ export default function TeamAttendancePage() {
     setProcessingAttendance(true);
     try {
       const res = await api.post('/api/attendance-engine/process-daily', { date });
-      toast.success(lang === 'ar' 
-        ? `تم التحضير بنجاح: ${res.data.processed || 0} موظف` 
-        : `Processed successfully: ${res.data.processed || 0} employees`
-      );
+      const d = res.data;
+      
+      // رسالة تفصيلية
+      if (lang === 'ar') {
+        toast.success(d.message_ar || 'تم التحضير', {
+          description: d.explanation_ar,
+          duration: 5000
+        });
+      } else {
+        toast.success(`Processed: ${d.processed || 0} new, ${d.updated || 0} updated, ${d.skipped_gps || 0} GPS protected`);
+      }
+      
       // Refresh data
       fetchAllData();
     } catch (err) {
