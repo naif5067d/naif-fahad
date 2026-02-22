@@ -151,10 +151,16 @@ async def shutdown():
 # Health endpoint for Kubernetes liveness/readiness probes (without /api prefix)
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": APP_VERSION}
+    # Get version from database if available, fallback to APP_VERSION
+    version_info = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    version = version_info.get("version", APP_VERSION) if version_info else APP_VERSION
+    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": version}
 
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": APP_VERSION}
+    # Get version from database if available, fallback to APP_VERSION
+    version_info = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    version = version_info.get("version", APP_VERSION) if version_info else APP_VERSION
+    return {"status": "ok", "service": "DAR AL CODE HR OS", "version": version}
 
