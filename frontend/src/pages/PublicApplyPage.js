@@ -174,18 +174,34 @@ export default function PublicApplyPage() {
     );
   }
   
-  // Error state
+  // Error state - Professional polite message
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-400" />
+      <div className="min-h-screen bg-white flex items-center justify-center p-4" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        {/* Language Toggle */}
+        <div className="absolute top-3 right-3 z-50">
+          <button 
+            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+            className="px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors"
+          >
+            {lang === 'ar' ? 'EN' : 'عربي'}
+          </button>
+        </div>
+        
+        <div className="text-center max-w-md px-6">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Briefcase className="w-8 h-8 text-slate-400" />
           </div>
-          <h1 className="text-lg font-semibold text-slate-800 mb-2">
-            {lang === 'ar' ? 'عذراً' : 'Sorry'}
+          <h1 className="text-xl font-semibold text-slate-800 mb-3">
+            {lang === 'ar' ? 'الوظيفة غير متاحة' : 'Position Not Available'}
           </h1>
-          <p className="text-slate-500 text-sm">{error}</p>
+          <p className="text-slate-500 text-sm leading-relaxed mb-6">{error}</p>
+          <p className="text-slate-400 text-xs">
+            {lang === 'ar' 
+              ? 'ندعوك لزيارة صفحة الوظائف للاطلاع على الفرص المتاحة الأخرى.'
+              : 'We invite you to visit our careers page to explore other available opportunities.'
+            }
+          </p>
         </div>
       </div>
     );
