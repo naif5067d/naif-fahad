@@ -47,6 +47,22 @@ export default function LoginPage() {
     loadSettings();
   }, []);
 
+  // مسح الجلسة السابقة عند فتح صفحة تسجيل الدخول مباشرة
+  // هذا يضمن أن صفحة /login مستقلة تماماً
+  useEffect(() => {
+    // تحقق من أن المستخدم وصل لصفحة login مباشرة (ليس redirect)
+    const isDirectAccess = !document.referrer || 
+                          !document.referrer.includes(window.location.host) ||
+                          document.referrer.includes('/login');
+    
+    // مسح بيانات الجلسة القديمة (ما عدا remember me)
+    if (isDirectAccess) {
+      localStorage.removeItem('dar_token');
+      localStorage.removeItem('dar_user');
+      sessionStorage.clear();
+    }
+  }, []);
+
   // تحميل بيانات "تذكرني" من localStorage
   useEffect(() => {
     const savedUsername = localStorage.getItem('dar_remember_username');
