@@ -412,31 +412,40 @@ export default function LeavePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {/* Group consecutive holidays by name */}
+                  {/* Group consecutive holidays by name AND year */}
                   {(() => {
-                    // Group holidays by base name (remove numbers like "1", "2" etc.)
+                    // Group holidays by base name AND year
                     const groups = {};
                     holidays.forEach(h => {
                       const baseName = (h.name_ar || h.name || '').replace(/\s*\d+\s*$/, '').trim() || h.name;
-                      if (!groups[baseName]) {
-                        groups[baseName] = [];
+                      const year = h.date ? h.date.substring(0, 4) : 'unknown';
+                      const key = `${baseName}__${year}`;
+                      if (!groups[key]) {
+                        groups[key] = { name: baseName, year, days: [] };
                       }
-                      groups[baseName].push(h);
+                      groups[key].days.push(h);
                     });
                     
-                    // Convert to range format
-                    return Object.entries(groups).map(([name, days]) => {
-                      // Sort by date
-                      days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                    // Convert to range format and sort by date
+                    const sortedGroups = Object.values(groups)
+                      .map(group => {
+                        group.days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                        return group;
+                      })
+                      .sort((a, b) => (a.days[0]?.date || '').localeCompare(b.days[0]?.date || ''));
+                    
+                    return sortedGroups.map(({ name, year, days }) => {
                       const startDate = days[0]?.date;
                       const endDate = days[days.length - 1]?.date;
                       const nameAr = days[0]?.name_ar?.replace(/\s*\d+\s*$/, '').trim() || name;
                       const nameEn = days[0]?.name?.replace(/\s*\d+\s*$/, '').trim() || name;
+                      const displayNameAr = `${nameAr} ${year}`;
+                      const displayNameEn = `${nameEn} ${year}`;
                       
                       return (
-                        <tr key={name} className="hover:bg-muted/30">
+                        <tr key={`${name}-${year}`} className="hover:bg-muted/30">
                           <td className="px-3 py-2 text-sm font-medium">
-                            {lang === 'ar' ? nameAr : nameEn}
+                            {lang === 'ar' ? displayNameAr : displayNameEn}
                           </td>
                           <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(startDate).combined}</td>
                           <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(endDate).combined}</td>
@@ -467,7 +476,7 @@ export default function LeavePage() {
                                 </button>
                                 <button 
                                   onClick={() => {
-                                    if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
+                                    if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr} ${year}؟` : `Delete all ${nameEn} ${year} days?`)) {
                                       days.forEach(d => handleDeleteHoliday(d.id));
                                     }
                                   }} 
