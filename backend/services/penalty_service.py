@@ -80,7 +80,14 @@ class PenaltyCalculator:
     
     async def calculate_monthly_penalties(self, year: int, month: int) -> Dict:
         """
-        حساب العقوبات الشهرية
+        حساب العقوبات الشهرية مع نظام الساعات الذكية (Smart Hours)
+        
+        يشمل:
+        - حساب الغياب
+        - حساب النقص (تأخير + خروج مبكر)
+        - حساب الساعات الإضافية (البقاء بعد الدوام)
+        - تطبيق سماح التعويض الشهري
+        - الخصم الصافي
         """
         await self.load_employee()
         
@@ -103,8 +110,8 @@ class PenaltyCalculator:
         # حساب الغيابات
         absence_result = self._calculate_absence_penalties(daily_records)
         
-        # حساب نقص الساعات (تأخير + خروج مبكر)
-        deficit_result = self._calculate_deficit_penalties(daily_records)
+        # حساب نقص الساعات (تأخير + خروج مبكر) مع سماح التعويض
+        deficit_result = await self._calculate_deficit_penalties_with_compensation(daily_records)
         
         # الراتب اليومي
         daily_salary = 0
@@ -112,7 +119,7 @@ class PenaltyCalculator:
             monthly_salary = self.contract.get("basic_salary", 0)
             daily_salary = monthly_salary / 30  # افتراضي 30 يوم
         
-        # إجمالي الخصم
+        # إجمالي الخصم (بعد التعويض)
         total_days_deduction = absence_result["deduction_days"] + deficit_result["deduction_days"]
         total_deduction_amount = total_days_deduction * daily_salary
         
@@ -130,13 +137,21 @@ class PenaltyCalculator:
                 "warnings": absence_result["warnings"]
             },
             
-            # النقص (تأخير + خروج مبكر)
+            # النقص (تأخير + خروج مبكر) مع التعويض
             "deficit": {
                 "total_late_minutes": deficit_result["total_late_minutes"],
                 "total_early_leave_minutes": deficit_result["total_early_leave_minutes"],
                 "total_deficit_minutes": deficit_result["total_deficit_minutes"],
                 "total_deficit_hours": deficit_result["total_deficit_hours"],
-                "deduction_days": deficit_result["deduction_days"]
+                
+                # الساعات الإضافية (Smart Hours)
+                "total_extra_hours": deficit_result.get("total_extra_hours", 0),
+                "compensation_allowance_hours": deficit_result.get("compensation_allowance_hours", 0),
+                "compensated_hours": deficit_result.get("compensated_hours", 0),
+                "net_deficit_hours": deficit_result.get("net_deficit_hours", deficit_result["total_deficit_hours"]),
+                
+                "deduction_days": deficit_result["deduction_days"],
+                "calculation_note_ar": deficit_result.get("calculation_note_ar", "")
             },
             
             # الإجمالي
@@ -150,7 +165,9 @@ class PenaltyCalculator:
                     "status": r.get("final_status"),
                     "status_ar": r.get("status_ar"),
                     "late_minutes": r.get("late_minutes", 0),
-                    "early_leave_minutes": r.get("early_leave_minutes", 0)
+                    "early_leave_minutes": r.get("early_leave_minutes", 0),
+                    "actual_hours": r.get("actual_hours", 0),
+                    "required_hours": r.get("required_hours", 8)
                 }
                 for r in daily_records
             ]
