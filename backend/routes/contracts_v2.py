@@ -132,6 +132,9 @@ class ContractUpdate(BaseModel):
     - يمكن تعديل كل الحقول بما فيها الأرصدة
     - مرونة كاملة في التعديل
     """
+    # الرقم المرجعي - قابل للتعديل
+    ref_no: Optional[str] = None
+    
     employee_name: Optional[str] = None
     employee_name_ar: Optional[str] = None
     
