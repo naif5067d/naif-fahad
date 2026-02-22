@@ -456,7 +456,7 @@ export default function ExecutiveDashboard() {
                 لوحة الحوكمة التنفيذية
               </h1>
               <p className="text-xs hidden sm:block" style={{ color: THEME.text.tertiary }}>
-                آخر تحديث: {lastUpdate?.toLocaleTimeString('ar-EG')}
+                آخر تحديث: {lastUpdate?.toLocaleTimeString('en-US', { hour12: true })}
               </p>
             </div>
           </div>
