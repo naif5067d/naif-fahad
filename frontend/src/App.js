@@ -68,6 +68,9 @@ function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* صفحة تسجيل الدخول المستقلة - تمسح أي جلسة سابقة */}
+      <Route path="/login" element={<LoginPage />} />
+      
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
       <Route path="/transactions/:id" element={<ProtectedRoute><TransactionDetailPage /></ProtectedRoute>} />
