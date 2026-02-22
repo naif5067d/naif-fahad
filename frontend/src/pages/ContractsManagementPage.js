@@ -1399,7 +1399,7 @@ export default function ContractsManagementPage() {
                             variant="ghost" 
                             size="sm" 
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeleteContract(contract.id)}
+                            onClick={() => setDeleteContract(contract)}
                             data-testid={`delete-contract-${contract.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
