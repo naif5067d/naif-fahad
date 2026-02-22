@@ -631,7 +631,7 @@ export default function ATSPage() {
                         <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
                       </div>
                       <Button variant="ghost" size="sm" asChild>
-                        <a href={`${baseUrl}/api/uploads/ats_cv/${file.saved_name}`} target="_blank" rel="noopener noreferrer">
+                        <a href={`${baseUrl}/api/upload/ats_cv/${file.saved_name}`} target="_blank" rel="noopener noreferrer">
                           <Download size={14} />
                         </a>
                       </Button>
