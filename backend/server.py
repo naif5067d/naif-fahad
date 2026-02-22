@@ -17,10 +17,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response: Response = await call_next(request)
         # Security Headers
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
+        
+        # Allow iframe for public ATS pages (careers, apply)
+        path = request.url.path
+        if path.startswith("/careers") or path.startswith("/apply") or path.startswith("/api/ats/public"):
+            # Allow embedding in any site for public ATS pages
+            response.headers["X-Frame-Options"] = "ALLOWALL"
+        else:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        
         # HSTS - Enable in production
         if os.environ.get("ENVIRONMENT") == "production":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
