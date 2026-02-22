@@ -1271,9 +1271,18 @@ export default function ContractsManagementPage() {
                           <Eye className="w-4 h-4" />
                         </Button>
                         
-                        <Button variant="ghost" size="sm" onClick={() => handlePreviewPDF(contract.id)}>
-                          <FileText className="w-4 h-4" />
-                        </Button>
+                        {/* Delete - STAS only */}
+                        {user?.role === 'stas' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteContract(contract)}
+                            data-testid={`delete-contract-${contract.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                         
                         {/* Edit - للمسؤولين (سلطان/نايف/STAS) يمكنهم تعديل أي عقد */}
                         {isAdmin && (
