@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://hr-data-cleanup.preview.emergentagent.com"
+    BASE_URL = "https://applicant-review-1.preview.emergentagent.com"
 
 # Test user IDs (from previous iterations)
 STAS_USER_ID = "fedffe24-ec69-5c65-809d-5d24f8a16b9d"
