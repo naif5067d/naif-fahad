@@ -29,6 +29,8 @@ import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
+import ATSPage from "@/pages/ATSPage";
+import PublicApplyPage from "@/pages/PublicApplyPage";
 
 function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
