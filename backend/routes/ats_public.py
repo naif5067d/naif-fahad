@@ -327,9 +327,14 @@ async def submit_application(
         "files": saved_files,
         "file_count": len(saved_files),
         "status": "new",
-        "score": None,  # Placeholder for future AI scoring
-        "score_class": None,
-        "extracted_text": None,  # Placeholder for future text extraction
+        # ATS Intelligence fields
+        "ats_readable": ats_readable,
+        "extracted_text": all_text[:10000],  # Limit stored text
+        "score": scoring_result.get("score", 0),
+        "auto_class": scoring_result.get("auto_class", "Weak"),
+        "tier": scoring_result.get("tier", "C"),
+        "scoring": scoring_result,
+        # Legacy fields
         "notes": [],
         "submitted_at": now,
         "status_updated_at": now
