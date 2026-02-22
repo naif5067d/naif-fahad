@@ -108,6 +108,7 @@ export default function PublicApplyPage() {
   // Submit application
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('=== Starting form submission ===');
     
     if (!fullName.trim()) {
       setFileErrors([lang === 'ar' ? 'الرجاء إدخال الاسم الكامل' : 'Please enter your full name']);
@@ -136,12 +137,18 @@ export default function PublicApplyPage() {
       formData.append('phone', phone.trim());
       files.forEach(file => formData.append('files', file));
       
+      console.log('Sending to:', `${baseUrl}/api/ats/public/apply/${slug}`);
+      console.log('Files count:', files.length);
+      
       const res = await fetch(`${baseUrl}/api/ats/public/apply/${slug}`, {
         method: 'POST',
         body: formData
       });
       
+      console.log('Response status:', res.status);
+      
       const data = await res.json();
+      console.log('Response data:', data);
       
       if (!res.ok) {
         throw new Error(data.detail?.[lang] || data.detail?.en || data.detail || 'Error submitting application');
@@ -150,6 +157,7 @@ export default function PublicApplyPage() {
       setSubmitted(true);
       setSubmitMessage(data.message);
     } catch (err) {
+      console.error('Submit error:', err);
       setFileErrors([err.message]);
     } finally {
       setSubmitting(false);
