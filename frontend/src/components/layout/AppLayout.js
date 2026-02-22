@@ -20,7 +20,8 @@ const NAV_ITEMS = {
   // صلاح مالي فقط
   salah: ['dashboard', 'transactions', 'financialCustody', 'policies'],
   // محمد CEO
-  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody', 'policies'],
+  // محمد CEO - استعراض الموظفين + التقارير
+  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody', 'policies', 'employees'],
   // ستاس إداري + صلاحيات كاملة (loginSessions خاصة به فقط)
   stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
 };
