@@ -94,6 +94,10 @@ function AppRoutes() {
       <Route path="/careers" element={<PublicCareersPage />} />
       <Route path="/jobs" element={<PublicCareersPage />} />
       <Route path="/apply/:slug" element={<PublicApplyPage />} />
+      {/* Embed routes for iframe - lightweight versions */}
+      <Route path="/embed/careers" element={<EmbedCareersPage />} />
+      <Route path="/embed/jobs" element={<EmbedCareersPage />} />
+      <Route path="/embed/apply/:slug" element={<EmbedApplyPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
