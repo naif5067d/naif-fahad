@@ -93,6 +93,7 @@ export default function STASMirrorPage() {
   const [companySettings, setCompanySettings] = useState({
     logo_url: null,
     side_image_url: null,
+    pwa_icon_url: null,
     welcome_text_ar: 'أنتم الدار ونحن الكود',
     welcome_text_en: 'You are the Home, We are the Code',
     primary_color: '#1E3A5F',
@@ -103,6 +104,7 @@ export default function STASMirrorPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingSideImage, setUploadingSideImage] = useState(false);
+  const [uploadingPwaIcon, setUploadingPwaIcon] = useState(false);
 
   useEffect(() => {
     fetchPending();
