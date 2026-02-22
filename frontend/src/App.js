@@ -87,6 +87,8 @@ function AppRoutes() {
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/employees/:employeeId" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeeProfilePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/ats" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><ATSPage /></ProtectedRoute>} />
+      <Route path="/apply/:slug" element={<PublicApplyPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
