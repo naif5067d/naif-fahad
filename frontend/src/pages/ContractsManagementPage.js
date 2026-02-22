@@ -437,6 +437,7 @@ export default function ContractsManagementPage() {
 
   const resetForm = () => {
     setFormData({
+      ref_no: '',
       is_new_employee: true,
       employee_id: '',
       employee_code: '',
@@ -472,8 +473,16 @@ export default function ContractsManagementPage() {
     });
   };
 
+  // فتح نموذج إنشاء عقد جديد مع رقم مرجعي تلقائي
+  const openCreateDialog = () => {
+    resetForm();
+    setFormData(prev => ({ ...prev, ref_no: generateRefNo() }));
+    setCreateDialogOpen(true);
+  };
+
   const openEditDialog = (contract) => {
     setFormData({
+      ref_no: contract.ref_no || '',
       is_new_employee: false,
       employee_id: contract.employee_id,
       employee_code: contract.employee_code,
