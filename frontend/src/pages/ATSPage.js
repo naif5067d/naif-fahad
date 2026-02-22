@@ -7,7 +7,7 @@ import {
   RefreshCw, ChevronLeft, Clock, FileText, Download,
   CheckCircle, XCircle, MessageSquare, Send, Star,
   AlertTriangle, TrendingUp, Shield, Target, Brain,
-  Filter, Zap, Award
+  Filter, Zap, Award, AlertOctagon
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
