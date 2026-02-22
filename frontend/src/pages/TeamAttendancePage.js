@@ -1213,7 +1213,8 @@ export default function TeamAttendancePage() {
             </div>
           )}
 
-          {/* Rules Info */}
+          {/* Rules Info - للإدارة فقط */}
+          {isAdmin && (
           <Card className="bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)] mb-6">
             <CardContent className="p-4">
               <h3 className="font-bold flex items-center gap-2 mb-3">
@@ -1241,6 +1242,7 @@ export default function TeamAttendancePage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Employees Penalties List */}
           <Card>
