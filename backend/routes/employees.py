@@ -330,6 +330,91 @@ async def get_employee_assigned_locations(employee_id: str, user=Depends(get_cur
 
 # ==================== DELETE EMPLOYEE ====================
 
+@router.delete("/{employee_id}/permanent")
+async def delete_employee_permanent(employee_id: str, user=Depends(require_roles('stas'))):
+    """
+    🗑️ حذف موظف نهائياً من الجذور - STAS فقط
+    
+    يحذف:
+    - سجل الموظف
+    - العقود
+    - سجلات الحضور
+    - سجلات الإجازات
+    - المعاملات
+    - المستخدم المرتبط
+    - كل شيء متعلق بهذا الموظف
+    
+    ⚠️ هذا الإجراء لا يمكن التراجع عنه!
+    """
+    emp = await db.employees.find_one({"id": employee_id})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    emp_name = emp.get('full_name') or emp.get('name_ar') or emp.get('name') or employee_id
+    
+    deleted_counts = {}
+    
+    # 1. حذف العقود
+    r = await db.contracts.delete_many({"employee_id": employee_id})
+    deleted_counts['contracts'] = r.deleted_count
+    
+    r = await db.contracts_v2.delete_many({"employee_id": employee_id})
+    deleted_counts['contracts_v2'] = r.deleted_count
+    
+    # 2. حذف سجلات الحضور
+    r = await db.attendance_ledger.delete_many({"employee_id": employee_id})
+    deleted_counts['attendance_ledger'] = r.deleted_count
+    
+    # 3. حذف الحالة اليومية
+    r = await db.daily_status.delete_many({"employee_id": employee_id})
+    deleted_counts['daily_status'] = r.deleted_count
+    
+    # 4. حذف سجلات الإجازات
+    r = await db.leave_ledger.delete_many({"employee_id": employee_id})
+    deleted_counts['leave_ledger'] = r.deleted_count
+    
+    # 5. حذف المعاملات
+    r = await db.transactions.delete_many({"employee_id": employee_id})
+    deleted_counts['transactions'] = r.deleted_count
+    
+    # 6. حذف الخصومات
+    r = await db.penalties.delete_many({"employee_id": employee_id})
+    deleted_counts['penalties'] = r.deleted_count
+    
+    # 7. حذف الأجهزة المسجلة
+    r = await db.employee_devices.delete_many({"employee_id": employee_id})
+    deleted_counts['employee_devices'] = r.deleted_count
+    
+    # 8. حذف جلسات الدخول
+    r = await db.login_sessions.delete_many({"employee_id": employee_id})
+    deleted_counts['login_sessions'] = r.deleted_count
+    
+    # 9. حذف المستخدم
+    r = await db.users.delete_many({"employee_id": employee_id})
+    deleted_counts['users'] = r.deleted_count
+    
+    # 10. حذف الموظف نفسه
+    r = await db.employees.delete_one({"id": employee_id})
+    deleted_counts['employees'] = r.deleted_count
+    
+    # تسجيل عملية الحذف
+    await db.audit_log.insert_one({
+        "action": "permanent_delete_employee",
+        "employee_id": employee_id,
+        "employee_name": emp_name,
+        "deleted_by": user['user_id'],
+        "deleted_counts": deleted_counts,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "success": True,
+        "message": f"تم حذف الموظف '{emp_name}' نهائياً",
+        "employee_id": employee_id,
+        "deleted_counts": deleted_counts
+    }
+
+
 @router.delete("/{employee_id}")
 async def delete_employee(employee_id: str, user=Depends(require_roles('stas'))):
     """
