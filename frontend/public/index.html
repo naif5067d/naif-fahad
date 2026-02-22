@@ -15,16 +15,36 @@
         <meta name="msapplication-TileColor" content="#1E3A5F" />
         <meta name="msapplication-tap-highlight" content="no" />
         
-        <!-- Icons with Grey Background and Blue Border -->
-        <link rel="icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico?v=3" />
-        <link rel="icon" type="image/png" sizes="512x512" href="%PUBLIC_URL%/icon-512.png?v=3" />
-        <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/icon-192.png?v=3" />
-        <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png?v=3" />
-        <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png?v=3" />
-        <link rel="apple-touch-icon" sizes="192x192" href="%PUBLIC_URL%/icon-192.png?v=3" />
+        <!-- Dynamic Icons from API -->
+        <link rel="icon" type="image/png" sizes="32x32" id="favicon-32" />
+        <link rel="icon" type="image/png" sizes="192x192" id="favicon-192" />
+        <link rel="apple-touch-icon" sizes="180x180" id="apple-touch-icon" />
         
-        <!-- Manifest -->
-        <link rel="manifest" href="%PUBLIC_URL%/manifest.json?v=3" />
+        <!-- Manifest - Dynamic from API -->
+        <link rel="manifest" id="manifest-link" />
+        
+        <script>
+            // Load dynamic icons from API
+            (function() {
+                var apiBase = '';
+                var timestamp = Date.now();
+                
+                // Set dynamic manifest
+                var manifestLink = document.getElementById('manifest-link');
+                if (manifestLink) {
+                    manifestLink.href = '/api/company-settings/manifest.json?v=' + timestamp;
+                }
+                
+                // Set dynamic icons
+                var favicon32 = document.getElementById('favicon-32');
+                var favicon192 = document.getElementById('favicon-192');
+                var appleIcon = document.getElementById('apple-touch-icon');
+                
+                if (favicon32) favicon32.href = '/api/company-settings/pwa-icon/32?v=' + timestamp;
+                if (favicon192) favicon192.href = '/api/company-settings/pwa-icon/192?v=' + timestamp;
+                if (appleIcon) appleIcon.href = '/api/company-settings/pwa-icon/180?v=' + timestamp;
+            })();
+        </script>
         
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
