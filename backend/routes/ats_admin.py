@@ -11,8 +11,13 @@ from database import db
 from utils.auth import get_current_user
 import uuid
 import os
+import shutil
 
 router = APIRouter(prefix="/api/ats/admin", tags=["ATS Admin"])
+
+# ATS Storage - Completely isolated from main app
+ATS_STORAGE_DIR = "/app/ats_storage"
+ATS_CV_DIR = "/app/ats_storage/cv_files"
 
 # ==================== MODELS ====================
 
