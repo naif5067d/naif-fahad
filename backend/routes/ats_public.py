@@ -290,22 +290,11 @@ async def submit_application(
             ats_readable = False
             extraction_errors.append(f["original_name"])
     
-    # Reject if not ATS-readable
+    # If not ATS-readable, still accept but mark for manual review
+    # Don't reject applicants just because their CV is scanned
     if not ats_readable or len(all_text.strip()) < 100:
-        # Clean up files
-        for f in saved_files:
-            try:
-                os.remove(f["path"])
-            except:
-                pass
-        
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "ar": "ملفك غير مناسب للقراءة الآلية (ATS). ارفع نسخة نصية قابلة للقراءة (PDF نصي أو Word)، وتجنب ملفات السكان.",
-                "en": "Your file is not ATS-readable. Upload a text-based PDF or Word file (avoid scanned/image PDFs)."
-            }
-        )
+        ats_readable = False
+        all_text = "[Manual Review Required - CV not machine-readable]"
     
     # Score the application
     job_requirements = {
