@@ -631,7 +631,7 @@ export default function ContractsManagementPage() {
         {canCreate && (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="create-contract-btn">
+              <Button data-testid="create-contract-btn" onClick={openCreateDialog}>
                 <Plus className="w-4 h-4 ml-2" />
                 إنشاء عقد جديد
               </Button>
@@ -643,6 +643,29 @@ export default function ContractsManagementPage() {
               </DialogHeader>
               
               <div className="space-y-4 py-4">
+                {/* الرقم المرجعي */}
+                <div className="p-4 border rounded-lg bg-slate-50/50">
+                  <Label className="text-sm font-medium">الرقم المرجعي</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input 
+                      value={formData.ref_no}
+                      onChange={e => setFormData(p => ({ ...p, ref_no: e.target.value }))}
+                      placeholder="DAC-2026-001"
+                      className="font-mono"
+                      data-testid="contract-ref-no"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setFormData(p => ({ ...p, ref_no: generateRefNo() }))}
+                      type="button"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">يتم توليده تلقائياً ويمكنك تعديله</p>
+                </div>
+
                 {/* اختيار نوع الموظف: جديد أو قديم */}
                 {/* بيانات الموظف الجديد - الخيار الوحيد */}
                 <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50">
