@@ -296,30 +296,37 @@ class ATSScoringEngine:
     def _calc_language(self, cv_text: str):
         """Score language proficiency"""
         required_langs = self.job.get('required_languages', ['ar'])
+        if isinstance(required_langs, str):
+            required_langs = [required_langs]
         
         score = 0
-        lang_detected = []
         
-        # Check Arabic
-        if re.search(r'[\u0600-\u06FF]{20,}', cv_text):
-            lang_detected.append('ar')
-            if 'ar' in required_langs:
-                score += 50
+        # Check Arabic content (at least 50 characters)
+        has_arabic = len(re.findall(r'[\u0600-\u06FF]', cv_text)) >= 50
+        has_english = len(re.findall(r'[a-zA-Z]', cv_text)) >= 50
         
-        # Check English
-        if re.search(r'[a-zA-Z]{20,}', cv_text):
-            lang_detected.append('en')
-            if 'en' in required_langs:
-                score += 50
+        # Score based on required languages
+        if 'ar' in required_langs and has_arabic:
+            score += 50
+        if 'en' in required_langs and has_english:
+            score += 50
+        
+        # Bonus for both languages if both required
+        if len(required_langs) >= 2 and has_arabic and has_english:
+            score = min(score + 20, 100)
         
         # Check for language proficiency mentions
-        lang_keywords = ['fluent', 'native', 'proficient', 'bilingual', 'طلاقة', 'إجادة', 'ثنائي اللغة']
+        lang_keywords = ['fluent', 'native', 'proficient', 'bilingual', 'طلاقة', 'إجادة', 'ثنائي اللغة', 'جيد جداً', 'ممتاز']
         for kw in lang_keywords:
             if kw in cv_text.lower():
-                score += 10
+                score = min(score + 10, 100)
                 break
         
-        self.result.language_score = min(score, 100)
+        # If no required languages specified, give neutral score if any language found
+        if not required_langs and (has_arabic or has_english):
+            score = 70
+        
+        self.result.language_score = score
     
     def _calc_stability(self, cv_text: str):
         """Calculate job stability (penalize frequent changes)"""
