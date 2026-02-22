@@ -278,3 +278,174 @@ async def delete_side_image(user=Depends(require_roles('stas'))):
     )
     
     return {"message": "تم حذف الصورة الجانبية"}
+
+
+# ============================================================
+# PWA ICON MANAGEMENT - إدارة أيقونات التطبيق
+# ============================================================
+
+@router.post("/upload-pwa-icon")
+async def upload_pwa_icon(
+    file: UploadFile = File(...),
+    user=Depends(require_roles('stas'))
+):
+    """
+    Upload PWA icon. This will be used for app icons on all devices.
+    Accepts PNG, JPG (512x512 recommended).
+    STAS only.
+    """
+    # Validate file type
+    allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يُقبل PNG, JPG فقط")
+    
+    # Validate file size (max 2MB)
+    content = await file.read()
+    if len(content) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="حجم الملف أكبر من 2MB")
+    
+    # Convert to base64 data URL
+    mime_type = file.content_type
+    base64_data = base64.b64encode(content).decode('utf-8')
+    data_url = f"data:{mime_type};base64,{base64_data}"
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Save to database
+    await db.company_settings.update_one(
+        {"key": "login_page"},
+        {
+            "$set": {
+                "pwa_icon_url": data_url,
+                "pwa_icon_filename": file.filename,
+                "pwa_icon_updated_at": now,
+                "updated_at": now,
+                "updated_by": user["user_id"]
+            }
+        },
+        upsert=True
+    )
+    
+    # Also save the raw bytes to serve as actual icon files
+    await db.company_settings.update_one(
+        {"key": "pwa_icons"},
+        {
+            "$set": {
+                "icon_data": base64_data,
+                "mime_type": mime_type,
+                "updated_at": now,
+                "version": str(uuid.uuid4())[:8]
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "message": "تم رفع أيقونة التطبيق بنجاح",
+        "pwa_icon_url": data_url
+    }
+
+
+@router.delete("/pwa-icon")
+async def delete_pwa_icon(user=Depends(require_roles('stas'))):
+    """Delete PWA icon - will revert to default"""
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.company_settings.update_one(
+        {"key": "login_page"},
+        {
+            "$set": {
+                "pwa_icon_url": None,
+                "pwa_icon_filename": None,
+                "updated_at": now,
+                "updated_by": user["user_id"]
+            }
+        }
+    )
+    
+    await db.company_settings.delete_one({"key": "pwa_icons"})
+    
+    return {"message": "تم حذف أيقونة التطبيق"}
+
+
+@router.get("/pwa-icon/{size}")
+async def get_pwa_icon(size: str):
+    """
+    Get PWA icon in requested size. No auth required.
+    Sizes: 192, 512, 180 (apple-touch)
+    Returns the actual image file.
+    """
+    from fastapi.responses import Response
+    from PIL import Image
+    from io import BytesIO
+    
+    # Get icon from database
+    icon_data = await db.company_settings.find_one({"key": "pwa_icons"})
+    
+    if not icon_data or not icon_data.get("icon_data"):
+        # Fall back to company logo
+        settings = await db.company_settings.find_one({"key": "login_page"})
+        if settings and settings.get("logo_url"):
+            # Extract base64 from data URL
+            logo_url = settings["logo_url"]
+            if logo_url.startswith("data:"):
+                parts = logo_url.split(",", 1)
+                if len(parts) == 2:
+                    base64_data = parts[1]
+                    mime_type = parts[0].split(":")[1].split(";")[0]
+                else:
+                    raise HTTPException(status_code=404, detail="Icon not found")
+            else:
+                raise HTTPException(status_code=404, detail="Icon not found")
+        else:
+            raise HTTPException(status_code=404, detail="Icon not found")
+    else:
+        base64_data = icon_data["icon_data"]
+        mime_type = icon_data.get("mime_type", "image/png")
+    
+    # Decode base64
+    try:
+        image_bytes = base64.b64decode(base64_data)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Invalid icon data")
+    
+    # Parse requested size
+    try:
+        target_size = int(size)
+        if target_size not in [32, 180, 192, 512]:
+            target_size = 512
+    except ValueError:
+        target_size = 512
+    
+    # Resize image
+    try:
+        img = Image.open(BytesIO(image_bytes))
+        
+        # Convert to RGB if needed (for PNG with transparency, add white background)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Resize
+        img = img.resize((target_size, target_size), Image.LANCZOS)
+        
+        # Save to bytes
+        output = BytesIO()
+        img.save(output, format='PNG')
+        output.seek(0)
+        
+        return Response(
+            content=output.read(),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=3600",
+                "Content-Disposition": f"inline; filename=icon-{target_size}.png"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process icon: {str(e)}")
