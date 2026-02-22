@@ -370,12 +370,26 @@ export default function ATSPage() {
             {view === 'jobs' ? 'ATS' : (lang === 'ar' ? selectedJob?.title_ar : selectedJob?.title_en)}
           </h1>
         </div>
-        {view === 'jobs' && (
-          <Button onClick={() => { resetJobForm(); setEditJob(null); setShowJobDialog(true); }} data-testid="add-job-btn">
-            <Plus size={18} className="mr-1" />
-            {lang === 'ar' ? 'إضافة وظيفة' : 'Add Job'}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {view === 'jobs' && canNuclearDelete && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={() => setShowNuclearDialog(true)}
+              data-testid="nuclear-delete-btn"
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <AlertOctagon size={16} className="mr-1" />
+              {lang === 'ar' ? 'حذف نووي' : 'Nuclear Delete'}
+            </Button>
+          )}
+          {view === 'jobs' && (
+            <Button onClick={() => { resetJobForm(); setEditJob(null); setShowJobDialog(true); }} data-testid="add-job-btn">
+              <Plus size={18} className="mr-1" />
+              {lang === 'ar' ? 'إضافة وظيفة' : 'Add Job'}
+            </Button>
+          )}
+        </div>
       </div>
       
       {/* Stats */}
