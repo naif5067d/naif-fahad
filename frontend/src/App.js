@@ -34,6 +34,7 @@ import PublicApplyPage from "@/pages/PublicApplyPage";
 import PublicCareersPage from "@/pages/PublicCareersPage";
 import EmbedCareersPage from "@/pages/EmbedCareersPage";
 import EmbedApplyPage from "@/pages/EmbedApplyPage";
+import PoliciesPage from "@/pages/PoliciesPage";
 
 function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
