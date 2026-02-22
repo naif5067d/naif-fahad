@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // إعدادات الشركة
+  // إعدادات الشركة - دار الكود
   const [settings, setSettings] = useState({
     logo_url: null,
     side_image_url: null,
@@ -27,8 +27,8 @@ export default function LoginPage() {
     welcome_text_en: 'You are the Home, We are the Code',
     primary_color: '#1E3A5F',
     secondary_color: '#A78BFA',
-    company_name_ar: 'شركة دار الأركان',
-    company_name_en: 'Dar Al Arkan'
+    company_name_ar: 'شركة دار الكود للاستشارات الهندسية',
+    company_name_en: 'Dar Al Code Engineering Consultancy'
   });
 
   // تحميل إعدادات الشركة (بدون مصادقة)
