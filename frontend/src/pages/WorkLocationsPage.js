@@ -272,8 +272,122 @@ export default function WorkLocationsPage() {
     }
   };
 
+  // === حفظ سماح التعويض (Smart Hours) ===
+  const handleSaveCompensationAllowance = async (value) => {
+    setSavingCompensation(true);
+    try {
+      await api.put('/api/settings/compensation-allowance', {
+        monthly_compensation_hours: value
+      });
+      setCompensationAllowance(value);
+      toast.success(lang === 'ar' ? 'تم حفظ سماح التعويض' : 'Compensation allowance saved');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to save');
+    } finally {
+      setSavingCompensation(false);
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="work-locations-page">
+      
+      {/* === سماح التعويض الشهري (Smart Hours) - للمدراء فقط === */}
+      {canManageCompensation && (
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent" data-testid="compensation-allowance-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Timer size={20} className="text-primary" />
+              </div>
+              <div>
+                <span>{lang === 'ar' ? 'سماح التعويض الشهري' : 'Monthly Compensation Allowance'}</span>
+                <p className="text-xs font-normal text-muted-foreground mt-0.5">
+                  {lang === 'ar' 
+                    ? 'يسمح للموظفين بتعويض تأخيراتهم من خلال ساعات العمل الإضافية'
+                    : 'Allows employees to offset their delays with extra work hours'}
+                </p>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="space-y-4">
+              {/* الشرح */}
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <p className="text-muted-foreground">
+                  {lang === 'ar' 
+                    ? `الموظف الذي يتأخر أو يخرج مبكراً يمكنه تعويض هذا النقص بالبقاء ساعات إضافية، بحد أقصى ${compensationAllowance} ساعة شهرياً.`
+                    : `Employees who are late or leave early can compensate by working extra hours, up to ${compensationAllowance} hours/month.`}
+                </p>
+                {compensationAllowance === 0 && (
+                  <p className="text-destructive mt-1 font-medium">
+                    {lang === 'ar' ? 'حالياً: لا يوجد سماح تعويض (0 ساعة)' : 'Currently: No compensation allowed (0 hours)'}
+                  </p>
+                )}
+              </div>
+              
+              {/* Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {lang === 'ar' ? 'الحد الأقصى للتعويض:' : 'Max compensation:'}
+                  </span>
+                  <div className="text-3xl font-bold text-primary">
+                    {compensationAllowance}
+                    <span className="text-sm font-normal text-muted-foreground ms-1">
+                      {lang === 'ar' ? 'ساعة/شهر' : 'hours/month'}
+                    </span>
+                  </div>
+                </div>
+                
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="1"
+                  value={compensationAllowance}
+                  onChange={e => setCompensationAllowance(parseInt(e.target.value))}
+                  className="w-full h-3 rounded-full appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${(compensationAllowance / 50) * 100}%, hsl(var(--muted)) ${(compensationAllowance / 50) * 100}%, hsl(var(--muted)) 100%)`
+                  }}
+                  data-testid="compensation-allowance-slider"
+                />
+                
+                {/* Quick select buttons */}
+                <div className="flex justify-between gap-2">
+                  {[0, 5, 10, 20, 30, 50].map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setCompensationAllowance(v)}
+                      className={`flex-1 text-xs py-1.5 px-2 rounded-lg transition-all ${
+                        compensationAllowance === v 
+                          ? 'bg-primary text-white' 
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      {v === 0 ? (lang === 'ar' ? 'بدون' : 'None') : v}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Save button */}
+                <Button 
+                  onClick={() => handleSaveCompensationAllowance(compensationAllowance)}
+                  disabled={savingCompensation}
+                  className="w-full mt-2"
+                  data-testid="save-compensation-btn"
+                >
+                  {savingCompensation 
+                    ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') 
+                    : (lang === 'ar' ? 'حفظ الإعداد' : 'Save Setting')}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
           {lang === 'ar' ? 'مواقع العمل' : 'Work Locations'}
