@@ -454,13 +454,50 @@ export default function DashboardPage() {
 
       {/* Next Holiday */}
       {nextHoliday && (
-        <div className="card-premium p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-            <CalendarDays size={18} className="text-[hsl(var(--warning))]" />
+        <div className={`card-premium p-3 flex items-center gap-3 ${
+          nextHoliday.relative === 'today' ? 'border-2 border-green-400 bg-green-50/50' : ''
+        }`}>
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            nextHoliday.relative === 'today' || nextHoliday.relative === 'tomorrow'
+              ? 'bg-green-100'
+              : 'bg-warning/10'
+          }`}>
+            <CalendarDays size={18} className={
+              nextHoliday.relative === 'today' || nextHoliday.relative === 'tomorrow'
+                ? 'text-green-600'
+                : 'text-[hsl(var(--warning))]'
+            } />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-muted-foreground">{t('dashboard.nextHoliday')}</p>
-            <p className="text-sm font-medium truncate">{lang === 'ar' ? nextHoliday.name_ar : nextHoliday.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] text-muted-foreground">{t('dashboard.nextHoliday')}</p>
+              {nextHoliday.relative === 'today' && (
+                <span className="text-[10px] font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                  {lang === 'ar' ? 'اليوم' : 'Today'}
+                </span>
+              )}
+              {nextHoliday.relative === 'tomorrow' && (
+                <span className="text-[10px] font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                  {lang === 'ar' ? 'غداً' : 'Tomorrow'}
+                </span>
+              )}
+            </div>
+            <p className={`text-sm font-medium truncate ${
+              nextHoliday.relative === 'today' || nextHoliday.relative === 'tomorrow'
+                ? 'text-green-700'
+                : ''
+            }`}>
+              {lang === 'ar' ? nextHoliday.name_ar : nextHoliday.name}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              <span className="text-foreground">{nextHoliday.date}</span>
+              {nextHoliday.hijri_date && (
+                <span className="mx-1">•</span>
+              )}
+              {nextHoliday.hijri_date && (
+                <span>{nextHoliday.hijri_date}</span>
+              )}
+            </p>
           </div>
         </div>
       )}
