@@ -154,12 +154,12 @@ async def run_monthly_summary_job():
 
 def init_scheduler():
     """تهيئة وتشغيل الـ scheduler"""
-    # المعالجة اليومية - كل يوم الساعة 1:00 صباحاً (توقيت الرياض = 22:00 UTC)
+    # التحضير الذاتي - كل يوم الساعة 7:00 صباحاً (توقيت الرياض = 04:00 UTC)
     scheduler.add_job(
-        run_daily_attendance_job,
-        CronTrigger(hour=22, minute=0),  # 1 AM Riyadh time
-        id='daily_attendance',
-        name='Daily Attendance Processing',
+        run_daily_auto_attendance,
+        CronTrigger(hour=4, minute=0),  # 7 AM Riyadh time (UTC+3)
+        id='daily_auto_attendance',
+        name='Daily Auto Attendance',
         replace_existing=True
     )
     
@@ -173,7 +173,7 @@ def init_scheduler():
     )
     
     scheduler.start()
-    logger.info("✅ تم تشغيل جدولة المهام")
+    logger.info("✅ تم تشغيل جدولة المهام - التحضير الذاتي 7:00 صباحاً")
 
 
 def shutdown_scheduler():
