@@ -190,7 +190,7 @@ export default function MaintenanceTrackingPage() {
                   size="sm"
                   onClick={() => setFilterStatus(s.value)}
                 >
-                  {s.icon} {lang === 'ar' ? s.label_ar : s.label_en}
+                  {lang === 'ar' ? s.label_ar : s.label_en}
                 </Button>
               ))}
             </div>
