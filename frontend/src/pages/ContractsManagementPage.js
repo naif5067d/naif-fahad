@@ -399,6 +399,23 @@ export default function ContractsManagementPage() {
     setActionLoading(false);
   };
 
+  // حذف العقد نهائياً - STAS فقط
+  const handleDeleteContract = async () => {
+    if (!deleteContract) return;
+    setDeleting(true);
+    
+    try {
+      await api.delete(`/api/contracts-v2/${deleteContract.id}`);
+      toast.success(`تم حذف العقد ${deleteContract.ref_no || ''} نهائياً`);
+      setDeleteContract(null);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل حذف العقد');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handlePreviewPDF = async (contractId) => {
     try {
       const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
