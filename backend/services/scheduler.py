@@ -15,7 +15,13 @@ logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
 async def run_daily_attendance_job():
-    """تشغيل معالجة الحضور اليومي"""
+    """
+    تشغيل معالجة الحضور اليومي
+    
+    المنطق الذكي:
+    - لا يكتب فوق بصمات GPS أبداً
+    - يُحدّث السجلات القديمة إذا جاءت GPS لاحقاً
+    """
     from services.day_resolver_v2 import resolve_and_save_v2
     from database import db
     
@@ -32,13 +38,26 @@ async def run_daily_attendance_job():
             "id": {"$nin": excluded_ids}
         }, {"_id": 0, "id": 1}).to_list(None)
         
-        processed = 0
+        created = 0
+        updated = 0
+        skipped_gps = 0
+        skipped_existing = 0
         errors = []
         
         for emp in employees:
             try:
-                await resolve_and_save_v2(emp['id'], yesterday)
-                processed += 1
+                result = await resolve_and_save_v2(emp['id'], yesterday)
+                action = result.get('action', 'created')
+                
+                if action == 'created':
+                    created += 1
+                elif action == 'updated':
+                    updated += 1
+                elif action == 'skipped':
+                    skipped_gps += 1
+                elif action == 'kept':
+                    skipped_existing += 1
+                    
             except Exception as e:
                 errors.append({"employee_id": emp['id'], "error": str(e)})
                 logger.error(f"خطأ في معالجة {emp['id']}: {e}")
@@ -47,14 +66,18 @@ async def run_daily_attendance_job():
         await db.job_logs.insert_one({
             "job_type": "daily_attendance",
             "date": yesterday,
-            "processed_count": processed,
+            "created_count": created,
+            "updated_count": updated,
+            "skipped_gps_count": skipped_gps,
+            "skipped_existing_count": skipped_existing,
+            "total_employees": len(employees),
             "error_count": len(errors),
             "errors": errors,
             "executed_at": datetime.utcnow().isoformat(),
             "status": "success" if len(errors) == 0 else "partial"
         })
         
-        logger.info(f"✅ تمت المعالجة اليومية: {processed} موظف، {len(errors)} خطأ")
+        logger.info(f"✅ تمت المعالجة اليومية: جديد={created}, تحديث={updated}, GPS محمي={skipped_gps}, موجود={skipped_existing}, أخطاء={len(errors)}")
         
     except Exception as e:
         logger.error(f"❌ فشل في المعالجة اليومية: {e}")
