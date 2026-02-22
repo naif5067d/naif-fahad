@@ -556,6 +556,82 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                 padding: 3px 8px;
                 border-radius: 3px;
             }}
+            
+            /* Tear-off Section - قسم القص */
+            .tear-off {{
+                margin-top: 30px;
+                padding-top: 20px;
+            }}
+            
+            .tear-line {{
+                border-top: 2px dashed #999;
+                text-align: center;
+                margin-bottom: 15px;
+                position: relative;
+            }}
+            
+            .tear-line span {{
+                background: white;
+                padding: 0 15px;
+                color: #666;
+                font-size: 10pt;
+                position: relative;
+                top: -12px;
+            }}
+            
+            .tear-content {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+            }}
+            
+            .tear-qr-left, .tear-qr-right {{
+                text-align: center;
+            }}
+            
+            .qr-tear {{
+                width: 70px;
+                height: 70px;
+            }}
+            
+            .tear-label {{
+                font-size: 8pt;
+                color: #666;
+                margin-top: 5px;
+            }}
+            
+            .tear-info {{
+                text-align: center;
+                flex: 1;
+                padding: 0 20px;
+            }}
+            
+            .tear-ref {{
+                font-size: 16pt;
+                font-weight: bold;
+                color: #1a365d;
+                font-family: monospace;
+            }}
+            
+            .tear-emp {{
+                font-size: 11pt;
+                margin: 5px 0;
+            }}
+            
+            .tear-type {{
+                font-size: 9pt;
+                color: #666;
+            }}
+            
+            .tear-status {{
+                font-size: 11pt;
+                font-weight: bold;
+                margin-top: 5px;
+            }}
         </style>
     </head>
     <body>
