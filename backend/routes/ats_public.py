@@ -14,7 +14,7 @@ import uuid
 import os
 import re
 
-router = APIRouter(prefix="/ats/public", tags=["ATS Public"])
+router = APIRouter(prefix="/api/ats/public", tags=["ATS Public"])
 
 # ==================== SECURITY CONFIGURATION ====================
 

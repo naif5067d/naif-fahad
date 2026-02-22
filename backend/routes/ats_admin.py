@@ -12,7 +12,7 @@ from utils.auth import get_current_user
 import uuid
 import os
 
-router = APIRouter(prefix="/ats/admin", tags=["ATS Admin"])
+router = APIRouter(prefix="/api/ats/admin", tags=["ATS Admin"])
 
 # ==================== MODELS ====================
 
