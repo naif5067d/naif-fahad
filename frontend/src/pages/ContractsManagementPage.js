@@ -88,6 +88,8 @@ export default function ContractsManagementPage() {
   const [viewContract, setViewContract] = useState(null);
   const [editContract, setEditContract] = useState(null);
   const [terminateContract, setTerminateContract] = useState(null);
+  const [deleteContract, setDeleteContract] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
