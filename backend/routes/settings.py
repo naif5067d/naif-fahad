@@ -248,3 +248,91 @@ async def check_for_update(user=Depends(get_current_user)):
         "message_en": f"Version {version_info.get('version', '1.0.0')} is available",
         "message_ar": f"الإصدار {version_info.get('version', '1.0.0')} متاح"
     }
+
+
+# ==================== سماح التعويض الشهري (Smart Hours) ====================
+
+class CompensationAllowanceUpdate(BaseModel):
+    """
+    إعداد سماح التعويض الشهري
+    يحدد عدد الساعات التي يمكن للموظفين تعويض تأخيراتهم خلالها
+    """
+    monthly_compensation_hours: int  # 0-50 ساعة
+
+
+@router.get("/compensation-allowance")
+async def get_compensation_allowance(user=Depends(get_current_user)):
+    """
+    الحصول على إعداد سماح التعويض - للمدراء فقط
+    الموظف العادي لا يرى هذا الإعداد
+    """
+    # فقط المدراء يمكنهم رؤية هذا الإعداد
+    if user.get('role') not in ['stas', 'sultan', 'naif', 'salah', 'mohammed']:
+        raise HTTPException(status_code=403, detail="غير مصرح لك بالوصول لهذا الإعداد")
+    
+    settings = await db.settings.find_one({"type": "compensation_allowance"}, {"_id": 0})
+    if not settings:
+        # إرجاع القيمة الافتراضية
+        return {
+            "type": "compensation_allowance",
+            "monthly_compensation_hours": 0,
+            "updated_at": None,
+            "updated_by": None,
+            "description_ar": "سماح التعويض الشهري - عدد الساعات التي يمكن للموظفين تعويض تأخيراتهم خلالها",
+            "description_en": "Monthly compensation allowance - hours employees can use to offset their delays"
+        }
+    return settings
+
+
+@router.put("/compensation-allowance")
+async def update_compensation_allowance(body: CompensationAllowanceUpdate, user=Depends(get_current_user)):
+    """
+    تحديث سماح التعويض الشهري - للمدراء فقط (stas, sultan, naif)
+    
+    القيم المسموحة: 0-50 ساعة
+    - 0 = لا يوجد سماح تعويض
+    - 2 = الموظف يمكنه تعويض ساعتين من تأخيراته
+    - 30 = الموظف يمكنه تعويض 30 ساعة من تأخيراته
+    """
+    if user.get('role') not in ['stas', 'sultan', 'naif']:
+        raise HTTPException(status_code=403, detail="فقط المدراء يمكنهم تحديث هذا الإعداد")
+    
+    # التحقق من القيمة
+    hours = max(0, min(50, body.monthly_compensation_hours))
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    update_data = {
+        "type": "compensation_allowance",
+        "monthly_compensation_hours": hours,
+        "updated_at": now,
+        "updated_by": user.get('user_id'),
+        "updated_by_name": user.get('full_name', user.get('username', '')),
+        "description_ar": "سماح التعويض الشهري - عدد الساعات التي يمكن للموظفين تعويض تأخيراتهم خلالها",
+        "description_en": "Monthly compensation allowance - hours employees can use to offset their delays"
+    }
+    
+    existing = await db.settings.find_one({"type": "compensation_allowance"})
+    
+    if existing:
+        # حفظ تاريخ التغييرات
+        history = existing.get("change_history", [])
+        history.append({
+            "previous_value": existing.get("monthly_compensation_hours"),
+            "new_value": hours,
+            "changed_at": now,
+            "changed_by": user.get('user_id'),
+            "changed_by_name": user.get('full_name', user.get('username', ''))
+        })
+        update_data["change_history"] = history[-20:]  # احتفاظ بآخر 20 تغيير
+        
+        await db.settings.update_one(
+            {"type": "compensation_allowance"},
+            {"$set": update_data}
+        )
+    else:
+        update_data["change_history"] = []
+        await db.settings.insert_one(update_data)
+    
+    result = await db.settings.find_one({"type": "compensation_allowance"}, {"_id": 0})
+    return result
