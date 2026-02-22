@@ -99,6 +99,9 @@ export default function TeamAttendancePage() {
   const { lang } = useLanguage();
   const { user } = useAuth();
   
+  // الأدوار الإدارية التي ترى قواعد الخصم
+  const isAdmin = ['stas', 'sultan', 'naif', 'mohammed'].includes(user?.role);
+  
   // Main tab: 'attendance' or 'penalties'
   const [mainTab, setMainTab] = useState('attendance');
   
