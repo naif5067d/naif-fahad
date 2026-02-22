@@ -398,7 +398,7 @@ export default function ATSPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {view === 'jobs' && (
+          {view === 'jobs' && user?.username === 'stas' && (
             <Button 
               variant="outline" 
               size="sm" 
