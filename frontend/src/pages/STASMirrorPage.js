@@ -257,6 +257,38 @@ export default function STASMirrorPage() {
     }
   };
 
+  // === PWA Icon Functions ===
+  const handleUploadPwaIcon = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadingPwaIcon(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await api.post('/api/company-settings/upload-pwa-icon', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setCompanySettings(prev => ({ ...prev, pwa_icon_url: res.data.pwa_icon_url }));
+      toast.success(lang === 'ar' ? 'تم رفع أيقونة التطبيق بنجاح! سيتم تحديثها تلقائياً.' : 'App icon uploaded! It will update automatically.');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل رفع الأيقونة' : 'Failed to upload icon'));
+    } finally {
+      setUploadingPwaIcon(false);
+    }
+  };
+
+  const handleDeletePwaIcon = async () => {
+    try {
+      await api.delete('/api/company-settings/pwa-icon');
+      setCompanySettings(prev => ({ ...prev, pwa_icon_url: null }));
+      toast.success(lang === 'ar' ? 'تم حذف أيقونة التطبيق' : 'App icon deleted');
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل حذف الأيقونة' : 'Failed to delete icon');
+    }
+  };
+
   // === My Transactions Functions ===
   const fetchMyTransactions = async () => {
     try {
