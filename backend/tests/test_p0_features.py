@@ -22,7 +22,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://stas-mirror-fix.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-data-cleanup.preview.emergentagent.com')
 
 
 # ==================== FIXTURES ====================
