@@ -98,46 +98,6 @@ async def run_daily_auto_attendance():
             "error": str(e),
             "executed_at": datetime.now(timezone.utc).isoformat()
         })
-                
-                if action == 'created':
-                    created += 1
-                elif action == 'updated':
-                    updated += 1
-                elif action == 'skipped':
-                    skipped_gps += 1
-                elif action == 'kept':
-                    skipped_existing += 1
-                    
-            except Exception as e:
-                errors.append({"employee_id": emp['id'], "error": str(e)})
-                logger.error(f"خطأ في معالجة {emp['id']}: {e}")
-        
-        # تسجيل النتيجة
-        await db.job_logs.insert_one({
-            "job_type": "daily_attendance",
-            "date": yesterday,
-            "created_count": created,
-            "updated_count": updated,
-            "skipped_gps_count": skipped_gps,
-            "skipped_existing_count": skipped_existing,
-            "total_employees": len(employees),
-            "error_count": len(errors),
-            "errors": errors,
-            "executed_at": datetime.utcnow().isoformat(),
-            "status": "success" if len(errors) == 0 else "partial"
-        })
-        
-        logger.info(f"✅ تمت المعالجة اليومية: جديد={created}, تحديث={updated}, GPS محمي={skipped_gps}, موجود={skipped_existing}, أخطاء={len(errors)}")
-        
-    except Exception as e:
-        logger.error(f"❌ فشل في المعالجة اليومية: {e}")
-        await db.job_logs.insert_one({
-            "job_type": "daily_attendance",
-            "date": yesterday,
-            "status": "failed",
-            "error": str(e),
-            "executed_at": datetime.utcnow().isoformat()
-        })
 
 
 async def run_monthly_summary_job():
