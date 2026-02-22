@@ -398,6 +398,18 @@ export default function ATSPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          {view === 'jobs' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowEmbedDialog(true)}
+              data-testid="embed-code-btn"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50"
+            >
+              <Code size={16} className="mr-1" />
+              {lang === 'ar' ? 'كود البوابة' : 'Embed Code'}
+            </Button>
+          )}
           {view === 'jobs' && canNuclearDelete && (
             <Button 
               variant="destructive" 
