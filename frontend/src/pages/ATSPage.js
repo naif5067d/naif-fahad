@@ -65,12 +65,39 @@ export default function ATSPage() {
   const [showNuclearDialog, setShowNuclearDialog] = useState(false);
   const [nuclearLoading, setNuclearLoading] = useState(false);
   const [nuclearConfirmText, setNuclearConfirmText] = useState('');
+  const [showEmbedDialog, setShowEmbedDialog] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   
   const isAdmin = user?.role === 'admin' || ['stas', 'naif'].includes(user?.username);
   const canAccess = isAdmin || user?.role === 'hr' || ['sultan', 'mohammed'].includes(user?.username);
   const canNuclearDelete = ['stas', 'sultan'].includes(user?.username);
   
   const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
+  
+  // Get the current domain for embed code
+  const currentDomain = typeof window !== 'undefined' ? window.location.origin : baseUrl;
+  
+  // Generate embed code
+  const embedCode = `<iframe 
+  src="${currentDomain}/embed/careers" 
+  width="100%" 
+  height="700" 
+  frameborder="0"
+  style="border: none; border-radius: 12px;"
+  title="بوابة التوظيف - Careers Portal"
+></iframe>`;
+
+  // Copy embed code to clipboard
+  const copyEmbedCode = async () => {
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      setCopiedCode(true);
+      toast.success(lang === 'ar' ? 'تم نسخ الكود!' : 'Code copied!');
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch (err) {
+      toast.error(lang === 'ar' ? 'فشل النسخ' : 'Failed to copy');
+    }
+  };
   
   // Load data
   const loadJobs = useCallback(async () => {
