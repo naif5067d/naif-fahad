@@ -277,13 +277,13 @@ class PenaltyCalculator:
             if status == "PERMISSION":
                 continue
             
-            total_late_minutes += r.get("late_minutes", 0)
-            total_early_leave_minutes += r.get("early_leave_minutes", 0)
+            total_late_minutes += r.get("late_minutes", 0) or 0
+            total_early_leave_minutes += r.get("early_leave_minutes", 0) or 0
             
             # حساب الساعات الإضافية (البقاء بعد نهاية الدوام)
-            actual_hours = r.get("actual_hours", 0)
-            required_hours = r.get("required_hours", 8)
-            if actual_hours > required_hours:
+            actual_hours = r.get("actual_hours") or 0
+            required_hours = r.get("required_hours") or 8
+            if actual_hours and required_hours and actual_hours > required_hours:
                 extra_hours = actual_hours - required_hours
                 total_extra_minutes += int(extra_hours * 60)
         
