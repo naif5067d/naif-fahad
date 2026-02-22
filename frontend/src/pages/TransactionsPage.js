@@ -590,12 +590,19 @@ export default function TransactionsPage() {
                 ref={videoRef} 
                 autoPlay 
                 playsInline 
+                muted
                 className="w-full h-full object-cover"
                 style={{ display: scannerStream ? 'block' : 'none' }}
               />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
               {scannerStream && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-48 h-24 border-2 border-primary rounded-lg animate-pulse" />
+                  <div className="w-48 h-48 border-2 border-primary rounded-2xl animate-pulse">
+                    <QrCode size={40} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary/50" />
+                  </div>
+                  <p className="absolute bottom-4 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                    {lang === 'ar' ? 'وجّه الكاميرا على QR المعاملة...' : 'Point camera at transaction QR...'}
+                  </p>
                 </div>
               )}
             </div>
