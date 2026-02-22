@@ -103,6 +103,8 @@ app.include_router(analytics_router)
 app.include_router(performance_router)
 app.include_router(push_router)
 app.include_router(company_settings_router)
+app.include_router(ats_admin_router)
+app.include_router(ats_public_router)
 
 app.add_middleware(
     CORSMiddleware,
