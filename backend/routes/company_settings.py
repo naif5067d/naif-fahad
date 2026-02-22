@@ -449,3 +449,82 @@ async def get_pwa_icon(size: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process icon: {str(e)}")
+
+
+@router.get("/manifest.json")
+async def get_dynamic_manifest():
+    """
+    Get dynamic manifest.json with custom icons.
+    No auth required.
+    """
+    settings = await db.company_settings.find_one({"key": "login_page"}, {"_id": 0})
+    icon_data = await db.company_settings.find_one({"key": "pwa_icons"})
+    
+    company_name_ar = settings.get("company_name_ar", "شركة دار الكود") if settings else "شركة دار الكود"
+    company_name_en = settings.get("company_name_en", "DAR AL CODE") if settings else "DAR AL CODE"
+    primary_color = settings.get("primary_color", "#1E3A5F") if settings else "#1E3A5F"
+    
+    # Use version for cache busting
+    version = icon_data.get("version", "1") if icon_data else "1"
+    
+    # Check if custom icon exists
+    has_custom_icon = icon_data and icon_data.get("icon_data")
+    has_logo = settings and settings.get("logo_url")
+    
+    if has_custom_icon or has_logo:
+        # Use dynamic icons from API
+        icons = [
+            {
+                "src": f"/api/company-settings/pwa-icon/192?v={version}",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": f"/api/company-settings/pwa-icon/512?v={version}",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    else:
+        # Default icons
+        icons = [
+            {
+                "src": "/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    
+    manifest = {
+        "name": f"{company_name_en} - نظام الموارد البشرية",
+        "short_name": company_name_en,
+        "description": f"نظام إدارة الموارد البشرية - {company_name_ar}",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#FFFFFF",
+        "theme_color": primary_color,
+        "orientation": "portrait-primary",
+        "scope": "/",
+        "lang": "ar",
+        "dir": "rtl",
+        "categories": ["business", "productivity"],
+        "icons": icons
+    }
+    
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        content=manifest,
+        headers={
+            "Content-Type": "application/manifest+json",
+            "Cache-Control": "public, max-age=300"
+        }
+    )
