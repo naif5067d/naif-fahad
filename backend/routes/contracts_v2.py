@@ -858,7 +858,7 @@ async def revert_contract_to_draft(
 
 
 # ============================================================
-# DELETE CONTRACT (Draft Only)
+# DELETE CONTRACT (Draft Only - or any status for STAS)
 # ============================================================
 
 @router.delete("/{contract_id}")
@@ -868,14 +868,17 @@ async def delete_contract(
 ):
     """
     Delete a contract.
-    Only allowed for draft status.
-    Executed contracts cannot be deleted.
+    - STAS can delete any contract regardless of status
+    - Others can only delete draft or pending_stas contracts
     """
     contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
     if not contract:
         raise HTTPException(status_code=404, detail="العقد غير موجود")
     
-    if contract["status"] not in ("draft", "pending_stas"):
+    # STAS can delete any contract
+    is_stas = user.get('username') == 'stas'
+    
+    if not is_stas and contract["status"] not in ("draft", "pending_stas"):
         raise HTTPException(
             status_code=400, 
             detail=f"لا يمكن حذف عقد بحالة {contract['status']}. يمكن حذف العقود بحالة draft أو pending_stas فقط."
