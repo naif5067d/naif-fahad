@@ -56,8 +56,8 @@ async def get_public_settings():
             "welcome_text_en": "You are the Home, We are the Code",
             "primary_color": "#1E3A5F",  # Navy
             "secondary_color": "#A78BFA",  # Lavender
-            "company_name_ar": "شركة دار الأركان",
-            "company_name_en": "Dar Al Arkan"
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "company_name_en": "Dar Al Code Engineering Consultancy"
         }
     
     return settings
@@ -84,8 +84,8 @@ async def get_settings(user=Depends(require_roles('stas'))):
             "welcome_text_en": "You are the Home, We are the Code",
             "primary_color": "#1E3A5F",
             "secondary_color": "#A78BFA",
-            "company_name_ar": "شركة دار الأركان",
-            "company_name_en": "Dar Al Arkan",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "company_name_en": "Dar Al Code Engineering Consultancy",
             "updated_at": None,
             "updated_by": None
         }
