@@ -76,10 +76,11 @@ async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(requir
     """
     التحضير اليدوي من الإدارة - تحليل الحضور للموظفين
     
-    المنطق:
-    - إذا الموظف سجل بصمة ذاتية (GPS) → لا يُغيّر
-    - إذا لم يسجل وكان ضمن أوقات العمل → يُحسب تأخير
-    - إذا لم يسجل وكان خارج أوقات العمل → لا يُحسب تأخير (فقط إثبات حضور)
+    المنطق الذكي الجديد:
+    - إذا الموظف سجل بصمة ذاتية (GPS) → لا يُغيّر أبداً
+    - إذا الموظف ليس له سجل → يُنشئ سجل جديد
+    - إذا الموظف له سجل بدون GPS وجاءت GPS لاحقاً → يُحدّث تلقائياً
+    - يمنع الكتابة فوق GPS تحت أي ظرف
     
     يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
     """
@@ -90,13 +91,11 @@ async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(requir
     
     # جلب الموظفين
     if req.employee_id:
-        # موظف واحد محدد
         employees = await db.employees.find(
             {"id": req.employee_id, "is_active": {"$ne": False}}, 
             {"_id": 0, "id": 1}
         ).to_list(1)
     else:
-        # جميع الموظفين (باستثناء المستثنين)
         employees = await db.employees.find(
             {
                 "is_active": {"$ne": False},
@@ -106,45 +105,70 @@ async def process_daily_attendance(req: ProcessDailyRequest, user=Depends(requir
         ).to_list(500)
     
     processed = 0
-    skipped = 0
+    skipped_gps = 0
+    skipped_existing = 0
+    updated = 0
     results = []
     
     for emp in employees:
-        # فحص إذا كان هناك سجل بصمة ذاتية (GPS)
-        existing_gps = await db.attendance_ledger.find_one({
-            "employee_id": emp['id'],
-            "date": req.date,
-            "type": "check_in",
-            "source": "self_checkin"
-        })
+        result = await resolve_and_save_v2(emp['id'], req.date)
         
-        if existing_gps:
-            # لا نُغيّر البصمة الذاتية - GPS هو الأصل
-            skipped += 1
+        action = result.get('action', 'processed')
+        
+        if action == 'skipped':
+            skipped_gps += 1
             results.append({
                 "employee_id": emp['id'],
-                "action": "skipped",
-                "reason": "بصمة ذاتية GPS موجودة"
+                "action": "skipped_gps",
+                "reason_ar": result.get('reason_ar', 'بصمة GPS موجودة')
             })
-            continue
-        
-        # تحليل اليوم وتسجيل الحضور
-        result = await resolve_and_save_v2(emp['id'], req.date)
-        processed += 1
-        results.append({
-            "employee_id": emp['id'],
-            "action": "processed",
-            "status": result.get('final_status'),
-            "status_ar": result.get('status_ar'),
-            "late_minutes": result.get('late_minutes', 0)
-        })
+        elif action == 'kept':
+            skipped_existing += 1
+            results.append({
+                "employee_id": emp['id'],
+                "action": "kept",
+                "reason_ar": result.get('reason_ar', 'السجل موجود')
+            })
+        elif action == 'updated':
+            updated += 1
+            results.append({
+                "employee_id": emp['id'],
+                "action": "updated",
+                "status": result.get('final_status'),
+                "status_ar": result.get('status_ar'),
+                "reason_ar": result.get('reason_ar')
+            })
+        else:
+            processed += 1
+            results.append({
+                "employee_id": emp['id'],
+                "action": "created",
+                "status": result.get('final_status'),
+                "status_ar": result.get('status_ar'),
+                "late_minutes": result.get('late_minutes', 0)
+            })
+    
+    # رسالة واضحة بالعربي
+    message_parts = []
+    if processed > 0:
+        message_parts.append(f"✅ {processed} موظف جديد")
+    if updated > 0:
+        message_parts.append(f"🔄 {updated} تحديث")
+    if skipped_gps > 0:
+        message_parts.append(f"🔒 {skipped_gps} محمي (GPS)")
+    if skipped_existing > 0:
+        message_parts.append(f"⏭️ {skipped_existing} موجود")
     
     return {
         "success": True,
         "date": req.date,
         "processed": processed,
-        "skipped": skipped,
-        "message_ar": f"تم التحضير: {processed} موظف، تخطي {skipped} (بصمة GPS)",
+        "updated": updated,
+        "skipped_gps": skipped_gps,
+        "skipped_existing": skipped_existing,
+        "total": len(employees),
+        "message_ar": " | ".join(message_parts) if message_parts else "لا يوجد موظفين للمعالجة",
+        "explanation_ar": "🔒 GPS لا يمكن التعديل عليها | 🔄 تم تحديث من جاءت له GPS بعد التحضير السابق",
         "results": results
     }
 
