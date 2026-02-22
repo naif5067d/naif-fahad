@@ -2,18 +2,15 @@
  * Smart Rich Text Editor Component
  * Canva/Notion-like intelligent editor with RTL support
  */
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Highlight } from '@tiptap/extension-highlight';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import { 
-  Bold, Italic, Underline, List, ListOrdered, 
+  Bold, Italic, Strikethrough, List, ListOrdered, 
   Heading1, Heading2, Heading3, Quote, Minus, 
   Table as TableIcon, AlertTriangle, Info, 
   Palette, Highlighter, Undo, Redo
@@ -21,10 +18,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-// Custom Warning/Notice block extension
 import { Node, mergeAttributes } from '@tiptap/core';
 
+// Custom Warning block extension
 const WarningBlock = Node.create({
   name: 'warningBlock',
   group: 'block',
@@ -35,11 +31,12 @@ const WarningBlock = Node.create({
   renderHTML({ HTMLAttributes }) {
     return ['div', mergeAttributes(HTMLAttributes, { 
       'data-type': 'warning',
-      'class': 'warning-block p-4 my-4 rounded-lg border-r-4 border-amber-500 bg-amber-50 dark:bg-amber-950/30'
+      'class': 'warning-block'
     }), 0];
   },
 });
 
+// Custom Notice block extension
 const NoticeBlock = Node.create({
   name: 'noticeBlock',
   group: 'block',
@@ -50,7 +47,7 @@ const NoticeBlock = Node.create({
   renderHTML({ HTMLAttributes }) {
     return ['div', mergeAttributes(HTMLAttributes, { 
       'data-type': 'notice',
-      'class': 'notice-block p-4 my-4 rounded-lg border-r-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30'
+      'class': 'notice-block'
     }), 0];
   },
 });
@@ -60,8 +57,6 @@ const COLORS = [
   '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
   '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff',
   '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
-  '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3',
-  '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
 ];
 
 const HIGHLIGHT_COLORS = [
@@ -90,21 +85,10 @@ export default function SmartEditor({
       Highlight.configure({ multicolor: true }),
       Table.configure({
         resizable: true,
-        HTMLAttributes: {
-          class: 'border-collapse border border-border my-4 w-full',
-        },
       }),
       TableRow,
-      TableHeader.configure({
-        HTMLAttributes: {
-          class: 'border border-border bg-muted p-2 font-bold',
-        },
-      }),
-      TableCell.configure({
-        HTMLAttributes: {
-          class: 'border border-border p-2',
-        },
-      }),
+      TableHeader,
+      TableCell,
       Typography,
       Placeholder.configure({
         placeholder,
@@ -206,7 +190,7 @@ export default function SmartEditor({
             active={editor.isActive('strike')}
             title="Strikethrough"
           >
-            <Underline size={16} />
+            <Strikethrough size={16} />
           </ToolbarButton>
 
           <div className="w-px h-6 bg-border mx-1" />
@@ -332,43 +316,11 @@ export default function SmartEditor({
         </div>
       )}
 
-      {/* Bubble Menu for quick formatting */}
-      {!readOnly && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-          <div className="flex items-center gap-1 p-1 rounded-lg border bg-background shadow-lg">
-            <Button
-              variant={editor.isActive('bold') ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => editor.chain().focus().toggleBold().run()}
-            >
-              <Bold size={14} />
-            </Button>
-            <Button
-              variant={editor.isActive('italic') ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-            >
-              <Italic size={14} />
-            </Button>
-            <Button
-              variant={editor.isActive('highlight') ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()}
-            >
-              <Highlighter size={14} />
-            </Button>
-          </div>
-        </BubbleMenu>
-      )}
-
       {/* Editor Content */}
       <EditorContent editor={editor} className="policy-editor-content" />
 
       {/* Editor Styles */}
-      <style jsx global>{`
+      <style>{`
         .policy-editor-content .ProseMirror {
           min-height: 300px;
           outline: none;
