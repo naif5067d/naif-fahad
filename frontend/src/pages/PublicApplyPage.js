@@ -33,13 +33,29 @@ export default function PublicApplyPage() {
       try {
         const res = await fetch(`${baseUrl}/api/ats/public/jobs/${slug}`);
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail?.[lang] || err.detail?.en || 'Job not found');
+          // Handle error without parsing JSON twice
+          let errorMsg = lang === 'ar' 
+            ? 'عذراً، الوظيفة التي تبحث عنها غير متاحة حالياً أو أن باب التقديم قد أُغلق.'
+            : 'Sorry, the position you are looking for is not available or applications have been closed.';
+          
+          try {
+            const errData = await res.json();
+            if (errData.detail) {
+              errorMsg = errData.detail[lang] || errData.detail.ar || errData.detail.en || errorMsg;
+            }
+          } catch {
+            // If JSON parsing fails, use default message
+          }
+          
+          throw new Error(errorMsg);
         }
         const data = await res.json();
         setJob(data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || (lang === 'ar' 
+          ? 'عذراً، حدث خطأ في تحميل بيانات الوظيفة.'
+          : 'Sorry, an error occurred while loading the job details.'
+        ));
       } finally {
         setLoading(false);
       }
