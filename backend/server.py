@@ -71,6 +71,7 @@ from routes.push_notifications import router as push_router
 from routes.company_settings import router as company_settings_router
 from routes.ats_admin import router as ats_admin_router
 from routes.ats_public import router as ats_public_router
+from routes.policies import router as policies_router
 from seed import seed_database
 
 # App Version
@@ -115,6 +116,7 @@ app.include_router(push_router)
 app.include_router(company_settings_router)
 app.include_router(ats_admin_router)
 app.include_router(ats_public_router)
+app.include_router(policies_router)
 
 app.add_middleware(
     CORSMiddleware,
