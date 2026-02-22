@@ -660,21 +660,32 @@ export default function EmployeesPage() {
       <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-destructive">{lang === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</DialogTitle>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 size={20} />
+              {lang === 'ar' ? 'حذف نهائي' : 'Permanent Delete'}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm">
+            <p className="text-sm font-medium">
               {lang === 'ar' 
-                ? `هل أنت متأكد من حذف الموظف "${deleteDialog?.full_name_ar || deleteDialog?.full_name}"؟`
-                : `Are you sure you want to delete employee "${deleteDialog?.full_name}"?`
+                ? `هل أنت متأكد من حذف الموظف "${deleteDialog?.full_name_ar || deleteDialog?.full_name}" نهائياً؟`
+                : `Are you sure you want to permanently delete "${deleteDialog?.full_name}"?`
               }
             </p>
-            <p className="text-xs text-muted-foreground">
-              {lang === 'ar' 
-                ? 'ملاحظة: لا يمكن حذف موظف لديه عقد نشط. يجب إنهاء العقد أولاً.'
-                : 'Note: Cannot delete employee with active contract. Must terminate contract first.'
-              }
-            </p>
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm">
+              <p className="font-medium text-destructive mb-2">
+                {lang === 'ar' ? '⚠️ تحذير: سيتم حذف كل شيء:' : '⚠️ Warning: Everything will be deleted:'}
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>{lang === 'ar' ? 'العقود' : 'Contracts'}</li>
+                <li>{lang === 'ar' ? 'سجلات الحضور' : 'Attendance records'}</li>
+                <li>{lang === 'ar' ? 'الإجازات والمعاملات' : 'Leaves & transactions'}</li>
+                <li>{lang === 'ar' ? 'حساب المستخدم' : 'User account'}</li>
+              </ul>
+              <p className="mt-2 text-xs text-destructive font-bold">
+                {lang === 'ar' ? '❌ هذا الإجراء لا يمكن التراجع عنه!' : '❌ This action cannot be undone!'}
+              </p>
+            </div>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -690,7 +701,7 @@ export default function EmployeesPage() {
                 disabled={deleting}
                 data-testid="confirm-delete-emp"
               >
-                {deleting ? (lang === 'ar' ? 'جاري الحذف...' : 'Deleting...') : (lang === 'ar' ? 'حذف' : 'Delete')}
+                {deleting ? (lang === 'ar' ? 'جاري الحذف...' : 'Deleting...') : (lang === 'ar' ? 'حذف نهائي' : 'Delete Permanently')}
               </Button>
             </div>
           </div>
