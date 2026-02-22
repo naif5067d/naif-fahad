@@ -167,11 +167,13 @@ class ATSScoringEngine:
         self.result = ScoringResult()
         self.result.ats_readable = is_readable
         
+        # For unreadable CVs, mark for manual review instead of rejecting
         if not is_readable or not cv_text or len(cv_text.strip()) < 100:
             self.result.score = 0
-            self.result.auto_class = "Rejected (Unreadable)"
-            self.result.tier = "Rejected"
-            self.result.risks.append("CV is not ATS-readable or too short")
+            self.result.auto_class = "Manual Review"
+            self.result.tier = "C"  # Put in Tier C for manual review
+            self.result.risks.append("CV requires manual review - not machine-readable")
+            self.result.top_reasons.append("File uploaded but needs HR review")
             return self.result
         
         cv_lower = cv_text.lower()
