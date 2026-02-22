@@ -402,13 +402,14 @@ class ATSScoringEngine:
         ego_count = sum(cv_lower.count(p) for p in EGO_PRONOUNS_EN + EGO_PRONOUNS_AR)
         team_count = sum(cv_lower.count(p) for p in TEAM_WORDS_EN + TEAM_WORDS_AR)
         
-        total = ego_count + team_count
-        if total > 0:
-            self.result.ego_index = ego_count / total
+        # Add 1 to avoid division by zero and reduce sensitivity
+        total = ego_count + team_count + 1
+        self.result.ego_index = ego_count / total
         
-        # Penalty only if high ego without evidence
-        if self.result.ego_index > 0.8 and self.result.evidence_score < 50:
-            self.result.ego_penalty = int((self.result.ego_index - 0.5) * self.weights['ego_penalty_max'] * 2)
+        # Penalty only if very high ego without evidence
+        # Note: CVs naturally use "I" - only penalize extreme cases with no team words
+        if self.result.ego_index > 0.9 and team_count == 0 and self.result.evidence_score < 50:
+            self.result.ego_penalty = int((self.result.ego_index - 0.7) * self.weights['ego_penalty_max'])
         else:
             self.result.ego_penalty = 0
     
