@@ -2440,7 +2440,7 @@ export default function STASMirrorPage() {
                     <Input
                       value={companySettings.company_name_en}
                       onChange={(e) => setCompanySettings(prev => ({ ...prev, company_name_en: e.target.value }))}
-                      placeholder="Dar Al Arkan"
+                      placeholder="Dar Al Code Engineering Consultancy"
                       className="mt-2"
                       dir="ltr"
                     />
