@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +13,7 @@ import {
 import { formatSaudiDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import jsQR from 'jsqr';
 
 // تكوين الحالات - ألوان الشركة
 const STATUS_CONFIG = {
