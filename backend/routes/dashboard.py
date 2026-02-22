@@ -72,8 +72,13 @@ async def get_dashboard_stats(user=Depends(get_current_user)):
 
 @router.get("/next-holiday")
 async def get_next_holiday(user=Depends(get_current_user)):
-    """Get the next upcoming official holiday."""
+    """Get the next upcoming official holiday with relative date info."""
+    from datetime import timedelta
+    from hijri_converter import Hijri, Gregorian
+    
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
+    
     # Check public holidays first
     holiday = await db.public_holidays.find_one(
         {"date": {"$gte": today}},
@@ -87,4 +92,34 @@ async def get_next_holiday(user=Depends(get_current_user)):
             {"_id": 0},
             sort=[("date", 1)]
         )
-    return holiday or None
+    
+    if not holiday:
+        return None
+    
+    # Add relative date info
+    holiday_date = holiday.get('date', '')
+    
+    # Determine if today, tomorrow, or future
+    if holiday_date == today:
+        holiday['relative'] = 'today'
+        holiday['relative_ar'] = 'اليوم'
+    elif holiday_date == tomorrow:
+        holiday['relative'] = 'tomorrow'
+        holiday['relative_ar'] = 'غداً'
+    else:
+        holiday['relative'] = 'upcoming'
+        holiday['relative_ar'] = 'قادمة'
+    
+    # Convert to Hijri date
+    try:
+        year, month, day = map(int, holiday_date.split('-'))
+        hijri = Gregorian(year, month, day).to_hijri()
+        hijri_months_ar = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 
+                          'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة']
+        holiday['hijri_date'] = f"{hijri.day} {hijri_months_ar[hijri.month - 1]} {hijri.year}"
+        holiday['hijri_date_short'] = f"{hijri.day}/{hijri.month}/{hijri.year}"
+    except:
+        holiday['hijri_date'] = ''
+        holiday['hijri_date_short'] = ''
+    
+    return holiday
