@@ -507,3 +507,78 @@ async def get_calibration_report(user=Depends(get_current_user)):
         "class_accuracy": class_accuracy,
         "suggestions": suggestions
     }
+
+
+
+# ==================== NUCLEAR DELETE ====================
+
+def require_nuclear_access(user: dict):
+    """Only stas and sultan can perform nuclear delete"""
+    username = user.get('username', '')
+    if username not in ['stas', 'sultan']:
+        raise HTTPException(
+            status_code=403, 
+            detail="فقط سلطان وستاس يمكنهم تنفيذ هذا الإجراء / Only sultan and stas can perform this action"
+        )
+    return True
+
+
+@router.delete("/nuclear-delete")
+async def nuclear_delete_all_ats_data(user=Depends(get_current_user)):
+    """
+    🔴 NUCLEAR DELETE - Permanently deletes ALL ATS applications and files
+    RESTRICTED TO: stas, sultan ONLY
+    
+    This action:
+    1. Deletes ALL files in /app/ats_storage/cv_files/
+    2. Deletes ALL records from ats_applications collection
+    3. DOES NOT delete job postings (only applications)
+    
+    WARNING: This action is IRREVERSIBLE
+    """
+    require_nuclear_access(user)
+    
+    deleted_files = 0
+    deleted_records = 0
+    errors = []
+    
+    # Step 1: Delete all files in ATS storage
+    if os.path.exists(ATS_CV_DIR):
+        for filename in os.listdir(ATS_CV_DIR):
+            file_path = os.path.join(ATS_CV_DIR, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    deleted_files += 1
+            except Exception as e:
+                errors.append(f"Failed to delete file {filename}: {str(e)}")
+    
+    # Step 2: Delete all application records from database
+    result = await db.ats_applications.delete_many({})
+    deleted_records = result.deleted_count
+    
+    # Log the action
+    from datetime import datetime, timezone
+    log_entry = {
+        "action": "nuclear_delete",
+        "performed_by": user.get("username"),
+        "performed_at": datetime.now(timezone.utc).isoformat(),
+        "deleted_files": deleted_files,
+        "deleted_records": deleted_records,
+        "errors": errors
+    }
+    
+    # Store in audit log
+    await db.ats_audit_log.insert_one(log_entry)
+    
+    return {
+        "success": True,
+        "message": {
+            "ar": "تم حذف جميع طلبات التوظيف والملفات المرفقة بشكل نهائي",
+            "en": "All applications and attached files have been permanently deleted"
+        },
+        "deleted_files": deleted_files,
+        "deleted_records": deleted_records,
+        "errors": errors if errors else None,
+        "performed_by": user.get("username")
+    }
