@@ -67,6 +67,10 @@ export default function WorkLocationsPage() {
   const [ramadanDialog, setRamadanDialog] = useState(null);
   const [savingRamadan, setSavingRamadan] = useState(false);
   
+  // Compensation Allowance (Smart Hours) - للمدراء فقط
+  const [compensationAllowance, setCompensationAllowance] = useState(0);
+  const [savingCompensation, setSavingCompensation] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
