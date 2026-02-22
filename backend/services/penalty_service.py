@@ -75,8 +75,7 @@ class PenaltyCalculator:
         if self.employee:
             self.contract = await db.contracts_v2.find_one({
                 "employee_id": self.employee_id,
-                "status": "active",
-                "is_active": True
+                "status": "active"
             }, {"_id": 0})
     
     async def calculate_monthly_penalties(self, year: int, month: int) -> Dict:
