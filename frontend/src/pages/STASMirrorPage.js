@@ -2260,6 +2260,86 @@ export default function STASMirrorPage() {
               </CardContent>
             </Card>
 
+            {/* PWA Icon Upload - أيقونة التطبيق */}
+            <Card className="border border-border shadow-none md:col-span-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Smartphone size={18} className="text-blue-600" />
+                  {lang === 'ar' ? 'أيقونة التطبيق (PWA)' : 'App Icon (PWA)'}
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                    {lang === 'ar' ? 'جديد' : 'New'}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {lang === 'ar' 
+                    ? 'هذه الأيقونة ستظهر على أجهزة المستخدمين (آيفون، أندرويد، الكمبيوتر) عند تثبيت التطبيق. يُنصح باستخدام صورة مربعة 512×512 بكسل.'
+                    : 'This icon will appear on user devices (iPhone, Android, Desktop) when installing the app. Recommended size: 512x512 pixels.'}
+                </p>
+                <div className="flex items-center gap-4">
+                  {companySettings.pwa_icon_url ? (
+                    <div className="relative">
+                      <img 
+                        src={companySettings.pwa_icon_url} 
+                        alt="PWA Icon" 
+                        className="w-24 h-24 object-contain rounded-xl border-2 border-blue-200 shadow-md"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeletePwaIcon}
+                        className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full bg-destructive text-white hover:bg-destructive"
+                      >
+                        <X size={12} />
+                      </Button>
+                    </div>
+                  ) : companySettings.logo_url ? (
+                    <div className="relative">
+                      <img 
+                        src={companySettings.logo_url} 
+                        alt="Logo as Icon" 
+                        className="w-24 h-24 object-contain rounded-xl border-2 border-dashed border-blue-300 opacity-60"
+                      />
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        {lang === 'ar' ? 'من الشعار' : 'From Logo'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-300 flex items-center justify-center text-blue-400">
+                      <Smartphone size={32} />
+                    </div>
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      onChange={handleUploadPwaIcon}
+                      className="hidden"
+                      id="pwa-icon-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('pwa-icon-upload')?.click()}
+                      disabled={uploadingPwaIcon}
+                      className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    >
+                      {uploadingPwaIcon ? <Loader2 size={16} className="animate-spin ml-2" /> : <Smartphone size={16} className="ml-2" />}
+                      {lang === 'ar' ? 'رفع أيقونة التطبيق' : 'Upload App Icon'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      PNG, JPG - 512×512 {lang === 'ar' ? 'بكسل مُوصى' : 'px recommended'}
+                    </p>
+                    {!companySettings.pwa_icon_url && companySettings.logo_url && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        {lang === 'ar' ? '💡 حالياً يتم استخدام الشعار كأيقونة' : '💡 Currently using logo as icon'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Welcome Text */}
             <Card className="border border-border shadow-none md:col-span-2">
               <CardHeader>
