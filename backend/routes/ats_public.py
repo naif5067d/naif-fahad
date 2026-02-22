@@ -23,8 +23,9 @@ ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_FILES = 2
 
-# Upload directory (isolated from main app uploads)
-ATS_UPLOAD_DIR = "/app/uploads/ats_cv"
+# Upload directory - COMPLETELY ISOLATED from main app storage
+# This folder is outside /app/backend to ensure full separation
+ATS_UPLOAD_DIR = "/app/ats_storage/cv_files"
 os.makedirs(ATS_UPLOAD_DIR, exist_ok=True)
 
 # ==================== HELPER FUNCTIONS ====================
