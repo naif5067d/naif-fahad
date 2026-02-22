@@ -15,23 +15,117 @@
   @apply bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))] ring-[hsl(var(--info)/0.2)] dark:bg-[hsl(var(--info)/0.15)];
 }
 
+/* ============================================
+   MOBILE-FIRST RESPONSIVE DESIGN
+   ============================================ */
+
+/* الجداول على الجوال - تمرير أفقي */
+@media (max-width: 640px) {
+  .table-container {
+    @apply overflow-x-auto -mx-4 px-4;
+  }
+  
+  .table-container table {
+    min-width: 600px;
+  }
+  
+  /* إخفاء بعض الأعمدة على الجوال */
+  .hide-mobile {
+    @apply hidden sm:table-cell;
+  }
+  
+  /* تصغير النصوص */
+  .hr-table th,
+  .hr-table td {
+    @apply px-2 py-2 text-xs;
+  }
+  
+  /* الأزرار أصغر */
+  button, .btn {
+    @apply text-sm;
+  }
+  
+  /* Input fields */
+  input, select, textarea {
+    @apply text-base; /* يمنع التكبير على iOS */
+  }
+}
+
+/* تحسينات اللمس للجوال */
+@media (max-width: 768px) {
+  /* مناطق لمس أكبر */
+  button, 
+  [role="button"], 
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* تقليل الـ padding */
+  .container {
+    @apply px-3;
+  }
+  
+  /* Cards أصغر */
+  .card {
+    @apply rounded-xl;
+  }
+}
+
 /* Table styles */
 .hr-table {
   @apply w-full text-sm;
 }
 .hr-table th {
-  @apply text-left font-medium text-muted-foreground px-4 py-3 border-b bg-muted/50;
+  @apply text-left font-medium text-muted-foreground px-4 py-3 border-b bg-muted/50 text-xs sm:text-sm;
 }
 [dir="rtl"] .hr-table th {
   @apply text-right;
 }
 .hr-table td {
-  @apply px-4 py-3 border-b border-border/50;
+  @apply px-4 py-3 border-b border-border/50 text-xs sm:text-sm;
 }
 .hr-table tr:hover td {
   @apply bg-muted/30;
 }
 
+/* Mobile table - Stack layout */
+@media (max-width: 640px) {
+  .mobile-stack {
+    display: block !important;
+  }
+  
+  .mobile-stack thead {
+    display: none;
+  }
+  
+  .mobile-stack tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+  }
+  
+  .mobile-stack tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+  
+  .mobile-stack tbody td:last-child {
+    border-bottom: none;
+  }
+  
+  .mobile-stack tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+    margin-left: 1rem;
+  }
+}
 
 /* STAS Mirror - Premium Design */
 .bg-grid-white\/\[0\.05\] {
