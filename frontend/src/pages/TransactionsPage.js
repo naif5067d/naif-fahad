@@ -403,99 +403,90 @@ export default function TransactionsPage() {
             return (
               <div
                 key={tx.id}
-                className="group bg-card hover:bg-muted/30 rounded-2xl border border-border/60 hover:border-primary/30 transition-all duration-200 overflow-hidden"
+                className="group bg-card hover:bg-muted/30 rounded-xl sm:rounded-2xl border border-border/60 hover:border-primary/30 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
                 data-testid={`tx-row-${tx.ref_no}`}
+                onClick={() => navigate(`/transactions/${tx.id}`)}
               >
-                {/* المحتوى الرئيسي */}
-                <div className="p-4 sm:p-5">
+                {/* المحتوى الرئيسي - محسّن للجوال */}
+                <div className="p-3 sm:p-5">
                   {/* الصف العلوي - نوع المعاملة والحالة */}
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       {/* أيقونة النوع */}
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        {typeConfig.Icon && <typeConfig.Icon size={24} className="text-primary" />}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {typeConfig.Icon && <typeConfig.Icon size={20} className="text-primary sm:hidden" />}
+                        {typeConfig.Icon && <typeConfig.Icon size={24} className="text-primary hidden sm:block" />}
                       </div>
                       {/* النوع والرقم المرجعي */}
-                      <div>
-                        <h3 className="font-semibold text-base">{typeConfig.label}</h3>
-                        <p className="text-xs text-muted-foreground font-mono mt-0.5">{tx.ref_no}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base truncate">{typeConfig.label}</h3>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground font-mono mt-0.5 truncate">{tx.ref_no}</p>
                       </div>
                     </div>
                     {/* شارة الحالة */}
-                    <span className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}>
+                    <span className={`inline-flex items-center rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold border whitespace-nowrap ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}>
                       {statusConfig.label}
                     </span>
                   </div>
                   
-                  {/* صف المعلومات */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm mb-4">
+                  {/* صف المعلومات - مبسط للجوال */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                     {/* الموظف */}
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <User size={14} />
-                      <span>{getEmployeeName(tx)}</span>
+                    <div className="flex items-center gap-1">
+                      <User size={12} className="sm:hidden" />
+                      <User size={14} className="hidden sm:block" />
+                      <span className="truncate max-w-[120px] sm:max-w-none">{getEmployeeName(tx)}</span>
                     </div>
                     {/* الوقت */}
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Clock size={14} />
+                    <div className="flex items-center gap-1">
+                      <Clock size={12} className="sm:hidden" />
+                      <Clock size={14} className="hidden sm:block" />
                       <span>{formatSaudiDateTime(tx.created_at)}</span>
-                    </div>
-                    {/* المرحلة */}
-                    <div className="ms-auto text-xs bg-muted/50 px-2 py-1 rounded-md">
-                      المرحلة: {getStageLabel(tx.current_stage)}
                     </div>
                   </div>
 
-                  {/* صف الإجراءات */}
-                  <div className="flex items-center gap-2 pt-3 border-t border-border/50">
-                    {/* زر العرض */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/transactions/${tx.id}`)}
-                      className="flex-1 h-10 rounded-xl hover:bg-primary/10 hover:text-primary"
-                      data-testid={`view-tx-${tx.ref_no}`}
+                  {/* أزرار الإجراءات - للإدارة فقط (لا تفتح التفاصيل) */}
+                  {(showActions || showEscalate) && (
+                    <div 
+                      className="flex items-center gap-2 pt-3 mt-3 border-t border-border/50"
+                      onClick={e => e.stopPropagation()}
                     >
-                      <Eye size={16} className="me-2" />
-                      عرض التفاصيل
-                    </Button>
-                    
-                    {/* أزرار الموافقة/الرفض */}
-                    {showActions && (
-                      <>
+                      {showActions && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => setActionDialog({ ...tx, action: 'approve' })}
+                            className="flex-1 h-9 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm"
+                            data-testid={`approve-tx-${tx.ref_no}`}
+                          >
+                            <Check size={14} className="me-1" />
+                            موافقة
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setActionDialog({ ...tx, action: 'reject' })}
+                            className="h-9 sm:h-10 w-9 sm:w-10 rounded-lg sm:rounded-xl p-0"
+                            data-testid={`reject-tx-${tx.ref_no}`}
+                          >
+                            <XIcon size={14} />
+                          </Button>
+                        </>
+                      )}
+                      
+                      {showEscalate && (
                         <Button
+                          variant="outline"
                           size="sm"
-                          onClick={() => setActionDialog({ ...tx, action: 'approve' })}
-                          className="h-10 px-5 rounded-xl bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white font-medium shadow-sm"
-                          data-testid={`approve-tx-${tx.ref_no}`}
+                          onClick={() => setActionDialog({ ...tx, action: 'escalate' })}
+                          className="h-9 sm:h-10 rounded-lg sm:rounded-xl text-xs sm:text-sm border-amber-500/30 text-amber-600 hover:bg-amber-50"
+                          data-testid={`escalate-tx-${tx.ref_no}`}
                         >
-                          <Check size={16} className="me-1.5" />
-                          موافقة
+                          تصعيد
                         </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setActionDialog({ ...tx, action: 'reject' })}
-                          className="h-10 w-10 rounded-xl p-0"
-                          data-testid={`reject-tx-${tx.ref_no}`}
-                        >
-                          <XIcon size={16} />
-                        </Button>
-                      </>
-                    )}
-                    
-                    {/* زر التصعيد */}
-                    {showEscalate && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActionDialog({ ...tx, action: 'escalate' })}
-                        className="h-10 rounded-xl border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] hover:border-[hsl(var(--warning)/0.4)]"
-                        data-testid={`escalate-tx-${tx.ref_no}`}
-                      >
-                        تصعيد
-                      </Button>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
