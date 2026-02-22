@@ -214,25 +214,51 @@ async def reopen_job(job_id: str, user=Depends(get_current_user)):
 # ==================== APPLICATIONS ENDPOINTS ====================
 
 @router.get("/jobs/{job_id}/applications")
-async def list_applications(job_id: str, user=Depends(get_current_user)):
-    """List all applications for a job"""
+async def list_applications(
+    job_id: str, 
+    tier: str = None,  # Filter by tier: A, B, C, or all
+    show_tier_c: bool = False,  # Show Tier C by default
+    user=Depends(get_current_user)
+):
+    """List all applications for a job with tier filtering"""
     require_ats_access(user)
     
     job = await db.ats_jobs.find_one({"id": job_id}, {"_id": 0})
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
-    applications = await db.ats_applications.find(
-        {"job_id": job_id}, 
-        {"_id": 0}
-    ).sort("submitted_at", -1).to_list(1000)
+    # Build query
+    query = {"job_id": job_id}
     
-    return {"job": job, "applications": applications}
+    if tier and tier in ['A', 'B', 'C']:
+        query["tier"] = tier
+    elif not show_tier_c:
+        # Default: hide Tier C
+        query["tier"] = {"$in": ["A", "B"]}
+    
+    applications = await db.ats_applications.find(
+        query, 
+        {"_id": 0, "extracted_text": 0}  # Exclude large text field
+    ).sort([("score", -1), ("submitted_at", -1)]).to_list(1000)
+    
+    # Count by tier
+    tier_counts = {
+        "A": await db.ats_applications.count_documents({"job_id": job_id, "tier": "A"}),
+        "B": await db.ats_applications.count_documents({"job_id": job_id, "tier": "B"}),
+        "C": await db.ats_applications.count_documents({"job_id": job_id, "tier": "C"}),
+    }
+    
+    return {
+        "job": job, 
+        "applications": applications,
+        "tier_counts": tier_counts,
+        "total": sum(tier_counts.values())
+    }
 
 
 @router.get("/applications/{app_id}")
 async def get_application(app_id: str, user=Depends(get_current_user)):
-    """Get application details"""
+    """Get application details with full scoring info"""
     require_ats_access(user)
     
     app = await db.ats_applications.find_one({"id": app_id}, {"_id": 0})
