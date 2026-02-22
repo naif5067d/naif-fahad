@@ -31,6 +31,7 @@ import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
 import ATSPage from "@/pages/ATSPage";
 import PublicApplyPage from "@/pages/PublicApplyPage";
+import PublicCareersPage from "@/pages/PublicCareersPage";
 
 function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
