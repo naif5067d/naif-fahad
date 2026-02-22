@@ -33,7 +33,7 @@ const ICONS = {
   attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
-  attendancePenalties: UsersRound, loginSessions: History, tasks: ClipboardList, maintenanceTracking: Hammer,
+  attendancePenalties: UsersRound, loginSessions: History, tasks: ClipboardList, maintenanceTracking: Hammer, ats: ClipboardCheck,
 };
 
 const PATHS = {
