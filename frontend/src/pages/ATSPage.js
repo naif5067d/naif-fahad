@@ -222,6 +222,32 @@ export default function ATSPage() {
     }
   };
   
+  // Nuclear Delete - Only for stas and sultan
+  const handleNuclearDelete = async () => {
+    if (nuclearConfirmText !== 'DELETE ALL') {
+      toast.error(lang === 'ar' ? 'اكتب "DELETE ALL" للتأكيد' : 'Type "DELETE ALL" to confirm');
+      return;
+    }
+    
+    setNuclearLoading(true);
+    try {
+      const res = await api.delete('/api/ats/admin/nuclear-delete');
+      toast.success(
+        lang === 'ar' 
+          ? `تم الحذف النووي: ${res.data.deleted_records} طلب، ${res.data.deleted_files} ملف` 
+          : `Nuclear delete complete: ${res.data.deleted_records} applications, ${res.data.deleted_files} files`
+      );
+      setShowNuclearDialog(false);
+      setNuclearConfirmText('');
+      loadJobs();
+      loadStats();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error performing nuclear delete');
+    } finally {
+      setNuclearLoading(false);
+    }
+  };
+  
   const resetJobForm = () => {
     setJobForm({
       title_ar: '',
