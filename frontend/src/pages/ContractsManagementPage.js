@@ -2186,6 +2186,50 @@ export default function ContractsManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Contract Dialog - STAS Only */}
+      <Dialog open={!!deleteContract} onOpenChange={() => setDeleteContract(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 size={20} />
+              حذف العقد نهائياً
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+              <p className="font-medium mb-2">
+                هل أنت متأكد من حذف العقد؟
+              </p>
+              <div className="text-sm space-y-1">
+                <p><strong>الرقم المرجعي:</strong> {deleteContract?.ref_no || 'غير محدد'}</p>
+                <p><strong>الموظف:</strong> {deleteContract?.employee_name_ar || deleteContract?.employee_name}</p>
+                <p><strong>تاريخ البداية:</strong> {deleteContract?.start_date}</p>
+              </div>
+            </div>
+            <p className="text-xs text-destructive font-bold">
+              ⚠️ هذا الإجراء لا يمكن التراجع عنه!
+            </p>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setDeleteContract(null)} 
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteContract} 
+                className="flex-1"
+                disabled={deleting}
+              >
+                {deleting ? 'جاري الحذف...' : 'حذف نهائي'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
