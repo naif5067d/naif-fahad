@@ -53,6 +53,38 @@ def sanitize_filename(filename: str) -> str:
 
 # ==================== PUBLIC ENDPOINTS ====================
 
+@router.get("/careers")
+async def get_careers_page():
+    """
+    Get all active jobs for public careers/jobs listing page
+    Returns empty list with polite message if no jobs available
+    """
+    jobs = await db.ats_jobs.find(
+        {"status": "active"},
+        {
+            "_id": 0,
+            "id": 1,
+            "slug": 1,
+            "title_ar": 1,
+            "title_en": 1,
+            "description": 1,
+            "location": 1,
+            "contract_type": 1,
+            "experience_years": 1,
+            "created_at": 1
+        }
+    ).sort("created_at", -1).to_list(100)
+    
+    return {
+        "jobs": jobs,
+        "count": len(jobs),
+        "message": {
+            "ar": "شكراً لاهتمامك بالانضمام إلى فريقنا" if jobs else "نشكرك على اهتمامك، لا توجد شواغر متاحة حالياً. ندعوك لزيارة هذه الصفحة لاحقاً للاطلاع على الفرص الجديدة.",
+            "en": "Thank you for your interest in joining our team" if jobs else "Thank you for your interest. There are no vacancies available at this time. Please check back later for new opportunities."
+        }
+    }
+
+
 @router.get("/jobs/{slug}")
 async def get_public_job(slug: str):
     """
