@@ -1940,33 +1940,69 @@ export default function STASMirrorPage() {
                 <table className="hr-table" data-testid="holidays-table">
                   <thead>
                     <tr>
-                      <th>{t('stas.holidayDate')}</th>
-                      <th>{t('stas.holidayNameEn')}</th>
-                      <th>{t('stas.holidayNameAr')}</th>
+                      <th>{lang === 'ar' ? 'الإجازة' : 'Holiday'}</th>
+                      <th>{lang === 'ar' ? 'من' : 'From'}</th>
+                      <th>{lang === 'ar' ? 'إلى' : 'To'}</th>
+                      <th>{lang === 'ar' ? 'الأيام' : 'Days'}</th>
                       <th>{t('common.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {holidays.length === 0 ? (
-                      <tr><td colSpan={4} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
-                    ) : holidays.map(h => (
-                      <tr key={h.id}>
-                        <td className="font-mono text-xs">{h.date}</td>
-                        <td className="text-sm">{h.name}</td>
-                        <td className="text-sm" dir="rtl">{h.name_ar}</td>
-                        <td>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0 text-destructive" 
-                            onClick={() => deleteHoliday(h.id)}
-                            data-testid={`delete-holiday-${h.id}`}
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                      <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
+                    ) : (() => {
+                      // Group consecutive holidays by name
+                      const groups = {};
+                      holidays.forEach(h => {
+                        const baseName = (h.name_ar || h.name || '').replace(/\s*\d+\s*$/, '').trim() || h.name;
+                        if (!groups[baseName]) {
+                          groups[baseName] = [];
+                        }
+                        groups[baseName].push(h);
+                      });
+                      
+                      // Convert to range format
+                      return Object.entries(groups).map(([name, days]) => {
+                        // Sort by date
+                        days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                        const startDate = days[0]?.date;
+                        const endDate = days[days.length - 1]?.date;
+                        const nameAr = days[0]?.name_ar?.replace(/\s*\d+\s*$/, '').trim() || name;
+                        const nameEn = days[0]?.name?.replace(/\s*\d+\s*$/, '').trim() || name;
+                        const firstDayId = days[0]?.id;
+                        
+                        return (
+                          <tr key={name}>
+                            <td className="text-sm font-medium">
+                              {lang === 'ar' ? nameAr : nameEn}
+                            </td>
+                            <td className="font-mono text-xs">{startDate}</td>
+                            <td className="font-mono text-xs">{endDate}</td>
+                            <td className="text-center">
+                              <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                                {days.length}
+                              </span>
+                            </td>
+                            <td>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 w-7 p-0 text-destructive" 
+                                onClick={() => {
+                                  if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
+                                    // حذف جميع أيام هذه العطلة
+                                    Promise.all(days.map(d => deleteHoliday(d.id)));
+                                  }
+                                }}
+                                data-testid={`delete-holiday-${firstDayId}`}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
