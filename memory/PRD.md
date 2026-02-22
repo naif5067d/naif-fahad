@@ -17,6 +17,14 @@
 
 ## What's Been Implemented
 
+### 2026-02-22 (Session 3)
+
+1. **إصلاح مشكلة عدم تحديث رقم الإصدار في Footer (P0)** ✅
+   - **السبب الجذري**: `/api/health` كان يُرجع إصدار ثابت من `APP_VERSION` في `server.py`
+   - **الحل**: تعديل `/api/health` ليقرأ الإصدار من قاعدة البيانات (collection: `settings`, type: `app_version`)
+   - **الملف المُعدّل**: `/app/backend/server.py`
+   - الآن عند تحديث الإصدار من STAS Mirror ← يظهر فوراً في Dashboard
+
 ### 2026-02-21 (Session 2)
 
 1. **إصلاح التوقيت (P0)** ✅
