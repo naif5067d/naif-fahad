@@ -266,6 +266,55 @@ async def submit_application(
             }
         )
     
+    # ============ PHASE 2: Text Extraction & ATS Scoring ============
+    from services.ats_extraction import extract_text_from_file, detect_language
+    from services.ats_scoring import score_application
+    
+    # Extract text from all CV files
+    all_text = ""
+    ats_readable = True
+    extraction_errors = []
+    
+    for f in saved_files:
+        text, is_readable, error = await extract_text_from_file(f["path"])
+        f["extracted_text"] = text
+        f["is_readable"] = is_readable
+        f["extraction_error"] = error
+        f["language"] = detect_language(text)
+        
+        if text:
+            all_text += text + "\n\n"
+        
+        if not is_readable:
+            ats_readable = False
+            extraction_errors.append(f["original_name"])
+    
+    # Reject if not ATS-readable
+    if not ats_readable or len(all_text.strip()) < 100:
+        # Clean up files
+        for f in saved_files:
+            try:
+                os.remove(f["path"])
+            except:
+                pass
+        
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "ar": "ملفك غير مناسب للقراءة الآلية (ATS). ارفع نسخة نصية قابلة للقراءة (PDF نصي أو Word)، وتجنب ملفات السكان.",
+                "en": "Your file is not ATS-readable. Upload a text-based PDF or Word file (avoid scanned/image PDFs)."
+            }
+        )
+    
+    # Score the application
+    job_requirements = {
+        "required_skills": job.get("required_skills", ""),
+        "experience_years": job.get("experience_years", 0),
+        "required_languages": job.get("required_languages", ["ar"]),
+    }
+    
+    scoring_result = await score_application(all_text, job_requirements, ats_readable)
+    
     # Create application record
     now = datetime.now(timezone.utc).isoformat()
     application = {
