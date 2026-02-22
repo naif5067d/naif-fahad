@@ -1951,36 +1951,37 @@ export default function STASMirrorPage() {
                     {holidays.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
                     ) : (() => {
-                      // Group consecutive holidays by name
+                      // Group consecutive holidays by name AND year
                       const groups = {};
                       holidays.forEach(h => {
                         const baseName = (h.name_ar || h.name || '').replace(/\s*\d+\s*$/, '').trim() || h.name;
-                        if (!groups[baseName]) {
-                          groups[baseName] = [];
+                        const year = h.date ? h.date.substring(0, 4) : 'unknown';
+                        const key = `${baseName}__${year}`;
+                        if (!groups[key]) {
+                          groups[key] = { name: baseName, year, days: [] };
                         }
-                        groups[baseName].push(h);
+                        groups[key].days.push(h);
                       });
                       
                       // Convert to range format and sort by first date
-                      const sortedGroups = Object.entries(groups)
-                        .map(([name, days]) => {
-                          days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-                          return { name, days };
+                      const sortedGroups = Object.values(groups)
+                        .map(group => {
+                          group.days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                          return group;
                         })
                         .sort((a, b) => (a.days[0]?.date || '').localeCompare(b.days[0]?.date || ''));
                       
-                      return sortedGroups.map(({ name, days }) => {
+                      return sortedGroups.map(({ name, year, days }) => {
                         const startDate = days[0]?.date;
                         const endDate = days[days.length - 1]?.date;
                         const nameAr = days[0]?.name_ar?.replace(/\s*\d+\s*$/, '').trim() || name;
                         const nameEn = days[0]?.name?.replace(/\s*\d+\s*$/, '').trim() || name;
                         const firstDayId = days[0]?.id;
+                        const displayName = lang === 'ar' ? `${nameAr} ${year}` : `${nameEn} ${year}`;
                         
                         return (
-                          <tr key={name} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 font-medium">
-                              {lang === 'ar' ? nameAr : nameEn}
-                            </td>
+                          <tr key={`${name}-${year}`} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-medium">{displayName}</td>
                             <td className="px-4 py-3 text-center font-mono text-xs">{startDate}</td>
                             <td className="px-4 py-3 text-center font-mono text-xs">{endDate}</td>
                             <td className="px-4 py-3 text-center">
@@ -1994,7 +1995,7 @@ export default function STASMirrorPage() {
                                 size="sm" 
                                 className="h-8 w-8 p-0 text-destructive hover:bg-red-50" 
                                 onClick={() => {
-                                  if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
+                                  if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr} ${year}؟` : `Delete all ${nameEn} ${year} days?`)) {
                                     Promise.all(days.map(d => deleteHoliday(d.id)));
                                   }
                                 }}
