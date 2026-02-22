@@ -663,7 +663,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                 outer_consent.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER')]))
                 elements.append(outer_consent)
     
-    # ============ EXECUTION STAMP (STAS BARCODE) ============
+    # ============ EXECUTION STAMP (STAS QR) ============
     if transaction.get('status') == 'executed':
         elements.append(Spacer(1, 4*mm))
         
@@ -671,20 +671,20 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         stamp_date = format_saudi_time(transaction.get('executed_at') or transaction.get('updated_at'))
         
         exec_code = f"EXEC-{ref_no.replace('TXN-', '')}"
-        barcode_img = create_barcode_image(exec_code, width=55, height=14)
+        qr_img = create_qr_image(exec_code, size=30)
         
         stamp_elements = [
             [make_para(executed_label, styles['section'])],
         ]
         stamp_heights = [6*mm]
         
-        if barcode_img:
-            stamp_elements.append([barcode_img])
-            stamp_heights.append(20*mm)
+        if qr_img:
+            stamp_elements.append([qr_img])
+            stamp_heights.append(32*mm)
         
         # Use LTR for ref number
         ref_style = ParagraphStyle('ref_bold', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER, textColor=NAVY)
-        stamp_elements.append([Paragraph(f"Ref No: {ref_no}", ref_style)])
+        stamp_elements.append([Paragraph(f"Ref: {ref_no}", ref_style)])
         stamp_heights.append(6*mm)
         
         # Use LTR for date
