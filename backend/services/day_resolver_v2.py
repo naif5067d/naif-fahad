@@ -744,21 +744,86 @@ async def resolve_day_v2(employee_id: str, date: str) -> dict:
     return await resolver.resolve()
 
 
-async def resolve_and_save_v2(employee_id: str, date: str) -> dict:
-    """تنفيذ القرار V2 وحفظه في قاعدة البيانات"""
+async def resolve_and_save_v2(employee_id: str, date: str, force_update: bool = False) -> dict:
+    """
+    تنفيذ القرار V2 وحفظه في قاعدة البيانات
+    
+    المنطق الذكي:
+    1. إذا وجدت بصمة GPS ذاتية (self_checkin) → لا تُغيّر أبداً (إلا force_update)
+    2. إذا وجد سجل قديم بدون GPS وجاءت GPS جديدة → حدّث السجل
+    3. إذا لا يوجد سجل → أنشئ جديد
+    
+    Args:
+        employee_id: معرف الموظف
+        date: التاريخ
+        force_update: إجبار التحديث (للحالات الخاصة)
+    """
+    # 1. فحص وجود بصمة GPS ذاتية
+    gps_checkin = await db.attendance_ledger.find_one({
+        "employee_id": employee_id,
+        "date": date,
+        "type": "check_in",
+        "source": "self_checkin"
+    })
+    
+    # 2. فحص السجل الحالي في daily_status
+    existing_record = await db.daily_status.find_one({
+        "employee_id": employee_id,
+        "date": date
+    }, {"_id": 0})
+    
+    # 3. اتخاذ القرار الذكي
+    if existing_record:
+        existing_source = existing_record.get('final_source', '')
+        existing_has_gps = existing_source == 'self_checkin' or existing_record.get('has_gps_checkin', False)
+        
+        # إذا السجل الحالي من GPS → لا تغيّر (GPS هو الملك)
+        if existing_has_gps and not force_update:
+            return {
+                **existing_record,
+                "action": "skipped",
+                "reason_ar": "بصمة GPS ذاتية موجودة - لا يمكن التعديل عليها"
+            }
+        
+        # إذا السجل الحالي ليس GPS وجاءت GPS جديدة → حدّث!
+        if not existing_has_gps and gps_checkin:
+            # سيتم التحديث أدناه
+            pass
+        
+        # إذا السجل الحالي ليس GPS ولا توجد GPS جديدة → أبقِ الحالي
+        elif not existing_has_gps and not gps_checkin and not force_update:
+            return {
+                **existing_record,
+                "action": "kept",
+                "reason_ar": "السجل موجود ولا توجد بصمة GPS جديدة"
+            }
+    
+    # 4. تنفيذ القرار
     result = await resolve_day_v2(employee_id, date)
     
     if result.get('error'):
         return result
     
-    # حذف السجل القديم إن وجد
+    # 5. إضافة علامة GPS إذا وجدت
+    if gps_checkin:
+        result['has_gps_checkin'] = True
+        result['gps_checkin_time'] = gps_checkin.get('time')
+    
+    # 6. حذف السجل القديم وحفظ الجديد
     await db.daily_status.delete_one({
         "employee_id": employee_id,
         "date": date
     })
     
-    # حفظ السجل الجديد
     await db.daily_status.insert_one(result)
     result.pop('_id', None)
+    
+    # 7. إضافة معلومات الإجراء
+    if existing_record:
+        result['action'] = 'updated'
+        result['reason_ar'] = 'تم التحديث بناءً على بصمة GPS جديدة' if gps_checkin else 'تم التحديث يدوياً'
+    else:
+        result['action'] = 'created'
+        result['reason_ar'] = 'تم إنشاء سجل جديد'
     
     return result
