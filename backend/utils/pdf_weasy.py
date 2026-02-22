@@ -623,11 +623,36 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
                 <p>{executed_at if status == 'executed' else '-'}</p>
             </div>
             
-            <!-- Footer -->
+            <!-- Footer with Tear-off Section -->
             <div class="footer">
                 <p>{'تم الإنشاء' if lang == 'ar' else 'Generated'}: {created_at}</p>
                 <p class="integrity">{integrity_id}</p>
                 <p>DAR AL CODE HR OS | {content_hash}</p>
+            </div>
+            
+            <!-- Tear-off Section - قسم القص -->
+            <div class="tear-off">
+                <div class="tear-line">
+                    <span>{'✂️ قص هنا' if lang == 'ar' else '✂️ Cut Here'}</span>
+                </div>
+                <div class="tear-content">
+                    <div class="tear-qr-left">
+                        <img src="data:image/png;base64,{main_qr}" class="qr-tear" alt="QR1">
+                        <p class="tear-label">{'QR التحقق' if lang == 'ar' else 'Verify QR'}</p>
+                    </div>
+                    <div class="tear-info">
+                        <p class="tear-ref">{ref_no}</p>
+                        <p class="tear-emp">{emp_name}</p>
+                        <p class="tear-type">{type_label}</p>
+                        <p class="tear-status" style="color: {'#22c55e' if status == 'executed' else '#f59e0b'}">
+                            {'منفذ' if status == 'executed' and lang == 'ar' else 'Executed' if status == 'executed' else 'معلق' if lang == 'ar' else 'Pending'}
+                        </p>
+                    </div>
+                    <div class="tear-qr-right">
+                        <img src="data:image/png;base64,{stas_qr}" class="qr-tear" alt="QR2">
+                        <p class="tear-label">{'QR المعاملة' if lang == 'ar' else 'Transaction QR'}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </body>
