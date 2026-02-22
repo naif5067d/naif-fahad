@@ -617,7 +617,8 @@ class DayResolverV2:
             'grace_period_in': grace_period_in,
             'grace_period_out': grace_period_out,
             'check_in_local': check_in_local.strftime("%H:%M"),
-            'check_out_local': check_out_local_str
+            'check_out_local': check_out_local_str,
+            'is_ramadan': is_ramadan
         }
     
     async def _check_permissions(self) -> Optional[dict]:
