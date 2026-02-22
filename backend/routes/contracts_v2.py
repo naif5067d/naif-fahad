@@ -41,6 +41,9 @@ router = APIRouter(prefix="/api/contracts-v2", tags=["contracts-v2"])
 # ============================================================
 
 class ContractCreate(BaseModel):
+    # الرقم المرجعي - يُولّد تلقائياً إذا لم يُحدد
+    ref_no: Optional[str] = None
+    
     # موظف جديد أو قديم
     is_new_employee: bool = False
     employee_id: Optional[str] = ""
