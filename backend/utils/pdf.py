@@ -561,7 +561,7 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
         elements.append(details_table)
     
     # ============ APPROVAL CHAIN - STAS ONLY ============
-    # فقط توقيع STAS يظهر رقمياً - باقي التوقيعات يدوية
+    # توقيع STAS يظهر كـ QR Code
     approval_chain = transaction.get('approval_chain', [])
     stas_approval = None
     for approval in approval_chain:
@@ -572,19 +572,19 @@ def generate_transaction_pdf(transaction: dict, employee: dict = None, lang: str
     if stas_approval or transaction.get('status') == 'executed':
         elements.append(Spacer(1, 8*mm))
         
-        # إنشاء توقيع STAS كباركود
+        # إنشاء توقيع STAS كـ QR Code
         sig_code = f"STAS-{ref_no}"
-        barcode_drawing = create_barcode_image(sig_code, width=50, height=12)
+        qr_drawing = create_qr_image(sig_code, size=25)
         
         # نص "فحص النظام صحيح"
         system_check_text = reshape_arabic("فحص النظام صحيح ✓") if lang == 'ar' else "System Verified ✓"
         
-        if barcode_drawing:
+        if qr_drawing:
             # جدول التوقيع
             sig_elements = [
                 [make_para(reshape_arabic("توقيع STAS") if lang == 'ar' else "STAS Signature", styles['header_cell'])],
-                [barcode_drawing],
-                [make_ltr_para(ref_no, styles['cell_center'])],
+                [qr_drawing],
+                [make_ltr_para(sig_code, styles['cell_center'])],
                 [Spacer(1, 2*mm)],
                 [make_para(system_check_text, ParagraphStyle('check', parent=styles['cell_center'], textColor=colors.HexColor('#16a34a'), fontSize=8))],
             ]
