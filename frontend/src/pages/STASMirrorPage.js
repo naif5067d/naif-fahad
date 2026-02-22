@@ -1937,17 +1937,17 @@ export default function STASMirrorPage() {
             </CardHeader>
             <CardContent>
               <div className="border border-border rounded-lg overflow-hidden">
-                <table className="hr-table" data-testid="holidays-table">
+                <table className="w-full text-sm" data-testid="holidays-table">
                   <thead>
-                    <tr>
-                      <th>{lang === 'ar' ? 'الإجازة' : 'Holiday'}</th>
-                      <th>{lang === 'ar' ? 'من' : 'From'}</th>
-                      <th>{lang === 'ar' ? 'إلى' : 'To'}</th>
-                      <th>{lang === 'ar' ? 'الأيام' : 'Days'}</th>
-                      <th>{t('common.actions')}</th>
+                    <tr className="bg-slate-50 border-b">
+                      <th className="px-4 py-3 text-right font-semibold">{lang === 'ar' ? 'الإجازة' : 'Holiday'}</th>
+                      <th className="px-4 py-3 text-center font-semibold w-32">{lang === 'ar' ? 'من' : 'From'}</th>
+                      <th className="px-4 py-3 text-center font-semibold w-32">{lang === 'ar' ? 'إلى' : 'To'}</th>
+                      <th className="px-4 py-3 text-center font-semibold w-20">{lang === 'ar' ? 'الأيام' : 'Days'}</th>
+                      <th className="px-4 py-3 text-center font-semibold w-20">{t('common.actions')}</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y">
                     {holidays.length === 0 ? (
                       <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
                     ) : (() => {
@@ -1961,10 +1961,15 @@ export default function STASMirrorPage() {
                         groups[baseName].push(h);
                       });
                       
-                      // Convert to range format
-                      return Object.entries(groups).map(([name, days]) => {
-                        // Sort by date
-                        days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                      // Convert to range format and sort by first date
+                      const sortedGroups = Object.entries(groups)
+                        .map(([name, days]) => {
+                          days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+                          return { name, days };
+                        })
+                        .sort((a, b) => (a.days[0]?.date || '').localeCompare(b.days[0]?.date || ''));
+                      
+                      return sortedGroups.map(({ name, days }) => {
                         const startDate = days[0]?.date;
                         const endDate = days[days.length - 1]?.date;
                         const nameAr = days[0]?.name_ar?.replace(/\s*\d+\s*$/, '').trim() || name;
@@ -1972,31 +1977,30 @@ export default function STASMirrorPage() {
                         const firstDayId = days[0]?.id;
                         
                         return (
-                          <tr key={name}>
-                            <td className="text-sm font-medium">
+                          <tr key={name} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-medium">
                               {lang === 'ar' ? nameAr : nameEn}
                             </td>
-                            <td className="font-mono text-xs">{startDate}</td>
-                            <td className="font-mono text-xs">{endDate}</td>
-                            <td className="text-center">
-                              <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                            <td className="px-4 py-3 text-center font-mono text-xs">{startDate}</td>
+                            <td className="px-4 py-3 text-center font-mono text-xs">{endDate}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 text-sm font-bold">
                                 {days.length}
                               </span>
                             </td>
-                            <td>
+                            <td className="px-4 py-3 text-center">
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-7 w-7 p-0 text-destructive" 
+                                className="h-8 w-8 p-0 text-destructive hover:bg-red-50" 
                                 onClick={() => {
                                   if (confirm(lang === 'ar' ? `هل تريد حذف جميع أيام ${nameAr}؟` : `Delete all ${nameEn} days?`)) {
-                                    // حذف جميع أيام هذه العطلة
                                     Promise.all(days.map(d => deleteHoliday(d.id)));
                                   }
                                 }}
                                 data-testid={`delete-holiday-${firstDayId}`}
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={16} />
                               </Button>
                             </td>
                           </tr>
