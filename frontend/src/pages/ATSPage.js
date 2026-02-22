@@ -4,8 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../lib/api';
 import { 
   Briefcase, Plus, Users, Eye, Link2, Trash2, Archive, 
-  RefreshCw, X, ChevronLeft, Clock, FileText, Download,
-  CheckCircle, XCircle, Calendar, MessageSquare, Send
+  RefreshCw, ChevronLeft, Clock, FileText, Download,
+  CheckCircle, XCircle, MessageSquare, Send, Star,
+  AlertTriangle, TrendingUp, Shield, Target, Brain,
+  Filter, Zap, Award
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -34,10 +36,13 @@ export default function ATSPage() {
   const [jobs, setJobs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('jobs'); // jobs, applications, details
+  const [view, setView] = useState('jobs');
   const [selectedJob, setSelectedJob] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [tierCounts, setTierCounts] = useState({});
   const [selectedApp, setSelectedApp] = useState(null);
+  const [showTierC, setShowTierC] = useState(false);
+  const [tierFilter, setTierFilter] = useState('all');
   
   // Dialogs
   const [showJobDialog, setShowJobDialog] = useState(false);
@@ -56,7 +61,6 @@ export default function ATSPage() {
     required_skills: ''
   });
   
-  // Note state
   const [noteText, setNoteText] = useState('');
   
   const isAdmin = user?.role === 'admin' || ['stas', 'naif'].includes(user?.username);
@@ -83,16 +87,19 @@ export default function ATSPage() {
     }
   }, []);
   
-  const loadApplications = useCallback(async (jobId) => {
+  const loadApplications = useCallback(async (jobId, tier = null) => {
     try {
-      const res = await api.get(`/api/ats/admin/jobs/${jobId}/applications`);
+      let url = `/api/ats/admin/jobs/${jobId}/applications?show_tier_c=${showTierC}`;
+      if (tier && tier !== 'all') url += `&tier=${tier}`;
+      const res = await api.get(url);
       setSelectedJob(res.data.job);
       setApplications(res.data.applications);
+      setTierCounts(res.data.tier_counts || {});
       setView('applications');
     } catch (err) {
       toast.error(lang === 'ar' ? 'خطأ في تحميل الطلبات' : 'Error loading applications');
     }
-  }, [lang]);
+  }, [lang, showTierC]);
   
   useEffect(() => {
     if (canAccess) {
@@ -174,7 +181,7 @@ export default function ATSPage() {
     try {
       await api.put(`/api/ats/admin/applications/${appId}/status`, { status });
       toast.success(lang === 'ar' ? 'تم تحديث الحالة' : 'Status updated');
-      if (selectedJob) loadApplications(selectedJob.id);
+      if (selectedJob) loadApplications(selectedJob.id, tierFilter);
       if (selectedApp) {
         const res = await api.get(`/api/ats/admin/applications/${appId}`);
         setSelectedApp(res.data);
@@ -204,7 +211,7 @@ export default function ATSPage() {
       toast.success(lang === 'ar' ? 'تم الحذف النهائي' : 'Permanently deleted');
       setShowAppDetails(false);
       setSelectedApp(null);
-      if (selectedJob) loadApplications(selectedJob.id);
+      if (selectedJob) loadApplications(selectedJob.id, tierFilter);
       loadStats();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Error deleting application');
@@ -273,6 +280,26 @@ export default function ATSPage() {
     return labels[status]?.[lang] || status;
   };
   
+  const getTierColor = (tier) => {
+    const colors = {
+      A: 'bg-emerald-500 text-white',
+      B: 'bg-blue-500 text-white',
+      C: 'bg-slate-400 text-white'
+    };
+    return colors[tier] || 'bg-slate-300 text-white';
+  };
+  
+  const getClassColor = (cls) => {
+    const colors = {
+      'Excellent': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      'Strong': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Acceptable': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      'Weak': 'bg-red-100 text-red-700 border-red-200',
+      'Rejected (Unreadable)': 'bg-slate-100 text-slate-700 border-slate-200'
+    };
+    return colors[cls] || 'bg-slate-100 text-slate-700';
+  };
+  
   const getJobStatusColor = (status) => {
     const colors = {
       active: 'bg-green-100 text-green-700',
@@ -280,12 +307,6 @@ export default function ATSPage() {
       archived: 'bg-orange-100 text-orange-700'
     };
     return colors[status] || 'bg-gray-100 text-gray-700';
-  };
-  
-  const contractTypes = {
-    full_time: { ar: 'دوام كامل', en: 'Full Time' },
-    part_time: { ar: 'دوام جزئي', en: 'Part Time' },
-    contract: { ar: 'عقد مؤقت', en: 'Contract' }
   };
   
   if (!canAccess) {
@@ -329,7 +350,7 @@ export default function ATSPage() {
       
       {/* Stats */}
       {view === 'jobs' && stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="card-premium p-3 text-center">
             <p className="text-2xl font-bold text-primary">{stats.total_jobs}</p>
             <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجمالي الوظائف' : 'Total Jobs'}</p>
@@ -340,11 +361,15 @@ export default function ATSPage() {
           </div>
           <div className="card-premium p-3 text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.total_applications}</p>
-            <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجمالي الطلبات' : 'Total Applications'}</p>
+            <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجمالي الطلبات' : 'Applications'}</p>
           </div>
           <div className="card-premium p-3 text-center">
             <p className="text-2xl font-bold text-orange-600">{stats.new_applications}</p>
-            <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'طلبات جديدة' : 'New Applications'}</p>
+            <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'طلبات جديدة' : 'New'}</p>
+          </div>
+          <div className="card-premium p-3 text-center">
+            <p className="text-2xl font-bold text-purple-600">{stats.high_potential || 0}</p>
+            <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'مواهب واعدة' : 'High Potential'}</p>
           </div>
         </div>
       )}
@@ -430,56 +455,108 @@ export default function ATSPage() {
         </div>
       )}
       
-      {/* Applications List */}
+      {/* Applications List with Tier Filter */}
       {view === 'applications' && (
-        <div className="card-premium overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b text-xs">
-                <th className="px-4 py-3 text-right font-semibold">{lang === 'ar' ? 'المتقدم' : 'Candidate'}</th>
-                <th className="px-4 py-3 text-center font-semibold w-28">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                <th className="px-4 py-3 text-center font-semibold w-20">{lang === 'ar' ? 'الملفات' : 'Files'}</th>
-                <th className="px-4 py-3 text-center font-semibold w-24">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                <th className="px-4 py-3 text-center font-semibold w-24">{lang === 'ar' ? 'التفاصيل' : 'Details'}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {applications.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-12 text-muted-foreground">
-                    {lang === 'ar' ? 'لا توجد طلبات' : 'No applications yet'}
-                  </td>
+        <>
+          {/* Tier Filter */}
+          <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Filter size={16} className="text-slate-500" />
+              <span className="text-sm font-medium">{lang === 'ar' ? 'الفئة:' : 'Tier:'}</span>
+              <div className="flex gap-1">
+                {['all', 'A', 'B', 'C'].map(tier => (
+                  <button
+                    key={tier}
+                    onClick={() => { setTierFilter(tier); loadApplications(selectedJob.id, tier); }}
+                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                      tierFilter === tier 
+                        ? 'bg-slate-900 text-white' 
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border'
+                    }`}
+                  >
+                    {tier === 'all' ? (lang === 'ar' ? 'الكل' : 'All') : `Tier ${tier}`}
+                    {tier !== 'all' && tierCounts[tier] !== undefined && ` (${tierCounts[tier]})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input 
+                type="checkbox" 
+                checked={showTierC} 
+                onChange={e => { setShowTierC(e.target.checked); loadApplications(selectedJob.id, tierFilter); }}
+                className="rounded"
+              />
+              {lang === 'ar' ? 'إظهار الفئة C' : 'Show Tier C'}
+            </label>
+          </div>
+          
+          <div className="card-premium overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b text-xs">
+                  <th className="px-4 py-3 text-right font-semibold">{lang === 'ar' ? 'المتقدم' : 'Candidate'}</th>
+                  <th className="px-4 py-3 text-center font-semibold w-20">{lang === 'ar' ? 'الفئة' : 'Tier'}</th>
+                  <th className="px-4 py-3 text-center font-semibold w-24">{lang === 'ar' ? 'النتيجة' : 'Score'}</th>
+                  <th className="px-4 py-3 text-center font-semibold w-28">{lang === 'ar' ? 'التصنيف' : 'Class'}</th>
+                  <th className="px-4 py-3 text-center font-semibold w-24">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                  <th className="px-4 py-3 text-center font-semibold w-24">{lang === 'ar' ? 'التفاصيل' : 'Details'}</th>
                 </tr>
-              ) : applications.map(app => (
-                <tr key={app.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{app.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{app.email}</p>
-                    <p className="text-xs text-muted-foreground">{app.phone}</p>
-                  </td>
-                  <td className="px-4 py-3 text-center text-xs font-mono">
-                    {app.submitted_at?.split('T')[0]}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
-                      {app.file_count || app.files?.length || 0}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
-                      {getStatusLabel(app.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Button variant="ghost" size="sm" onClick={() => openAppDetails(app)}>
-                      <Eye size={16} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y">
+                {applications.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                      {lang === 'ar' ? 'لا توجد طلبات' : 'No applications yet'}
+                    </td>
+                  </tr>
+                ) : applications.map(app => (
+                  <tr key={app.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="font-medium flex items-center gap-1">
+                            {app.full_name}
+                            {app.scoring?.high_potential && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded">
+                                <Zap size={10} />
+                                HP
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{app.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${getTierColor(app.tier)}`}>
+                        {app.tier || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-lg font-bold">{app.score ?? '-'}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getClassColor(app.auto_class)}`}>
+                        {app.auto_class || '-'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
+                        {getStatusLabel(app.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Button variant="ghost" size="sm" onClick={() => openAppDetails(app)}>
+                        <Eye size={16} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       
       {/* Job Dialog */}
@@ -494,44 +571,28 @@ export default function ATSPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>{lang === 'ar' ? 'المسمى (عربي)' : 'Title (Arabic)'}</Label>
-                <Input 
-                  value={jobForm.title_ar} 
-                  onChange={e => setJobForm({...jobForm, title_ar: e.target.value})}
-                  dir="rtl"
-                />
+                <Input value={jobForm.title_ar} onChange={e => setJobForm({...jobForm, title_ar: e.target.value})} dir="rtl" />
               </div>
               <div>
                 <Label>{lang === 'ar' ? 'المسمى (إنجليزي)' : 'Title (English)'}</Label>
-                <Input 
-                  value={jobForm.title_en} 
-                  onChange={e => setJobForm({...jobForm, title_en: e.target.value})}
-                />
+                <Input value={jobForm.title_en} onChange={e => setJobForm({...jobForm, title_en: e.target.value})} />
               </div>
             </div>
             
             <div>
               <Label>{lang === 'ar' ? 'الوصف' : 'Description'}</Label>
-              <Textarea 
-                value={jobForm.description} 
-                onChange={e => setJobForm({...jobForm, description: e.target.value})}
-                rows={3}
-              />
+              <Textarea value={jobForm.description} onChange={e => setJobForm({...jobForm, description: e.target.value})} rows={3} />
             </div>
             
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>{lang === 'ar' ? 'الموقع' : 'Location'}</Label>
-                <Input 
-                  value={jobForm.location} 
-                  onChange={e => setJobForm({...jobForm, location: e.target.value})}
-                />
+                <Input value={jobForm.location} onChange={e => setJobForm({...jobForm, location: e.target.value})} />
               </div>
               <div>
                 <Label>{lang === 'ar' ? 'نوع العقد' : 'Contract Type'}</Label>
                 <Select value={jobForm.contract_type} onValueChange={v => setJobForm({...jobForm, contract_type: v})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full_time">{lang === 'ar' ? 'دوام كامل' : 'Full Time'}</SelectItem>
                     <SelectItem value="part_time">{lang === 'ar' ? 'دوام جزئي' : 'Part Time'}</SelectItem>
@@ -544,22 +605,12 @@ export default function ATSPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>{lang === 'ar' ? 'سنوات الخبرة' : 'Experience (years)'}</Label>
-                <Input 
-                  type="number"
-                  min="0"
-                  value={jobForm.experience_years} 
-                  onChange={e => setJobForm({...jobForm, experience_years: parseInt(e.target.value) || 0})}
-                />
+                <Input type="number" min="0" value={jobForm.experience_years} onChange={e => setJobForm({...jobForm, experience_years: parseInt(e.target.value) || 0})} />
               </div>
               <div>
                 <Label>{lang === 'ar' ? 'اللغات المطلوبة' : 'Required Languages'}</Label>
-                <Select 
-                  value={jobForm.required_languages?.join(',') || 'ar'} 
-                  onValueChange={v => setJobForm({...jobForm, required_languages: v.split(',')})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={jobForm.required_languages?.join(',') || 'ar'} onValueChange={v => setJobForm({...jobForm, required_languages: v.split(',')})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ar">{lang === 'ar' ? 'عربي فقط' : 'Arabic Only'}</SelectItem>
                     <SelectItem value="en">{lang === 'ar' ? 'إنجليزي فقط' : 'English Only'}</SelectItem>
@@ -571,53 +622,181 @@ export default function ATSPage() {
             
             <div>
               <Label>{lang === 'ar' ? 'المهارات المطلوبة (مفصولة بفاصلة)' : 'Required Skills (comma separated)'}</Label>
-              <Input 
-                value={jobForm.required_skills} 
-                onChange={e => setJobForm({...jobForm, required_skills: e.target.value})}
-                placeholder="Excel, Word, Communication"
-              />
+              <Input value={jobForm.required_skills} onChange={e => setJobForm({...jobForm, required_skills: e.target.value})} placeholder="Excel, Word, Communication" />
             </div>
             
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowJobDialog(false)}>
-                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
-              </Button>
-              <Button onClick={handleSaveJob}>
-                {editJob ? (lang === 'ar' ? 'تحديث' : 'Update') : (lang === 'ar' ? 'إنشاء' : 'Create')}
-              </Button>
+              <Button variant="outline" onClick={() => setShowJobDialog(false)}>{lang === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+              <Button onClick={handleSaveJob}>{editJob ? (lang === 'ar' ? 'تحديث' : 'Update') : (lang === 'ar' ? 'إنشاء' : 'Create')}</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
       
-      {/* Application Details Dialog */}
+      {/* Application Details Dialog - Enhanced with ATS Intelligence */}
       <Dialog open={showAppDetails} onOpenChange={setShowAppDetails}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              {lang === 'ar' ? 'تفاصيل الطلب' : 'Application Details'}
+              <Brain className="w-5 h-5 text-purple-600" />
+              {lang === 'ar' ? 'تحليل الطلب' : 'Application Analysis'}
             </DialogTitle>
           </DialogHeader>
           
           {selectedApp && (
             <div className="space-y-4 mt-4">
-              {/* Candidate Info */}
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <h3 className="font-semibold mb-2">{selectedApp.full_name}</h3>
-                <p className="text-sm text-muted-foreground">{selectedApp.email}</p>
-                <p className="text-sm text-muted-foreground">{selectedApp.phone}</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  <Clock size={12} className="inline mr-1" />
-                  {selectedApp.submitted_at?.replace('T', ' ').substring(0, 16)}
-                </p>
+              {/* Candidate Info + Score Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <h3 className="font-semibold mb-2">{selectedApp.full_name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedApp.email}</p>
+                  <p className="text-sm text-muted-foreground">{selectedApp.phone}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    {selectedApp.ats_readable ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                        <CheckCircle size={12} /> ATS Readable
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                        <XCircle size={12} /> Not Readable
+                      </span>
+                    )}
+                    {selectedApp.scoring?.high_potential && (
+                      <span className="inline-flex items-center gap-1 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded font-medium">
+                        <Zap size={12} /> High Potential
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-400">{lang === 'ar' ? 'النتيجة الإجمالية' : 'Overall Score'}</p>
+                      <p className="text-4xl font-bold">{selectedApp.score ?? 0}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-block px-3 py-1 rounded-lg text-sm font-bold ${getTierColor(selectedApp.tier)}`}>
+                        Tier {selectedApp.tier || '-'}
+                      </span>
+                      <p className="text-xs text-slate-400 mt-1">{selectedApp.auto_class}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              {/* Job Info */}
-              <div className="p-4 border rounded-lg">
-                <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'الوظيفة' : 'Job'}</p>
-                <p className="font-medium">{lang === 'ar' ? selectedApp.job?.title_ar : selectedApp.job?.title_en}</p>
-              </div>
+              {/* Scoring Details */}
+              {selectedApp.scoring && (
+                <>
+                  {/* Score Breakdown */}
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <Target size={16} className="text-blue-600" />
+                      {lang === 'ar' ? 'تفاصيل التقييم' : 'Score Breakdown'}
+                    </h4>
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                      {[
+                        { key: 'skill_match_score', label: lang === 'ar' ? 'المهارات' : 'Skills', icon: Target },
+                        { key: 'experience_score', label: lang === 'ar' ? 'الخبرة' : 'Experience', icon: Clock },
+                        { key: 'education_score', label: lang === 'ar' ? 'التعليم' : 'Education', icon: Award },
+                        { key: 'language_score', label: lang === 'ar' ? 'اللغات' : 'Languages', icon: MessageSquare },
+                        { key: 'stability_score', label: lang === 'ar' ? 'الاستقرار' : 'Stability', icon: Shield },
+                        { key: 'evidence_score', label: lang === 'ar' ? 'الإنجازات' : 'Evidence', icon: TrendingUp },
+                      ].map(item => (
+                        <div key={item.key} className="text-center p-2 bg-slate-50 rounded-lg">
+                          <item.icon size={14} className="mx-auto text-slate-400 mb-1" />
+                          <p className="text-lg font-bold">{selectedApp.scoring[item.key] ?? 0}</p>
+                          <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Risk Indicators */}
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      <AlertTriangle size={16} className="text-orange-600" />
+                      {lang === 'ar' ? 'مؤشرات المخاطر' : 'Risk Indicators'}
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { key: 'fluff_ratio', label: lang === 'ar' ? 'الحشو' : 'Fluff', color: 'orange' },
+                        { key: 'ego_index', label: lang === 'ar' ? 'الأنا' : 'Ego', color: 'purple' },
+                        { key: 'stuffing_risk', label: lang === 'ar' ? 'الحشو بالكلمات' : 'Stuffing', color: 'red' },
+                        { key: 'stability_risk', label: lang === 'ar' ? 'عدم الاستقرار' : 'Instability', color: 'yellow' },
+                      ].map(item => {
+                        const value = selectedApp.scoring[item.key] ?? 0;
+                        const percent = Math.round(value * 100);
+                        const isHigh = percent > 50;
+                        return (
+                          <div key={item.key} className={`p-3 rounded-lg ${isHigh ? `bg-${item.color}-50` : 'bg-slate-50'}`}>
+                            <p className="text-xs text-muted-foreground">{item.label}</p>
+                            <p className={`text-xl font-bold ${isHigh ? `text-${item.color}-600` : 'text-slate-600'}`}>
+                              {percent}%
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Top Reasons & Risks */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border border-green-200 bg-green-50 rounded-lg">
+                      <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-2">
+                        <CheckCircle size={14} />
+                        {lang === 'ar' ? 'نقاط القوة' : 'Strengths'}
+                      </h4>
+                      <ul className="space-y-1">
+                        {(selectedApp.scoring.top_reasons || []).map((r, i) => (
+                          <li key={i} className="text-sm text-green-800 flex items-start gap-2">
+                            <span className="text-green-500">+</span> {r}
+                          </li>
+                        ))}
+                        {(!selectedApp.scoring.top_reasons || selectedApp.scoring.top_reasons.length === 0) && (
+                          <li className="text-sm text-green-600">-</li>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
+                      <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-2">
+                        <AlertTriangle size={14} />
+                        {lang === 'ar' ? 'المخاطر' : 'Risks'}
+                      </h4>
+                      <ul className="space-y-1">
+                        {(selectedApp.scoring.risks || []).map((r, i) => (
+                          <li key={i} className="text-sm text-red-800 flex items-start gap-2">
+                            <span className="text-red-500">!</span> {r}
+                          </li>
+                        ))}
+                        {(!selectedApp.scoring.risks || selectedApp.scoring.risks.length === 0) && (
+                          <li className="text-sm text-red-600">-</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  {/* Skills Match */}
+                  {(selectedApp.scoring.matched_skills?.length > 0 || selectedApp.scoring.missing_skills?.length > 0) && (
+                    <div className="p-4 border rounded-lg">
+                      <h4 className="text-sm font-semibold mb-2">{lang === 'ar' ? 'مطابقة المهارات' : 'Skills Match'}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedApp.scoring.matched_skills?.map((s, i) => (
+                          <span key={i} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                            {s}
+                          </span>
+                        ))}
+                        {selectedApp.scoring.missing_skills?.map((s, i) => (
+                          <span key={i} className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full line-through">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
               
               {/* Files */}
               <div className="p-4 border rounded-lg">
@@ -629,6 +808,9 @@ export default function ATSPage() {
                         <FileText size={16} className="text-blue-600" />
                         <span className="text-sm">{file.original_name}</span>
                         <span className="text-xs text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
+                        {file.is_readable === false && (
+                          <span className="text-xs text-red-500">(Unreadable)</span>
+                        )}
                       </div>
                       <Button variant="ghost" size="sm" asChild>
                         <a href={`${baseUrl}/api/upload/ats_cv/${file.saved_name}`} target="_blank" rel="noopener noreferrer">
@@ -640,7 +822,7 @@ export default function ATSPage() {
                 </div>
               </div>
               
-              {/* Status */}
+              {/* Status Actions */}
               <div className="p-4 border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">{lang === 'ar' ? 'الحالة' : 'Status'}</p>
                 <div className="flex flex-wrap gap-2">
@@ -661,30 +843,19 @@ export default function ATSPage() {
               {/* Notes */}
               <div className="p-4 border rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">{lang === 'ar' ? 'الملاحظات' : 'Notes'}</p>
-                
                 {selectedApp.notes?.length > 0 && (
                   <div className="space-y-2 mb-4">
                     {selectedApp.notes.map((note, idx) => (
                       <div key={idx} className="p-2 bg-slate-50 rounded text-sm">
                         <p>{note.text}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {note.created_by_name} - {note.created_at?.split('T')[0]}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{note.created_by_name} - {note.created_at?.split('T')[0]}</p>
                       </div>
                     ))}
                   </div>
                 )}
-                
                 <div className="flex gap-2">
-                  <Input 
-                    value={noteText}
-                    onChange={e => setNoteText(e.target.value)}
-                    placeholder={lang === 'ar' ? 'أضف ملاحظة...' : 'Add a note...'}
-                    onKeyDown={e => e.key === 'Enter' && handleAddNote(selectedApp.id)}
-                  />
-                  <Button size="sm" onClick={() => handleAddNote(selectedApp.id)}>
-                    <Send size={14} />
-                  </Button>
+                  <Input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder={lang === 'ar' ? 'أضف ملاحظة...' : 'Add a note...'} onKeyDown={e => e.key === 'Enter' && handleAddNote(selectedApp.id)} />
+                  <Button size="sm" onClick={() => handleAddNote(selectedApp.id)}><Send size={14} /></Button>
                 </div>
               </div>
               
