@@ -1,5 +1,33 @@
 # DAR AL CODE HR OS - Changelog
 
+## [2026-02-23] Bug Fixes Session
+
+### Fixed
+1. **MaintenanceTrackingPage.js Crash**: Removed invalid `s.icon` reference from STATUSES array mapping (lines 186-195, 253-260). The STATUSES objects don't have an 'icon' property.
+
+2. **PWA Icons Updated**: Regenerated all PWA icons (icon-512.png, icon-192.png, apple-touch-icon.png, favicon.ico) with grey background and blue border as requested by user. Added cache-busting query strings (?v=3) to prevent caching issues.
+
+### Verified Working
+- **STAS Mirror Branding Tab (الهوية)**: Tab at /stas-mirror works correctly - shows company logo upload, side image upload, welcome text, company name, and login page colors.
+- **MaintenanceTrackingPage**: Page at /maintenance-tracking loads without crash.
+
+### Files Modified
+- `frontend/src/pages/MaintenanceTrackingPage.js`: Removed s.icon references
+- `frontend/public/icon-512.png`: New grey/blue icon
+- `frontend/public/icon-192.png`: New grey/blue icon
+- `frontend/public/apple-touch-icon.png`: New grey/blue icon
+- `frontend/public/favicon.ico`: New grey/blue icon
+- `frontend/public/index.html`: Added cache-busting ?v=3 to icon links
+- `frontend/public/manifest.json`: Added cache-busting ?v=3 to icon sources
+
+### Test Report
+- `/app/test_reports/iteration_40.json`: All tests passed (100% success rate)
+
+---
+
+
+# DAR AL CODE HR OS - Changelog
+
 ## [2026-02-19] Phase 33: Bug Fixes & Deployment Readiness
 
 ### Fixed
