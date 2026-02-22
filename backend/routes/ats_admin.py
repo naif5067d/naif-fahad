@@ -361,10 +361,144 @@ async def get_ats_stats(user=Depends(get_current_user)):
     ]
     status_counts = await db.ats_applications.aggregate(pipeline).to_list(20)
     
+    # Applications by tier
+    tier_pipeline = [
+        {"$group": {"_id": "$tier", "count": {"$sum": 1}}}
+    ]
+    tier_counts = await db.ats_applications.aggregate(tier_pipeline).to_list(10)
+    
+    # Applications by class
+    class_pipeline = [
+        {"$group": {"_id": "$auto_class", "count": {"$sum": 1}}}
+    ]
+    class_counts = await db.ats_applications.aggregate(class_pipeline).to_list(10)
+    
+    # High potential count
+    high_potential = await db.ats_applications.count_documents({"scoring.high_potential": True})
+    
+    # Average score
+    avg_pipeline = [
+        {"$match": {"score": {"$ne": None}}},
+        {"$group": {"_id": None, "avg_score": {"$avg": "$score"}}}
+    ]
+    avg_result = await db.ats_applications.aggregate(avg_pipeline).to_list(1)
+    avg_score = avg_result[0]["avg_score"] if avg_result else 0
+    
     return {
         "total_jobs": total_jobs,
         "active_jobs": active_jobs,
         "total_applications": total_applications,
         "new_applications": new_applications,
-        "by_status": {s["_id"]: s["count"] for s in status_counts}
+        "by_status": {s["_id"]: s["count"] for s in status_counts if s["_id"]},
+        "by_tier": {t["_id"]: t["count"] for t in tier_counts if t["_id"]},
+        "by_class": {c["_id"]: c["count"] for c in class_counts if c["_id"]},
+        "high_potential": high_potential,
+        "avg_score": round(avg_score, 1)
+    }
+
+
+# ==================== FEEDBACK LEARNING ====================
+
+@router.post("/applications/{app_id}/outcome")
+async def record_outcome(app_id: str, outcome: str, notes: str = "", user=Depends(get_current_user)):
+    """
+    Record final outcome for feedback learning
+    Outcomes: shortlisted, interview, offer, hired, rejected
+    """
+    require_ats_access(user)
+    
+    valid_outcomes = ["shortlisted", "interview", "offer", "hired", "rejected"]
+    if outcome not in valid_outcomes:
+        raise HTTPException(status_code=400, detail=f"Invalid outcome. Must be one of: {valid_outcomes}")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.ats_applications.update_one(
+        {"id": app_id},
+        {"$set": {
+            "final_outcome": outcome,
+            "outcome_recorded_at": now,
+            "outcome_recorded_by": user.get("user_id"),
+            "outcome_notes": notes
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    return {"message": f"Outcome recorded: {outcome}"}
+
+
+@router.get("/calibration-report")
+async def get_calibration_report(user=Depends(get_current_user)):
+    """
+    Monthly calibration report: compare ATS predictions vs actual outcomes
+    Used for weight adjustment suggestions
+    """
+    require_ats_access(user)
+    
+    # Get applications with outcomes
+    apps_with_outcome = await db.ats_applications.find(
+        {"final_outcome": {"$exists": True, "$ne": None}},
+        {"_id": 0, "score": 1, "auto_class": 1, "tier": 1, "final_outcome": 1, "scoring": 1}
+    ).to_list(1000)
+    
+    if not apps_with_outcome:
+        return {
+            "message": "No outcome data yet for calibration",
+            "total_with_outcomes": 0
+        }
+    
+    # Analyze accuracy
+    positive_outcomes = ["shortlisted", "interview", "offer", "hired"]
+    
+    # Group by tier
+    tier_accuracy = {"A": {"correct": 0, "total": 0}, "B": {"correct": 0, "total": 0}, "C": {"correct": 0, "total": 0}}
+    class_accuracy = {"Excellent": {"correct": 0, "total": 0}, "Strong": {"correct": 0, "total": 0}, 
+                      "Acceptable": {"correct": 0, "total": 0}, "Weak": {"correct": 0, "total": 0}}
+    
+    for app in apps_with_outcome:
+        tier = app.get("tier", "C")
+        auto_class = app.get("auto_class", "Weak")
+        outcome = app.get("final_outcome", "")
+        is_positive = outcome in positive_outcomes
+        
+        if tier in tier_accuracy:
+            tier_accuracy[tier]["total"] += 1
+            if (tier in ["A", "B"] and is_positive) or (tier == "C" and not is_positive):
+                tier_accuracy[tier]["correct"] += 1
+        
+        if auto_class in class_accuracy:
+            class_accuracy[auto_class]["total"] += 1
+            expected_positive = auto_class in ["Excellent", "Strong"]
+            if (expected_positive and is_positive) or (not expected_positive and not is_positive):
+                class_accuracy[auto_class]["correct"] += 1
+    
+    # Calculate accuracy percentages
+    for tier in tier_accuracy:
+        total = tier_accuracy[tier]["total"]
+        if total > 0:
+            tier_accuracy[tier]["accuracy"] = round(tier_accuracy[tier]["correct"] / total * 100, 1)
+        else:
+            tier_accuracy[tier]["accuracy"] = 0
+    
+    for cls in class_accuracy:
+        total = class_accuracy[cls]["total"]
+        if total > 0:
+            class_accuracy[cls]["accuracy"] = round(class_accuracy[cls]["correct"] / total * 100, 1)
+        else:
+            class_accuracy[cls]["accuracy"] = 0
+    
+    # Weight adjustment suggestions
+    suggestions = []
+    if tier_accuracy["A"]["accuracy"] < 70:
+        suggestions.append("Consider increasing skill_match weight - Tier A accuracy is low")
+    if tier_accuracy["C"]["accuracy"] < 60:
+        suggestions.append("Consider reviewing fluff_penalty - too many Tier C candidates being hired")
+    
+    return {
+        "total_with_outcomes": len(apps_with_outcome),
+        "tier_accuracy": tier_accuracy,
+        "class_accuracy": class_accuracy,
+        "suggestions": suggestions
     }
