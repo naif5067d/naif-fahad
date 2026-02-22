@@ -537,12 +537,25 @@ class DayResolverV2:
         required_hours = 8.0
         grace_period_in = 15
         grace_period_out = 15
+        is_ramadan = False
         
         # من موقع العمل - قراءة الحقول بالأسماء الصحيحة
         if self.work_location:
-            work_start = self.work_location.get('work_start', '08:00')
-            work_end = self.work_location.get('work_end', '17:00')
-            required_hours = self.work_location.get('daily_hours', 8.0)
+            # فحص رمضان أولاً
+            ramadan_active = self.work_location.get('ramadan_hours_active', False)
+            
+            if ramadan_active:
+                # استخدام ساعات رمضان
+                is_ramadan = True
+                work_start = self.work_location.get('ramadan_work_start', '09:00')
+                work_end = self.work_location.get('ramadan_work_end', '15:00')
+                required_hours = self.work_location.get('ramadan_daily_hours', 6.0)
+            else:
+                # استخدام الساعات العادية
+                work_start = self.work_location.get('work_start', '08:00')
+                work_end = self.work_location.get('work_end', '17:00')
+                required_hours = self.work_location.get('daily_hours', 8.0)
+            
             grace_period_in = self.work_location.get('grace_checkin_minutes', 15)
             grace_period_out = self.work_location.get('grace_checkout_minutes', 15)
         
