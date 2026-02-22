@@ -240,7 +240,7 @@ export default function EmployeesPage() {
     }
   };
 
-  // حذف الموظف
+  // حذف الموظف نهائياً
   const openDeleteDialog = (emp) => {
     setDeleteDialog(emp);
   };
@@ -250,8 +250,18 @@ export default function EmployeesPage() {
     setDeleting(true);
     
     try {
-      await api.delete(`/api/employees/${deleteDialog.id}`);
-      toast.success(lang === 'ar' ? 'تم حذف الموظف' : 'Employee deleted');
+      // حذف نهائي من الجذور
+      const res = await api.delete(`/api/employees/${deleteDialog.id}/permanent`);
+      toast.success(
+        lang === 'ar' 
+          ? `تم حذف الموظف "${deleteDialog.full_name_ar || deleteDialog.full_name}" نهائياً` 
+          : `Employee "${deleteDialog.full_name}" permanently deleted`,
+        {
+          description: lang === 'ar' 
+            ? `تم حذف: ${Object.entries(res.data.deleted_counts || {}).map(([k,v]) => v > 0 ? `${k}: ${v}` : '').filter(Boolean).join(', ')}`
+            : undefined
+        }
+      );
       setDeleteDialog(null);
       api.get('/api/employees').then(r => setEmployees(r.data));
     } catch (err) {
