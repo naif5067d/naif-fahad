@@ -1020,6 +1020,85 @@ export default function ATSPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Embed Code Dialog */}
+      <Dialog open={showEmbedDialog} onOpenChange={setShowEmbedDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-600">
+              <Code className="w-6 h-6" />
+              {lang === 'ar' ? 'كود بوابة التوظيف' : 'Careers Portal Embed Code'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 mb-2">
+                {lang === 'ar' 
+                  ? 'انسخ الكود التالي والصقه في موقع شركتك (Wuilt أو أي منصة أخرى):' 
+                  : 'Copy the code below and paste it into your company website:'}
+              </p>
+              <p className="text-xs text-blue-600">
+                {lang === 'ar' 
+                  ? '✓ سيعرض جميع الوظائف النشطة تلقائياً'
+                  : '✓ Will automatically display all active jobs'}
+              </p>
+              <p className="text-xs text-blue-600">
+                {lang === 'ar' 
+                  ? '✓ أي تغيير في الوظائف سينعكس مباشرة'
+                  : '✓ Any job changes will reflect immediately'}
+              </p>
+            </div>
+            
+            <div className="relative">
+              <pre className="p-4 bg-gray-900 text-green-400 rounded-lg text-sm overflow-x-auto font-mono" dir="ltr">
+                {embedCode}
+              </pre>
+              <Button
+                size="sm"
+                onClick={copyEmbedCode}
+                className="absolute top-2 right-2"
+                variant={copiedCode ? "default" : "secondary"}
+              >
+                {copiedCode ? (
+                  <>
+                    <Check size={14} className="mr-1" />
+                    {lang === 'ar' ? 'تم النسخ!' : 'Copied!'}
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} className="mr-1" />
+                    {lang === 'ar' ? 'نسخ' : 'Copy'}
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>{lang === 'ar' ? 'ملاحظة:' : 'Note:'}</strong>{' '}
+                {lang === 'ar' 
+                  ? 'تأكد من نشر التطبيق (Deploy) أولاً للحصول على رابط دائم.'
+                  : 'Make sure to Deploy the app first to get a permanent URL.'}
+              </p>
+            </div>
+            
+            <div className="flex justify-between items-center pt-2">
+              <a 
+                href={`${currentDomain}/embed/careers`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <Eye size={14} />
+                {lang === 'ar' ? 'معاينة البوابة' : 'Preview Portal'}
+              </a>
+              <Button variant="outline" onClick={() => setShowEmbedDialog(false)}>
+                {lang === 'ar' ? 'إغلاق' : 'Close'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
