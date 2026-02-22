@@ -312,18 +312,6 @@ export default function ContractsManagementPage() {
     setActionLoading(false);
   };
 
-  const handleDeleteContract = async (contractId) => {
-    if (!confirm('هل تريد حذف هذا العقد؟')) return;
-    
-    try {
-      await api.delete(`/api/contracts-v2/${contractId}`);
-      toast.success('تم حذف العقد');
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'فشل الحذف');
-    }
-  };
-
   // حذف نهائي للعقود الملغية (STAS فقط)
   const handlePermanentDelete = async (contractId, contractSerial) => {
     if (!confirm(`تحذير: هل تريد حذف العقد ${contractSerial} نهائياً؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
