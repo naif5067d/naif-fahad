@@ -1,11 +1,11 @@
 """
 Scheduler Service - جدولة المهام التلقائية
-- معالجة الحضور اليومي (بعد منتصف الليل)
+- التحضير الذاتي في بداية كل يوم عمل (7:00 صباحاً)
 - ملخص الحضور الشهري (أول كل شهر)
 """
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -14,20 +14,22 @@ logger = logging.getLogger(__name__)
 # Global scheduler instance
 scheduler = AsyncIOScheduler()
 
-async def run_daily_attendance_job():
+
+async def run_daily_auto_attendance():
     """
-    تشغيل معالجة الحضور اليومي
+    التحضير الذاتي - يعمل في بداية كل يوم عمل
     
-    المنطق الذكي:
-    - لا يكتب فوق بصمات GPS أبداً
-    - يُحدّث السجلات القديمة إذا جاءت GPS لاحقاً
+    المنطق:
+    1. ينشئ سجلات حضور لجميع الموظفين لليوم الحالي
+    2. يتحقق من العطلات الرسمية وعطلة نهاية الأسبوع
+    3. يضع الحالة المناسبة تلقائياً
     """
     from services.day_resolver_v2 import resolve_and_save_v2
     from database import db
     
-    # معالجة يوم الأمس
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    logger.info(f"⏰ بدء المعالجة اليومية للحضور: {yesterday}")
+    # معالجة اليوم الحالي
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    logger.info(f"⏰ بدء التحضير الذاتي لليوم: {today}")
     
     try:
         # الحصول على جميع الموظفين النشطين (باستثناء المستخدمين الإداريين)
@@ -40,14 +42,62 @@ async def run_daily_attendance_job():
         
         created = 0
         updated = 0
-        skipped_gps = 0
+        skipped_holiday = 0
+        skipped_weekend = 0
         skipped_existing = 0
         errors = []
         
         for emp in employees:
             try:
-                result = await resolve_and_save_v2(emp['id'], yesterday)
+                result = await resolve_and_save_v2(emp['id'], today)
                 action = result.get('action', 'created')
+                status = result.get('status', '')
+                
+                if action == 'created':
+                    created += 1
+                elif action == 'updated':
+                    updated += 1
+                elif action == 'skipped':
+                    if 'holiday' in status.lower():
+                        skipped_holiday += 1
+                    elif 'weekend' in status.lower():
+                        skipped_weekend += 1
+                    else:
+                        skipped_existing += 1
+                elif action == 'kept':
+                    skipped_existing += 1
+                    
+            except Exception as e:
+                errors.append({"employee_id": emp['id'], "error": str(e)})
+                logger.error(f"خطأ في معالجة {emp['id']}: {e}")
+        
+        # تسجيل النتيجة
+        await db.job_logs.insert_one({
+            "job_type": "daily_auto_attendance",
+            "date": today,
+            "created_count": created,
+            "updated_count": updated,
+            "skipped_holiday": skipped_holiday,
+            "skipped_weekend": skipped_weekend,
+            "skipped_existing": skipped_existing,
+            "total_employees": len(employees),
+            "error_count": len(errors),
+            "errors": errors,
+            "executed_at": datetime.now(timezone.utc).isoformat(),
+            "status": "success" if len(errors) == 0 else "partial"
+        })
+        
+        logger.info(f"✅ تم التحضير الذاتي: جديد={created}, تحديث={updated}, عطلة={skipped_holiday}, نهاية أسبوع={skipped_weekend}, موجود={skipped_existing}, أخطاء={len(errors)}")
+        
+    except Exception as e:
+        logger.error(f"❌ فشل في التحضير الذاتي: {e}")
+        await db.job_logs.insert_one({
+            "job_type": "daily_auto_attendance",
+            "date": today,
+            "status": "failed",
+            "error": str(e),
+            "executed_at": datetime.now(timezone.utc).isoformat()
+        })
                 
                 if action == 'created':
                     created += 1
