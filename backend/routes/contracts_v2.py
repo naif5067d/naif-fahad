@@ -405,8 +405,8 @@ async def create_contract(
     if req.annual_policy_days not in [21, 30]:
         req.annual_policy_days = calculated_leave_days
     
-    # Generate serial
-    contract_serial = await generate_contract_serial()
+    # Generate serial or use provided ref_no
+    contract_serial = req.ref_no if req.ref_no else await generate_contract_serial()
     
     # Get version
     version = await get_next_contract_version(req.employee_id)
@@ -414,6 +414,7 @@ async def create_contract(
     contract = {
         "id": str(uuid.uuid4()),
         "contract_serial": contract_serial,
+        "ref_no": contract_serial,  # الرقم المرجعي
         "version": version,
         
         "employee_id": req.employee_id,
