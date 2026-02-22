@@ -62,9 +62,13 @@ export default function ATSPage() {
   });
   
   const [noteText, setNoteText] = useState('');
+  const [showNuclearDialog, setShowNuclearDialog] = useState(false);
+  const [nuclearLoading, setNuclearLoading] = useState(false);
+  const [nuclearConfirmText, setNuclearConfirmText] = useState('');
   
   const isAdmin = user?.role === 'admin' || ['stas', 'naif'].includes(user?.username);
   const canAccess = isAdmin || user?.role === 'hr' || ['sultan', 'mohammed'].includes(user?.username);
+  const canNuclearDelete = ['stas', 'sultan'].includes(user?.username);
   
   const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
   
