@@ -95,25 +95,87 @@ export default function TransactionsPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerStream, setScannerStream] = useState(null);
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const scanIntervalRef = useRef(null);
 
-  // فتح الكاميرا
+  // فتح الكاميرا وبدء المسح التلقائي
   const startScanner = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
       });
       setScannerStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        
+        // بدء المسح التلقائي للـ QR
+        scanIntervalRef.current = setInterval(() => {
+          scanQRCode();
+        }, 200); // مسح كل 200 مللي ثانية
       }
     } catch (err) {
+      console.error('Camera error:', err);
       toast.error(lang === 'ar' ? 'لا يمكن الوصول للكاميرا' : 'Cannot access camera');
       setScannerOpen(false);
     }
   };
 
+  // مسح الـ QR Code من الفيديو
+  const scanQRCode = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert',
+    });
+    
+    if (code) {
+      // تم العثور على QR Code
+      const qrData = code.data;
+      console.log('QR Found:', qrData);
+      
+      // استخراج رقم المعاملة من الـ QR
+      let txRef = null;
+      
+      // التحقق من أنماط مختلفة للـ QR
+      if (qrData.includes('TXN-')) {
+        // QR يحتوي على رقم المعاملة مباشرة
+        const match = qrData.match(/TXN-\d{4}-\d+/);
+        if (match) txRef = match[0];
+      } else if (qrData.startsWith('INT-')) {
+        // QR رقم السلامة (Integrity ID)
+        txRef = qrData;
+      } else if (qrData.includes('/transactions/')) {
+        // QR رابط
+        const match = qrData.match(/TXN-\d{4}-\d+/);
+        if (match) txRef = match[0];
+      }
+      
+      if (txRef) {
+        stopScanner();
+        setSearch(txRef);
+        toast.success(lang === 'ar' ? `تم العثور على: ${txRef}` : `Found: ${txRef}`);
+      }
+    }
+  }, [lang]);
+
   // إغلاق الكاميرا
   const stopScanner = () => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
     if (scannerStream) {
       scannerStream.getTracks().forEach(track => track.stop());
       setScannerStream(null);
