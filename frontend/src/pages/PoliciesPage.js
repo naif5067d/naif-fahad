@@ -271,40 +271,41 @@ export default function PoliciesPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6">
-        <div className="flex gap-6 flex-col lg:flex-row">
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-6">
+        <div className="flex gap-4 sm:gap-6 flex-col lg:flex-row">
           
           {/* Sidebar - Chapter List */}
           <div className="w-full lg:w-72 flex-shrink-0">
             <div className="bg-white dark:bg-slate-900 rounded-xl border shadow-sm overflow-hidden">
-              <div className="p-4 border-b bg-slate-50 dark:bg-slate-800/50">
+              <div className="p-3 sm:p-4 border-b bg-slate-50 dark:bg-slate-800/50">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-900 dark:text-white">
+                  <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">
                     {isRTL ? 'الفصول' : 'Chapters'}
                   </h3>
                   {isAdmin && (
                     <Button 
                       size="sm" 
                       onClick={() => setCreateDialog(true)}
+                      className="h-8 text-xs sm:text-sm"
                       data-testid="create-chapter-btn"
                     >
-                      <Plus size={16} className="me-1" />
+                      <Plus size={14} className="me-1" />
                       {isRTL ? 'جديد' : 'New'}
                     </Button>
                   )}
                 </div>
               </div>
               
-              <div className="p-2 max-h-[500px] overflow-y-auto">
+              <div className="p-2 max-h-[300px] sm:max-h-[500px] overflow-y-auto">
                 {loading ? (
-                  <div className="py-8 text-center text-slate-500">
-                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <div className="py-6 text-center text-slate-500 text-sm">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     {isRTL ? 'جاري التحميل...' : 'Loading...'}
                   </div>
                 ) : chapters.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <FileText size={40} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                    <p className="text-slate-500">{isRTL ? 'لا توجد فصول' : 'No chapters yet'}</p>
+                  <div className="py-6 text-center">
+                    <FileText size={32} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                    <p className="text-slate-500 text-sm">{isRTL ? 'لا توجد فصول' : 'No chapters yet'}</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -315,14 +316,14 @@ export default function PoliciesPage() {
                           setSelectedChapter(chapter);
                           setIsEditing(false);
                         }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-start transition-all ${
+                        className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg text-start transition-all ${
                           selectedChapter?.id === chapter.id
                             ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500'
                             : 'hover:bg-slate-50 dark:hover:bg-slate-800 border-2 border-transparent'
                         }`}
                         data-testid={`chapter-item-${chapter.id}`}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold ${
                           selectedChapter?.id === chapter.id
                             ? 'bg-blue-600 text-white'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -330,7 +331,7 @@ export default function PoliciesPage() {
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-medium truncate text-sm ${
+                          <p className={`font-medium truncate text-xs sm:text-sm ${
                             selectedChapter?.id === chapter.id
                               ? 'text-blue-700 dark:text-blue-400'
                               : 'text-slate-700 dark:text-slate-300'
@@ -339,12 +340,12 @@ export default function PoliciesPage() {
                           </p>
                           <div className="flex items-center gap-1 mt-0.5">
                             {chapter.status === 'published' ? (
-                              <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                 <Eye size={10} />
                                 {isRTL ? 'منشور' : 'Published'}
                               </span>
                             ) : (
-                              <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <span className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
                                 <Edit2 size={10} />
                                 {isRTL ? 'مسودة' : 'Draft'}
                               </span>
