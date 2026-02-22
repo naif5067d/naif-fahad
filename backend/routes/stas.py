@@ -599,16 +599,34 @@ async def get_deduction_mirror(proposal_id: str, user=Depends(require_roles('sta
 # ==================== HOLIDAY MANAGEMENT ====================
 
 @router.get("/holidays")
-async def get_manual_holidays(user=Depends(require_roles('stas'))):
-    """Get all manual holidays added by STAS"""
-    holidays = await db.holidays.find({}, {"_id": 0}).sort("date", 1).to_list(500)
-    return holidays
+async def get_all_holidays(user=Depends(require_roles('stas'))):
+    """Get all holidays (system + manual) for STAS mirror"""
+    # جلب العطل من كلا الجدولين
+    system_holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(500)
+    manual_holidays = await db.holidays.find({}, {"_id": 0}).to_list(500)
+    
+    # إضافة مصدر لكل عطلة
+    for h in system_holidays:
+        h['source'] = 'system'
+        h['source_ar'] = 'نظامية'
+    for h in manual_holidays:
+        h['source'] = 'manual'
+        h['source_ar'] = 'يدوية'
+    
+    # دمج وترتيب
+    all_holidays = system_holidays + manual_holidays
+    all_holidays.sort(key=lambda x: x.get('date', ''))
+    
+    return all_holidays
 
 
 @router.post("/holidays")
 async def add_holiday(req: HolidayCreate, user=Depends(require_roles('stas'))):
     """Add a manual holiday"""
+    # التحقق في كلا الجدولين
     existing = await db.holidays.find_one({"date": req.date})
+    if not existing:
+        existing = await db.public_holidays.find_one({"date": req.date})
     if existing:
         raise HTTPException(status_code=400, detail="العطلة موجودة مسبقاً لهذا التاريخ")
     
@@ -618,19 +636,23 @@ async def add_holiday(req: HolidayCreate, user=Depends(require_roles('stas'))):
         "name_ar": req.name_ar,
         "date": req.date,
         "year": int(req.date[:4]),
+        "is_active": True,
         "created_by": user['user_id'],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
+    # إضافة للعطل اليدوية + العطل الرسمية
     await db.holidays.insert_one(holiday)
+    await db.public_holidays.insert_one({**holiday, "source": "manual"})
     holiday.pop('_id', None)
     return holiday
 
 
 @router.delete("/holidays/{holiday_id}")
 async def delete_holiday(holiday_id: str, user=Depends(require_roles('stas'))):
-    """Delete a manual holiday"""
-    result = await db.holidays.delete_one({"id": holiday_id})
-    if result.deleted_count == 0:
+    """Delete a holiday from both collections"""
+    result1 = await db.holidays.delete_one({"id": holiday_id})
+    result2 = await db.public_holidays.delete_one({"id": holiday_id})
+    if result1.deleted_count == 0 and result2.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Holiday not found")
     return {"message": "Holiday deleted"}
 
