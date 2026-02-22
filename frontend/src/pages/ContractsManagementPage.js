@@ -93,6 +93,8 @@ export default function ContractsManagementPage() {
   
   // Form state
   const [formData, setFormData] = useState({
+    // الرقم المرجعي - تلقائي وقابل للتعديل
+    ref_no: '',
     // هل موظف جديد أو اختيار من القائمة
     is_new_employee: true,
     employee_id: '',
@@ -140,6 +142,13 @@ export default function ContractsManagementPage() {
     // بدل طبيعة العمل
     nature_of_work_allowance: 0,
   });
+  
+  // توليد الرقم المرجعي تلقائياً
+  const generateRefNo = () => {
+    const year = new Date().getFullYear();
+    const randomNum = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
+    return `DAC-${year}-${randomNum}`;
+  };
   
   // Termination form
   const [terminationData, setTerminationData] = useState({
