@@ -916,6 +916,71 @@ export default function ATSPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      {/* Nuclear Delete Confirmation Dialog */}
+      <Dialog open={showNuclearDialog} onOpenChange={setShowNuclearDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertOctagon className="w-6 h-6" />
+              {lang === 'ar' ? 'تحذير: حذف نووي!' : 'Warning: Nuclear Delete!'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium mb-2">
+                {lang === 'ar' 
+                  ? 'هذا الإجراء سيحذف بشكل نهائي:' 
+                  : 'This action will permanently delete:'}
+              </p>
+              <ul className="text-sm text-red-700 space-y-1 mr-4">
+                <li>• {lang === 'ar' ? 'جميع طلبات التوظيف' : 'All job applications'}</li>
+                <li>• {lang === 'ar' ? 'جميع ملفات السيرة الذاتية المرفقة' : 'All attached CV files'}</li>
+                <li>• {lang === 'ar' ? 'جميع الملاحظات والتقييمات' : 'All notes and scores'}</li>
+              </ul>
+              <p className="text-sm text-red-800 font-bold mt-3">
+                {lang === 'ar' ? '⚠️ لا يمكن التراجع عن هذا الإجراء!' : '⚠️ This action cannot be undone!'}
+              </p>
+            </div>
+            
+            <div>
+              <Label className="text-sm text-muted-foreground">
+                {lang === 'ar' ? 'اكتب "DELETE ALL" للتأكيد:' : 'Type "DELETE ALL" to confirm:'}
+              </Label>
+              <Input 
+                value={nuclearConfirmText}
+                onChange={e => setNuclearConfirmText(e.target.value)}
+                placeholder="DELETE ALL"
+                className="mt-1 font-mono"
+                data-testid="nuclear-confirm-input"
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => { setShowNuclearDialog(false); setNuclearConfirmText(''); }}
+              >
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleNuclearDelete}
+                disabled={nuclearLoading || nuclearConfirmText !== 'DELETE ALL'}
+                data-testid="nuclear-confirm-btn"
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {nuclearLoading ? (
+                  <RefreshCw size={14} className="mr-1 animate-spin" />
+                ) : (
+                  <AlertOctagon size={14} className="mr-1" />
+                )}
+                {lang === 'ar' ? 'حذف الكل نهائياً' : 'Delete Everything'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
