@@ -59,6 +59,8 @@ from routes.analytics import router as analytics_router
 from routes.performance import router as performance_router
 from routes.push_notifications import router as push_router
 from routes.company_settings import router as company_settings_router
+from routes.ats_admin import router as ats_admin_router
+from routes.ats_public import router as ats_public_router
 from seed import seed_database
 
 # App Version
