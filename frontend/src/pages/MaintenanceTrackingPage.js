@@ -254,7 +254,7 @@ export default function MaintenanceTrackingPage() {
                         >
                           {STATUSES.map(s => (
                             <option key={s.value} value={s.value}>
-                              {s.icon} {lang === 'ar' ? s.label_ar : s.label_en}
+                              {lang === 'ar' ? s.label_ar : s.label_en}
                             </option>
                           ))}
                         </select>
