@@ -9,20 +9,20 @@ import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = {
   // الموظفون العاديون يرون الحضور والماليات والمهام
-  employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances'],
+  employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'policies'],
   // المشرف يرى الحضور والعقوبات لمتابعة فريقه
-  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties'],
+  supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties', 'policies'],
   // سلطان موظف + إداري
   // سلطان مدير إداري
-  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats'],
+  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
   // نايف إداري فقط
-  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats'],
+  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
   // صلاح مالي فقط
-  salah: ['dashboard', 'transactions', 'financialCustody'],
+  salah: ['dashboard', 'transactions', 'financialCustody', 'policies'],
   // محمد CEO
-  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody'],
+  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody', 'policies'],
   // ستاس إداري + صلاحيات كاملة (loginSessions خاصة به فقط)
-  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats'],
+  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
