@@ -57,6 +57,8 @@ export default function LoginPage() {
     
     // مسح بيانات الجلسة القديمة (ما عدا remember me)
     if (isDirectAccess) {
+      localStorage.removeItem('hr_token');
+      localStorage.removeItem('hr_user');
       localStorage.removeItem('dar_token');
       localStorage.removeItem('dar_user');
       sessionStorage.clear();
