@@ -21,11 +21,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
         
-        # Allow iframe for public ATS pages (careers, apply)
+        # Allow iframe for embed and public ATS pages
         path = request.url.path
-        if path.startswith("/careers") or path.startswith("/apply") or path.startswith("/api/ats/public"):
-            # Allow embedding in any site for public ATS pages
-            response.headers["X-Frame-Options"] = "ALLOWALL"
+        if "/embed" in path or "/careers" in path or "/apply" in path or "/api/ats/public" in path:
+            # Remove X-Frame-Options to allow embedding anywhere
+            # Use Content-Security-Policy frame-ancestors instead for better control
+            if "X-Frame-Options" in response.headers:
+                del response.headers["X-Frame-Options"]
         else:
             response.headers["X-Frame-Options"] = "SAMEORIGIN"
         
