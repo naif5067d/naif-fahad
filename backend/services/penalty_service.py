@@ -235,9 +235,89 @@ class PenaltyCalculator:
         
         return streaks
     
+    async def _calculate_deficit_penalties_with_compensation(self, records: List[Dict]) -> Dict:
+        """
+        حساب عقوبات نقص الساعات (التأخير والخروج المبكر) مع احتساب سماح التعويض
+        
+        نظام الساعات الذكية (Smart Hours):
+        1. يُحسب إجمالي النقص (تأخير + خروج مبكر)
+        2. يُحسب إجمالي الساعات الإضافية (بعد نهاية الدوام)
+        3. يُطبق سماح التعويض الشهري (من الإعدادات العامة)
+        4. الخصم الصافي = النقص - MIN(الساعات الإضافية, سماح التعويض)
+        """
+        total_late_minutes = 0
+        total_early_leave_minutes = 0
+        total_extra_minutes = 0  # الساعات الإضافية (البقاء بعد الدوام)
+        
+        for r in records:
+            status = r.get("final_status")
+            
+            # لا نحسب نقص للإجازات والعطل
+            if status in ["ON_LEAVE", "ON_ADMIN_LEAVE", "HOLIDAY", "WEEKEND", "ON_MISSION"]:
+                continue
+            
+            # الاستئذان المعتمد لا يحسب كنقص
+            if status == "PERMISSION":
+                continue
+            
+            total_late_minutes += r.get("late_minutes", 0)
+            total_early_leave_minutes += r.get("early_leave_minutes", 0)
+            
+            # حساب الساعات الإضافية (البقاء بعد نهاية الدوام)
+            actual_hours = r.get("actual_hours", 0)
+            required_hours = r.get("required_hours", 8)
+            if actual_hours > required_hours:
+                extra_hours = actual_hours - required_hours
+                total_extra_minutes += int(extra_hours * 60)
+        
+        total_deficit_minutes = total_late_minutes + total_early_leave_minutes
+        total_deficit_hours = total_deficit_minutes / 60
+        total_extra_hours = total_extra_minutes / 60
+        
+        # جلب سماح التعويض من الإعدادات العامة
+        compensation_settings = await db.settings.find_one({"type": "compensation_allowance"}, {"_id": 0})
+        compensation_allowance_hours = 0
+        if compensation_settings:
+            compensation_allowance_hours = compensation_settings.get("monthly_compensation_hours", 0)
+        
+        # حساب الساعات المعوّضة
+        # لا يمكن تعويض أكثر من سماح التعويض المحدد من الإدارة
+        compensated_hours = min(total_extra_hours, compensation_allowance_hours)
+        # لا يمكن تعويض أكثر من النقص الفعلي
+        compensated_hours = min(compensated_hours, total_deficit_hours)
+        
+        # الخصم الصافي = النقص - التعويض
+        net_deficit_hours = max(0, total_deficit_hours - compensated_hours)
+        
+        # كل 8 ساعات = يوم خصم
+        deduction_days = net_deficit_hours / DEFICIT_HOURS_PER_DAY
+        
+        return {
+            "total_late_minutes": total_late_minutes,
+            "total_early_leave_minutes": total_early_leave_minutes,
+            "total_deficit_minutes": total_deficit_minutes,
+            "total_deficit_hours": round(total_deficit_hours, 2),
+            
+            # الساعات الإضافية (البقاء بعد الدوام)
+            "total_extra_minutes": total_extra_minutes,
+            "total_extra_hours": round(total_extra_hours, 2),
+            
+            # سماح التعويض
+            "compensation_allowance_hours": compensation_allowance_hours,
+            "compensated_hours": round(compensated_hours, 2),
+            
+            # النتيجة النهائية
+            "net_deficit_hours": round(net_deficit_hours, 2),
+            "deduction_days": round(deduction_days, 2),
+            
+            # معلومات توضيحية
+            "calculation_note_ar": f"النقص الإجمالي: {round(total_deficit_hours, 2)} ساعة - التعويض: {round(compensated_hours, 2)} ساعة = الخصم الصافي: {round(net_deficit_hours, 2)} ساعة",
+            "calculation_note_en": f"Total deficit: {round(total_deficit_hours, 2)}h - Compensated: {round(compensated_hours, 2)}h = Net deficit: {round(net_deficit_hours, 2)}h"
+        }
+    
     def _calculate_deficit_penalties(self, records: List[Dict]) -> Dict:
         """
-        حساب عقوبات نقص الساعات (التأخير والخروج المبكر)
+        حساب عقوبات نقص الساعات (التأخير والخروج المبكر) - النسخة الأصلية للتوافقية
         """
         total_late_minutes = 0
         total_early_leave_minutes = 0
