@@ -1,32 +1,36 @@
 # DAR AL CODE HR OS - Changelog
 
-## [2026-02-23] Bug Fixes Session
+## [2026-02-23] PWA Icon Management Feature + Bug Fixes
+
+### Added (New Feature)
+1. **PWA Icon Management**: STAS user can now upload custom app icons via "الهوية" (Branding) tab
+   - Upload custom icon (512x512 recommended)
+   - Icons automatically resize to 192x192, 512x512, 180x180 (Apple)
+   - Falls back to company logo if no custom icon uploaded
+   - Changes reflect immediately - no need to reinstall PWA
+
+### Backend Changes
+- `POST /api/company-settings/upload-pwa-icon` - Upload custom PWA icon
+- `DELETE /api/company-settings/pwa-icon` - Delete custom icon (revert to logo)
+- `GET /api/company-settings/pwa-icon/{size}` - Get resized icon (32, 180, 192, 512)
+- `GET /api/company-settings/manifest.json` - Dynamic manifest with custom icons
+
+### Frontend Changes
+- Added PWA icon section in STAS Mirror Branding tab with upload/delete UI
+- index.html now uses dynamic icons from API (auto-updates)
 
 ### Fixed
-1. **MaintenanceTrackingPage.js Crash**: Removed invalid `s.icon` reference from STATUSES array mapping (lines 186-195, 253-260). The STATUSES objects don't have an 'icon' property.
-
-2. **PWA Icons Updated**: Regenerated all PWA icons (icon-512.png, icon-192.png, apple-touch-icon.png, favicon.ico) with grey background and blue border as requested by user. Added cache-busting query strings (?v=3) to prevent caching issues.
+1. **MaintenanceTrackingPage.js Crash**: Removed invalid `s.icon` reference
 
 ### Verified Working
-- **STAS Mirror Branding Tab (الهوية)**: Tab at /stas-mirror works correctly - shows company logo upload, side image upload, welcome text, company name, and login page colors.
-- **MaintenanceTrackingPage**: Page at /maintenance-tracking loads without crash.
-
-### Files Modified
-- `frontend/src/pages/MaintenanceTrackingPage.js`: Removed s.icon references
-- `frontend/public/icon-512.png`: New grey/blue icon
-- `frontend/public/icon-192.png`: New grey/blue icon
-- `frontend/public/apple-touch-icon.png`: New grey/blue icon
-- `frontend/public/favicon.ico`: New grey/blue icon
-- `frontend/public/index.html`: Added cache-busting ?v=3 to icon links
-- `frontend/public/manifest.json`: Added cache-busting ?v=3 to icon sources
+- All PWA icon APIs return correct images
+- Dynamic manifest.json with RTL support
+- Branding tab shows PWA icon section with "جديد" badge
 
 ### Test Report
-- `/app/test_reports/iteration_40.json`: All tests passed (100% success rate)
+- `/app/test_reports/iteration_41.json`: All tests passed (100% success rate)
 
 ---
-
-
-# DAR AL CODE HR OS - Changelog
 
 ## [2026-02-19] Phase 33: Bug Fixes & Deployment Readiness
 
