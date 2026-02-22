@@ -1,7 +1,7 @@
 {
-  "name": "DAR AL CODE - نظام الموارد البشرية",
-  "short_name": "DAR ALCODE CO",
-  "description": "نظام إدارة الموارد البشرية - دار الكود للاستشارات الهندسية",
+  "name": "دار الكود - نظام الموارد البشرية",
+  "short_name": "دار الكود",
+  "description": "نظام إدارة الموارد البشرية - شركة دار الكود للاستشارات الهندسية",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
@@ -13,13 +13,13 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/icon-192.png?v=3",
+      "src": "/icon-192.png?v=4",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png?v=3",
+      "src": "/icon-512.png?v=4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
