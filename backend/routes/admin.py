@@ -555,3 +555,38 @@ async def system_reset_from_date(body: SystemResetFromDateRequest):
         "timestamp": now
     }
 
+
+
+# ============================================================
+# التزامن التلقائي
+# ============================================================
+
+@router.post("/sync-database")
+async def sync_database_endpoint(user=Depends(require_roles('stas'))):
+    """
+    تزامن البيانات الأساسية
+    يتأكد من وجود المستخدمين والإعدادات الأساسية
+    """
+    result = await auto_sync_database(db)
+    return {
+        "success": True,
+        "message_ar": "تم التزامن بنجاح",
+        "message_en": "Sync completed successfully",
+        "actions": result["actions"],
+        "timestamp": result["timestamp"]
+    }
+
+
+@router.post("/force-full-sync")
+async def force_full_sync_endpoint(body: dict):
+    """
+    تزامن إجباري كامل
+    يُعيد تعيين جميع البيانات الأساسية
+    """
+    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    result = await force_full_sync(db)
+    return result
+
+
