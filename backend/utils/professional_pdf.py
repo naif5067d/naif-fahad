@@ -391,9 +391,11 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
     
     # Add from approval chain
     approval_chain = transaction.get('approval_chain', [])
+    added_roles = set(['Employee'])  # Employee already added
+    
     for approval in approval_chain:
         stage = approval.get('stage', '')
-        if stage == 'ceo':
+        if stage == 'ceo' and 'CEO' not in added_roles:
             signatures.append({
                 'role_ar': 'الرئيس التنفيذي',
                 'role_en': 'CEO',
@@ -402,7 +404,8 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
                 'signed': True,
                 'timestamp': approval.get('timestamp', ''),
             })
-        elif stage in ('hr', 'sultan'):
+            added_roles.add('CEO')
+        elif stage in ('hr', 'sultan') and 'HR' not in added_roles:
             signatures.append({
                 'role_ar': 'الموارد البشرية',
                 'role_en': 'HR',
@@ -411,7 +414,8 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
                 'signed': True,
                 'timestamp': approval.get('timestamp', ''),
             })
-        elif stage == 'stas':
+            added_roles.add('HR')
+        elif stage == 'stas' and 'STAS' not in added_roles:
             signatures.append({
                 'role_ar': 'STAS',
                 'role_en': 'STAS',
@@ -420,11 +424,10 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
                 'signed': True,
                 'timestamp': approval.get('timestamp', ''),
             })
+            added_roles.add('STAS')
     
     # Add STAS if executed but not in chain
-    if status == 'executed':
-        has_stas = any(s['role_en'] == 'STAS' for s in signatures)
-        if not has_stas:
+    if status == 'executed' and 'STAS' not in added_roles:
             signatures.append({
                 'role_ar': 'STAS',
                 'role_en': 'STAS',
