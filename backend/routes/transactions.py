@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import db
 from utils.auth import get_current_user
-from utils.pdf import generate_transaction_pdf
+from utils.professional_pdf import generate_professional_transaction_pdf
 from utils.workflow import (
     WORKFLOW_MAP, STAGE_ROLES,
     validate_stage_actor, get_next_stage,
