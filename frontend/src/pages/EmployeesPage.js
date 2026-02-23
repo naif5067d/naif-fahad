@@ -56,25 +56,28 @@ export default function EmployeesPage() {
   const isOps = ['sultan', 'naif', 'stas', 'mohammed'].includes(user?.role);
   const isCEO = user?.role === 'mohammed';
   const canSummon = ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user?.role);
+  const canAssignSupervisor = ['sultan', 'naif', 'stas'].includes(user?.role); // محمد لا يحتاج تعيين مشرف
   
   // حالة الاستدعاءات النشطة
   const [activeSummons, setActiveSummons] = useState([]);
 
   useEffect(() => {
-    api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
+    api.get('/api/employees').then(r => setEmployees(r.data)).catch((err) => {
+      console.error('Failed to load employees:', err);
+    });
     // جلب العقود المنتهية قريباً
-    if (isOps) {
+    if (user?.role && ['sultan', 'naif', 'stas', 'mohammed'].includes(user.role)) {
       api.get('/api/notifications/expiring-contracts?days_ahead=90')
         .then(r => setExpiringContracts(r.data.employees || []))
         .catch(() => {});
     }
     // جلب الاستدعاءات النشطة
-    if (canSummon) {
+    if (user?.role && ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user.role)) {
       api.get('/api/notifications/summons')
         .then(r => setActiveSummons(r.data.summons || []))
         .catch(() => {});
     }
-  }, [isOps, canSummon]);
+  }, [user?.role]);
 
   // التحقق إذا كان الموظف لديه استدعاء نشط
   const getActiveSummon = (employeeId) => {
