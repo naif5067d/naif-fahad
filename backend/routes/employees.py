@@ -198,6 +198,26 @@ async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends
             {"employee_id": employee_id},
             {"$set": {"department": updates['department']}}
         )
+    if 'department_ar' in updates:
+        # تحديث القسم العربي في كل مكان
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"department_ar": updates['department_ar']}}
+        )
+        await db.transactions.update_many(
+            {"data.employee_id": employee_id},
+            {"$set": {"data.department_ar": updates['department_ar']}}
+        )
+    if 'position' in updates:
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"position": updates['position']}}
+        )
+    if 'position_ar' in updates:
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"position_ar": updates['position_ar']}}
+        )
     if 'is_active' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"is_active": updates['is_active']}})
     updated = await db.employees.find_one({"id": employee_id}, {"_id": 0})
