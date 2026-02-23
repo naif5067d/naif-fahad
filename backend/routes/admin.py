@@ -249,7 +249,8 @@ class ResetStasPasswordRequest(BaseModel):
 async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
     """
     إعادة تعيين كلمة مرور STAS للطوارئ
-    كلمة المرور الجديدة: 123456
+    اسم المستخدم: stas506
+    كلمة المرور الجديدة: 654321
     """
     from utils.auth import hash_password
     
@@ -257,26 +258,26 @@ async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
     if body.emergency_key != "EMERGENCY_STAS_2026":
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
-    # البحث عن مستخدم stas
-    stas_user = await db.users.find_one({"username": "stas"})
+    # البحث عن مستخدم stas أو stas506
+    stas_user = await db.users.find_one({"$or": [{"username": "stas"}, {"username": "stas506"}]})
     
     if not stas_user:
         raise HTTPException(status_code=404, detail="مستخدم stas غير موجود")
     
     # تشفير كلمة المرور الجديدة
-    new_hash = hash_password("123456")
+    new_hash = hash_password("654321")
     
-    # تحديث كلمة المرور
+    # تحديث اسم المستخدم وكلمة المرور
     await db.users.update_one(
-        {"username": "stas"},
-        {"$set": {"password_hash": new_hash}}
+        {"_id": stas_user["_id"]},
+        {"$set": {"username": "stas506", "password_hash": new_hash}}
     )
     
     return {
-        "message_ar": "تم إعادة تعيين كلمة مرور STAS بنجاح",
-        "message_en": "STAS password has been reset successfully",
-        "username": "stas",
-        "new_password": "123456",
+        "message_ar": "تم إعادة تعيين بيانات STAS بنجاح",
+        "message_en": "STAS credentials have been reset successfully",
+        "username": "stas506",
+        "new_password": "654321",
         "warning": "يرجى تغيير كلمة المرور بعد تسجيل الدخول"
     }
 
