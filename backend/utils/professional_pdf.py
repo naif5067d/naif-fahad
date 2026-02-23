@@ -290,7 +290,8 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     for approval in chain:
         stage = approval.get('stage', '')
         ts = approval.get('timestamp', '')
-        signer = approval.get('signer_name', '')
+        # جرب أكثر من حقل للاسم
+        signer = approval.get('approver_name', '') or approval.get('signer_name', '') or approval.get('approver_name_en', '')
         if stage and ts:
             signed_stages[stage] = {'timestamp': ts, 'signer': signer}
     
