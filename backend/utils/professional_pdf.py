@@ -297,6 +297,11 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     # التعامل مع المراحل البديلة (ops = supervisor)
     if 'ops' in signed_stages and 'supervisor' not in signed_stages:
         signed_stages['supervisor'] = signed_stages['ops']
+    # التعامل مع أسماء المراحل البديلة
+    if 'sultan' in signed_stages and 'hr' not in signed_stages:
+        signed_stages['hr'] = signed_stages['sultan']
+    if 'mohammed' in signed_stages and 'ceo' not in signed_stages:
+        signed_stages['ceo'] = signed_stages['mohammed']
     
     # تحديد المراحل التي وصلت لها المعاملة بناءً على الحالة
     # الترتيب: pending -> supervisor -> hr -> ceo -> stas -> executed
