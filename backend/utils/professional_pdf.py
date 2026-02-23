@@ -134,7 +134,7 @@ def create_qr_image(data: str, size: int = 20, fill_color="black"):
         img.save(buffer, format='PNG')
         buffer.seek(0)
         return RLImage(buffer, width=size*mm, height=size*mm)
-    except:
+    except Exception:
         return None
 
 
@@ -148,7 +148,7 @@ def create_logo_image(logo_data: str, width: int = 20, height: int = 20):
         img_bytes = base64.b64decode(logo_data)
         buffer = io.BytesIO(img_bytes)
         return RLImage(buffer, width=width*mm, height=height*mm)
-    except:
+    except Exception:
         return None
 
 
