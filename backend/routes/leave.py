@@ -384,3 +384,46 @@ async def delete_holiday(holiday_id: str, user=Depends(get_current_user)):
     if r1.deleted_count == 0:
         await db.holidays.delete_one({"id": holiday_id})
     return {"message": "Holiday deleted"}
+
+
+@router.post("/holidays/cleanup-duplicates")
+async def cleanup_duplicate_holidays(user=Depends(get_current_user)):
+    """
+    تنظيف السجلات المكررة للعطل - STAS فقط
+    يحذف التكرارات ويبقي سجل واحد لكل تاريخ
+    """
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="STAS فقط يمكنه تنظيف السجلات المكررة")
+    
+    # جمع جميع العطل
+    all_holidays = await db.public_holidays.find({}, {"_id": 0}).to_list(1000)
+    
+    # تجميع حسب التاريخ
+    by_date = {}
+    for h in all_holidays:
+        date = h.get('date', '')
+        if date not in by_date:
+            by_date[date] = []
+        by_date[date].append(h)
+    
+    deleted_count = 0
+    kept_count = 0
+    
+    # حذف التكرارات
+    for date, holidays in by_date.items():
+        if len(holidays) > 1:
+            # نبقي الأول ونحذف الباقي
+            kept_count += 1
+            for h in holidays[1:]:
+                await db.public_holidays.delete_one({"id": h['id']})
+                deleted_count += 1
+        else:
+            kept_count += 1
+    
+    return {
+        "message_ar": f"تم تنظيف {deleted_count} سجل مكرر، وتم الاحتفاظ بـ {kept_count} سجل",
+        "message_en": f"Cleaned {deleted_count} duplicate records, kept {kept_count} records",
+        "deleted": deleted_count,
+        "kept": kept_count
+    }
+
