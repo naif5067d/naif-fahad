@@ -431,7 +431,6 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
             })
     
     # Create signature table
-    sig_header_style = ParagraphStyle('sig_h', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=WHITE)
     sig_role_style = ParagraphStyle('sig_role', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=NAVY)
     sig_role_en_style = ParagraphStyle('sig_role_en', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
     sig_name_style = ParagraphStyle('sig_name', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=TEXT_DARK)
