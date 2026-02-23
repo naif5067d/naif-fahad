@@ -95,6 +95,7 @@ function AppRoutes() {
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/employees/:employeeId" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeeProfilePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/sound-settings" element={<ProtectedRoute allowedRoles={['stas']}><SoundSettingsPage /></ProtectedRoute>} />
       <Route path="/policies" element={<ProtectedRoute><PoliciesPage /></ProtectedRoute>} />
       <Route path="/ats" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><ATSPage /></ProtectedRoute>} />
       <Route path="/careers" element={<PublicCareersPage />} />
