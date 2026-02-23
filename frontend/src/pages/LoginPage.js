@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, User, AlertCircle, Eye, EyeOff, Globe, Loader2 } from 'lucide-react';
+import { playWelcomeSound } from '@/utils/soundLibrary';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
