@@ -75,7 +75,7 @@ from routes.policies import router as policies_router
 from seed import seed_database
 
 # App Version
-APP_VERSION = "21.1"
+APP_VERSION = "22.0"
 
 app = FastAPI(title="DAR AL CODE HR OS", version=APP_VERSION, redirect_slashes=False)
 
