@@ -139,15 +139,18 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         'cpa': ParagraphStyle('cpa', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY),
     }
     
+    # Get logo from branding
+    logo_data = brand.get('logo_data', None) if brand else None
+    
     # ═══════════════════════════════════════════════════════════════
-    # HEADER: لوجو (يمين) | اسم الشركة (وسط) | فارغ (يسار)
+    # HEADER: اسم الشركة (يمين) | لوجو (وسط) | الترخيص (يسار)
     # ═══════════════════════════════════════════════════════════════
     third = CW / 3
     
     hdr_r = Table([[Paragraph(ar(co_ar), s['h_ar'])], [Paragraph(co_en, s['h_en'])]], colWidths=[third])
     hdr_r.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'RIGHT'), ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
     
-    hdr_c = Table([[logo()]], colWidths=[third])
+    hdr_c = Table([[logo(logo_data, 15)]], colWidths=[third])
     hdr_c.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
     
     hdr_l = Table([[Paragraph("KSA | 5110004935", s['h_sm'])]], colWidths=[third])
