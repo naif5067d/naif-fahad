@@ -328,12 +328,12 @@ export default function AppLayout({ children }) {
             <div className="hidden md:block" />
 
             {/* Right side controls */}
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 overflow-visible">
               {/* Fullscreen Toggle - Desktop only */}
               <button 
                 data-testid="toggle-fullscreen" 
                 onClick={toggleFullscreen} 
-                className="hidden md:flex p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors"
+                className="hidden md:flex p-2 rounded-xl hover:bg-muted text-muted-foreground transition-colors flex-shrink-0"
                 title={isFullscreen ? (lang === 'ar' ? 'إلغاء ملء الشاشة' : 'Exit Fullscreen') : (lang === 'ar' ? 'ملء الشاشة' : 'Fullscreen')}
               >
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
