@@ -370,8 +370,8 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     name_row = []
     for r in roles:
         stage_key = r[0]
-        ar_name = r[3]  # الاسم العربي
-        en_name = r[4]  # الاسم الإنجليزي
+        default_ar = r[3]  # الاسم العربي الافتراضي
+        default_en = r[4]  # الاسم الإنجليزي الافتراضي
         
         if stage_key == 'stas':
             # STAS إنجليزي فقط بالأزرق الداكن
@@ -382,8 +382,8 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         elif stage_key == 'employee':
             # عربي فوق + إنجليزي تحت
             name_content = Table([
-                [Paragraph(ar(ar_name) if ar_name else "—", s_name)],
-                [Paragraph(en_name if en_name else "", s_name_en_small)]
+                [Paragraph(ar(default_ar) if default_ar else "—", s_name)],
+                [Paragraph(default_en if default_en else "", s_name_en_small)]
             ], colWidths=[col_width - 4*mm])
             name_content.setStyle(TableStyle([
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -393,16 +393,25 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
             ]))
             name_row.append(name_content)
         elif stage_key in signed_stages:
-            # استخدام اسم الموقع الفعلي إذا متوفر
+            # الاسم من approval_chain
             signer_info = signed_stages[stage_key]
-            actual_ar = ar_name
-            actual_en = en_name
-            if isinstance(signer_info, dict) and signer_info.get('signer'):
-                signer_name = signer_info.get('signer')
-                if any('\u0600' <= c <= '\u06FF' for c in signer_name):
+            actual_ar = default_ar
+            actual_en = default_en
+            
+            if isinstance(signer_info, dict):
+                # جرب الحصول على الاسم العربي والإنجليزي
+                signer_name = signer_info.get('signer', '')
+                signer_name_ar = signer_info.get('signer_ar', '')
+                signer_name_en = signer_info.get('signer_en', '')
+                
+                # إذا الاسم عربي، استخدمه كعربي
+                if signer_name and any('\u0600' <= c <= '\u06FF' for c in signer_name):
                     actual_ar = signer_name
-                else:
+                # إذا الاسم إنجليزي، استخدمه كإنجليزي لكن أبقِ العربي الافتراضي
+                elif signer_name:
                     actual_en = signer_name
+                    # لا تغير actual_ar - استخدم الافتراضي
+            
             # عربي فوق + إنجليزي تحت
             name_content = Table([
                 [Paragraph(ar(actual_ar) if actual_ar else "—", s_name)],
