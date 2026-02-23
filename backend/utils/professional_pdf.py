@@ -1,20 +1,17 @@
 """
 Professional PDF Generator - مولد PDF الاحترافي
 ============================================================
-التصميم الجديد الموحد لجميع مستندات الشركة:
-- ترويسة موحدة (عربي + إنجليزي)
-- خط القطع (عربي + إنجليزي)  
-- جدول توقيعات منظم مع QR لكل موقع
-- 2 QR لـ STAS: واحد في الجدول + واحد أسفل خط القطع
+تصميم احترافي موحد لجميع مستندات الشركة
+مع محاذاة صحيحة وتناسق كامل
 ============================================================
 """
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.units import mm
+from reportlab.lib.units import mm, cm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image as RLImage
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image as RLImage, HRFlowable
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics.shapes import Drawing, Rect, String, Line
@@ -30,16 +27,18 @@ from datetime import datetime, timezone, timedelta
 
 # ==================== PAGE SETUP ====================
 PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 12 * mm
+MARGIN = 15 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 
 # ==================== COLORS ====================
-NAVY = colors.Color(0.118, 0.227, 0.373)      # #1E3A5F - الأزرق الداكن
-GOLD = colors.Color(0.75, 0.62, 0.35)          # الذهبي
-LIGHT_GRAY = colors.Color(0.96, 0.96, 0.97)    # رمادي فاتح
-BORDER_GRAY = colors.Color(0.85, 0.85, 0.87)   # رمادي للحدود
-TEXT_GRAY = colors.Color(0.4, 0.4, 0.45)       # رمادي للنص
-SUCCESS_GREEN = colors.Color(0.1, 0.55, 0.3)   # أخضر للنجاح
+NAVY = colors.Color(0.118, 0.227, 0.373)       # #1E3A5F
+GOLD = colors.Color(0.75, 0.62, 0.35)          # ذهبي
+LIGHT_BLUE = colors.Color(0.93, 0.96, 0.99)    # أزرق فاتح للخلفية
+LIGHT_GRAY = colors.Color(0.95, 0.95, 0.96)    # رمادي فاتح
+BORDER_COLOR = colors.Color(0.8, 0.82, 0.85)   # لون الحدود
+TEXT_DARK = colors.Color(0.2, 0.2, 0.25)       # نص داكن
+TEXT_GRAY = colors.Color(0.5, 0.5, 0.55)       # نص رمادي
+SUCCESS_GREEN = colors.Color(0.13, 0.55, 0.33) # أخضر
 WHITE = colors.white
 
 # ==================== FONTS ====================
@@ -75,7 +74,6 @@ def register_fonts():
     return False
 
 
-# تسجيل الخطوط عند التحميل
 _fonts_registered = register_fonts()
 
 
@@ -90,15 +88,8 @@ def reshape_arabic(text):
         return str(text)
 
 
-def has_arabic(text):
-    """التحقق من وجود نص عربي"""
-    if not text:
-        return False
-    return any('\u0600' <= c <= '\u06FF' for c in str(text))
-
-
-def format_saudi_time(ts):
-    """تحويل الوقت لتوقيت السعودية UTC+3"""
+def format_date(ts):
+    """تنسيق التاريخ"""
     if not ts:
         return '-'
     try:
@@ -118,18 +109,13 @@ def format_saudi_time(ts):
         return str(ts)[:16] if ts else '-'
 
 
-def create_qr_image(data: str, size: int = 20, fill_color="black"):
+def create_qr_image(data: str, size: int = 25):
     """إنشاء صورة QR Code"""
     try:
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=3,
-            border=1,
-        )
+        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=4, border=1)
         qr.add_data(data)
         qr.make(fit=True)
-        img = qr.make_image(fill_color=fill_color, back_color="white")
+        img = qr.make_image(fill_color="black", back_color="white")
         buffer = io.BytesIO()
         img.save(buffer, format='PNG')
         buffer.seek(0)
@@ -138,502 +124,41 @@ def create_qr_image(data: str, size: int = 20, fill_color="black"):
         return None
 
 
-def create_logo_image(logo_data: str, width: int = 20, height: int = 20):
-    """إنشاء صورة الشعار من base64"""
-    if not logo_data:
-        return None
-    try:
-        if ',' in logo_data:
-            logo_data = logo_data.split(',')[1]
-        img_bytes = base64.b64decode(logo_data)
-        buffer = io.BytesIO(img_bytes)
-        return RLImage(buffer, width=width*mm, height=height*mm)
-    except Exception:
-        return None
-
-
-def create_text_logo(width=20, height=20):
-    """إنشاء شعار نصي بديل DAC"""
-    d = Drawing(width*mm, height*mm)
-    d.add(Rect(0, 0, width*mm, height*mm, fillColor=NAVY, strokeColor=None, rx=3, ry=3))
-    d.add(String(2*mm, 7*mm, "D", fontName=ENGLISH_FONT_BOLD, fontSize=12, fillColor=WHITE))
-    d.add(String(7*mm, 7*mm, "A", fontName=ENGLISH_FONT_BOLD, fontSize=12, fillColor=GOLD))
-    d.add(String(12*mm, 7*mm, "C", fontName=ENGLISH_FONT_BOLD, fontSize=12, fillColor=WHITE))
+def create_logo_placeholder():
+    """إنشاء شعار نصي بديل"""
+    d = Drawing(25*mm, 25*mm)
+    d.add(Rect(0, 0, 25*mm, 25*mm, fillColor=NAVY, strokeColor=None, rx=3, ry=3))
+    d.add(String(3*mm, 10*mm, "DAC", fontName=ENGLISH_FONT_BOLD, fontSize=14, fillColor=WHITE))
     return d
 
 
-# ==================== UNIFIED HEADER / الترويسة الموحدة ====================
-def create_unified_header(branding: dict = None):
-    """
-    إنشاء الترويسة الموحدة للمستندات
-    تتضمن: اللوجو في المنتصف + اسم الشركة عربي/إنجليزي + البيانات الرسمية
-    """
-    company_name_ar = "شركة دار الكود للاستشارات الهندسية"
-    company_name_en = "DAR AL CODE Engineering Consultancy"
-    slogan_ar = "التميز الهندسي"
-    slogan_en = "Engineering Excellence"
-    license_no = "5110004935"
-    cr_no = "1010463476"
-    
-    if branding:
-        company_name_ar = branding.get('company_name_ar', company_name_ar)
-        company_name_en = branding.get('company_name_en', company_name_en)
-        slogan_ar = branding.get('slogan_ar', slogan_ar)
-        slogan_en = branding.get('slogan_en', slogan_en)
-    
-    # Styles
-    style_ar = ParagraphStyle('header_ar', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_RIGHT, wordWrap='RTL', leading=11)
-    style_en = ParagraphStyle('header_en', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_LEFT, leading=11)
-    style_small_ar = ParagraphStyle('small_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, wordWrap='RTL', textColor=TEXT_GRAY)
-    style_small_en = ParagraphStyle('small_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_LEFT, textColor=TEXT_GRAY)
-    
-    # Logo
-    logo = None
-    if branding and branding.get('logo_data'):
-        logo = create_logo_image(branding['logo_data'], 18, 18)
-    if not logo:
-        logo = create_text_logo(18, 18)
-    
-    # Left column (English)
-    left_content = [
-        [Paragraph("Kingdom of Saudi Arabia - Riyadh", style_small_en)],
-        [Paragraph(company_name_en, style_en)],
-        [Paragraph(f"License: {license_no} | CR: {cr_no}", style_small_en)],
-    ]
-    left_table = Table(left_content, colWidths=[CONTENT_WIDTH * 0.4])
-    left_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    
-    # Right column (Arabic)
-    right_content = [
-        [Paragraph(reshape_arabic("المملكة العربية السعودية - الرياض"), style_small_ar)],
-        [Paragraph(reshape_arabic(company_name_ar), style_ar)],
-        [Paragraph(reshape_arabic(f"ترخيص: {license_no} | سجل: {cr_no}"), style_small_ar)],
-    ]
-    right_table = Table(right_content, colWidths=[CONTENT_WIDTH * 0.4])
-    right_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-    ]))
-    
-    # Main header table: Left | Logo | Right
-    header_table = Table(
-        [[left_table, logo, right_table]],
-        colWidths=[CONTENT_WIDTH * 0.4, CONTENT_WIDTH * 0.2, CONTENT_WIDTH * 0.4]
-    )
-    header_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
-        ('ALIGN', (2, 0), (2, 0), 'RIGHT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LINEBELOW', (0, 0), (-1, 0), 2, NAVY),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-    ]))
-    
-    return header_table
-
-
-# ==================== TEAR-OFF LINE / خط القطع ====================
-def create_tear_off_line():
-    """
-    إنشاء خط القطع بالعربي والإنجليزي
-    """
-    style_center = ParagraphStyle('tear', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    
-    # Scissors symbol + dashed line + text
-    tear_text = "- - - - - - - -  ✂ Cut Here | قص هنا ✂  - - - - - - - -"
-    
-    tear_table = Table(
-        [[Paragraph(tear_text, style_center)]],
-        colWidths=[CONTENT_WIDTH]
-    )
-    tear_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-        ('LINEABOVE', (0, 0), (-1, 0), 0.5, BORDER_GRAY),
-        ('LINEBELOW', (0, 0), (-1, 0), 0.5, BORDER_GRAY),
-    ]))
-    
-    return tear_table
-
-
-# ==================== SIGNATURES TABLE / جدول التوقيعات ====================
-def create_signatures_table(signatures: list, ref_no: str):
-    """
-    إنشاء جدول التوقيعات الاحترافي
-    جدول منظم بأعمدة: الدور | الاسم (عربي + إنجليزي) | QR Code | التاريخ
-    
-    signatures: قائمة التوقيعات
-    [
-        {"role": "employee", "name_ar": "أحمد", "name_en": "Ahmed", "signed": True, "timestamp": "..."},
-        {"role": "hr", "name_ar": "سلطان", "name_en": "Sultan", "signed": True, "timestamp": "..."},
-        {"role": "ceo", "name_ar": "محمد", "name_en": "Mohammed", "signed": True, "timestamp": "..."},
-        {"role": "stas", "name_ar": "STAS", "name_en": "STAS", "signed": True, "timestamp": "..."},
-    ]
-    """
-    # Styles
-    style_header_ar = ParagraphStyle('sig_header_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=WHITE, wordWrap='RTL')
-    style_header_en = ParagraphStyle('sig_header_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=WHITE)
-    style_role_ar = ParagraphStyle('sig_role_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
-    style_role_en = ParagraphStyle('sig_role_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    style_name_ar = ParagraphStyle('sig_name_ar', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, wordWrap='RTL')
-    style_name_en = ParagraphStyle('sig_name_en', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    style_date = ParagraphStyle('sig_date', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    style_signed = ParagraphStyle('sig_signed', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_CENTER, textColor=SUCCESS_GREEN, wordWrap='RTL')
-    style_pending = ParagraphStyle('sig_pending', fontName=ARABIC_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY, wordWrap='RTL')
-    
-    # Role labels mapping
-    role_labels = {
-        'employee': ('الموظف', 'Employee'),
-        'hr': ('الموارد البشرية', 'HR'),
-        'ceo': ('الرئيس التنفيذي', 'CEO'),
-        'stas': ('STAS', 'STAS'),
-        'ops': ('العمليات', 'Operations'),
-        'finance': ('المالية', 'Finance'),
-        'supervisor': ('المشرف', 'Supervisor'),
-    }
-    
-    if not signatures:
-        return None
-    
-    # Column widths
-    col_role = 35 * mm      # الدور
-    col_name = 55 * mm      # الاسم
-    col_qr = 30 * mm        # QR
-    col_date = 45 * mm      # التاريخ والحالة
-    
-    # Table header row
-    header_row = [
-        Paragraph(reshape_arabic("الدور"), style_header_ar),
-        Paragraph(reshape_arabic("الاسم"), style_header_ar),
-        Paragraph("QR", style_header_en),
-        Paragraph(reshape_arabic("التاريخ / الحالة"), style_header_ar),
-    ]
-    
-    table_data = [header_row]
-    
-    # Build rows for each signature
-    for sig in signatures:
-        role = sig.get('role', 'unknown')
-        name_ar = sig.get('name_ar', '')
-        name_en = sig.get('name_en', '')
-        signed = sig.get('signed', False)
-        timestamp = sig.get('timestamp', '')
-        
-        role_ar, role_en = role_labels.get(role, (role, role))
-        
-        # Column 1: Role (Arabic + English)
-        role_cell = Table([
-            [Paragraph(reshape_arabic(role_ar), style_role_ar)],
-            [Paragraph(role_en, style_role_en)],
-        ], colWidths=[col_role - 4*mm])
-        role_cell.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        
-        # Column 2: Name (Arabic + English)
-        name_cell = Table([
-            [Paragraph(reshape_arabic(name_ar), style_name_ar)],
-            [Paragraph(name_en, style_name_en)],
-        ], colWidths=[col_name - 4*mm])
-        name_cell.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        
-        # Column 3: QR Code
-        if signed:
-            qr_data = f"SIG-{role.upper()}-{ref_no}"
-            qr_img = create_qr_image(qr_data, size=18)
-            qr_cell = qr_img if qr_img else Paragraph("-", style_date)
-        else:
-            qr_cell = Paragraph("____", style_date)
-        
-        # Column 4: Date + Status
-        if signed and timestamp:
-            date_cell = Table([
-                [Paragraph(format_saudi_time(timestamp), style_date)],
-                [Paragraph(reshape_arabic("✓ تم التوقيع"), style_signed)],
-            ], colWidths=[col_date - 4*mm])
-        else:
-            date_cell = Table([
-                [Paragraph("____/____/____", style_date)],
-                [Paragraph(reshape_arabic("بانتظار التوقيع"), style_pending)],
-            ], colWidths=[col_date - 4*mm])
-        date_cell.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        
-        # Add row
-        table_data.append([role_cell, name_cell, qr_cell, date_cell])
-    
-    # Create main table
-    main_table = Table(table_data, colWidths=[col_role, col_name, col_qr, col_date])
-    main_table.setStyle(TableStyle([
-        # Header styling
-        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
-        ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
-        # Grid
-        ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
-        ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
-        ('LINEBELOW', (0, 0), (-1, 0), 1.5, NAVY),
-        # Alignment
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        # Padding
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('LEFTPADDING', (0, 0), (-1, -1), 2),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
-        # Alternating row colors
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
-    ]))
-    
-    return main_table
-
-
-# ==================== TEAR-OFF COUPON / الكوبون ====================
-def create_tear_off_coupon(doc_type: str, ref_no: str, employee_name_ar: str, employee_name_en: str, 
-                           stas_signed: bool = False, stas_timestamp: str = None, branding: dict = None):
-    """
-    إنشاء قسيمة القطع (الكوبون) للملفات اليدوية
-    يحتوي على QR لـ STAS + ملخص المستند
-    """
-    company_name_ar = branding.get('company_name_ar', 'شركة دار الكود') if branding else 'شركة دار الكود'
-    company_name_en = branding.get('company_name_en', 'DAR AL CODE') if branding else 'DAR AL CODE'
-    
-    style_title = ParagraphStyle('coupon_title', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
-    style_title_en = ParagraphStyle('coupon_title_en', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
-    style_value = ParagraphStyle('coupon_value', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_RIGHT, wordWrap='RTL')
-    style_value_en = ParagraphStyle('coupon_value_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_LEFT)
-    style_small = ParagraphStyle('coupon_small', fontName=ENGLISH_FONT, fontSize=6, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    style_verified = ParagraphStyle('coupon_verified', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=SUCCESS_GREEN, wordWrap='RTL')
-    
-    # Document type labels
-    doc_types = {
-        'leave_request': ('طلب إجازة', 'Leave Request'),
-        'tangible_custody': ('عهدة عينية', 'In-Kind Custody'),
-        'finance_60': ('عهدة مالية', 'Financial Custody'),
-        'settlement': ('مخالصة نهائية', 'Final Settlement'),
-        'contract': ('عقد عمل', 'Employment Contract'),
-        'salary_advance': ('سلفة راتب', 'Salary Advance'),
-        'tangible_custody_return': ('إرجاع عهدة', 'Custody Return'),
-    }
-    
-    doc_type_ar, doc_type_en = doc_types.get(doc_type, (doc_type, doc_type))
-    
-    # STAS QR for manual files
-    stas_qr_data = f"STAS-VERIFY-{ref_no}"
-    stas_qr = create_qr_image(stas_qr_data, size=22) if stas_signed else None
-    
-    # Left side: QR + verification
-    left_content = []
-    if stas_qr:
-        left_content.append([stas_qr])
-        left_content.append([Paragraph("STAS QR", style_small)])
-        left_content.append([Paragraph(reshape_arabic("للملفات اليدوية"), style_small)])
-        if stas_timestamp:
-            left_content.append([Paragraph(format_saudi_time(stas_timestamp), style_small)])
-    else:
-        left_content.append([Paragraph("Pending", style_small)])
-    
-    left_table = Table(left_content, colWidths=[30*mm])
-    left_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ]))
-    
-    # Center: Document info
-    center_content = [
-        [Paragraph(reshape_arabic(company_name_ar), style_title)],
-        [Paragraph(company_name_en, style_title_en)],
-        [Spacer(1, 2*mm)],
-        [Paragraph(reshape_arabic(doc_type_ar), style_value)],
-        [Paragraph(doc_type_en, style_value_en)],
-        [Spacer(1, 2*mm)],
-        [Paragraph(f"Ref: {ref_no}", style_value_en)],
-        [Spacer(1, 2*mm)],
-        [Paragraph(reshape_arabic(employee_name_ar), style_value)],
-        [Paragraph(employee_name_en, style_value_en)],
-    ]
-    
-    if stas_signed:
-        center_content.append([Spacer(1, 2*mm)])
-        center_content.append([Paragraph(reshape_arabic("✓ معاملة صحيحة - Valid Document"), style_verified)])
-    
-    center_table = Table(center_content, colWidths=[80*mm])
-    center_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ]))
-    
-    # Right side: Another QR for verification
-    verify_qr_data = f"VERIFY-{ref_no}"
-    verify_qr = create_qr_image(verify_qr_data, size=22)
-    
-    right_content = []
-    if verify_qr:
-        right_content.append([verify_qr])
-        right_content.append([Paragraph("Verify QR", style_small)])
-        right_content.append([Paragraph(reshape_arabic("للتحقق"), style_small)])
-    
-    right_table = Table(right_content, colWidths=[30*mm])
-    right_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ]))
-    
-    # Main coupon table
-    coupon_table = Table(
-        [[left_table, center_table, right_table]],
-        colWidths=[35*mm, CONTENT_WIDTH - 80*mm, 35*mm]
-    )
-    coupon_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
-        ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.98, 0.98, 1)),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-    ]))
-    
-    return coupon_table
-
-
-# ==================== DOCUMENT TITLE / عنوان المستند ====================
-def create_document_title(title_ar: str, title_en: str, ref_no: str):
-    """إنشاء عنوان المستند مع رقم المرجع"""
-    style_title_ar = ParagraphStyle('doc_title_ar', fontName=ARABIC_FONT_BOLD, fontSize=14, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
-    style_title_en = ParagraphStyle('doc_title_en', fontName=ENGLISH_FONT_BOLD, fontSize=12, alignment=TA_CENTER, textColor=NAVY)
-    style_ref = ParagraphStyle('doc_ref', fontName=ENGLISH_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    
-    title_content = [
-        [Paragraph(reshape_arabic(title_ar), style_title_ar)],
-        [Paragraph(title_en, style_title_en)],
-        [Paragraph(f"Reference: {ref_no}", style_ref)],
-    ]
-    
-    title_table = Table(title_content, colWidths=[CONTENT_WIDTH])
-    title_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
-    
-    return title_table
-
-
-# ==================== BILINGUAL ROW / صف ثنائي اللغة ====================
-def create_bilingual_row(label_ar: str, label_en: str, value_ar: str, value_en: str, is_header: bool = False):
-    """إنشاء صف ثنائي اللغة"""
-    if is_header:
-        style_label_ar = ParagraphStyle('row_label_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_RIGHT, wordWrap='RTL', textColor=WHITE)
-        style_label_en = ParagraphStyle('row_label_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_LEFT, textColor=WHITE)
-        bg_color = NAVY
-    else:
-        style_label_ar = ParagraphStyle('row_label_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, wordWrap='RTL', textColor=TEXT_GRAY)
-        style_label_en = ParagraphStyle('row_label_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_LEFT, textColor=TEXT_GRAY)
-        bg_color = LIGHT_GRAY
-    
-    style_value_ar = ParagraphStyle('row_value_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_RIGHT, wordWrap='RTL')
-    style_value_en = ParagraphStyle('row_value_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_LEFT)
-    
-    row_data = [[
-        Paragraph(str(value_en), style_value_en),
-        Paragraph(label_en, style_label_en),
-        Paragraph(reshape_arabic(label_ar), style_label_ar),
-        Paragraph(reshape_arabic(str(value_ar)), style_value_ar),
-    ]]
-    
-    col_width = CONTENT_WIDTH / 4
-    row_table = Table(row_data, colWidths=[col_width] * 4)
-    
-    style_list = [
-        ('ALIGN', (0, 0), (1, -1), 'LEFT'),
-        ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]
-    
-    if is_header:
-        style_list.append(('BACKGROUND', (0, 0), (-1, -1), bg_color))
-        style_list.append(('TEXTCOLOR', (0, 0), (-1, -1), WHITE))
-    else:
-        style_list.append(('BACKGROUND', (1, 0), (2, -1), bg_color))
-    
-    row_table.setStyle(TableStyle(style_list))
-    
-    return row_table
-
-
-# ==================== FOOTER / التذييل ====================
-def create_footer(integrity_id: str):
-    """إنشاء تذييل المستند"""
-    style_footer = ParagraphStyle('footer', fontName=ENGLISH_FONT, fontSize=6, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    
-    now = datetime.now(timezone.utc) + timedelta(hours=3)
-    footer_text = f"DAR AL CODE HR OS | {integrity_id} | Generated: {now.strftime('%Y-%m-%d %H:%M')} KSA"
-    
-    return Paragraph(footer_text, style_footer)
-
-
 # ==================== MAIN PDF GENERATOR ====================
-def generate_professional_transaction_pdf(
-    transaction: dict,
-    employee: dict = None,
-    branding: dict = None,
-) -> tuple:
+def generate_professional_transaction_pdf(transaction: dict, employee: dict = None, branding: dict = None) -> tuple:
     """
     توليد PDF احترافي للمعاملات
-    
     Returns: (pdf_bytes, pdf_hash, integrity_id)
     """
-    buffer = io.BytesIO()
+    register_fonts()
     
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        topMargin=MARGIN,
-        bottomMargin=MARGIN,
-        leftMargin=MARGIN,
-        rightMargin=MARGIN
-    )
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=MARGIN, bottomMargin=MARGIN, leftMargin=MARGIN, rightMargin=MARGIN)
     
     elements = []
     
-    # Generate integrity ID
+    # Extract data
     ref_no = transaction.get('ref_no', 'TXN-0000')
-    tx_id = transaction.get('id', str(uuid.uuid4()))
-    content_hash = hashlib.sha256(f"{ref_no}{tx_id}".encode()).hexdigest()[:8]
-    integrity_id = f"DAR-{ref_no.replace('TXN-', '')}-{content_hash}".upper()
-    
-    # Get transaction type
     tx_type = transaction.get('type', 'unknown')
+    status = transaction.get('status', 'pending')
+    created_at = transaction.get('created_at', '')
     tx_data = transaction.get('data', {})
     
-    # Document titles
-    doc_titles = {
-        'leave_request': ('طلب إجازة', 'Leave Request'),
-        'tangible_custody': ('سند استلام عهدة عينية', 'In-Kind Custody Receipt'),
-        'finance_60': ('سند عهدة مالية', 'Financial Custody Receipt'),
-        'settlement': ('وثيقة المخالصة النهائية', 'Final Settlement Document'),
-        'contract': ('عقد العمل', 'Employment Contract'),
-        'salary_advance': ('طلب سلفة راتب', 'Salary Advance Request'),
-        'tangible_custody_return': ('سند إرجاع عهدة عينية', 'Custody Return Receipt'),
-    }
+    # Generate integrity ID
+    content_hash = hashlib.sha256(f"{ref_no}{transaction.get('id', '')}".encode()).hexdigest()[:8]
+    integrity_id = f"DAR-{ref_no.replace('TXN-', '').replace('-', '')}-{content_hash}".upper()
     
-    title_ar, title_en = doc_titles.get(tx_type, (tx_type, tx_type))
+    # Company info
+    company_ar = branding.get('company_name_ar', 'شركة دار الكود للاستشارات الهندسية') if branding else 'شركة دار الكود للاستشارات الهندسية'
+    company_en = branding.get('company_name_en', 'DAR AL CODE Engineering Consultancy') if branding else 'DAR AL CODE Engineering Consultancy'
     
     # Employee info
     emp_name_ar = ''
@@ -643,183 +168,383 @@ def generate_professional_transaction_pdf(
         emp_name_ar = employee.get('full_name_ar', employee.get('full_name', ''))
         emp_name_en = employee.get('full_name', '')
         emp_no = employee.get('employee_number', '')
-    elif tx_data:
-        emp_name_ar = tx_data.get('employee_name_ar', tx_data.get('employee_name', ''))
-        emp_name_en = tx_data.get('employee_name', '')
+    if tx_data:
+        if not emp_name_ar:
+            emp_name_ar = tx_data.get('employee_name_ar', tx_data.get('employee_name', ''))
+        if not emp_name_en:
+            emp_name_en = tx_data.get('employee_name', '')
     
-    # ============ 1. HEADER ============
-    elements.append(create_unified_header(branding))
-    elements.append(Spacer(1, 4*mm))
+    # ==================== 1. HEADER ====================
+    # Simple centered header
+    header_style_ar = ParagraphStyle('header_ar', fontName=ARABIC_FONT_BOLD, fontSize=14, alignment=TA_CENTER, textColor=NAVY, leading=18)
+    header_style_en = ParagraphStyle('header_en', fontName=ENGLISH_FONT_BOLD, fontSize=11, alignment=TA_CENTER, textColor=NAVY, leading=14)
+    header_style_small = ParagraphStyle('header_small', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
     
-    # ============ 2. DOCUMENT TITLE ============
-    elements.append(create_document_title(title_ar, title_en, ref_no))
-    elements.append(Spacer(1, 4*mm))
-    
-    # ============ 3. MAIN CONTENT ============
-    # Status and date info
-    status = transaction.get('status', 'pending')
-    created_at = transaction.get('created_at', '')
-    
-    status_labels = {
-        'executed': ('منفذة', 'Executed'),
-        'rejected': ('مرفوضة', 'Rejected'),
-        'cancelled': ('ملغاة', 'Cancelled'),
-        'pending_stas': ('بانتظار STAS', 'Pending STAS'),
-        'pending_ceo': ('بانتظار CEO', 'Pending CEO'),
-        'pending_hr': ('بانتظار HR', 'Pending HR'),
-    }
-    status_ar, status_en = status_labels.get(status, (status, status))
-    
-    # Info section header
-    info_header = create_bilingual_row('معلومات المعاملة', 'Transaction Info', '', '', is_header=True)
-    elements.append(info_header)
-    
-    # Info rows
-    info_rows = [
-        ('رقم المرجع', 'Reference No', ref_no, ref_no),
-        ('الحالة', 'Status', status_ar, status_en),
-        ('التاريخ', 'Date', format_saudi_time(created_at), format_saudi_time(created_at)),
-        ('معرف السلامة', 'Integrity ID', integrity_id, integrity_id),
-    ]
-    
-    if emp_name_ar or emp_name_en:
-        info_rows.append(('اسم الموظف', 'Employee Name', emp_name_ar, emp_name_en))
-    if emp_no:
-        info_rows.append(('الرقم الوظيفي', 'Employee No', emp_no, emp_no))
-    
-    for row in info_rows:
-        elements.append(create_bilingual_row(row[0], row[1], row[2], row[3]))
-    
+    elements.append(Paragraph(reshape_arabic(company_ar), header_style_ar))
+    elements.append(Paragraph(company_en, header_style_en))
+    elements.append(Paragraph("Kingdom of Saudi Arabia | License: 5110004935 | CR: 1010463476", header_style_small))
     elements.append(Spacer(1, 3*mm))
     
-    # Transaction-specific details
-    details_header = create_bilingual_row('تفاصيل المعاملة', 'Transaction Details', '', '', is_header=True)
-    elements.append(details_header)
+    # Divider line
+    elements.append(HRFlowable(width="100%", thickness=2, color=NAVY, spaceBefore=2, spaceAfter=5))
     
-    # Extract relevant fields based on transaction type
-    detail_fields = []
+    # ==================== 2. DOCUMENT TITLE ====================
+    doc_titles = {
+        'leave_request': ('طلب إجازة', 'Leave Request'),
+        'tangible_custody': ('سند عهدة عينية', 'In-Kind Custody'),
+        'finance_60': ('عهدة مالية', 'Financial Custody'),
+        'settlement': ('مخالصة نهائية', 'Final Settlement'),
+        'salary_advance': ('سلفة راتب', 'Salary Advance'),
+    }
+    title_ar, title_en = doc_titles.get(tx_type, (tx_type, tx_type))
+    
+    title_style_ar = ParagraphStyle('title_ar', fontName=ARABIC_FONT_BOLD, fontSize=16, alignment=TA_CENTER, textColor=NAVY, spaceAfter=2)
+    title_style_en = ParagraphStyle('title_en', fontName=ENGLISH_FONT_BOLD, fontSize=12, alignment=TA_CENTER, textColor=TEXT_GRAY, spaceAfter=2)
+    ref_style = ParagraphStyle('ref', fontName=ENGLISH_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=GOLD)
+    
+    elements.append(Paragraph(reshape_arabic(title_ar), title_style_ar))
+    elements.append(Paragraph(title_en, title_style_en))
+    elements.append(Paragraph(f"Ref: {ref_no}", ref_style))
+    elements.append(Spacer(1, 5*mm))
+    
+    # ==================== 3. INFO TABLE ====================
+    # Create a clean 4-column table: Value EN | Label EN | Label AR | Value AR
+    
+    label_style = ParagraphStyle('label', fontName=ENGLISH_FONT, fontSize=9, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    label_style_ar = ParagraphStyle('label_ar', fontName=ARABIC_FONT, fontSize=9, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    value_style = ParagraphStyle('value', fontName=ENGLISH_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=TEXT_DARK)
+    value_style_ar = ParagraphStyle('value_ar', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=TEXT_DARK)
+    
+    # Status translation
+    status_map = {
+        'executed': ('منفذة', 'Executed'),
+        'pending': ('معلقة', 'Pending'),
+        'pending_ops': ('بانتظار العمليات', 'Pending Ops'),
+        'pending_stas': ('بانتظار STAS', 'Pending STAS'),
+        'pending_ceo': ('بانتظار CEO', 'Pending CEO'),
+        'rejected': ('مرفوضة', 'Rejected'),
+    }
+    status_ar, status_en = status_map.get(status, (status, status))
+    
+    # Build info rows
+    info_data = [
+        # Header row
+        [
+            Paragraph("Value", label_style),
+            Paragraph("Field", label_style),
+            Paragraph(reshape_arabic("الحقل"), label_style_ar),
+            Paragraph(reshape_arabic("القيمة"), label_style_ar),
+        ],
+        # Reference
+        [
+            Paragraph(ref_no, value_style),
+            Paragraph("Reference", label_style),
+            Paragraph(reshape_arabic("رقم المرجع"), label_style_ar),
+            Paragraph(reshape_arabic(ref_no), value_style_ar),
+        ],
+        # Status
+        [
+            Paragraph(status_en, value_style),
+            Paragraph("Status", label_style),
+            Paragraph(reshape_arabic("الحالة"), label_style_ar),
+            Paragraph(reshape_arabic(status_ar), value_style_ar),
+        ],
+        # Date
+        [
+            Paragraph(format_date(created_at), value_style),
+            Paragraph("Date", label_style),
+            Paragraph(reshape_arabic("التاريخ"), label_style_ar),
+            Paragraph(reshape_arabic(format_date(created_at)), value_style_ar),
+        ],
+        # Integrity ID
+        [
+            Paragraph(integrity_id, value_style),
+            Paragraph("Integrity ID", label_style),
+            Paragraph(reshape_arabic("معرف السلامة"), label_style_ar),
+            Paragraph(reshape_arabic(integrity_id), value_style_ar),
+        ],
+    ]
+    
+    # Add employee info
+    if emp_name_en or emp_name_ar:
+        info_data.append([
+            Paragraph(emp_name_en, value_style),
+            Paragraph("Employee", label_style),
+            Paragraph(reshape_arabic("الموظف"), label_style_ar),
+            Paragraph(reshape_arabic(emp_name_ar), value_style_ar),
+        ])
+    
+    if emp_no:
+        info_data.append([
+            Paragraph(emp_no, value_style),
+            Paragraph("Employee No", label_style),
+            Paragraph(reshape_arabic("الرقم الوظيفي"), label_style_ar),
+            Paragraph(reshape_arabic(emp_no), value_style_ar),
+        ])
+    
+    col_w = CONTENT_WIDTH / 4
+    info_table = Table(info_data, colWidths=[col_w, col_w, col_w, col_w])
+    info_table.setStyle(TableStyle([
+        # Header
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
+        # Grid
+        ('BOX', (0, 0), (-1, -1), 1, NAVY),
+        ('LINEBELOW', (0, 0), (-1, 0), 1, NAVY),
+        ('INNERGRID', (0, 1), (-1, -1), 0.5, BORDER_COLOR),
+        # Alignment
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        # Alternating colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 5*mm))
+    
+    # ==================== 4. DETAILS TABLE ====================
+    # Transaction specific details
+    detail_rows = []
     
     if tx_type == 'leave_request':
         leave_type = tx_data.get('leave_type', '')
-        leave_types = {'annual': ('سنوية', 'Annual'), 'sick': ('مرضية', 'Sick'), 'emergency': ('طارئة', 'Emergency')}
-        lt_ar, lt_en = leave_types.get(leave_type, (leave_type, leave_type))
-        detail_fields = [
-            ('نوع الإجازة', 'Leave Type', lt_ar, lt_en),
-            ('من تاريخ', 'Start Date', tx_data.get('start_date', ''), tx_data.get('start_date', '')),
-            ('إلى تاريخ', 'End Date', tx_data.get('end_date', ''), tx_data.get('end_date', '')),
-            ('عدد الأيام', 'Working Days', tx_data.get('working_days', ''), tx_data.get('working_days', '')),
+        leave_map = {'annual': ('سنوية', 'Annual'), 'sick': ('مرضية', 'Sick'), 'emergency': ('طارئة', 'Emergency')}
+        lt_ar, lt_en = leave_map.get(leave_type, (leave_type, leave_type))
+        
+        detail_rows = [
+            (lt_en, 'Leave Type', 'نوع الإجازة', lt_ar),
+            (tx_data.get('start_date', '-'), 'Start Date', 'من تاريخ', tx_data.get('start_date', '-')),
+            (tx_data.get('end_date', '-'), 'End Date', 'إلى تاريخ', tx_data.get('end_date', '-')),
+            (str(tx_data.get('working_days', '-')), 'Working Days', 'أيام العمل', str(tx_data.get('working_days', '-'))),
         ]
     elif tx_type in ('tangible_custody', 'tangible_custody_return'):
-        detail_fields = [
-            ('اسم العنصر', 'Item Name', tx_data.get('item_name_ar', tx_data.get('item_name', '')), tx_data.get('item_name', '')),
-            ('الرقم التسلسلي', 'Serial Number', tx_data.get('serial_number', '-'), tx_data.get('serial_number', '-')),
-            ('القيمة التقديرية', 'Estimated Value', f"{tx_data.get('estimated_value', 0):,.2f} ريال", f"{tx_data.get('estimated_value', 0):,.2f} SAR"),
-        ]
-    elif tx_type == 'finance_60':
-        detail_fields = [
-            ('المبلغ', 'Amount', f"{tx_data.get('amount', 0):,.2f} ريال", f"{tx_data.get('amount', 0):,.2f} SAR"),
-            ('الوصف', 'Description', tx_data.get('description', '-'), tx_data.get('description', '-')),
+        detail_rows = [
+            (tx_data.get('item_name', '-'), 'Item Name', 'اسم العنصر', tx_data.get('item_name_ar', tx_data.get('item_name', '-'))),
+            (tx_data.get('serial_number', '-'), 'Serial No', 'الرقم التسلسلي', tx_data.get('serial_number', '-')),
+            (f"{tx_data.get('estimated_value', 0):,.2f} SAR", 'Value', 'القيمة', f"{tx_data.get('estimated_value', 0):,.2f} ريال"),
         ]
     elif tx_type == 'salary_advance':
-        detail_fields = [
-            ('المبلغ', 'Amount', f"{tx_data.get('amount', 0):,.2f} ريال", f"{tx_data.get('amount', 0):,.2f} SAR"),
-            ('السبب', 'Reason', tx_data.get('reason', '-'), tx_data.get('reason', '-')),
+        detail_rows = [
+            (f"{tx_data.get('amount', 0):,.2f} SAR", 'Amount', 'المبلغ', f"{tx_data.get('amount', 0):,.2f} ريال"),
+            (tx_data.get('reason', '-'), 'Reason', 'السبب', tx_data.get('reason', '-')),
         ]
     
-    for field in detail_fields:
-        elements.append(create_bilingual_row(field[0], field[1], field[2], field[3]))
+    if detail_rows:
+        # Section title
+        section_title = ParagraphStyle('section', fontName=ARABIC_FONT_BOLD, fontSize=11, alignment=TA_CENTER, textColor=NAVY, spaceBefore=5, spaceAfter=3)
+        elements.append(Paragraph(reshape_arabic("تفاصيل المعاملة | Transaction Details"), section_title))
+        
+        detail_data = [[
+            Paragraph("Value", label_style),
+            Paragraph("Field", label_style),
+            Paragraph(reshape_arabic("الحقل"), label_style_ar),
+            Paragraph(reshape_arabic("القيمة"), label_style_ar),
+        ]]
+        
+        for row in detail_rows:
+            detail_data.append([
+                Paragraph(str(row[0]), value_style),
+                Paragraph(row[1], label_style),
+                Paragraph(reshape_arabic(row[2]), label_style_ar),
+                Paragraph(reshape_arabic(str(row[3])), value_style_ar),
+            ])
+        
+        detail_table = Table(detail_data, colWidths=[col_w, col_w, col_w, col_w])
+        detail_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), GOLD),
+            ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
+            ('BOX', (0, 0), (-1, -1), 1, GOLD),
+            ('LINEBELOW', (0, 0), (-1, 0), 1, GOLD),
+            ('INNERGRID', (0, 1), (-1, -1), 0.5, BORDER_COLOR),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
+        ]))
+        elements.append(detail_table)
     
-    elements.append(Spacer(1, 5*mm))
+    elements.append(Spacer(1, 8*mm))
     
-    # ============ 4. SIGNATURES TABLE ============
-    # Build signatures list from approval chain
-    approval_chain = transaction.get('approval_chain', [])
+    # ==================== 5. SIGNATURES TABLE ====================
+    section_title = ParagraphStyle('section', fontName=ARABIC_FONT_BOLD, fontSize=11, alignment=TA_CENTER, textColor=NAVY, spaceBefore=5, spaceAfter=3)
+    elements.append(Paragraph(reshape_arabic("التوقيعات | Signatures"), section_title))
+    
+    # Build signatures
     signatures = []
     
-    # Add employee signature if applicable
-    if tx_type in ('leave_request', 'salary_advance', 'finance_60'):
-        signatures.append({
-            'role': 'employee',
-            'name_ar': emp_name_ar,
-            'name_en': emp_name_en,
-            'signed': True,
-            'timestamp': created_at,
-        })
+    # Employee signature
+    signatures.append({
+        'role_ar': 'الموظف',
+        'role_en': 'Employee',
+        'name_ar': emp_name_ar,
+        'name_en': emp_name_en,
+        'signed': True,
+        'timestamp': created_at,
+    })
     
-    # Add approval chain signatures
+    # Add from approval chain
+    approval_chain = transaction.get('approval_chain', [])
     for approval in approval_chain:
         stage = approval.get('stage', '')
-        if stage == 'stas':
+        if stage == 'ceo':
             signatures.append({
-                'role': 'stas',
-                'name_ar': 'STAS',
-                'name_en': 'STAS',
-                'signed': True,
-                'timestamp': approval.get('timestamp', ''),
-            })
-        elif stage == 'ceo':
-            signatures.append({
-                'role': 'ceo',
+                'role_ar': 'الرئيس التنفيذي',
+                'role_en': 'CEO',
                 'name_ar': 'محمد',
                 'name_en': 'Mohammed',
                 'signed': True,
                 'timestamp': approval.get('timestamp', ''),
             })
-        elif stage == 'hr' or stage == 'sultan':
+        elif stage in ('hr', 'sultan'):
             signatures.append({
-                'role': 'hr',
+                'role_ar': 'الموارد البشرية',
+                'role_en': 'HR',
                 'name_ar': 'سلطان',
                 'name_en': 'Sultan',
                 'signed': True,
                 'timestamp': approval.get('timestamp', ''),
             })
+        elif stage == 'stas':
+            signatures.append({
+                'role_ar': 'STAS',
+                'role_en': 'STAS',
+                'name_ar': 'STAS',
+                'name_en': 'STAS',
+                'signed': True,
+                'timestamp': approval.get('timestamp', ''),
+            })
     
-    # Always add STAS if executed
+    # Add STAS if executed but not in chain
     if status == 'executed':
-        has_stas = any(s['role'] == 'stas' for s in signatures)
+        has_stas = any(s['role_en'] == 'STAS' for s in signatures)
         if not has_stas:
             signatures.append({
-                'role': 'stas',
+                'role_ar': 'STAS',
+                'role_en': 'STAS',
                 'name_ar': 'STAS',
                 'name_en': 'STAS',
                 'signed': True,
                 'timestamp': transaction.get('executed_at', transaction.get('updated_at', '')),
             })
     
-    if signatures:
-        sig_title_style = ParagraphStyle('sig_title', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
-        elements.append(Paragraph(reshape_arabic("التوقيعات | Signatures"), sig_title_style))
-        elements.append(Spacer(1, 3*mm))
+    # Create signature table
+    sig_header_style = ParagraphStyle('sig_h', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=WHITE)
+    sig_role_style = ParagraphStyle('sig_role', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=NAVY)
+    sig_role_en_style = ParagraphStyle('sig_role_en', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    sig_name_style = ParagraphStyle('sig_name', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=TEXT_DARK)
+    sig_name_en_style = ParagraphStyle('sig_name_en', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    sig_date_style = ParagraphStyle('sig_date', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    sig_status_style = ParagraphStyle('sig_status', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=SUCCESS_GREEN)
+    
+    # Build horizontal signature boxes
+    sig_boxes = []
+    for sig in signatures:
+        # QR
+        qr_data = f"SIG-{sig['role_en'].upper()}-{ref_no}"
+        qr_img = create_qr_image(qr_data, size=20) if sig['signed'] else Paragraph("—", sig_date_style)
         
-        sig_table = create_signatures_table(signatures, ref_no)
-        if sig_table:
-            elements.append(sig_table)
+        # Content
+        box_content = [
+            [Paragraph(reshape_arabic(sig['role_ar']), sig_role_style)],
+            [Paragraph(sig['role_en'], sig_role_en_style)],
+            [Spacer(1, 2*mm)],
+            [qr_img],
+            [Spacer(1, 2*mm)],
+            [Paragraph(reshape_arabic(sig['name_ar']), sig_name_style)],
+            [Paragraph(sig['name_en'], sig_name_en_style)],
+            [Spacer(1, 1*mm)],
+            [Paragraph(format_date(sig['timestamp']) if sig['signed'] else "____/____/____", sig_date_style)],
+            [Paragraph(reshape_arabic("✓ تم التوقيع") if sig['signed'] else "", sig_status_style)],
+        ]
+        
+        box_table = Table(box_content, colWidths=[45*mm])
+        box_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('BOX', (0, 0), (-1, -1), 1, BORDER_COLOR),
+            ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BLUE),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        
+        sig_boxes.append(box_table)
     
-    elements.append(Spacer(1, 8*mm))
+    # Arrange horizontally
+    if sig_boxes:
+        num_sigs = len(sig_boxes)
+        sig_col_w = CONTENT_WIDTH / num_sigs
+        sig_row = Table([sig_boxes], colWidths=[sig_col_w] * num_sigs)
+        sig_row.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        elements.append(sig_row)
     
-    # ============ 5. TEAR-OFF LINE ============
-    elements.append(create_tear_off_line())
-    elements.append(Spacer(1, 4*mm))
+    elements.append(Spacer(1, 10*mm))
     
-    # ============ 6. TEAR-OFF COUPON ============
-    stas_signed = status == 'executed'
-    stas_timestamp = transaction.get('executed_at', '')
+    # ==================== 6. TEAR-OFF LINE ====================
+    tear_style = ParagraphStyle('tear', fontName=ENGLISH_FONT, fontSize=9, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    elements.append(HRFlowable(width="100%", thickness=1, color=BORDER_COLOR, spaceBefore=2, spaceAfter=0, dash=(3, 3)))
+    elements.append(Paragraph("✂  Cut Here  |  قص هنا  ✂", tear_style))
+    elements.append(HRFlowable(width="100%", thickness=1, color=BORDER_COLOR, spaceBefore=0, spaceAfter=5, dash=(3, 3)))
     
-    coupon = create_tear_off_coupon(
-        doc_type=tx_type,
-        ref_no=ref_no,
-        employee_name_ar=emp_name_ar,
-        employee_name_en=emp_name_en,
-        stas_signed=stas_signed,
-        stas_timestamp=stas_timestamp,
-        branding=branding
-    )
-    elements.append(coupon)
+    # ==================== 7. COUPON ====================
+    coupon_title_ar = ParagraphStyle('coupon_ar', fontName=ARABIC_FONT_BOLD, fontSize=11, alignment=TA_CENTER, textColor=NAVY)
+    coupon_title_en = ParagraphStyle('coupon_en', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
+    coupon_text = ParagraphStyle('coupon_text', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_DARK)
+    coupon_text_ar = ParagraphStyle('coupon_text_ar', fontName=ARABIC_FONT, fontSize=9, alignment=TA_CENTER, textColor=TEXT_DARK)
+    coupon_status = ParagraphStyle('coupon_status', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=SUCCESS_GREEN if status == 'executed' else TEXT_GRAY)
     
-    elements.append(Spacer(1, 4*mm))
+    # Left QR (STAS)
+    stas_qr = create_qr_image(f"STAS-{ref_no}", size=25) if status == 'executed' else Paragraph("Pending", coupon_text)
+    left_content = [[stas_qr], [Paragraph("STAS QR", coupon_text)]]
+    left_table = Table(left_content, colWidths=[35*mm])
+    left_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
     
-    # ============ 7. FOOTER ============
-    elements.append(create_footer(integrity_id))
+    # Center info
+    center_content = [
+        [Paragraph(reshape_arabic(company_ar), coupon_title_ar)],
+        [Paragraph(company_en, coupon_title_en)],
+        [Spacer(1, 3*mm)],
+        [Paragraph(reshape_arabic(title_ar), coupon_text_ar)],
+        [Paragraph(title_en, coupon_text)],
+        [Paragraph(f"Ref: {ref_no}", coupon_text)],
+        [Spacer(1, 2*mm)],
+        [Paragraph(reshape_arabic(emp_name_ar), coupon_text_ar)],
+        [Paragraph(emp_name_en, coupon_text)],
+        [Spacer(1, 2*mm)],
+        [Paragraph(reshape_arabic("✓ معاملة صحيحة" if status == 'executed' else "بانتظار التنفيذ"), coupon_status)],
+    ]
+    center_table = Table(center_content, colWidths=[90*mm])
+    center_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
+    
+    # Right QR (Verify)
+    verify_qr = create_qr_image(f"VERIFY-{ref_no}", size=25)
+    right_content = [[verify_qr], [Paragraph("Verify QR", coupon_text)]]
+    right_table = Table(right_content, colWidths=[35*mm])
+    right_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
+    
+    # Coupon table
+    coupon_table = Table([[left_table, center_table, right_table]], colWidths=[40*mm, CONTENT_WIDTH - 80*mm, 40*mm])
+    coupon_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BLUE),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(coupon_table)
+    
+    elements.append(Spacer(1, 3*mm))
+    
+    # ==================== 8. FOOTER ====================
+    footer_style = ParagraphStyle('footer', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    now = datetime.now(timezone.utc) + timedelta(hours=3)
+    elements.append(Paragraph(f"DAR AL CODE HR OS | {integrity_id} | Generated: {now.strftime('%Y-%m-%d %H:%M')} KSA", footer_style))
     
     # Build PDF
     doc.build(elements)
@@ -827,3 +552,33 @@ def generate_professional_transaction_pdf(
     pdf_hash = hashlib.sha256(pdf_bytes).hexdigest()
     
     return pdf_bytes, pdf_hash, integrity_id
+
+
+# Export functions for use by other modules
+def create_unified_header(branding=None):
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_tear_off_line():
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_signatures_table(signatures, ref_no):
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_tear_off_coupon(*args, **kwargs):
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_document_title(*args, **kwargs):
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_bilingual_row(*args, **kwargs):
+    """للتوافق مع الملفات الأخرى"""
+    pass
+
+def create_footer(*args, **kwargs):
+    """للتوافق مع الملفات الأخرى"""
+    pass
