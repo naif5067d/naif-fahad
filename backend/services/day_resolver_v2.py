@@ -763,15 +763,45 @@ async def resolve_and_save_v2(employee_id: str, date: str, force_update: bool = 
     تنفيذ القرار V2 وحفظه في قاعدة البيانات
     
     المنطق الذكي:
-    1. إذا وجدت بصمة GPS ذاتية (self_checkin) → لا تُغيّر أبداً (إلا force_update)
-    2. إذا وجد سجل قديم بدون GPS وجاءت GPS جديدة → حدّث السجل
-    3. إذا لا يوجد سجل → أنشئ جديد
+    1. التحقق من تاريخ بدء النظام (system_start_date) - لا يُحتسب قبله
+    2. إذا وجدت بصمة GPS ذاتية (self_checkin) → لا تُغيّر أبداً (إلا force_update)
+    3. إذا وجد سجل قديم بدون GPS وجاءت GPS جديدة → حدّث السجل
+    4. إذا لا يوجد سجل → أنشئ جديد
     
     Args:
         employee_id: معرف الموظف
         date: التاريخ
         force_update: إجبار التحديث (للحالات الخاصة)
     """
+    # 0. التحقق من تاريخ بدء النظام
+    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0, "system_active": 1, "system_start_date": 1})
+    
+    if employee:
+        system_start_date = employee.get('system_start_date')
+        system_active = employee.get('system_active', False)
+        
+        # إذا النظام غير مُفعَّل أو التاريخ قبل بدء النظام → تخطي
+        if system_start_date and date < system_start_date:
+            return {
+                "employee_id": employee_id,
+                "date": date,
+                "final_status": "SYSTEM_INACTIVE",
+                "status_ar": "قبل تفعيل النظام",
+                "action": "skipped",
+                "reason_ar": f"التاريخ ({date}) قبل تاريخ تفعيل النظام ({system_start_date})"
+            }
+        
+        if not system_active and system_start_date:
+            # النظام موقوف
+            return {
+                "employee_id": employee_id,
+                "date": date,
+                "final_status": "SYSTEM_PAUSED",
+                "status_ar": "النظام موقوف",
+                "action": "skipped",
+                "reason_ar": "النظام موقوف مؤقتاً لهذا الموظف"
+            }
+    
     # 1. فحص وجود بصمة GPS ذاتية
     gps_checkin = await db.attendance_ledger.find_one({
         "employee_id": employee_id,
