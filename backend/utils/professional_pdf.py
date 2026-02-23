@@ -420,7 +420,12 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         else:
             date_row.append(Paragraph("—", s_empty))
     
-    sig_tbl = Table([role_row, qr_row, name_row, date_row], colWidths=[col_width]*num_cols, rowHeights=[6*mm, 8*mm, 5*mm, 4*mm])
+    # جدول التوقيعات - ارتفاعات أكبر للأسماء (عربي + إنجليزي)
+    sig_tbl = Table(
+        [role_row, qr_row, name_row, date_row], 
+        colWidths=[col_width]*num_cols, 
+        rowHeights=[6*mm, 10*mm, 12*mm, 5*mm]  # زيادة ارتفاع صف الأسماء
+    )
     sig_tbl.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
