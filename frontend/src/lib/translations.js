@@ -173,7 +173,7 @@ export const translations = {
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
       attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
-      policies: "السياسات"
+      policies: "السياسات", soundSettings: "إعدادات الأصوات"
     },
     login: {
       title: "تسجيل الدخول", subtitle: "نظام دار الكود للموارد البشرية",
