@@ -5,6 +5,7 @@ Admin Routes - إدارة النظام
 - ترحيل الإجازات (بقرار إداري)
 - تنبيهات الأرصدة
 - إعادة تعيين البيانات
+- التزامن التلقائي
 """
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -18,6 +19,7 @@ from services.hr_policy import (
     generate_balance_alerts,
     check_carryover_eligibility
 )
+from services.auto_sync import auto_sync_database, force_full_sync
 import uuid
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
