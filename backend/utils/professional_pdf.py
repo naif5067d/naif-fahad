@@ -72,10 +72,22 @@ def qr(data, s=8):
         return RLImage(b, width=s*mm, height=s*mm)
     except: return None
 
-def logo():
-    d = Drawing(12*mm, 12*mm)
-    d.add(Rect(0, 0, 12*mm, 12*mm, fillColor=NAVY, strokeColor=GOLD, strokeWidth=1))
-    d.add(Rect(1*mm, 1*mm, 10*mm, 10*mm, fillColor=None, strokeColor=GOLD, strokeWidth=0.5))
+def logo(logo_data=None, size=12):
+    """لوجو الشركة - من البيانات أو شكل افتراضي"""
+    if logo_data:
+        try:
+            import base64
+            if ',' in logo_data:
+                logo_data = logo_data.split(',')[1]
+            img_bytes = base64.b64decode(logo_data)
+            buf = io.BytesIO(img_bytes)
+            return RLImage(buf, width=size*mm, height=size*mm)
+        except:
+            pass
+    # شكل افتراضي بألوان الشركة
+    d = Drawing(size*mm, size*mm)
+    d.add(Rect(0, 0, size*mm, size*mm, fillColor=NAVY, strokeColor=GOLD, strokeWidth=1))
+    d.add(Rect(1*mm, 1*mm, (size-2)*mm, (size-2)*mm, fillColor=None, strokeColor=GOLD, strokeWidth=0.5))
     return d
 
 
