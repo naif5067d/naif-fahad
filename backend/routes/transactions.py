@@ -399,7 +399,8 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
             "logo_data": None
         }
     
-    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, lang, branding)
+    # استخدام التصميم الاحترافي الجديد
+    pdf_bytes, pdf_hash, integrity_id = generate_professional_transaction_pdf(tx, emp, branding)
 
     await db.transactions.update_one(
         {"id": transaction_id},
@@ -409,7 +410,11 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={tx['ref_no']}.pdf"}
+        headers={
+            "Content-Disposition": f"inline; filename={tx['ref_no']}.pdf",
+            "X-Integrity-ID": integrity_id,
+            "X-PDF-Hash": pdf_hash
+        }
     )
 
 
