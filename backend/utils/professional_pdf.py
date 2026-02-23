@@ -365,7 +365,8 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         else:
             qr_row.append(Paragraph("—", s_empty))
     
-    # صف الأسماء - عربي كبير + إنجليزي صغير تحته (إلا STAS إنجليزي فقط بالأزرق)
+    # صف الأسماء - عربي (سطر أول) + إنجليزي صغير (سطر ثاني)
+    # STAS فقط إنجليزي بالأزرق
     name_row = []
     for r in roles:
         stage_key = r[0]
@@ -379,13 +380,18 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
             else:
                 name_row.append(Paragraph("—", s_empty))
         elif stage_key == 'employee':
-            # جدول داخلي: عربي فوق + إنجليزي تحت
-            inner_tbl = Table([
-                [Paragraph(ar(ar_name), s_name)],
-                [Paragraph(en_name, s_name_en_small)]
-            ], colWidths=[col_width - 2*mm])
-            inner_tbl.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-            name_row.append(inner_tbl)
+            # عربي فوق + إنجليزي تحت
+            name_content = Table([
+                [Paragraph(ar(ar_name) if ar_name else "—", s_name)],
+                [Paragraph(en_name if en_name else "", s_name_en_small)]
+            ], colWidths=[col_width - 4*mm])
+            name_content.setStyle(TableStyle([
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ]))
+            name_row.append(name_content)
         elif stage_key in signed_stages:
             # استخدام اسم الموقع الفعلي إذا متوفر
             signer_info = signed_stages[stage_key]
@@ -397,13 +403,18 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
                     actual_ar = signer_name
                 else:
                     actual_en = signer_name
-            # جدول داخلي: عربي فوق + إنجليزي تحت
-            inner_tbl = Table([
-                [Paragraph(ar(actual_ar), s_name)],
-                [Paragraph(actual_en, s_name_en_small)]
-            ], colWidths=[col_width - 2*mm])
-            inner_tbl.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-            name_row.append(inner_tbl)
+            # عربي فوق + إنجليزي تحت
+            name_content = Table([
+                [Paragraph(ar(actual_ar) if actual_ar else "—", s_name)],
+                [Paragraph(actual_en if actual_en else "", s_name_en_small)]
+            ], colWidths=[col_width - 4*mm])
+            name_content.setStyle(TableStyle([
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+            ]))
+            name_row.append(name_content)
         else:
             name_row.append(Paragraph("—", s_empty))
     
