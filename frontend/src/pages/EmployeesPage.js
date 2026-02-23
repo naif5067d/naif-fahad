@@ -862,6 +862,95 @@ export default function EmployeesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Summon Dialog - استدعاء الموظف */}
+      <Dialog open={!!summonDialog} onOpenChange={() => setSummonDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell size={20} className="text-orange-500" />
+              {lang === 'ar' ? 'استدعاء موظف' : 'Summon Employee'}
+            </DialogTitle>
+          </DialogHeader>
+          {summonDialog && (
+            <div className="space-y-4">
+              {/* معلومات الموظف */}
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">
+                  {lang === 'ar' ? summonDialog.full_name_ar : summonDialog.full_name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {summonDialog.employee_number} • {summonDialog.department_ar || summonDialog.department}
+                </p>
+              </div>
+
+              {/* اختيار الأولوية */}
+              <div className="space-y-2">
+                <Label>{lang === 'ar' ? 'نوع الاستدعاء' : 'Priority'}</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={summonForm.priority === 'urgent' ? 'default' : 'outline'}
+                    className={`flex-1 ${summonForm.priority === 'urgent' ? 'bg-red-500 hover:bg-red-600 text-white' : 'border-red-300 text-red-600 hover:bg-red-50'}`}
+                    onClick={() => setSummonForm(f => ({ ...f, priority: 'urgent' }))}
+                  >
+                    🔴 {lang === 'ar' ? 'طارئ' : 'Urgent'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={summonForm.priority === 'medium' ? 'default' : 'outline'}
+                    className={`flex-1 ${summonForm.priority === 'medium' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'border-yellow-300 text-yellow-600 hover:bg-yellow-50'}`}
+                    onClick={() => setSummonForm(f => ({ ...f, priority: 'medium' }))}
+                  >
+                    🟡 {lang === 'ar' ? 'متوسط' : 'Medium'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={summonForm.priority === 'normal' ? 'default' : 'outline'}
+                    className={`flex-1 ${summonForm.priority === 'normal' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-green-300 text-green-600 hover:bg-green-50'}`}
+                    onClick={() => setSummonForm(f => ({ ...f, priority: 'normal' }))}
+                  >
+                    🟢 {lang === 'ar' ? 'عادي' : 'Normal'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* التعليق */}
+              <div className="space-y-2">
+                <Label>{lang === 'ar' ? 'التعليق / السبب' : 'Comment / Reason'}</Label>
+                <Textarea
+                  value={summonForm.comment}
+                  onChange={(e) => setSummonForm(f => ({ ...f, comment: e.target.value }))}
+                  placeholder={lang === 'ar' ? 'أدخل سبب الاستدعاء (اختياري)...' : 'Enter reason for summon (optional)...'}
+                  rows={3}
+                />
+              </div>
+
+              {/* الأزرار */}
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setSummonDialog(null)}
+                >
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+                <Button 
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                  onClick={handleSendSummon}
+                  disabled={sendingSummon}
+                  data-testid="send-summon-btn"
+                >
+                  {sendingSummon 
+                    ? (lang === 'ar' ? 'جاري الإرسال...' : 'Sending...') 
+                    : (lang === 'ar' ? 'إرسال الاستدعاء' : 'Send Summon')
+                  }
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
