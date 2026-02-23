@@ -157,6 +157,11 @@ def count_working_days(start_str: str, end_str: str, holidays: list, saturday_wo
     result = count_working_days_detailed(start_str, end_str, holidays, saturday_working)
     return result['working_days']
 
+# Alias للتوافقية
+def calculate_working_days(start_str: str, end_str: str, holidays: list, saturday_working: bool = False) -> int:
+    """Alias for count_working_days for backward compatibility"""
+    return count_working_days(start_str, end_str, holidays, saturday_working)
+
 
 def count_working_days_detailed(start_str: str, end_str: str, holidays: list, saturday_working: bool = False, holidays_data: list = None) -> dict:
     """
