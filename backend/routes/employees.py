@@ -28,7 +28,9 @@ class EmployeeUpdate(BaseModel):
     full_name_ar: Optional[str] = None
     is_active: Optional[bool] = None
     department: Optional[str] = None
+    department_ar: Optional[str] = None
     position: Optional[str] = None
+    position_ar: Optional[str] = None
 
 
 class SupervisorAssignment(BaseModel):
