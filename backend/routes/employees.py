@@ -163,12 +163,38 @@ async def update_employee(employee_id: str, update: EmployeeUpdate, user=Depends
             {"employee_id": employee_id},
             {"$set": {"employee_name": updates['full_name']}}
         )
+        # تحديث الاسم في المعاملات
+        await db.transactions.update_many(
+            {"data.employee_id": employee_id},
+            {"$set": {"data.employee_name": updates['full_name']}}
+        )
     if 'full_name_ar' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"full_name_ar": updates['full_name_ar']}})
         # تحديث الاسم العربي في العقود أيضاً
         await db.contracts_v2.update_many(
             {"employee_id": employee_id},
             {"$set": {"employee_name_ar": updates['full_name_ar']}}
+        )
+        # تحديث الاسم العربي في المعاملات
+        await db.transactions.update_many(
+            {"data.employee_id": employee_id},
+            {"$set": {"data.employee_name_ar": updates['full_name_ar']}}
+        )
+    if 'department' in updates:
+        # تحديث القسم في العقود
+        await db.contracts_v2.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"department": updates['department']}}
+        )
+        # تحديث القسم في المعاملات
+        await db.transactions.update_many(
+            {"data.employee_id": employee_id},
+            {"$set": {"data.department": updates['department']}}
+        )
+        # تحديث القسم في سجلات الحضور الشهرية
+        await db.monthly_hours.update_many(
+            {"employee_id": employee_id},
+            {"$set": {"department": updates['department']}}
         )
     if 'is_active' in updates:
         await db.users.update_one({"employee_id": employee_id}, {"$set": {"is_active": updates['is_active']}})
