@@ -327,6 +327,12 @@ export default function EmployeesPage() {
           ? `تم إرسال استدعاء ${priorityText[summonForm.priority]} للموظف "${summonDialog.full_name_ar || summonDialog.full_name}"` 
           : `${priorityText[summonForm.priority]} summon sent to "${summonDialog.full_name}"`
       );
+      
+      // تحديث قائمة الاستدعاءات
+      api.get('/api/notifications/summons')
+        .then(r => setActiveSummons(r.data.summons || []))
+        .catch(() => {});
+      
       setSummonDialog(null);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to send summon');
