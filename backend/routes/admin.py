@@ -248,37 +248,66 @@ class ResetStasPasswordRequest(BaseModel):
 @router.post("/emergency-reset-stas-password")
 async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
     """
-    إعادة تعيين كلمة مرور STAS للطوارئ
+    إعادة تعيين أو إنشاء مستخدم STAS للطوارئ
     اسم المستخدم: stas506
-    كلمة المرور الجديدة: 654321
+    كلمة المرور: 654321
+    
+    إذا لم يكن المستخدم موجوداً، سيتم إنشاؤه
     """
     from utils.auth import hash_password
+    import uuid as uuid_module
     
     # مفتاح الطوارئ
     if body.emergency_key != "EMERGENCY_STAS_2026":
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
-    # البحث عن مستخدم stas أو stas506
-    stas_user = await db.users.find_one({"$or": [{"username": "stas"}, {"username": "stas506"}]})
-    
-    if not stas_user:
-        raise HTTPException(status_code=404, detail="مستخدم stas غير موجود")
-    
-    # تشفير كلمة المرور الجديدة
+    # تشفير كلمة المرور
     new_hash = hash_password("654321")
+    now = datetime.now(timezone.utc).isoformat()
     
-    # تحديث اسم المستخدم وكلمة المرور
-    await db.users.update_one(
-        {"_id": stas_user["_id"]},
-        {"$set": {"username": "stas506", "password_hash": new_hash}}
-    )
+    # البحث عن أي مستخدم stas
+    stas_user = await db.users.find_one({
+        "$or": [
+            {"username": "stas"},
+            {"username": "stas506"},
+            {"role": "stas"}
+        ]
+    })
+    
+    if stas_user:
+        # تحديث المستخدم الموجود
+        await db.users.update_one(
+            {"_id": stas_user["_id"]},
+            {"$set": {
+                "username": "stas506",
+                "password_hash": new_hash,
+                "is_active": True
+            }}
+        )
+        action = "updated"
+    else:
+        # إنشاء مستخدم جديد
+        new_user = {
+            "id": str(uuid_module.uuid5(uuid_module.NAMESPACE_DNS, "stas506")),
+            "username": "stas506",
+            "password_hash": new_hash,
+            "full_name": "STAS",
+            "full_name_ar": "ستاس",
+            "role": "stas",
+            "email": "stas@daralcode.com",
+            "is_active": True,
+            "employee_id": "EMP-STAS",
+            "created_at": now
+        }
+        await db.users.insert_one(new_user)
+        action = "created"
     
     return {
-        "message_ar": "تم إعادة تعيين بيانات STAS بنجاح",
-        "message_en": "STAS credentials have been reset successfully",
+        "message_ar": f"تم {'تحديث' if action == 'updated' else 'إنشاء'} مستخدم STAS بنجاح",
+        "message_en": f"STAS user has been {action} successfully",
         "username": "stas506",
-        "new_password": "654321",
-        "warning": "يرجى تغيير كلمة المرور بعد تسجيل الدخول"
+        "password": "654321",
+        "action": action
     }
 
 
