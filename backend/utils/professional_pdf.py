@@ -136,89 +136,143 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     s_coupon = ParagraphStyle('coupon', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=NAVY, leading=7)
     
     # ═══════════════════════════════════════════════════════════════════
-    # 1. الترويسة
+    # 1. الترويسة - متوازنة ومركزة
     # ═══════════════════════════════════════════════════════════════════
-    logo_img = make_logo(logo_data, 12)
+    logo_img = make_logo(logo_data, 10)
     
-    header_content = []
+    header_rows = []
     if logo_img:
-        header_content.append([logo_img])
-    header_content.append([Paragraph(ar(co_ar), s_title)])
-    header_content.append([Paragraph(co_en, s_sub)])
-    header_content.append([Paragraph("Kingdom of Saudi Arabia | License: 5110004935 | CR: 1010463476", s_small)])
+        header_rows.append([logo_img])
+    header_rows.append([Paragraph(ar(co_ar), s_co_ar)])
+    header_rows.append([Paragraph(co_en, s_co_en)])
+    header_rows.append([Paragraph("Kingdom of Saudi Arabia | CR: 1010463476", s_info)])
     
-    header = Table(header_content, colWidths=[CW])
+    header = Table(header_rows, colWidths=[CW])
     header.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('LINEBELOW', (0,-1), (-1,-1), 1, NAVY),
-        ('BOTTOMPADDING', (0,-1), (-1,-1), 2),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LINEBELOW', (0,-1), (-1,-1), 0.5, NAVY),
+        ('BOTTOMPADDING', (0,-1), (-1,-1), 2*mm),
     ]))
     els.append(header)
-    els.append(Spacer(1, 3*mm))
+    els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 2. عنوان المعاملة - في المنتصف
+    # 2. عنوان المعاملة - في المنتصف تماماً
     # ═══════════════════════════════════════════════════════════════════
     title_tbl = Table([
-        [Paragraph(ar(typ_ar) + " | " + typ_en, s_title)],
-        [Paragraph(ref, ParagraphStyle('ref', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=NAVY))],
+        [Paragraph(ar(typ_ar), s_title)],
+        [Paragraph(typ_en, s_ref)],
+        [Paragraph(ref + " | " + integrity, s_info)],
     ], colWidths=[CW])
-    title_tbl.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    title_tbl.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 1),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
+    ]))
     els.append(title_tbl)
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 3. معلومات المعاملة - جدول أفقي (عربي + إنجليزي)
+    # 3. معلومات المعاملة - جدول أفقي متوازن (عربي فوق إنجليزي)
     # ═══════════════════════════════════════════════════════════════════
     col4 = CW / 4
     
-    # صف 1: العناوين
-    h1 = [ar("الحالة") + "\nStatus", ar("التاريخ") + "\nDate", ar("الموظف") + "\nEmployee", ar("المعرف") + "\nID"]
-    # صف 2: القيم
-    v1 = [ar(st_ar) + "\n" + st_en, dt(created), ar(emp_ar) + "\n" + emp_en, integrity]
+    # صف العناوين
+    headers1 = [
+        Paragraph(ar("الحالة"), s_hdr),
+        Paragraph(ar("التاريخ"), s_hdr),
+        Paragraph(ar("الموظف"), s_hdr),
+        Paragraph(ar("المعرف"), s_hdr),
+    ]
     
-    info1_h = Table([[Paragraph(x, s_lbl) for x in h1]], colWidths=[col4]*4)
-    info1_h.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BACKGROUND',(0,0),(-1,-1),NAVY), ('TEXTCOLOR',(0,0),(-1,-1),WHITE), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
+    # صف القيم العربية
+    vals_ar = [
+        Paragraph(ar(st_ar), s_val),
+        Paragraph(dt(created).split(' | ')[0], s_val),
+        Paragraph(ar(emp_ar), s_val),
+        Paragraph(integrity[:12], s_val),
+    ]
     
-    info1_v = Table([[Paragraph(x, s_val) for x in v1]], colWidths=[col4]*4)
-    info1_v.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BOX',(0,0),(-1,-1),0.5,NAVY), ('INNERGRID',(0,0),(-1,-1),0.5,LIGHT_GRAY), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
+    # صف القيم الإنجليزية
+    vals_en = [
+        Paragraph(st_en, s_val_en),
+        Paragraph(dt(created).split(' | ')[1] if ' | ' in dt(created) else '', s_val_en),
+        Paragraph(emp_en, s_val_en),
+        Paragraph(integrity[12:] if len(integrity) > 12 else '', s_val_en),
+    ]
     
-    els.append(info1_h)
-    els.append(info1_v)
-    els.append(Spacer(1, 1*mm))
+    info_tbl = Table([headers1, vals_ar, vals_en], colWidths=[col4]*4)
+    info_tbl.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('BOX', (0,0), (-1,-1), 0.5, NAVY),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+    ]))
+    els.append(info_tbl)
+    els.append(Spacer(1, 1.5*mm))
     
-    # تفاصيل حسب النوع
+    # ═══════════════════════════════════════════════════════════════════
+    # تفاصيل حسب نوع المعاملة
+    # ═══════════════════════════════════════════════════════════════════
     if typ == 'leave_request':
         lt = data.get('leave_type', '')
         lt_m = {'annual':('سنوية','Annual'), 'sick':('مرضية','Sick'), 'emergency':('طارئة','Emergency')}
         lt_ar, lt_en = lt_m.get(lt, (lt, lt))
         
-        h2 = [ar("النوع") + "\nType", ar("من") + "\nFrom", ar("إلى") + "\nTo", ar("الأيام") + "\nDays"]
-        v2 = [ar(lt_ar) + "\n" + lt_en, data.get('start_date','-').replace('-','.'), data.get('end_date','-').replace('-','.'), str(data.get('working_days','-'))]
+        h2 = [Paragraph(ar("النوع"), s_hdr), Paragraph(ar("من"), s_hdr), Paragraph(ar("إلى"), s_hdr), Paragraph(ar("الأيام"), s_hdr)]
+        v2_ar = [Paragraph(ar(lt_ar), s_val), Paragraph(data.get('start_date','-'), s_val), Paragraph(data.get('end_date','-'), s_val), Paragraph(str(data.get('working_days','-')), s_val)]
+        v2_en = [Paragraph(lt_en, s_val_en), Paragraph("From", s_val_en), Paragraph("To", s_val_en), Paragraph("Days", s_val_en)]
         
-        info2_h = Table([[Paragraph(x, s_lbl) for x in h2]], colWidths=[col4]*4)
-        info2_h.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BACKGROUND',(0,0),(-1,-1),GRAY), ('TEXTCOLOR',(0,0),(-1,-1),WHITE), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        
-        info2_v = Table([[Paragraph(x, s_val) for x in v2]], colWidths=[col4]*4)
-        info2_v.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BOX',(0,0),(-1,-1),0.5,GRAY), ('INNERGRID',(0,0),(-1,-1),0.5,LIGHT_GRAY), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        
-        els.append(info2_h)
-        els.append(info2_v)
+        detail_tbl = Table([h2, v2_ar, v2_en], colWidths=[col4]*4)
+        detail_tbl.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BACKGROUND', (0,0), (-1,0), DARK_GRAY),
+            ('BOX', (0,0), (-1,-1), 0.5, DARK_GRAY),
+            ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        els.append(detail_tbl)
     
     elif typ == 'tangible_custody':
-        h2 = [ar("العنصر") + "\nItem", ar("الرقم") + "\nSerial", ar("القيمة") + "\nValue", ""]
-        v2 = [ar(data.get('item_name_ar',data.get('item_name','-'))), data.get('serial_number','-'), f"{data.get('estimated_value',0):,.0f} SAR", ""]
+        h2 = [Paragraph(ar("العنصر"), s_hdr), Paragraph(ar("الرقم التسلسلي"), s_hdr), Paragraph(ar("القيمة"), s_hdr), Paragraph("", s_hdr)]
+        v2_ar = [Paragraph(ar(data.get('item_name_ar', data.get('item_name','-'))), s_val), Paragraph(data.get('serial_number','-'), s_val), Paragraph(f"{data.get('estimated_value',0):,.0f}", s_val), Paragraph("SAR", s_val)]
+        v2_en = [Paragraph(data.get('item_name','-'), s_val_en), Paragraph("Serial", s_val_en), Paragraph("Value", s_val_en), Paragraph("", s_val_en)]
         
-        info2_h = Table([[Paragraph(x, s_lbl) for x in h2]], colWidths=[col4]*4)
-        info2_h.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BACKGROUND',(0,0),(-1,-1),GRAY), ('TEXTCOLOR',(0,0),(-1,-1),WHITE), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        
-        info2_v = Table([[Paragraph(x, s_val) for x in v2]], colWidths=[col4]*4)
-        info2_v.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('BOX',(0,0),(-1,-1),0.5,GRAY), ('INNERGRID',(0,0),(-1,-1),0.5,LIGHT_GRAY), ('TOPPADDING',(0,0),(-1,-1),2), ('BOTTOMPADDING',(0,0),(-1,-1),2)]))
-        
-        els.append(info2_h)
-        els.append(info2_v)
+        detail_tbl = Table([h2, v2_ar, v2_en], colWidths=[col4]*4)
+        detail_tbl.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BACKGROUND', (0,0), (-1,0), DARK_GRAY),
+            ('BOX', (0,0), (-1,-1), 0.5, DARK_GRAY),
+            ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        els.append(detail_tbl)
     
-    els.append(Spacer(1, 3*mm))
+    elif typ == 'salary_advance':
+        h2 = [Paragraph(ar("المبلغ"), s_hdr), Paragraph(ar("السبب"), s_hdr), Paragraph("", s_hdr), Paragraph("", s_hdr)]
+        v2_ar = [Paragraph(f"{data.get('amount',0):,.0f} SAR", s_val), Paragraph(ar(data.get('reason','-')[:30]), s_val), Paragraph("", s_val), Paragraph("", s_val)]
+        
+        detail_tbl = Table([h2, v2_ar], colWidths=[col4]*4)
+        detail_tbl.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BACKGROUND', (0,0), (-1,0), DARK_GRAY),
+            ('BOX', (0,0), (-1,-1), 0.5, DARK_GRAY),
+            ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        els.append(detail_tbl)
+    
+    els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
     # 4. جدول التوقيعات - 5 خانات (موظف → مشرف → سلطان → محمد → STAS)
