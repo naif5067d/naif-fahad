@@ -275,8 +275,8 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 4. جدول التوقيعات - 5 خانات جاهزة
-    # يظهر الاسم و QR فقط للذين وصلتهم المعاملة ووقعوا فعلياً
+    # 4. جدول التوقيعات - تسلسلي حسب مراحل المعاملة
+    # يظهر فقط الأدوار التي وصلت لها المعاملة
     # ═══════════════════════════════════════════════════════════════════
     els.append(Paragraph(ar("التوقيعات") + " | Signatures", s_sec))
     els.append(Spacer(1, 1*mm))
@@ -286,32 +286,56 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     for approval in chain:
         stage = approval.get('stage', '')
         ts = approval.get('timestamp', '')
-        if stage and ts:  # فقط إذا وقع فعلياً (له timestamp)
-            signed_stages[stage] = ts
+        signer = approval.get('signer_name', '')
+        if stage and ts:
+            signed_stages[stage] = {'timestamp': ts, 'signer': signer}
     
-    # التحقق من حالة المعاملة لمعرفة من وصلت له
-    # المعاملة تصل بالترتيب: employee -> supervisor -> hr -> ceo -> stas
-    current_status = status.lower()
-    
-    # 5 أدوار بالترتيب الصحيح
-    # structure: (stage_key, ar_role, en_role, ar_name, en_name)
-    # ملاحظة: ops = العمليات (يمكن أن تكون بديل للمشرف)
-    roles = [
-        ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
-        ('supervisor', 'المشرف', 'Supervisor', 'المشرف', 'Supervisor'),
-        ('hr', 'سلطان', 'Sultan (HR)', 'سلطان', 'Sultan'),
-        ('ceo', 'محمد', 'Mohammed (CEO)', 'محمد', 'Mohammed'),
-        ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
-    ]
-    
-    # التعامل مع المراحل البديلة
-    # ops يعتبر مثل supervisor
+    # التعامل مع المراحل البديلة (ops = supervisor)
     if 'ops' in signed_stages and 'supervisor' not in signed_stages:
         signed_stages['supervisor'] = signed_stages['ops']
     
-    col5 = CW / 5
+    # تحديد المراحل التي وصلت لها المعاملة بناءً على الحالة
+    # الترتيب: pending -> supervisor -> hr -> ceo -> stas -> executed
+    current_status = status.lower()
     
-    # صف العناوين (الأدوار) - دائماً يظهر
+    # تحديد عدد الأعمدة بناءً على الحالة الحالية
+    stage_order = ['employee', 'supervisor', 'hr', 'ceo', 'stas']
+    status_to_max_stage = {
+        'pending': 1,      # فقط الموظف
+        'supervisor': 2,   # موظف + مشرف
+        'hr': 3,           # موظف + مشرف + المدير الإداري
+        'sultan': 3,       # نفس hr
+        'ceo': 4,          # موظف + مشرف + المدير الإداري + المدير التنفيذي
+        'mohammed': 4,     # نفس ceo
+        'stas': 5,         # الكل
+        'executed': 5      # الكل
+    }
+    max_stages = status_to_max_stage.get(current_status, 5)
+    
+    # إذا المعاملة منفذة، نعرض كل المراحل
+    if current_status == 'executed':
+        max_stages = 5
+    
+    # الأسماء الرسمية
+    supervisor_name = data.get('supervisor_name', 'المشرف')
+    supervisor_name_ar = data.get('supervisor_name_ar', supervisor_name)
+    
+    # الأدوار مع المسميات الرسمية
+    # (stage_key, ar_role_title, en_role_title, ar_name, en_name)
+    all_roles = [
+        ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
+        ('supervisor', 'المشرف', 'Supervisor', supervisor_name_ar, supervisor_name),
+        ('hr', 'المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),
+        ('ceo', 'المدير التنفيذي', 'Exec. Manager', 'م.محمد الثنيان', 'M. Al-Thunayan'),
+        ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
+    ]
+    
+    # فقط الأدوار التي وصلت لها المعاملة
+    roles = all_roles[:max_stages]
+    num_cols = len(roles)
+    col_width = CW / num_cols
+    
+    # صف العناوين (الأدوار)
     role_row = []
     for r in roles:
         role_row.append(Paragraph(ar(r[1]) + "\n" + r[2], s_role))
@@ -320,15 +344,12 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     qr_row = []
     for r in roles:
         stage_key = r[0]
-        # التحقق من التوقيع الفعلي
         if stage_key == 'employee':
-            # الموظف دائماً وقع (هو من أنشأ المعاملة)
+            # الموظف دائماً وقع (منشئ المعاملة)
             qr_row.append(make_qr(f"SIG-{r[2]}-{ref}", 6))
         elif stage_key in signed_stages:
-            # وقع فعلياً
             qr_row.append(make_qr(f"SIG-{r[2]}-{ref}", 6))
         else:
-            # لم يوقع - خانة فارغة
             qr_row.append(Paragraph("—", s_empty))
     
     # صف الأسماء - يظهر فقط للموقعين الفعليين
@@ -338,7 +359,10 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         if stage_key == 'employee':
             name_row.append(Paragraph(ar(r[3]) if r[3] else "—", s_name))
         elif stage_key in signed_stages:
-            name_row.append(Paragraph(ar(r[3]), s_name))
+            # استخدام اسم الموقع الفعلي إذا متوفر
+            signer_info = signed_stages[stage_key]
+            actual_name = signer_info.get('signer', r[3]) if isinstance(signer_info, dict) else r[3]
+            name_row.append(Paragraph(ar(actual_name), s_name))
         else:
             name_row.append(Paragraph("—", s_empty))
     
@@ -349,11 +373,13 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         if stage_key == 'employee':
             date_row.append(Paragraph(dt(created).split(' | ')[0], s_date))
         elif stage_key in signed_stages:
-            date_row.append(Paragraph(dt(signed_stages[stage_key]).split(' | ')[0], s_date))
+            signer_info = signed_stages[stage_key]
+            ts = signer_info.get('timestamp', '') if isinstance(signer_info, dict) else signer_info
+            date_row.append(Paragraph(dt(ts).split(' | ')[0], s_date))
         else:
             date_row.append(Paragraph("—", s_empty))
     
-    sig_tbl = Table([role_row, qr_row, name_row, date_row], colWidths=[col5]*5, rowHeights=[6*mm, 8*mm, 5*mm, 4*mm])
+    sig_tbl = Table([role_row, qr_row, name_row, date_row], colWidths=[col_width]*num_cols, rowHeights=[6*mm, 8*mm, 5*mm, 4*mm])
     sig_tbl.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
