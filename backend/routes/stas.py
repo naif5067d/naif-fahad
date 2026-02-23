@@ -348,9 +348,9 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             "logo_data": None
         }
 
-    # Generate PDF
+    # Generate PDF using new professional design
     emp = await db.employees.find_one({"id": emp_id}, {"_id": 0}) if emp_id else None
-    pdf_bytes, pdf_hash, integrity_id = generate_transaction_pdf(tx, emp, 'ar', branding)
+    pdf_bytes, pdf_hash, integrity_id = generate_professional_transaction_pdf(tx, emp, branding)
 
     timeline_event = {
         "event": "executed",
