@@ -298,16 +298,8 @@ export default function LoginPage() {
     }
   }, []);
 
-  // تشغيل الموسيقى عند النقر
-  const toggleMusic = () => {
-    if (!musicEnabled) {
-      playAmbientMusic();
-      setMusicEnabled(true);
-    } else {
-      playAmbientMusic(true);
-      setMusicEnabled(false);
-    }
-  };
+  // تشغيل الموسيقى تلقائياً غير ممكن بسبب سياسة المتصفح
+  // الموسيقى تعمل فقط عند تسجيل الدخول بنجاح
 
   const handleSubmit = async (e) => {
     e.preventDefault();
