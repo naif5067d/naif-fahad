@@ -416,17 +416,20 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
         
         # إذا لم يكن الاسم العربي موجوداً، جلبه من قاعدة البيانات
         if approver_id and not approval.get('approver_name_ar'):
-            # جرب جلب من users أولاً
-            approver_user = await db.users.find_one({"id": approver_id}, {"_id": 0})
-            if approver_user:
-                enriched['approver_name_ar'] = approver_user.get('full_name_ar', '')
-                enriched['approver_name_en'] = approver_user.get('full_name', approver_user.get('username', ''))
+            # جرب جلب من employees أولاً (أكثر موثوقية)
+            approver_emp = await db.employees.find_one({"user_id": approver_id}, {"_id": 0})
+            if approver_emp and approver_emp.get('full_name_ar'):
+                enriched['approver_name_ar'] = approver_emp.get('full_name_ar', '')
+                enriched['approver_name_en'] = approver_emp.get('full_name', '')
             else:
-                # جرب جلب من employees
-                approver_emp = await db.employees.find_one({"user_id": approver_id}, {"_id": 0})
-                if approver_emp:
-                    enriched['approver_name_ar'] = approver_emp.get('full_name_ar', '')
-                    enriched['approver_name_en'] = approver_emp.get('full_name', '')
+                # جرب جلب من users بعدة طرق
+                approver_user = await db.users.find_one(
+                    {"$or": [{"id": approver_id}, {"user_id": approver_id}]}, 
+                    {"_id": 0}
+                )
+                if approver_user and approver_user.get('full_name_ar'):
+                    enriched['approver_name_ar'] = approver_user.get('full_name_ar', '')
+                    enriched['approver_name_en'] = approver_user.get('full_name', approver_user.get('username', ''))
         
         enriched_chain.append(enriched)
     
