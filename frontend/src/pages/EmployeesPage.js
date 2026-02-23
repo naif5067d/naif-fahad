@@ -46,10 +46,16 @@ export default function EmployeesPage() {
   // حالة حذف الموظف
   const [deleteDialog, setDeleteDialog] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // حالة الاستدعاء
+  const [summonDialog, setSummonDialog] = useState(null);
+  const [summonForm, setSummonForm] = useState({ priority: 'normal', comment: '' });
+  const [sendingSummon, setSendingSummon] = useState(false);
 
   const isStas = user?.role === 'stas';
   const isOps = ['sultan', 'naif', 'stas', 'mohammed'].includes(user?.role);
   const isCEO = user?.role === 'mohammed';
+  const canSummon = ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user?.role);
 
   useEffect(() => {
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
