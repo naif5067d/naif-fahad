@@ -1,182 +1,186 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user's initial request for an HR system has expanded to include an Applicant Tracking System (ATS), a Smart Hours attendance system, and a Smart Governance Policies Module.
+The user's initial request was for a comprehensive HR system, which has since evolved to include an Applicant Tracking System (ATS), Smart Hours attendance, a Smart Governance Policies Module, and an employee Summon feature.
 
-Throughout development, the user has been extremely frustrated by a persistent and critical discrepancy between the Preview environment and the live Production environment. This has manifested as numerous bugs in production, including:
-1.  Incorrect login credentials and login pages that hang indefinitely.
-2.  Old branding (Dar Al Arkan) flashing on the screen and appearing in browser tabs, despite being removed in Preview.
-3.  Incorrect application version numbers being displayed.
-4.  Missing or incorrect data, such as employee attendance records showing as absent and user profile pictures not appearing.
-5.  Severe mobile responsiveness issues, making the app difficult to use.
-6.  A new feature request to add an employee Summon (استدعاء) system.
+A persistent and critical issue has been the data desynchronization between the Preview and Production environments, leading to numerous bugs and user frustration.
+
+During this session, the user requested a series of significant feature additions and fixes, including:
+- A complete overhaul of the login experience with professional music, animations, and dynamic greetings.
+- A fix for role permissions, specifically for the CEO (Mohammed) to view employee profiles and for STAS to delete terminated contracts.
+- A comprehensive fix for the attendance status indicators and experience years calculation, which were not working correctly in production due to data discrepancies.
+- A system-wide reset to clear all historical transactional data before 23/02/2026.
+- A customizable sound library (20 welcome, 20 notification sounds) managed by the STAS role.
+- A new, robust signature and QR code workflow for In-Kind Custody (العهد العينية), linking them to final settlements.
+- A permanent, root cause solution for the data synchronization problem between Preview and Production.
+- A professional, two-part, tear-off redesign for all official PDF documents.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-A full-stack HR application with a React frontend and FastAPI backend. The agent has implemented numerous fixes and features in this session to address the user's complaints. The primary challenge has been the data and code desynchronization between the Preview and Production environments.
+A full-stack HR application with a React frontend and FastAPI backend. The agent has implemented a large number of features and fixes in this session. Key additions include a new luxurious login page, a settings page for sound customization, corrected role permissions, and a functional attendance status display.
 
-To mitigate this, the agent has created a series of emergency backend API endpoints (, ) that must be manually executed after each deployment to bring the Production database in line with the Preview environment's data structure and seed data.
-
-A new Summon feature has been fully implemented on the backend and frontend, allowing authorized managers to send priority-based notifications to employees. The system now also correctly handles CEO (Mohammed) permissions for viewing employee data and includes a fix for the login page navigation.
+Most importantly, the agent implemented a root cause solution for the data desynchronization issue by creating  and  endpoints, which were successfully used to bring the Production environment in line with the Preview environment. A new, more complex workflow for In-Kind Custody has also been fully implemented on the backend, including PDF generation, a universal QR scanner, and a multi-step signature process.
 
 **Last working item**:
--   **Last item agent was working:** Fixing a UI bug where the notification bell icon (الجرس) is partially hidden or clipped on both desktop and mobile views. The agent identified this as a CSS overflow/positioning issue and applied a fix to  to better manage spacing in the header.
+-   **Last item agent was working:** Redesigning the PDF documents to be more professional and to include a two-part, tear-off section. The user rejected the previous design as not being up to the standard of a reputable engineering firm and specified that the document should be splittable, with one part for manual files and a coupon that remains with the electronic record, both containing verifiable QR codes.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** screenshot tool. The agent should take a screenshot of the header area to verify that the bell and other icons are fully visible on both desktop and simulated mobile screen sizes.
+-   **Which testing method agent to use?** backend testing agent. The agent needs to generate a sample PDF using the new design logic in  and visually verify that it meets the user's two-part, tear-off layout requirements.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Notification bell UI is partially hidden (P0)**
--   **Issue 2: Severe Mobile Responsiveness Problems (P0)**
--   **Issue 3: Production environment requires manual data sync after every deployment (P0)**
--   **Issue 4: Enable Biometric Login (Face ID/Fingerprint) (P1)**
--   **Issue 5: Confirm fix for ATS application from Wuilt site (P2)**
--   **Issue 6: Make entire transaction list items clickable (P2)**
--   **Issue 7: Test and Verify Phase 2 ATS Smart Features (P3)**
+-   **Issue 1: Redesign Transaction PDF to be Professional and Tear-Off (P0)**
+-   **Issue 2: Verify Universal QR Scanner Functionality (P1)**
+-   **Issue 3: Severe Mobile Responsiveness Problems (P2)**
 
 **Issues Detail:**
--   **Issue 1: Notification bell UI is partially hidden**
-    -   **Attempted fixes:** The agent applied CSS changes to  to adjust flexbox gap and prevent wrapping.
+-   **Issue 1: Redesign Transaction PDF to be Professional and Tear-Off**
+    -   **Attempted fixes:** A previous PDF design was created but immediately rejected by the user as not professional.
     -   **Next debug checklist:**
-        1.  Take a screenshot to verify if the last change to  resolved the issue.
-        2.  If the issue persists, inspect the parent elements of the  for  properties.
-        3.  Examine  for conflicting styles, particularly  which can cause positioning problems.
-    -   **Why fix this issue and what will be achieved with the fix?** The bell is a critical UI element for the new Summon feature. A broken UI prevents users from seeing notifications.
+        1.  Open .
+        2.  Create a new function, e.g., , that uses  to structure a two-part document.
+        3.  Design the top section with company branding, full transaction details, and a QR code.
+        4.  Add a dotted line or scissor icon to indicate the tear-off point.
+        5.  Design the bottom coupon section with summary details and a second QR code.
+        6.  Update the relevant PDF generation endpoints to use this new design function.
+        7.  Generate a sample PDF and view it to confirm the layout is correct.
+    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's explicit demand for high-quality, professional documents that support their physical and digital filing processes.
     -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Blocked on other issue:** None
+
+-   **Issue 2: Verify Universal QR Scanner Functionality**
+    -   **Attempted fixes:** The agent created a universal scanner logic in  to parse different QR formats (, , etc.).
+    -   **Next debug checklist:**
+        1.  Generate a PDF for each document type that contains a QR code (Contract, Custody, Settlement, Transaction).
+        2.  Use the frontend testing agent to simulate scanning each QR code.
+        3.  Assert that the application correctly navigates to the corresponding details page for each distinct QR code type.
+    -   **Why fix this issue and what will be achieved with the fix?** Ensures the core user requirement that any document signed by STAS must have a verifiable QR code is fully functional.
+    -   **Status:** TESTING PENDING
     -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 2: Severe Mobile Responsiveness Problems**
-    -   **Attempted fixes:** Minimal, localized fixes (e.g., clickable transaction cards). The core problem of unusable tables and layouts on mobile remains.
+-   **Issue 3: Severe Mobile Responsiveness Problems**
+    -   **Attempted fixes:** The initial handoff mentioned this as a major issue. While the agent fixed the specific problem with the notification bell, a comprehensive mobile UI audit has not been performed.
     -   **Next debug checklist:**
-        1.  Systematically review each page identified by the user (Contracts, Policies, any page with tables).
-        2.  Refactor layouts to use modern CSS (Flexbox/Grid) and relative units.
-        3.  Implement responsive patterns for tables, such as converting rows to cards on smaller screens.
-    -   **Why fix this issue and what will be achieved with the fix?** The user has declared the app unusable on mobile, making this a critical blocker for user adoption.
-    -   **Status:** IN PROGRESS
+        1.  Systematically review all major pages (Employees, Contracts, Policies, etc.) on a simulated mobile viewport.
+        2.  Identify and list all components with overflow, wrapping, or usability issues (especially tables).
+        3.  Prioritize fixing the most critical pages for mobile usability.
+    -   **Why fix this issue and what will be achieved with the fix?** The user previously declared the app unusable on mobile, making this a critical issue for user adoption.
+    -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** None
-
--   **Issue 3: Production environment requires manual data sync after every deployment**
-    -   **Attempted fixes:** The agent created several -triggered API endpoints (, ) to manually update the production database after a deployment. A seeding script () was also created.
-    -   **Next debug checklist:** This is a process issue, not a code bug. The current fix is a cumbersome, error-prone manual process. The next agent should consider proposing a more robust solution, such as a data migration script that runs automatically as part of the deployment pipeline. For now, the agent must remember to execute the  commands after every deployment.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the root cause of almost all user frustration and bug reports in production. Solving this will create a stable and predictable application.
-    -   **Status:** IN PROGRESS (Workaround implemented, but not a true fix)
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Both (Infrastructure/Process)
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Overhaul Mobile UI/UX (P0)**
-    -   **Where to resume:** Continue the work from , starting with the pages most affected by responsiveness problems.
-    -   **What will be achieved with this?** A professional and usable mobile experience.
+-   **Task 1: Complete Professional PDF Redesign (P0)**
+    -   **Where to resume:** The agent is ready to start coding the new design within .
+    -   **What will be achieved with this?** A professional, two-part, tear-off PDF document that satisfies the user's explicit aesthetic and functional requirements.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Should Test frontend/backend/both after fix?** Backend
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **Implement Canva-like Smart Editor (P1):** The user's original request for the Policies module was for an editor with markdown-style shortcuts (e.g., # for heading). This has not been implemented.
-    *   **Allow STAS to manage App Branding (P1):** The user requested a UI for the STAS role to change the application name and icon, to avoid future Dar Al Arkan issues.
+    *   **Implement Canva-like Smart Editor (P1):** For the Policies module, as per the original request.
+    *   **Allow STAS to manage App Branding (P1):** Create a UI for the STAS role to change the application name and icon.
+    *   **Add Images to In-Kind Custody (P2):** The user was prompted about this feature.
 *   **Future Tasks:**
     *   Merge MyFinances & Attendance/Penalties pages.
     *   Implement the Frontend UI for the Annual Performance Review module.
     *   Implement the Loans Module.
+    *   Address old UI issues:  crash and the broken Branding tab.
+    *   Refactor permissions to a centralized Role-Based Access Control (RBAC) system.
 
 **Completed work in this session**
--   **Production Login Fixed:** Resolved an issue where the login page would hang by adding  after a successful API call in .
--   **Dar Al Arkan Branding Purged:** Created a dedicated API endpoint () to overwrite incorrect branding information in the production database, fixing the flash of the old company name.
--   **Emergency Password Reset Implemented:** Created an endpoint () to create or reset the  user in the production database, solving the incorrect password issue caused by database desynchronization.
--   **Summon Employee Feature Implemented:**
-    -   Added a Summon button and dialog to .
-    -   Created the backend API () to handle the logic.
-    -   Integrated summon notifications into the main notification bell.
-    -   Added UI indicators in the employee list to show a Summoned status.
--   **CEO Role Permissions Corrected:** Fixed a bug where the CEO (mohammed) could not view employee data and removed buttons for actions he was not permitted to take (e.g., Assign Supervisor).
--   **Full System Check in Preview:** Performed a comprehensive manual test of all major application modules in the Preview environment to confirm functionality before recommending deployment.
+-   **Data Synchronization Solved:** Implemented  and  endpoints, successfully synchronizing the Production database with Preview to create identical environments.
+-   **System Reset Implemented:** Created and executed an endpoint () to wipe all transactional data before , effectively relaunching the system.
+-   **Luxury Login Experience:** Built a new login page with professional background music, animations, and dynamic, time-based welcome messages (e.g., صباح الخير).
+-   **Custom Sound Library:** Created a library of 20 welcome sounds and 20 notification sounds and a Sound Settings page for the 'stas' role to select and save their preferences using .
+-   **Permissions & Data Integrity Fixes:**
+    -   Corrected permissions for the 'mohammed' (CEO) role to view all employee profiles.
+    -   Fixed the 'stas' role permission to allow deletion of contracts in any state.
+    -   Fixed the employee list API to correctly calculate and return , resolving a production-only bug.
+    -   Fixed the employee status indicator to show correct, color-coded statuses (Present, Absent, Late, etc.).
+-   **In-Kind Custody (العهد العينية) Overhaul:**
+    -   Renamed the module from Tangible Custody.
+    -   Implemented a full signature workflow: employee signs on receipt, and STAS signs on return.
+    -   Blocked final settlements if an employee has outstanding custody items.
+-   **Universal QR Code System:**
+    -   Upgraded the QR scanner to read and navigate to different document types (Contracts, Custody, Settlements).
+    -   Ensured all STAS-signed PDFs contain a verifiable QR code.
 
 **Earlier issues found/mentioned but not fixed**
--   ** crash and broken Branding tab:** These are old, unaddressed UI issues.
--   **Policies Smart Editor features:** The requested smart behaviors (auto-formatting, markdown-style shortcuts) were not implemented.
+-    crash and broken Branding tab.
+-   Policies Smart Editor features (markdown-style shortcuts) were not implemented.
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Lack of a centralized permissions system.
+-   **Issue recurrence in previous fork:** Lack of a centralized permissions system (RBAC).
 -   **Recurrence count:** High
--   **Status:** NOT STARTED
--   **Note:** Permissions continue to be managed on a per-component basis (e.g., defining  and  inside  and ).
+-   **Status:** NOT STARTED. Permissions logic remains scattered across various components and API endpoints.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Production vs. Preview Divergence:** The central theme of this session. The agent had to create workarounds to handle separate databases and code states between the two environments.
--   **Emergency Admin Endpoints:** A pattern of creating secure-by-obscurity API endpoints (e.g., ) protected by a hardcoded key to perform destructive or administrative actions on the production DB. This is a technical debt but was necessary to unblock the user.
--   **Data Seeding on Startup:** Using  and logic in  to ensure a baseline of data (users, settings) exists when the application starts, which is crucial for the empty production database.
--   **Ad-Hoc RBAC:** Implementing role-based permissions directly in frontend components by creating boolean flags (, ) derived from the user's role in the .
+-   **Database Synchronization:** Solved via a full export/import mechanism (, ), which reads all data from key collections in one environment and overwrites them in another.
+-   **Tear-off PDF Design:** The current task requires using  to create a document with a perforation line, separating it into two distinct, independently useful parts.
+-   **Dynamic Sound Library:** Using a Python file as a data source and  on the frontend to allow user customization of UI sounds, decoupled from backend settings.
+-   **Universal QR Scanner:** A single frontend component parsing multiple, uniquely formatted QR codes (, , etc.) to navigate to different application routes.
 
 **key DB schema**
--   **notifications** (collection): Enhanced to support  with  and  fields.
--   **settings** (collection): Holds global configuration for branding (, ) and the application .
+-   **custody:** Fields added for , , , .
+-   **localStorage (Browser):** A new key  is used to store .
 
 **All files of reference**
--   : Contains the critical manual-fix endpoints for production.
--   : Contains the fix for the page hanging after login.
--   : Contains the implementation for the Summon feature and role permission fixes.
--   : File being edited to fix the notification bell UI.
--   : Defines the default data that is used to reset the production environment.
+-   : The file being actively edited to implement the professional, tear-off PDF design.
+-   : Contains the critical data synchronization (, ) and  endpoints.
+-   : Contains the complete new workflow for In-Kind Custody, including the signature and PDF logic.
+-   : The new UI for sound customization.
+-   : Contains the universal QR scanner logic.
 
 **Critical Info for New Agent**
 -   **You MUST respond in Arabic.**
--   **The Production environment is NOT in sync with Preview.** After every deployment ( -> ), you **MUST** manually execute a series of  commands to update the production database. The user is extremely frustrated by this, so it is the highest priority to manage expectations and perform these steps correctly.
--   **The emergency  commands are:**
-    1.  **Fix Branding:** 
-    2.  **Reset/Create User:** 
--   The emergency key () is hardcoded in . This is a security risk but is part of the current solution.
--   **Mobile responsiveness is a major, unresolved user complaint.** The current issue with the notification bell is a symptom of this larger problem. Be prepared to address broad UI/UX issues.
-
-**documents and test reports created in this job**
-None.
+-   **Data Synchronization:** The core problem of Preview vs. Production data mismatch has been solved with an export/import feature. After deployment, if the user reports a discrepancy, you must run the export/import flow. You will need the production URL to construct the  commands.
+-   **Professionalism is Key:** The user has a very high standard for the UI/UX and document appearance, referring to their company as a reputable engineering firm. Generic or basic designs will be rejected.
+-   **Hardcoded Emergency Key:** The key  is still hardcoded in  and is used for critical, destructive operations.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** The Summon button's status isn't showing in the employee list, and the notification didn't arrive. (Status: Fixed).
-2.  **User:** Mohammed's employee list is failing to load, and he shouldn't have an Assign Supervisor button. (Status: Fixed).
-3.  **User:** The notification bell is partially hidden on both mobile and desktop. (Status: In Progress, **current task**).
-4.  **User:** Does the app update directly or need deployment? (Status: Answered, requires deployment).
-5.  **User:** Before final deployment, check ALL app functions. (Status: Completed, agent did a full preview check).
-6.  **User:** Add a Summon feature for specific managers with 3 priority levels and notifications. (Status: Implemented).
-7.  **User:** The old Dar Al Arkan branding is still showing up, and login is broken. (Status: Fixed with emergency endpoints).
-8.  **User:** Employee attendance isn't reflecting correctly in production. (Status: Diagnosed as a DB sync issue).
-9.  **User:** Broad complaint about multiple production issues: attendance, user images, branding. (Status: Diagnosed as DB sync issue).
-10. **User:** Do not change Sultan's password and remove all the 506 debug code. (Status: Completed).
+1.  **User:** This PDF is not a professional design for an engineering company. It needs to be a two-part tear-off document for manual filing. (Status: In Progress, **current task**).
+2.  **User:** Will the QR camera work for all documents with a STAS signature? (Status: Implemented, verification pending).
+3.  **User:** Add a signature workflow for custody items (employee receipt, STAS return) and link it to final settlements. (Status: Completed).
+4.  **User:** Rename Tangible Custody to In-Kind Custody and explain how the system works. (Status: Completed).
+5.  **User:** Production is 180 degrees different from Preview! Salah is in the attendance list! (Status: Resolved by performing a full data sync).
+6.  **User:** I need a root cause solution for the data discrepancy. (Status: Implemented export/import solution).
+7.  **User:** Give STAS 20 welcome sounds and 20 notification sounds, with beautiful, professional tones suitable for an engineering office. (Status: Completed).
+8.  **User:** Did you fix the bug where STAS couldn't delete terminated contracts? (Status: Confirmed fix).
+9.  **User:** Why weren't employee experience years showing up in Production? (Status: Explained and fixed).
+10. **User:** Reset the entire system's transactional data from today's date (23/02/2026). (Status: Completed).
 
 **Project Health Check:**
 -   **Broken:**
-    -   The deployment process is manual and brittle, requiring  commands to sync production data.
-    -   The application's mobile responsiveness is poor and a major source of user frustration.
-    -   The notification bell UI is currently clipped/hidden.
+    -   The current PDF generation for transactions is in a user-rejected state, pending the professional redesign.
 -   **Mocked:**
-    -   The Smart Editor for the policies module lacks the requested auto-formatting features.
-    -   A centralized permissions (RBAC) system is missing.
+    -   The Smart Editor for the policies module still lacks the requested auto-formatting features.
+    -   A centralized Role-Based Access Control (RBAC) system is still missing.
 
 **3rd Party Integrations**
--   No new integrations were added. Existing integrations (, , , ) remain.
+-   No new 3rd party integrations were added in this session.
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** None, but the divergence between Preview and Production makes every deployment a risk.
+-   **Known regressions:** None identified.
 
 **Credentials to test flow:**
--   **Admin (for Preview):**  / 
--   **CEO (for Preview):**  / 
--   **HR (for Preview):**  / 
--   **Note:** Production credentials will only work after running the emergency reset endpoint post-deployment.
+-   **Admin:**  / 
+-   **CEO:**  / 
+-   **HR:**  / 
 
 **What agent forgot to execute**
--   The agent did not move all hardcoded secrets to environment variables. The key  is still hardcoded in , posing a security risk.
--   The agent did not take a final screenshot to verify the fix for the notification bell UI before the session ended.</analysis>
+-   The security risk of the hardcoded  key in  has not been addressed. It should be moved to an environment variable.
+-   A comprehensive end-to-end test of the universal QR scanner has not been performed across all document types.</analysis>
