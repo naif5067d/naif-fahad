@@ -196,8 +196,9 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     approval_entry = {
         "stage": stage,
         "approver_id": user['user_id'],
-        "approver_name": user.get('full_name_ar', user.get('full_name', user['username'])),
-        "approver_name_en": user.get('full_name', user['username']),
+        "approver_name": user.get('full_name_ar', user.get('full_name', user['username'])),  # العربي أولاً
+        "approver_name_ar": user.get('full_name_ar', ''),  # الاسم العربي
+        "approver_name_en": user.get('full_name', user['username']),  # الاسم الإنجليزي
         "status": body.action,
         "timestamp": now,
         "note": body.note or ""
