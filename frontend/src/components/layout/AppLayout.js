@@ -313,7 +313,7 @@ export default function AppLayout({ children }) {
       {/* Main content */}
       <div className="md:ms-64 pb-20 md:pb-0">
         {/* Top header - with safe area for iPhone notch/Dynamic Island */}
-        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header">
+        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header" style={{ overflow: 'visible' }}>
           <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16" style={{ overflow: 'visible' }}>
             {/* Mobile menu button */}
             <button 
