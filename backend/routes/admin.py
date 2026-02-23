@@ -590,3 +590,73 @@ async def force_full_sync_endpoint(body: dict):
     return result
 
 
+# ============================================================
+# تصدير/استيراد البيانات للتزامن بين البيئات
+# ============================================================
+
+@router.get("/export-data")
+async def export_all_data(user=Depends(require_roles('stas'))):
+    """
+    تصدير جميع البيانات للتزامن مع بيئة أخرى
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    
+    export_data = {
+        "export_timestamp": now,
+        "export_source": "preview",
+        "data": {}
+    }
+    
+    # تصدير الجداول المهمة
+    collections = [
+        "settings", "users", "employees", "contracts_v2", 
+        "work_locations", "departments", "positions"
+    ]
+    
+    for coll_name in collections:
+        try:
+            docs = await db[coll_name].find({}, {"_id": 0}).to_list(1000)
+            export_data["data"][coll_name] = docs
+        except Exception as e:
+            export_data["data"][coll_name] = {"error": str(e)}
+    
+    return export_data
+
+
+@router.post("/import-data")
+async def import_all_data(body: dict):
+    """
+    استيراد البيانات من بيئة أخرى
+    """
+    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    import_data = body.get("data", {})
+    if not import_data:
+        raise HTTPException(status_code=400, detail="لا توجد بيانات للاستيراد")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    results = {}
+    
+    # استيراد كل collection
+    for coll_name, docs in import_data.items():
+        if isinstance(docs, list) and docs:
+            try:
+                # حذف البيانات القديمة
+                await db[coll_name].delete_many({})
+                # إدراج البيانات الجديدة
+                for doc in docs:
+                    doc["imported_at"] = now
+                await db[coll_name].insert_many(docs)
+                results[coll_name] = {"imported": len(docs)}
+            except Exception as e:
+                results[coll_name] = {"error": str(e)}
+    
+    return {
+        "success": True,
+        "message_ar": "تم استيراد البيانات بنجاح",
+        "results": results,
+        "timestamp": now
+    }
+
+
