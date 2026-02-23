@@ -564,6 +564,14 @@ export default function EmployeesPage() {
               <Input data-testid="edit-name-ar" value={editForm.full_name_ar || ''} onChange={e => setEditForm(f => ({ ...f, full_name_ar: e.target.value }))} dir="rtl" />
             </div>
             <div>
+              <Label>{lang === 'ar' ? 'الدور (إنجليزي)' : 'Role/Department (EN)'}</Label>
+              <Input data-testid="edit-department-en" value={editForm.department || ''} onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))} placeholder={lang === 'ar' ? 'مثال: Operations, HR, STAS' : 'e.g. Operations, HR, STAS'} />
+            </div>
+            <div>
+              <Label>{lang === 'ar' ? 'الدور (عربي)' : 'Role/Department (AR)'}</Label>
+              <Input data-testid="edit-department-ar" value={editForm.department_ar || ''} onChange={e => setEditForm(f => ({ ...f, department_ar: e.target.value }))} dir="rtl" placeholder={lang === 'ar' ? 'مثال: العمليات، الموارد البشرية، ستاس' : 'e.g. العمليات'} />
+            </div>
+            <div>
               <Label>{lang === 'ar' ? 'المسمى الوظيفي (إنجليزي)' : 'Job Title (EN)'}</Label>
               <Input data-testid="edit-job-title-en" value={editForm.job_title || ''} onChange={e => setEditForm(f => ({ ...f, job_title: e.target.value }))} />
             </div>
