@@ -49,23 +49,47 @@ const getAudioContext = () => {
 const playNotificationSound = () => {
   try {
     const ctx = getAudioContext();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    const now = ctx.currentTime;
     
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    // إنشاء نغمة هندسية راقية - مستوحاة من أصوات البناء والتصميم
+    const playTone = (freq, startTime, duration, volume = 0.15) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      
+      // فلتر لصوت أنعم وأرقى
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000;
+      filter.Q.value = 1;
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      // تدرج الصوت - بداية ناعمة ونهاية سلسة
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+      gain.gain.setValueAtTime(volume, startTime + duration - 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
     
-    // نغمة إشعار مميزة
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
-    oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1); // C#6
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.2); // A5
+    // نغمة "دار الكود" - تصاعدية هندسية أنيقة
+    // مبنية على سلم موسيقي متناسق (C Major 7th chord)
+    playTone(523.25, now, 0.12, 0.12);        // C5 - الأساس
+    playTone(659.25, now + 0.08, 0.12, 0.14); // E5 - التناغم
+    playTone(783.99, now + 0.16, 0.15, 0.16); // G5 - الذروة
+    playTone(987.77, now + 0.24, 0.20, 0.12); // B5 - اللمسة النهائية الراقية
     
-    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    // صدى خفيف للإحساس بالعمق (مثل صدى في مبنى)
+    playTone(783.99, now + 0.35, 0.25, 0.06); // G5 echo
+    playTone(523.25, now + 0.45, 0.30, 0.04); // C5 final echo
     
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + 0.4);
   } catch (e) {
     console.log('Audio not supported:', e);
   }
