@@ -365,10 +365,12 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         if stage_key == 'employee':
             name_row.append(Paragraph(ar(r[3]) if r[3] else "—", s_name))
         elif stage_key in signed_stages:
-            # استخدام اسم الموقع الفعلي إذا متوفر
+            # استخدام اسم الموقع الفعلي إذا متوفر، وإلا استخدم الاسم الافتراضي
             signer_info = signed_stages[stage_key]
-            actual_name = signer_info.get('signer', r[3]) if isinstance(signer_info, dict) else r[3]
-            name_row.append(Paragraph(ar(actual_name), s_name))
+            actual_name = r[3]  # الاسم الافتراضي
+            if isinstance(signer_info, dict) and signer_info.get('signer'):
+                actual_name = signer_info.get('signer')
+            name_row.append(Paragraph(ar(actual_name) if actual_name else "—", s_name))
         else:
             name_row.append(Paragraph("—", s_empty))
     
