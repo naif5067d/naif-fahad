@@ -222,7 +222,11 @@ def generate_professional_transaction_pdf(transaction: dict, employee: dict = No
         'pending_ops': ('بانتظار العمليات', 'Pending Ops'),
         'pending_stas': ('بانتظار STAS', 'Pending STAS'),
         'pending_ceo': ('بانتظار CEO', 'Pending CEO'),
+        'stas': ('بانتظار STAS', 'Pending STAS'),
+        'ceo': ('بانتظار CEO', 'Pending CEO'),
+        'ops': ('بانتظار العمليات', 'Pending Ops'),
         'rejected': ('مرفوضة', 'Rejected'),
+        'cancelled': ('ملغاة', 'Cancelled'),
     }
     status_ar, status_en = status_map.get(status, (status, status))
     
