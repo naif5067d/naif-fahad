@@ -658,3 +658,132 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         result["has_critical"] = True
     
     return result
+
+
+
+# ============================================================
+# نظام الاستدعاء
+# ============================================================
+
+class SummonRequest(BaseModel):
+    employee_id: str
+    employee_name: str
+    priority: str  # urgent, medium, normal
+    comment: Optional[str] = ""
+
+
+@router.post("/summon")
+async def send_summon(
+    req: SummonRequest,
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'mohammed', 'salah'))
+):
+    """
+    إرسال استدعاء للموظف
+    متاح لـ: Sultan, Naif, STAS, Mohammed, Salah
+    
+    الأولويات:
+    - urgent (أحمر): طارئ
+    - medium (أصفر): متوسط
+    - normal (أخضر): عادي
+    """
+    import uuid
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديد اللون والأيقونة حسب الأولوية
+    priority_config = {
+        "urgent": {"color": "#EF4444", "icon": "AlertCircle", "title_ar": "استدعاء طارئ", "title_en": "Urgent Summon"},
+        "medium": {"color": "#F59E0B", "icon": "Bell", "title_ar": "استدعاء متوسط", "title_en": "Medium Summon"},
+        "normal": {"color": "#22C55E", "icon": "BellRing", "title_ar": "استدعاء عادي", "title_en": "Normal Summon"}
+    }
+    
+    config = priority_config.get(req.priority, priority_config["normal"])
+    
+    # الحصول على اسم المرسل
+    sender_name = user.get('full_name_ar') or user.get('full_name') or user.get('username')
+    
+    summon_id = str(uuid.uuid4())
+    
+    # إنشاء الإشعار
+    notification = {
+        "id": summon_id,
+        "notification_type": "summon",
+        "title": config["title_en"],
+        "title_ar": config["title_ar"],
+        "message": f"From: {sender_name}" + (f" - {req.comment}" if req.comment else ""),
+        "message_ar": f"من: {sender_name}" + (f" - {req.comment}" if req.comment else ""),
+        "priority": req.priority,
+        "icon": config["icon"],
+        "color": config["color"],
+        "reference_type": "summon",
+        "reference_id": summon_id,
+        "employee_id": req.employee_id,
+        "employee_name": req.employee_name,
+        "sender_id": user.get('user_id') or user.get('id'),
+        "sender_name": sender_name,
+        "comment": req.comment,
+        "is_read": False,
+        "created_at": now
+    }
+    
+    # حفظ الإشعار في قاعدة البيانات
+    await db.notifications.insert_one(notification)
+    
+    # إرسال إشعار للإدارة أيضاً (لتتبع الاستدعاءات)
+    admin_notification = {
+        "id": str(uuid.uuid4()),
+        "notification_type": "summon_sent",
+        "title": f"Summon sent to {req.employee_name}",
+        "title_ar": f"تم إرسال استدعاء لـ {req.employee_name}",
+        "message": f"By: {sender_name}" + (f" - {req.comment}" if req.comment else ""),
+        "message_ar": f"بواسطة: {sender_name}" + (f" - {req.comment}" if req.comment else ""),
+        "priority": req.priority,
+        "icon": "Send",
+        "color": config["color"],
+        "reference_type": "summon_admin",
+        "reference_id": summon_id,
+        "target_roles": ["sultan", "naif", "stas"],
+        "is_read": False,
+        "created_at": now
+    }
+    
+    await db.notifications.insert_one(admin_notification)
+    
+    return {
+        "message_ar": f"تم إرسال الاستدعاء بنجاح إلى {req.employee_name}",
+        "message_en": f"Summon sent successfully to {req.employee_name}",
+        "summon_id": summon_id,
+        "priority": req.priority
+    }
+
+
+@router.get("/summons")
+async def get_summons(
+    user=Depends(get_current_user)
+):
+    """
+    الحصول على الاستدعاءات
+    - الموظف يرى استدعاءاته
+    - الإدارة ترى جميع الاستدعاءات
+    """
+    user_role = user.get('role', '')
+    user_employee_id = user.get('employee_id')
+    
+    is_admin = user_role in ['sultan', 'naif', 'stas', 'mohammed', 'salah']
+    
+    if is_admin:
+        # الإدارة ترى جميع الاستدعاءات
+        summons = await db.notifications.find(
+            {"notification_type": {"$in": ["summon", "summon_sent"]}},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(50)
+    else:
+        # الموظف يرى استدعاءاته فقط
+        summons = await db.notifications.find(
+            {"notification_type": "summon", "employee_id": user_employee_id},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(20)
+    
+    return {
+        "summons": summons,
+        "count": len(summons)
+    }
