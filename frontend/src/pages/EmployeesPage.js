@@ -47,7 +47,8 @@ export default function EmployeesPage() {
   const [deleting, setDeleting] = useState(false);
 
   const isStas = user?.role === 'stas';
-  const isOps = ['sultan', 'naif', 'stas'].includes(user?.role);
+  const isOps = ['sultan', 'naif', 'stas', 'mohammed'].includes(user?.role);
+  const isCEO = user?.role === 'mohammed';
 
   useEffect(() => {
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
