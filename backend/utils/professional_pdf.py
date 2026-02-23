@@ -295,6 +295,7 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     
     # 5 أدوار بالترتيب الصحيح
     # structure: (stage_key, ar_role, en_role, ar_name, en_name)
+    # ملاحظة: ops = العمليات (يمكن أن تكون بديل للمشرف)
     roles = [
         ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
         ('supervisor', 'المشرف', 'Supervisor', 'المشرف', 'Supervisor'),
@@ -302,6 +303,11 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         ('ceo', 'محمد', 'Mohammed (CEO)', 'محمد', 'Mohammed'),
         ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
     ]
+    
+    # التعامل مع المراحل البديلة
+    # ops يعتبر مثل supervisor
+    if 'ops' in signed_stages and 'supervisor' not in signed_stages:
+        signed_stages['supervisor'] = signed_stages['ops']
     
     col5 = CW / 5
     
