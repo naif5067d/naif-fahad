@@ -319,11 +319,9 @@ export default function LoginPage() {
     try {
       const userData = await login(username, password);
       
-      // إيقاف موسيقى الخلفية
-      playAmbientMusic(true);
-      
-      // تشغيل موسيقى الترحيب
-      playWelcomeMusic();
+      // تشغيل موسيقى الترحيب من الإعدادات أو الافتراضية
+      const welcomeSoundKey = localStorage.getItem('dar_welcome_sound') || 'dar_classic';
+      playWelcomeSound(welcomeSoundKey);
       
       // إظهار رسالة الترحيب
       const userName = userData?.full_name_ar || userData?.full_name || username;
