@@ -93,6 +93,8 @@ export default function LoginPage() {
     
     try {
       await login(username, password);
+      // التوجيه للصفحة الرئيسية بعد تسجيل الدخول الناجح
+      navigate('/', { replace: true });
     } catch (err) {
       const detail = err.response?.data?.detail;
       if (typeof detail === 'object') {
