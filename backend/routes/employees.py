@@ -60,6 +60,10 @@ async def get_employee(employee_id: str, user=Depends(get_current_user)):
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     role = user.get('role')
+    # السماح للمدراء والـ CEO بالاطلاع على بيانات الموظفين
+    if role in ['stas', 'sultan', 'naif', 'mohammed', 'supervisor']:
+        return emp
+    # الموظف العادي يرى بياناته فقط
     if role == 'employee':
         own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not own or own['id'] != employee_id:
