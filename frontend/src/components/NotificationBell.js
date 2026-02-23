@@ -250,24 +250,26 @@ export default function NotificationBell() {
   };
   
   return (
-    <div className="relative flex-shrink-0" ref={bellRef}>
+    <div className="relative" ref={bellRef} style={{ overflow: 'visible' }}>
       {/* زر الجرس */}
       <button
         data-testid="notification-bell-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2 sm:p-2.5 rounded-xl transition-all ${
+        className={`relative p-2.5 rounded-xl transition-all ${
           isOpen ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'
         }`}
+        style={{ minWidth: '44px', minHeight: '44px' }}
         title={lang === 'ar' ? 'الإشعارات' : 'Notifications'}
       >
-        <Bell size={18} className={hasCritical ? 'animate-bounce' : ''} />
+        <Bell size={20} className={hasCritical ? 'animate-bounce' : ''} />
         
         {/* شارة العدد */}
         {unreadCount > 0 && (
           <span 
-            className={`absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold text-white rounded-full transition-all ${
-              hasCritical ? 'bg-destructive/100 animate-pulse' : 'bg-primary'
+            className={`absolute -top-1 -end-1 min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-bold text-white rounded-full transition-all ${
+              hasCritical ? 'bg-destructive animate-pulse' : 'bg-primary'
             }`}
+            style={{ zIndex: 10 }}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
