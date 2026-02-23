@@ -320,15 +320,11 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     if current_status == 'executed':
         max_stages = 5
     
-    # الأسماء الرسمية
-    supervisor_name = data.get('supervisor_name', 'المشرف')
-    supervisor_name_ar = data.get('supervisor_name_ar', supervisor_name)
-    
     # الأدوار مع المسميات الرسمية
     # (stage_key, ar_role_title, en_role_title, ar_name, en_name)
     all_roles = [
         ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
-        ('supervisor', 'المشرف', 'Supervisor', supervisor_name_ar, supervisor_name),
+        ('supervisor', 'المشرف', 'Supervisor', sup_ar, sup_en),
         ('hr', 'المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),
         ('ceo', 'المدير التنفيذي', 'Exec. Manager', 'م.محمد الثنيان', 'M. Al-Thunayan'),
         ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
