@@ -503,13 +503,64 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     # 5. ملخص الحضور
     attendance_summary = await get_employee_attendance_summary(employee_id)
     
-    # 6. حالة حضور اليوم
+    # 6. حالة حضور اليوم - من daily_status للحصول على الحالة الحقيقية
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # أولاً نجلب حالة اليوم من daily_status
+    today_daily_status = await db.daily_status.find_one({
+        "employee_id": employee_id,
+        "date": today
+    }, {"_id": 0})
+    
+    # ثم نجلب وقت الحضور من attendance_ledger
     today_attendance = await db.attendance_ledger.find_one({
         "employee_id": employee_id,
         "date": today,
         "type": "check_in"
     })
+    
+    # تحديد حالة اليوم
+    if today_daily_status:
+        final_status = today_daily_status.get('final_status', '')
+        if final_status == 'ABSENT':
+            today_status = 'absent'
+            today_status_ar = 'غائب'
+        elif final_status == 'LEAVE':
+            today_status = 'leave'
+            today_status_ar = 'إجازة'
+        elif final_status == 'HOLIDAY':
+            today_status = 'holiday'
+            today_status_ar = 'عطلة'
+        elif final_status == 'WEEKEND':
+            today_status = 'weekend'
+            today_status_ar = 'عطلة أسبوعية'
+        elif final_status == 'MISSION':
+            today_status = 'mission'
+            today_status_ar = 'مهمة خارجية'
+        elif 'LATE' in final_status:
+            today_status = 'late'
+            today_status_ar = 'متأخر'
+        elif final_status in ('PRESENT', 'PRESENT_FULL', 'PRESENT_EARLY_LEAVE'):
+            today_status = 'present'
+            today_status_ar = 'حاضر'
+        else:
+            today_status = 'present' if today_attendance else 'not_checked_in'
+            today_status_ar = 'حاضر' if today_attendance else 'لم يسجل'
+    else:
+        # لا يوجد سجل في daily_status - نتحقق من البصمة
+        today_status = 'present' if today_attendance else 'not_checked_in'
+        today_status_ar = 'حاضر' if today_attendance else 'لم يسجل'
+    
+    # وقت الحضور
+    check_in_time = None
+    if today_attendance:
+        check_in_time = today_attendance.get('time', today_attendance.get('timestamp', ''))
+        if check_in_time and 'T' in check_in_time:
+            check_in_time = check_in_time.split('T')[1][:5]
+    elif today_daily_status and today_daily_status.get('check_in'):
+        check_in_time = today_daily_status['check_in']
+        if check_in_time and 'T' in check_in_time:
+            check_in_time = check_in_time.split('T')[1][:5]
     
     # 7. بيانات الشهر الحالي (للجميع)
     month_start = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
