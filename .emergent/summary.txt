@@ -1,186 +1,182 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user initially requested a full audit of an HR system. This evolved into building a complete, multi-phase Applicant Tracking System (ATS), including a smart scoring engine and a Nuclear Delete feature.
+The user's initial request for an HR system has expanded to include an Applicant Tracking System (ATS), a Smart Hours attendance system, and a Smart Governance Policies Module.
 
-Following the ATS build, the user reported a critical bug where job applications submitted from an iframe on their main company website (built with Wuilt) were not being received.
-
-Most recently, the user requested a major overhaul and clarification of the attendance and payroll deduction system. The key requirements for this Smart Hours system are:
-1.  **Dynamic Work Schedules:** The system must read all work-hour rules (normal hours, Ramadan hours, grace periods, workdays) directly from Worksite Cards.
-2.  **Permission Allowance:** Each employee has a monthly allowance of paid permission hours (e.g., 2-3 hours), defined in their contract.
-3.  **Compensation Allowance:** The administration must have a global slider (0-50 hours) to set a monthly compensation allowance. Employees can use this allowance to offset any shortages (lateness, early leave) by working extra hours, which are tracked via their punch-in/out times.
-4.  **End-of-Month Calculation:** The final deduction is calculated only at the end of the month, as .
+Throughout development, the user has been extremely frustrated by a persistent and critical discrepancy between the Preview environment and the live Production environment. This has manifested as numerous bugs in production, including:
+1.  Incorrect login credentials and login pages that hang indefinitely.
+2.  Old branding (Dar Al Arkan) flashing on the screen and appearing in browser tabs, despite being removed in Preview.
+3.  Incorrect application version numbers being displayed.
+4.  Missing or incorrect data, such as employee attendance records showing as absent and user profile pictures not appearing.
+5.  Severe mobile responsiveness issues, making the app difficult to use.
+6.  A new feature request to add an employee Summon (استدعاء) system.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-The full Applicant Tracking System (ATS) is complete, including the fully tested Nuclear Delete feature. A critical bug preventing application submissions from an  was resolved by creating dedicated, lightweight  routes and adding a Get Embed Code button for the admin.
+A full-stack HR application with a React frontend and FastAPI backend. The agent has implemented numerous fixes and features in this session to address the user's complaints. The primary challenge has been the data and code desynchronization between the Preview and Production environments.
 
-The core HR system's attendance logic has been significantly refined. The automatic attendance job now runs correctly at the start of each day. The system now dynamically reads work schedules, including special hours for Ramadan, directly from Worksite Cards. A full-month simulation was successfully run to debug and confirm that the monthly attendance calculations and the employee dashboard's hours worked slider are functioning correctly.
+To mitigate this, the agent has created a series of emergency backend API endpoints (, ) that must be manually executed after each deployment to bring the Production database in line with the Preview environment's data structure and seed data.
+
+A new Summon feature has been fully implemented on the backend and frontend, allowing authorized managers to send priority-based notifications to employees. The system now also correctly handles CEO (Mohammed) permissions for viewing employee data and includes a fix for the login page navigation.
 
 **Last working item**:
--   **Last item agent was working:** Finalizing the requirements for the new Smart Hours system. The agent confirmed the logic for handling Ramadan hours, a monthly employee-specific permission allowance, and a global, admin-configurable compensation allowance. The implementation of this feature has not yet started.
--   **Status:** NOT STARTED
+-   **Last item agent was working:** Fixing a UI bug where the notification bell icon (الجرس) is partially hidden or clipped on both desktop and mobile views. The agent identified this as a CSS overflow/positioning issue and applied a fix to  to better manage spacing in the header.
+-   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** backend testing agent. This is a critical change to payroll logic. The test should simulate a full month for an employee, including setting a compensation allowance, using permission hours, having a shortage, working extra hours to compensate, and then verifying that the final end-of-month deduction calculation is correct.
+-   **Which testing method agent to use?** screenshot tool. The agent should take a screenshot of the header area to verify that the bell and other icons are fully visible on both desktop and simulated mobile screen sizes.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Implement Smart Hours System (P0 - HIGHEST PRIORITY)**
--   **Issue 2: Confirm a fix for the ATS application from the Wuilt site (P1)**
--   **Issue 3: Test and Verify Phase 2 ATS Smart Features (P1)**
+-   **Issue 1: Notification bell UI is partially hidden (P0)**
+-   **Issue 2: Severe Mobile Responsiveness Problems (P0)**
+-   **Issue 3: Production environment requires manual data sync after every deployment (P0)**
+-   **Issue 4: Enable Biometric Login (Face ID/Fingerprint) (P1)**
+-   **Issue 5: Confirm fix for ATS application from Wuilt site (P2)**
+-   **Issue 6: Make entire transaction list items clickable (P2)**
+-   **Issue 7: Test and Verify Phase 2 ATS Smart Features (P3)**
 
 **Issues Detail:**
--   **Issue 1: Implement Smart Hours System**
-    -   **Attempted fixes:** None. The agent just finished gathering requirements.
+-   **Issue 1: Notification bell UI is partially hidden**
+    -   **Attempted fixes:** The agent applied CSS changes to  to adjust flexbox gap and prevent wrapping.
     -   **Next debug checklist:**
-        1.  **DB/Models:** Add  to the employee contract model. Add a field for  to a global settings collection or the  model.
-        2.  **Admin UI:** Create a slider in the admin settings for / to set the .
-        3.  **Backend ():** Overhaul the end-of-month deduction logic to incorporate the new Compensation Allowance. The calculation should be: .
-        4.  **Employee UI:** Display the monthly permission hour balance (e.g., Used: 1.5 / 3 hours) on the employee dashboard.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a core business logic requirement to make the payroll system more flexible and fair, allowing employees to compensate for minor shortages.
-    -   **Status:** NOT STARTED
+        1.  Take a screenshot to verify if the last change to  resolved the issue.
+        2.  If the issue persists, inspect the parent elements of the  for  properties.
+        3.  Examine  for conflicting styles, particularly  which can cause positioning problems.
+    -   **Why fix this issue and what will be achieved with the fix?** The bell is a critical UI element for the new Summon feature. A broken UI prevents users from seeing notifications.
+    -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 2: Confirm a fix for the ATS application from the Wuilt site**
-    -   **Attempted fixes:** The agent created special  routes and adjusted server security headers to allow iframe embedding. A Get Embed Code button was also provided.
-    -   **Next debug checklist:** The agent needs to ask the user to deploy the application, use the new embed code on their live Wuilt site, and confirm that job applications are successfully submitted.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the final verification step for a critical bug that prevented the entire ATS feature from being usable on the company's main website.
-    -   **Status:** USER VERIFICATION PENDING
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** User test required.
+-   **Issue 2: Severe Mobile Responsiveness Problems**
+    -   **Attempted fixes:** Minimal, localized fixes (e.g., clickable transaction cards). The core problem of unusable tables and layouts on mobile remains.
+    -   **Next debug checklist:**
+        1.  Systematically review each page identified by the user (Contracts, Policies, any page with tables).
+        2.  Refactor layouts to use modern CSS (Flexbox/Grid) and relative units.
+        3.  Implement responsive patterns for tables, such as converting rows to cards on smaller screens.
+    -   **Why fix this issue and what will be achieved with the fix?** The user has declared the app unusable on mobile, making this a critical blocker for user adoption.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on other issue:** None
 
--   **Issue 3: Test and Verify Phase 2 ATS Smart Features**
-    -   **Attempted fixes:** The code for the scoring engine and calibration report exists but is untested.
-    -   **Next debug checklist:** Perform end-to-end testing with sample CVs to validate the accuracy of the scoring, classification, and tiering. Implement the logic for the calibration report.
-    -   **Why fix this issue and what will be achieved with the fix?** To ensure the Smart features of the ATS are reliable and provide real value to the HR team.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
+-   **Issue 3: Production environment requires manual data sync after every deployment**
+    -   **Attempted fixes:** The agent created several -triggered API endpoints (, ) to manually update the production database after a deployment. A seeding script () was also created.
+    -   **Next debug checklist:** This is a process issue, not a code bug. The current fix is a cumbersome, error-prone manual process. The next agent should consider proposing a more robust solution, such as a data migration script that runs automatically as part of the deployment pipeline. For now, the agent must remember to execute the  commands after every deployment.
+    -   **Why fix this issue and what will be achieved with the fix?** This is the root cause of almost all user frustration and bug reports in production. Solving this will create a stable and predictable application.
+    -   **Status:** IN PROGRESS (Workaround implemented, but not a true fix)
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both (Infrastructure/Process)
     -   **Blocked on other issue:** None
 
-**In progress Task List**: None.
+**In progress Task List**:
+-   **Task 1: Overhaul Mobile UI/UX (P0)**
+    -   **Where to resume:** Continue the work from , starting with the pages most affected by responsiveness problems.
+    -   **What will be achieved with this?** A professional and usable mobile experience.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
+*   **Upcoming Tasks:**
+    *   **Implement Canva-like Smart Editor (P1):** The user's original request for the Policies module was for an editor with markdown-style shortcuts (e.g., # for heading). This has not been implemented.
+    *   **Allow STAS to manage App Branding (P1):** The user requested a UI for the STAS role to change the application name and icon, to avoid future Dar Al Arkan issues.
 *   **Future Tasks:**
     *   Merge MyFinances & Attendance/Penalties pages.
     *   Implement the Frontend UI for the Annual Performance Review module.
     *   Implement the Loans Module.
-    *   Implement the incomplete Transaction Barcode & Camera Search Feature.
 
 **Completed work in this session**
--   **ATS Nuclear Delete Feature:** Implemented and exhaustively tested the backend endpoint, frontend button with confirmation dialog, and role-based access control (/ only).
--   ** Submission Bug Fix:** Diagnosed and fixed the critical bug preventing job applications from being submitted from the user's Wuilt website. Created lightweight  pages and provided a Get Embed Code button for the admin.
--   **Attendance System Overhaul:**
-    -   Corrected the automatic attendance job to run at 7 AM for the current day, instead of 1 AM for the previous day.
-    -   Integrated support for Ramadan work hours, read dynamically from Worksite Cards.
-    -   Fixed multiple bugs in the monthly attendance summary calculations and successfully ran a full-month simulation to validate the employee dashboard slider.
--   **Permissions & Logic:**
-    -   Granted  the ability to delete contracts in any status.
-    -   Fixed the Executive Governance dashboard time format to use English numerals.
+-   **Production Login Fixed:** Resolved an issue where the login page would hang by adding  after a successful API call in .
+-   **Dar Al Arkan Branding Purged:** Created a dedicated API endpoint () to overwrite incorrect branding information in the production database, fixing the flash of the old company name.
+-   **Emergency Password Reset Implemented:** Created an endpoint () to create or reset the  user in the production database, solving the incorrect password issue caused by database desynchronization.
+-   **Summon Employee Feature Implemented:**
+    -   Added a Summon button and dialog to .
+    -   Created the backend API () to handle the logic.
+    -   Integrated summon notifications into the main notification bell.
+    -   Added UI indicators in the employee list to show a Summoned status.
+-   **CEO Role Permissions Corrected:** Fixed a bug where the CEO (mohammed) could not view employee data and removed buttons for actions he was not permitted to take (e.g., Assign Supervisor).
+-   **Full System Check in Preview:** Performed a comprehensive manual test of all major application modules in the Preview environment to confirm functionality before recommending deployment.
 
 **Earlier issues found/mentioned but not fixed**
--   The status of two very old issues is unknown: a crash on  and a broken Branding tab.
+-   ** crash and broken Branding tab:** These are old, unaddressed UI issues.
+-   **Policies Smart Editor features:** The requested smart behaviors (auto-formatting, markdown-style shortcuts) were not implemented.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Lack of a centralized permissions system.
 -   **Recurrence count:** High
 -   **Status:** NOT STARTED
--   **Note:** Access control continues to be implemented on a feature-by-feature basis.
+-   **Note:** Permissions continue to be managed on a per-component basis (e.g., defining  and  inside  and ).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Iframe Embedding Security:** Resolved  issues by creating dedicated, header-controlled embeddable routes, a robust pattern for embedding React apps in third-party sites.
--   **Complex Business Logic Simulation:** Successfully used data simulation to debug and validate time-dependent payroll and attendance calculations over a full month period.
--   **Cron Job Management:** Refactored a critical scheduled task () to align its timing and logic with business requirements.
+-   **Production vs. Preview Divergence:** The central theme of this session. The agent had to create workarounds to handle separate databases and code states between the two environments.
+-   **Emergency Admin Endpoints:** A pattern of creating secure-by-obscurity API endpoints (e.g., ) protected by a hardcoded key to perform destructive or administrative actions on the production DB. This is a technical debt but was necessary to unblock the user.
+-   **Data Seeding on Startup:** Using  and logic in  to ensure a baseline of data (users, settings) exists when the application starts, which is crucial for the empty production database.
+-   **Ad-Hoc RBAC:** Implementing role-based permissions directly in frontend components by creating boolean flags (, ) derived from the user's role in the .
 
 **key DB schema**
--   No new collections were added. Logic was heavily modified to rely on  as the source of truth for all work-hour-related rules. The Smart Hours feature will require adding fields to  and a global settings collection.
-
-**changes in tech stack**
--   None.
+-   **notifications** (collection): Enhanced to support  with  and  fields.
+-   **settings** (collection): Holds global configuration for branding (, ) and the application .
 
 **All files of reference**
--   : Contains the existing deduction logic and will be the primary file for implementing the Smart Hours compensation feature.
--   : The core of the daily attendance decision engine.
--   : Defines the schema for , which is the source of all work hour rules.
--   : The new iframe-friendly careers page.
+-   : Contains the critical manual-fix endpoints for production.
+-   : Contains the fix for the page hanging after login.
+-   : Contains the implementation for the Summon feature and role permission fixes.
+-   : File being edited to fix the notification bell UI.
+-   : Defines the default data that is used to reset the production environment.
 
 **Critical Info for New Agent**
--   **Respond in Arabic.**
--   The next major task is to implement the **Smart Hours system**. All settings for this (work hours, grace periods, etc.) must come from the **Worksite Card**. The user wants a flexible system where employees can compensate for shortages by working extra hours, up to a monthly limit set by the admin.
--   The ** bug fix needs user verification.** The user must deploy the app and test the embed code on their live Wuilt site. Ask for their confirmation.
--   The attendance logic is spread across multiple files. The most current and authoritative logic is in  (daily status) and  (monthly deductions).
+-   **You MUST respond in Arabic.**
+-   **The Production environment is NOT in sync with Preview.** After every deployment ( -> ), you **MUST** manually execute a series of  commands to update the production database. The user is extremely frustrated by this, so it is the highest priority to manage expectations and perform these steps correctly.
+-   **The emergency  commands are:**
+    1.  **Fix Branding:** 
+    2.  **Reset/Create User:** 
+-   The emergency key () is hardcoded in . This is a security risk but is part of the current solution.
+-   **Mobile responsiveness is a major, unresolved user complaint.** The current issue with the notification bell is a symptom of this larger problem. Be prepared to address broad UI/UX issues.
 
 **documents and test reports created in this job**
--   
+None.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Asks if the system knows about Ramadan hours, permission allowances from contracts, and other excuses. States that the self-service system is the primary system, and the manual system is for admin overrides.
-2.  **Agent:** Provides a detailed report confirming that the system handles most excuses but is missing the logic for Ramadan hours.
-3.  **User:** Confirms that all settings, including Ramadan hours (6 hours), workdays, and grace periods, should be defined in the Worksite Cards. The system should be flexible enough to handle varied work schedules.
-4.  **Agent:** Confirms understanding and updates the system to read Ramadan settings from the worksite card, then presents a final report showing the system is ready.
-5.  **User:** Asks how absence and deductions are calculated.
-6.  **Agent:** Provides a detailed breakdown of how deductions are calculated for absences and how lateness/early leave hours are aggregated for a monthly deduction.
-7.  **User:** Asks to test the deduction calculation for a specific employee, .
-8.  **Agent:** Runs a simulation for Naif and presents a report showing a deduction of 300 Riyals for one day of absence.
-9.  **User:** Asks if the monthly hours slider is active for employees and if the penalty system is programmed to run monthly.
-10. **User:** Proposes the full Smart Hours system: a monthly permission allowance (from contract), a global compensation allowance (set by admin), and an end-of-month net deduction calculation. *Status: Acknowledged, implementation is the next step.*
+1.  **User:** The Summon button's status isn't showing in the employee list, and the notification didn't arrive. (Status: Fixed).
+2.  **User:** Mohammed's employee list is failing to load, and he shouldn't have an Assign Supervisor button. (Status: Fixed).
+3.  **User:** The notification bell is partially hidden on both mobile and desktop. (Status: In Progress, **current task**).
+4.  **User:** Does the app update directly or need deployment? (Status: Answered, requires deployment).
+5.  **User:** Before final deployment, check ALL app functions. (Status: Completed, agent did a full preview check).
+6.  **User:** Add a Summon feature for specific managers with 3 priority levels and notifications. (Status: Implemented).
+7.  **User:** The old Dar Al Arkan branding is still showing up, and login is broken. (Status: Fixed with emergency endpoints).
+8.  **User:** Employee attendance isn't reflecting correctly in production. (Status: Diagnosed as a DB sync issue).
+9.  **User:** Broad complaint about multiple production issues: attendance, user images, branding. (Status: Diagnosed as DB sync issue).
+10. **User:** Do not change Sultan's password and remove all the 506 debug code. (Status: Completed).
 
 **Project Health Check:**
--   **Broken:** None currently identified.
+-   **Broken:**
+    -   The deployment process is manual and brittle, requiring  commands to sync production data.
+    -   The application's mobile responsiveness is poor and a major source of user frustration.
+    -   The notification bell UI is currently clipped/hidden.
 -   **Mocked:**
-    -   The ATS calibration report endpoint is a placeholder.
-    -   The monthly penalty generation process () is coded but has only been run in a simulation, not in a live monthly cycle.
+    -   The Smart Editor for the policies module lacks the requested auto-formatting features.
+    -   A centralized permissions (RBAC) system is missing.
 
 **3rd Party Integrations**
--   usage: pdfplumber [-h] [--structure | --structure-text]
-                  [--format {csv,json,text}] [--types TYPES [TYPES ...]]
-                  [--include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]]
-                  [--exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]]
-                  [--laparams LAPARAMS] [--precision PRECISION]
-                  [--pages PAGES [PAGES ...]] [--indent INDENT]
-                  [infile]
-
-positional arguments:
-  infile
-
-options:
-  -h, --help            show this help message and exit
-  --structure           Write the structure tree as JSON. All other arguments
-                        except --pages, --laparams, and --indent will be
-                        ignored
-  --structure-text      Write the structure tree as JSON including text
-                        contents. All other arguments except --pages,
-                        --laparams, and --indent will be ignored
-  --format {csv,json,text}
-  --types TYPES [TYPES ...]
-  --include-attrs INCLUDE_ATTRS [INCLUDE_ATTRS ...]
-                        Include *only* these object attributes in output.
-  --exclude-attrs EXCLUDE_ATTRS [EXCLUDE_ATTRS ...]
-                        Exclude these object attributes from output.
-  --laparams LAPARAMS
-  --precision PRECISION
-  --pages PAGES [PAGES ...]
-  --indent INDENT       Indent level for JSON pretty-printing. (ATS CV Parsing)
--    (ATS CV Parsing)
+-   No new integrations were added. Existing integrations (, , , ) remain.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, for the Nuclear Delete feature.
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** A test file was created for the Nuclear Delete feature by the testing agent.
--   **Known regressions:** None.
+-   **Test files created:** None.
+-   **Known regressions:** None, but the divergence between Preview and Production makes every deployment a risk.
 
 **Credentials to test flow:**
--   **Admin (System):**  / 
--   **Management / HR:**  / 
--   **Admin:**  / 
+-   **Admin (for Preview):**  / 
+-   **CEO (for Preview):**  / 
+-   **HR (for Preview):**  / 
+-   **Note:** Production credentials will only work after running the emergency reset endpoint post-deployment.
 
 **What agent forgot to execute**
--   The agent has not yet implemented the Smart Hours system requested by the user in the last few messages.
--   The two old UI bugs ( crash and Branding tab) remain unverified.</analysis>
+-   The agent did not move all hardcoded secrets to environment variables. The key  is still hardcoded in , posing a security risk.
+-   The agent did not take a final screenshot to verify the fix for the notification bell UI before the session ended.</analysis>
