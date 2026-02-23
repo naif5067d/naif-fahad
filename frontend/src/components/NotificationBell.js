@@ -279,11 +279,11 @@ export default function NotificationBell() {
       {/* القائمة المنسدلة */}
       {isOpen && (
         <div 
-          className="absolute top-full mt-2 w-[320px] sm:w-96 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50"
+          className="fixed md:absolute top-16 md:top-full md:mt-2 inset-x-2 md:inset-x-auto md:w-96 md:end-0 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in"
           style={{ 
-            right: lang === 'ar' ? '0' : 'auto', 
-            left: lang === 'ar' ? 'auto' : '0',
-            transform: 'translateX(0)'
+            zIndex: 100,
+            maxWidth: 'calc(100vw - 1rem)',
+            maxHeight: 'calc(100vh - 5rem)'
           }}
           data-testid="notification-dropdown"
         >
