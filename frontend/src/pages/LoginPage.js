@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Lock, User, AlertCircle, Eye, EyeOff, Globe, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { Lock, User, AlertCircle, Eye, EyeOff, Globe, Loader2 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -232,7 +232,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [musicEnabled, setMusicEnabled] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [greeting, setGreeting] = useState('');
   const [subGreeting, setSubGreeting] = useState('');
