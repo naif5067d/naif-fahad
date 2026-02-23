@@ -581,3 +581,11 @@ def create_bilingual_row(*args, **kwargs):
 def create_footer(*args, **kwargs):
     """للتوافق مع الملفات الأخرى"""
     pass
+
+def format_saudi_time(ts):
+    """للتوافق - نفس format_date"""
+    return format_date(ts)
+
+def create_qr_image_export(data, size=25):
+    """للتوافق"""
+    return create_qr_image(data, size)
