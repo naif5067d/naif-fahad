@@ -378,18 +378,37 @@ export default function EmployeesPage() {
                 };
                 const serviceYears = calcServiceYears();
                 
+                const activeSummon = getActiveSummon(e.id) || getActiveSummon(e.employee_number);
+                
                 return (
                 <tr 
                   key={e.id} 
                   data-testid={`emp-row-${e.employee_number}`}
-                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-[hsl(var(--warning)/0.1)]') : ''}`}
+                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-[hsl(var(--warning)/0.1)]') : ''} ${activeSummon ? 'border-l-4 border-l-orange-400' : ''}`}
                 >
                   <td className="font-mono text-xs">{e.employee_number}</td>
                   <td className="text-sm font-medium">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={isCritical ? 'text-red-600 font-bold' : ''}>
                         {lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}
                       </span>
+                      {/* عرض الاستدعاء النشط */}
+                      {activeSummon && (
+                        <span 
+                          className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 ${
+                            activeSummon.priority === 'urgent' ? 'bg-red-100 text-red-700' : 
+                            activeSummon.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
+                            'bg-green-100 text-green-700'
+                          }`}
+                          title={activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}
+                        >
+                          <Bell size={10} />
+                          {lang === 'ar' 
+                            ? (activeSummon.priority === 'urgent' ? 'مستدعى - طارئ' : activeSummon.priority === 'medium' ? 'مستدعى' : 'مستدعى')
+                            : 'Summoned'
+                          }
+                        </span>
+                      )}
                       {isExpiring && (
                         <span 
                           className={`text-[10px] px-1.5 py-0.5 rounded ${
