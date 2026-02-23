@@ -1,89 +1,34 @@
 """
 PDF Generator for In-Kind Custody (العهدة العينية)
 مع QR Code وتوقيعات الاستلام والإرجاع
+التصميم الاحترافي الموحد مع خط القطع
 """
+from utils.professional_pdf import (
+    generate_professional_transaction_pdf,
+    create_unified_header,
+    create_tear_off_line,
+    create_signatures_table,
+    create_tear_off_coupon,
+    create_document_title,
+    create_bilingual_row,
+    create_footer,
+    create_qr_image,
+    reshape_arabic,
+    format_saudi_time,
+    register_fonts,
+    CONTENT_WIDTH, MARGIN, PAGE_WIDTH, PAGE_HEIGHT,
+    NAVY, GOLD, WHITE, LIGHT_GRAY, BORDER_GRAY, TEXT_GRAY, SUCCESS_GREEN
+)
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image as RLImage
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-import arabic_reshaper
-from bidi.algorithm import get_display
-import qrcode
 import io
-import os
 import hashlib
 import uuid
-from datetime import datetime, timezone
-
-# ==================== PAGE SETUP ====================
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 15 * mm
-CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
-
-# ==================== COLORS ====================
-NAVY = colors.Color(0.08, 0.16, 0.28)
-GOLD = colors.Color(0.75, 0.62, 0.35)
-WHITE = colors.white
-LIGHT_BG = colors.Color(0.98, 0.98, 0.99)
-BORDER = colors.Color(0.88, 0.88, 0.90)
-TEXT_DARK = colors.Color(0.12, 0.12, 0.14)
-SUCCESS = colors.Color(0.10, 0.55, 0.35)
-
-# ==================== FONTS ====================
-FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
-ARABIC_FONT = 'NotoNaskhArabic'
-ARABIC_FONT_BOLD = 'NotoNaskhArabicBold'
-
-
-def register_fonts():
-    """Register Arabic fonts"""
-    global ARABIC_FONT, ARABIC_FONT_BOLD
-    font_pairs = [
-        ('NotoNaskhArabic', 'NotoNaskhArabic-Regular.ttf', 'NotoNaskhArabic-Bold.ttf'),
-        ('NotoSansArabic', 'NotoSansArabic-Regular.ttf', 'NotoSansArabic-Bold.ttf'),
-    ]
-    for font_name, regular_file, bold_file in font_pairs:
-        try:
-            regular_path = os.path.join(FONTS_DIR, regular_file)
-            bold_path = os.path.join(FONTS_DIR, bold_file)
-            if os.path.exists(regular_path):
-                pdfmetrics.registerFont(TTFont(font_name, regular_path))
-                ARABIC_FONT = font_name
-                if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont(f'{font_name}Bold', bold_path))
-                    ARABIC_FONT_BOLD = f'{font_name}Bold'
-                return True
-        except Exception as e:
-            print(f"Font error: {e}")
-    return False
-
-
-def reshape_arabic(text):
-    """Reshape Arabic text for PDF display"""
-    if not text:
-        return ""
-    try:
-        reshaped = arabic_reshaper.reshape(str(text))
-        return get_display(reshaped)
-    except:
-        return str(text)
-
-
-def generate_qr_image(data, size=80):
-    """Generate QR code image"""
-    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=4, border=1)
-    qr.add_data(data)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    img = img.resize((size, size))
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    buffer.seek(0)
-    return RLImage(buffer, width=size, height=size)
+from datetime import datetime, timezone, timedelta
 
 
 def generate_inkind_custody_pdf(custody_data: dict, employee_data: dict, lang: str = 'ar', branding: dict = None):
