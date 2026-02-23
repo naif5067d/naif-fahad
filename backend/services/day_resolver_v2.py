@@ -763,36 +763,61 @@ async def resolve_and_save_v2(employee_id: str, date: str, force_update: bool = 
     تنفيذ القرار V2 وحفظه في قاعدة البيانات
     
     المنطق الذكي:
-    1. التحقق من تاريخ بدء النظام (system_start_date) - لا يُحتسب قبله
-    2. إذا وجدت بصمة GPS ذاتية (self_checkin) → لا تُغيّر أبداً (إلا force_update)
-    3. إذا وجد سجل قديم بدون GPS وجاءت GPS جديدة → حدّث السجل
-    4. إذا لا يوجد سجل → أنشئ جديد
+    1. التحقق من تاريخ المباشرة الفعلية (work_start_date) - لا يُحتسب قبله
+    2. التحقق من وضع التجربة (sandbox_mode) - إذا مفعّل لا يُحتسب
+    3. إذا وجدت بصمة GPS ذاتية (self_checkin) → لا تُغيّر أبداً (إلا force_update)
+    4. إذا وجد سجل قديم بدون GPS وجاءت GPS جديدة → حدّث السجل
+    5. إذا لا يوجد سجل → أنشئ جديد
     
     Args:
         employee_id: معرف الموظف
         date: التاريخ
         force_update: إجبار التحديث (للحالات الخاصة)
     """
-    # 0. التحقق من تاريخ بدء النظام
-    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0, "system_active": 1, "system_start_date": 1})
+    # 0. جلب بيانات الموظف والعقد للتحقق من تاريخ المباشرة ووضع التجربة
+    employee = await db.employees.find_one(
+        {"id": employee_id}, 
+        {"_id": 0, "system_active": 1, "system_start_date": 1}
+    )
     
-    if employee:
-        system_start_date = employee.get('system_start_date')
-        system_active = employee.get('system_active', False)
-        
-        # إذا النظام غير مُفعَّل أو التاريخ قبل بدء النظام → تخطي
-        if system_start_date and date < system_start_date:
+    # جلب العقد الفعال للموظف
+    contract = await db.contracts_v2.find_one(
+        {"employee_id": employee_id, "status": {"$in": ["active", "active_renewed"]}},
+        {"_id": 0, "work_start_date": 1, "sandbox_mode": 1, "start_date": 1, "system_active": 1, "system_start_date": 1}
+    )
+    
+    if contract:
+        # التحقق من وضع التجربة (Sandbox)
+        if contract.get('sandbox_mode') == True:
             return {
                 "employee_id": employee_id,
                 "date": date,
-                "final_status": "SYSTEM_INACTIVE",
-                "status_ar": "قبل تفعيل النظام",
+                "final_status": "SANDBOX",
+                "status_ar": "وضع التجربة",
                 "action": "skipped",
-                "reason_ar": f"التاريخ ({date}) قبل تاريخ تفعيل النظام ({system_start_date})"
+                "reason_ar": "الموظف في وضع التجربة (Sandbox) - لا يُحتسب حضور أو غياب"
             }
         
-        if not system_active and system_start_date:
-            # النظام موقوف
+        # تحديد تاريخ بدء الاحتساب (أولوية: system_start_date ثم work_start_date ثم start_date)
+        tracking_start_date = (
+            contract.get('system_start_date') or 
+            contract.get('work_start_date') or 
+            contract.get('start_date')
+        )
+        
+        # التحقق من أن التاريخ بعد تاريخ بدء الاحتساب
+        if tracking_start_date and date < tracking_start_date:
+            return {
+                "employee_id": employee_id,
+                "date": date,
+                "final_status": "BEFORE_START",
+                "status_ar": "قبل تاريخ المباشرة",
+                "action": "skipped",
+                "reason_ar": f"التاريخ ({date}) قبل تاريخ المباشرة الفعلية ({tracking_start_date})"
+            }
+        
+        # التحقق من تفعيل النظام (إذا تم استخدام زر التفعيل)
+        if contract.get('system_start_date') and not contract.get('system_active', True):
             return {
                 "employee_id": employee_id,
                 "date": date,
@@ -800,6 +825,19 @@ async def resolve_and_save_v2(employee_id: str, date: str, force_update: bool = 
                 "status_ar": "النظام موقوف",
                 "action": "skipped",
                 "reason_ar": "النظام موقوف مؤقتاً لهذا الموظف"
+            }
+    
+    # التحقق من employee level أيضاً
+    if employee:
+        system_start_date = employee.get('system_start_date')
+        if system_start_date and date < system_start_date:
+            return {
+                "employee_id": employee_id,
+                "date": date,
+                "final_status": "BEFORE_START",
+                "status_ar": "قبل تفعيل النظام",
+                "action": "skipped",
+                "reason_ar": f"التاريخ ({date}) قبل تاريخ تفعيل النظام ({system_start_date})"
             }
     
     # 1. فحص وجود بصمة GPS ذاتية
