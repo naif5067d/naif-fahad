@@ -1,6 +1,6 @@
 """
 PDF احترافي - صفحة واحدة A4
-ألوان: أزرق + أسود + رصاصي فقط
+ألوان: أزرق داكن + أسود + رصاصي فقط (لا ذهبي)
 """
 
 from reportlab.lib.pagesizes import A4
@@ -21,14 +21,15 @@ import os
 from datetime import datetime, timezone, timedelta
 
 W, H = A4
-M = 12*mm
+M = 10*mm  # هوامش أصغر
 CW = W - 2*M
 
-# ألوان: أزرق + أسود + رصاصي فقط
-NAVY = colors.Color(0.118, 0.227, 0.373)  # أزرق داكن
-BLACK = colors.Color(0.1, 0.1, 0.1)
-GRAY = colors.Color(0.5, 0.5, 0.5)
-LIGHT_GRAY = colors.Color(0.92, 0.92, 0.93)
+# ألوان فقط: أزرق داكن + أسود + رصاصي (لا ذهبي أبداً)
+NAVY = colors.Color(0.118, 0.227, 0.373)  # #1E3A5F
+BLACK = colors.Color(0.15, 0.15, 0.15)
+DARK_GRAY = colors.Color(0.35, 0.35, 0.35)
+GRAY = colors.Color(0.55, 0.55, 0.55)
+LIGHT_GRAY = colors.Color(0.94, 0.94, 0.95)
 WHITE = colors.white
 
 FD = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
