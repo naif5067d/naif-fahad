@@ -250,6 +250,11 @@ export default function LoginPage() {
               : '© 2026 DAR AL CODE. All rights reserved'
             }
           </p>
+          
+          {/* Version Check Code */}
+          <p className="text-xs text-center text-slate-300 mt-2 font-mono" data-testid="version-check">
+            506506506
+          </p>
         </div>
       </div>
 
