@@ -297,10 +297,25 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     for approval in chain:
         stage = approval.get('stage', '')
         ts = approval.get('timestamp', '')
-        # جرب أكثر من حقل للاسم
-        signer = approval.get('approver_name', '') or approval.get('signer_name', '') or approval.get('approver_name_en', '')
+        approver_id = approval.get('approver_id', '')
+        # جلب الأسماء - العربي والإنجليزي
+        signer_ar = approval.get('approver_name_ar', '')
+        signer_en = approval.get('approver_name_en', approval.get('approver_name', ''))
+        # إذا الاسم الافتراضي عربي، استخدمه كعربي
+        if not signer_ar and approval.get('approver_name'):
+            name = approval.get('approver_name', '')
+            if any('\u0600' <= c <= '\u06FF' for c in name):
+                signer_ar = name
+            else:
+                signer_en = name
+        
         if stage and ts:
-            signed_stages[stage] = {'timestamp': ts, 'signer': signer}
+            signed_stages[stage] = {
+                'timestamp': ts, 
+                'signer_ar': signer_ar,
+                'signer_en': signer_en,
+                'approver_id': approver_id
+            }
     
     # الحصول على الـ workflow الفعلي للمعاملة
     actual_workflow = tx.get('workflow', [])
