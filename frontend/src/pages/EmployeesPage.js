@@ -56,6 +56,9 @@ export default function EmployeesPage() {
   const isOps = ['sultan', 'naif', 'stas', 'mohammed'].includes(user?.role);
   const isCEO = user?.role === 'mohammed';
   const canSummon = ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user?.role);
+  
+  // حالة الاستدعاءات النشطة
+  const [activeSummons, setActiveSummons] = useState([]);
 
   useEffect(() => {
     api.get('/api/employees').then(r => setEmployees(r.data)).catch(() => {});
@@ -65,7 +68,22 @@ export default function EmployeesPage() {
         .then(r => setExpiringContracts(r.data.employees || []))
         .catch(() => {});
     }
-  }, [isOps]);
+    // جلب الاستدعاءات النشطة
+    if (canSummon) {
+      api.get('/api/notifications/summons')
+        .then(r => setActiveSummons(r.data.summons || []))
+        .catch(() => {});
+    }
+  }, [isOps, canSummon]);
+
+  // التحقق إذا كان الموظف لديه استدعاء نشط
+  const getActiveSummon = (employeeId) => {
+    return activeSummons.find(s => 
+      s.notification_type === 'summon' && 
+      s.employee_id === employeeId && 
+      !s.is_read
+    );
+  };
 
   // التحقق إذا كان الموظف لديه عقد ينتهي قريباً
   const getExpiryStatus = (employeeId) => {
