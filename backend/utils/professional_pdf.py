@@ -361,46 +361,57 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 5. QR للمعاملة (فوق خط القص)
+    # 5. QR للمعاملة (فوق خط القص) - حجم صغير
     # ═══════════════════════════════════════════════════════════════════
-    tx_qr = make_qr(f"TX-{ref}-{integrity}", 12)
+    tx_qr = make_qr(f"TX-{ref}-{integrity}", 10)
+    
+    qr_info = Table([
+        [Paragraph(ar("رمز التحقق") + " | Verification", s_info)],
+        [Paragraph(integrity, s_val_en)],
+    ], colWidths=[CW - 15*mm])
     
     qr_above = Table([
-        [tx_qr if tx_qr else Paragraph("", s_role), Paragraph(ar("رمز التحقق") + " | Verify Code\n" + integrity, s_role)],
-    ], colWidths=[20*mm, CW - 20*mm])
-    qr_above.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'MIDDLE')]))
+        [tx_qr if tx_qr else '', qr_info],
+    ], colWidths=[15*mm, CW - 15*mm])
+    qr_above.setStyle(TableStyle([
+        ('ALIGN', (0,0), (0,-1), 'CENTER'),
+        ('ALIGN', (1,0), (1,-1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
     els.append(qr_above)
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
     # 6. خط القص
     # ═══════════════════════════════════════════════════════════════════
-    els.append(Paragraph("─ ─ ─ ─ ─ ─ ─ ─ ✂ " + ar("قص هنا") + " | Cut Here ✂ ─ ─ ─ ─ ─ ─ ─ ─", s_tear))
+    els.append(Paragraph("─ ─ ─ ─ ─ ─ ─ ─ ✂ " + ar("قص هنا") + " ✂ ─ ─ ─ ─ ─ ─ ─ ─", s_tear))
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 7. QR للملفات (تحت خط القص)
+    # 7. كوبون (تحت خط القص) - مختصر
     # ═══════════════════════════════════════════════════════════════════
-    file_qr = make_qr(f"FILE-{ref}-{integrity}", 12)
+    file_qr = make_qr(f"FILE-{ref}-{integrity}", 10)
     
-    qr_below = Table([
-        [file_qr if file_qr else Paragraph("", s_role), 
-         Table([
-             [Paragraph(ar(co_ar), ParagraphStyle('co', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY))],
-             [Paragraph(typ_en + " | " + ref, s_small)],
-             [Paragraph(ar(emp_ar) + " | " + emp_en, s_small)],
-             [Paragraph(ar("معاملة صحيحة") + " | Valid" if status == 'executed' else ar("بانتظار"), s_role)],
-         ], colWidths=[CW - 25*mm])],
-    ], colWidths=[20*mm, CW - 20*mm])
-    qr_below.setStyle(TableStyle([
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    coupon_info = Table([
+        [Paragraph(ar(co_ar), s_coupon)],
+        [Paragraph(f"{typ_en} | {ref}", s_info)],
+        [Paragraph(f"{ar(emp_ar)} | {emp_en}", s_info)],
+        [Paragraph(ar("صالحة") + " | Valid" if status == 'executed' else ar("قيد المعالجة") + " | Processing", s_date)],
+    ], colWidths=[CW - 15*mm])
+    
+    coupon_tbl = Table([
+        [file_qr if file_qr else '', coupon_info],
+    ], colWidths=[15*mm, CW - 15*mm])
+    coupon_tbl.setStyle(TableStyle([
+        ('ALIGN', (0,0), (0,-1), 'CENTER'),
+        ('ALIGN', (1,0), (1,-1), 'LEFT'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BOX', (0,0), (-1,-1), 0.5, NAVY),
         ('BACKGROUND', (0,0), (-1,-1), LIGHT_GRAY),
         ('TOPPADDING', (0,0), (-1,-1), 2),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
     ]))
-    els.append(qr_below)
+    els.append(coupon_tbl)
     
     doc.build(els)
     pdf = buf.getvalue()
