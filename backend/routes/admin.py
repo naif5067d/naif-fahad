@@ -236,3 +236,62 @@ async def reset_test_data(user=Depends(require_roles('stas'))):
         },
         "timestamp": now
     }
+
+
+# ============================================================
+# إعادة تهيئة قاعدة البيانات بالكامل (للنشر الأولي)
+# ============================================================
+
+class FullResetRequest(BaseModel):
+    secret_key: str
+    confirm: bool = False
+
+@router.post("/full-reset-for-production")
+async def full_reset_for_production(body: FullResetRequest):
+    """
+    إعادة تهيئة قاعدة البيانات بالكامل للنشر الأولي
+    تحذير: هذا سيحذف جميع البيانات!
+    
+    يتطلب مفتاح سري للتأكيد
+    """
+    # التحقق من المفتاح السري
+    if body.secret_key != "RESET_PRODUCTION_2026_DAR_AL_CODE":
+        raise HTTPException(status_code=403, detail="مفتاح سري غير صحيح")
+    
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="يجب تأكيد العملية")
+    
+    from seed import seed_database
+    from utils.auth import hash_password
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # حذف جميع البيانات
+    collections_to_clear = [
+        'users', 'employees', 'contracts', 'contracts_v2',
+        'transactions', 'leave_ledger', 'attendance',
+        'settings', 'counters', 'public_holidays', 'finance_codes',
+        'custody_items', 'financial_custody', 'announcements',
+        'devices', 'login_sessions', 'deduction_log', 'tasks'
+    ]
+    
+    deleted_counts = {}
+    for coll_name in collections_to_clear:
+        try:
+            result = await db[coll_name].delete_many({})
+            deleted_counts[coll_name] = result.deleted_count
+        except Exception as e:
+            deleted_counts[coll_name] = f"error: {str(e)}"
+    
+    # إعادة تهيئة البيانات الأساسية
+    result = await seed_database(db)
+    
+    return {
+        "message_ar": "تم إعادة تهيئة قاعدة البيانات بنجاح",
+        "message_en": "Database has been fully reset and reseeded",
+        "deleted": deleted_counts,
+        "seed_result": result,
+        "timestamp": now,
+        "note": "كلمة المرور لجميع المستخدمين: 123456"
+    }
+
