@@ -440,6 +440,19 @@ export default function EmployeesPage() {
                         >
                           <Users size={14} />
                         </Button>
+                        {/* زر الاستدعاء */}
+                        {canSummon && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700" 
+                            onClick={() => openSummonDialog(e)} 
+                            data-testid={`summon-${e.employee_number}`}
+                            title={lang === 'ar' ? 'استدعاء' : 'Summon'}
+                          >
+                            <Bell size={14} />
+                          </Button>
+                        )}
                         {isStas && (
                           <>
                             <Button 
