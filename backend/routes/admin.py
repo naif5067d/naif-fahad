@@ -415,3 +415,141 @@ async def full_reset_for_production(body: FullResetRequest):
         "warning": "يُنصح بإزالة RESET_SECRET_KEY من environment variables بعد الاستخدام"
     }
 
+
+# ============================================================
+# إعادة تعيين النظام من تاريخ محدد (حذف البيانات القديمة)
+# ============================================================
+
+class SystemResetFromDateRequest(BaseModel):
+    reset_date: str  # YYYY-MM-DD - التاريخ الذي يبدأ منه النظام
+    emergency_key: str
+    confirm: bool = False
+
+
+@router.post("/system-reset-from-date")
+async def system_reset_from_date(body: SystemResetFromDateRequest):
+    """
+    إعادة تعيين النظام من تاريخ محدد
+    
+    يحذف:
+    - سجلات الحضور (daily_status) قبل التاريخ
+    - سجلات البصمة (attendance_ledger) قبل التاريخ
+    - العقوبات (penalties) قبل التاريخ
+    - المعاملات المالية (transactions, finance_entries) قبل التاريخ
+    - طلبات الإجازات (leave_requests) قبل التاريخ
+    - سجلات الإجازات (leave_ledger) قبل التاريخ
+    
+    يُبقي:
+    - الموظفين
+    - العقود
+    - بطاقات مواقع العمل
+    - إعدادات الشركة
+    """
+    # التحقق من مفتاح الطوارئ
+    if body.emergency_key != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    if not body.confirm:
+        raise HTTPException(status_code=400, detail="يجب تأكيد العملية (confirm: true)")
+    
+    reset_date = body.reset_date
+    now = datetime.now(timezone.utc).isoformat()
+    
+    deleted_counts = {}
+    
+    # 1. حذف سجلات الحضور اليومية قبل التاريخ
+    result = await db.daily_status.delete_many({"date": {"$lt": reset_date}})
+    deleted_counts["daily_status"] = result.deleted_count
+    
+    # 2. حذف سجلات البصمة قبل التاريخ
+    result = await db.attendance_ledger.delete_many({"date": {"$lt": reset_date}})
+    deleted_counts["attendance_ledger"] = result.deleted_count
+    
+    # 3. حذف العقوبات قبل التاريخ
+    result = await db.penalties.delete_many({
+        "$or": [
+            {"date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["penalties"] = result.deleted_count
+    
+    # 4. حذف المعاملات المالية قبل التاريخ
+    result = await db.transactions.delete_many({
+        "$or": [
+            {"date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["transactions"] = result.deleted_count
+    
+    # 5. حذف قيود المالية قبل التاريخ
+    result = await db.finance_entries.delete_many({
+        "$or": [
+            {"date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["finance_entries"] = result.deleted_count
+    
+    # 6. حذف طلبات الإجازات قبل التاريخ
+    result = await db.leave_requests.delete_many({
+        "$or": [
+            {"start_date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["leave_requests"] = result.deleted_count
+    
+    # 7. حذف سجلات الإجازات قبل التاريخ
+    result = await db.leave_ledger.delete_many({
+        "$or": [
+            {"date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["leave_ledger"] = result.deleted_count
+    
+    # 8. حذف سجلات الغياب غير المسوى قبل التاريخ
+    result = await db.unsettled_absences.delete_many({"date": {"$lt": reset_date}})
+    deleted_counts["unsettled_absences"] = result.deleted_count
+    
+    # 9. حذف سجلات الخصم قبل التاريخ
+    result = await db.deduction_log.delete_many({
+        "$or": [
+            {"date": {"$lt": reset_date}},
+            {"created_at": {"$lt": reset_date}}
+        ]
+    })
+    deleted_counts["deduction_log"] = result.deleted_count
+    
+    # 10. حذف الساعات الشهرية قبل الشهر
+    reset_month = reset_date[:7]  # YYYY-MM
+    result = await db.monthly_hours.delete_many({"month": {"$lt": reset_month}})
+    deleted_counts["monthly_hours"] = result.deleted_count
+    
+    # حساب إجمالي المحذوفات
+    total_deleted = sum(v for v in deleted_counts.values() if isinstance(v, int))
+    
+    # سجل التدقيق
+    await db.audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "system_reset_from_date",
+        "reset_date": reset_date,
+        "deleted_counts": deleted_counts,
+        "total_deleted": total_deleted,
+        "created_at": now,
+        "note": "إعادة تعيين النظام - كل ما قبل هذا التاريخ يُعتبر تجربة"
+    })
+    
+    return {
+        "success": True,
+        "message_ar": f"تم إعادة تعيين النظام بنجاح. البيانات قبل {reset_date} تم حذفها",
+        "message_en": f"System reset successful. Data before {reset_date} has been deleted",
+        "reset_date": reset_date,
+        "deleted": deleted_counts,
+        "total_deleted": total_deleted,
+        "kept": ["employees", "contracts_v2", "work_locations", "settings", "users"],
+        "timestamp": now
+    }
+
