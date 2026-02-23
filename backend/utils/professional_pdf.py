@@ -275,63 +275,90 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
-    # 4. جدول التوقيعات - 5 خانات (موظف → مشرف → سلطان → محمد → STAS)
+    # 4. جدول التوقيعات - 5 خانات جاهزة
+    # يظهر الاسم و QR فقط للذين وصلتهم المعاملة ووقعوا فعلياً
     # ═══════════════════════════════════════════════════════════════════
     els.append(Paragraph(ar("التوقيعات") + " | Signatures", s_sec))
     els.append(Spacer(1, 1*mm))
     
-    signed = {a.get('stage'): a.get('timestamp','') for a in chain}
+    # بناء قائمة الموقعين الفعليين من approval_chain
+    signed_stages = {}
+    for approval in chain:
+        stage = approval.get('stage', '')
+        ts = approval.get('timestamp', '')
+        if stage and ts:  # فقط إذا وقع فعلياً (له timestamp)
+            signed_stages[stage] = ts
     
-    # 5 أدوار بالترتيب
+    # التحقق من حالة المعاملة لمعرفة من وصلت له
+    # المعاملة تصل بالترتيب: employee -> supervisor -> hr -> ceo -> stas
+    current_status = status.lower()
+    
+    # 5 أدوار بالترتيب الصحيح
+    # structure: (stage_key, ar_role, en_role, ar_name, en_name)
     roles = [
-        ('employee', ar('الموظف'), 'Employee', emp_ar, emp_en, True, created),  # المنشئ دائماً موقع
-        ('supervisor', ar('المشرف'), 'Supervisor', '-', '-', 'supervisor' in signed, signed.get('supervisor', '')),
-        ('hr', ar('سلطان'), 'Sultan (HR)', 'سلطان', 'Sultan', 'hr' in signed or 'sultan' in signed, signed.get('hr', signed.get('sultan', ''))),
-        ('ceo', ar('محمد'), 'Mohammed (CEO)', 'محمد', 'Mohammed', 'ceo' in signed, signed.get('ceo', '')),
-        ('stas', 'STAS', 'STAS', 'STAS', 'STAS', status == 'executed' or 'stas' in signed, signed.get('stas', tx.get('executed_at', ''))),
+        ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
+        ('supervisor', 'المشرف', 'Supervisor', 'المشرف', 'Supervisor'),
+        ('hr', 'سلطان', 'Sultan (HR)', 'سلطان', 'Sultan'),
+        ('ceo', 'محمد', 'Mohammed (CEO)', 'محمد', 'Mohammed'),
+        ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
     ]
     
     col5 = CW / 5
     
-    # صف العناوين (الأدوار)
-    role_row = [Paragraph(f"{r[1]}\n{r[2]}", s_sig_h) for r in roles]
+    # صف العناوين (الأدوار) - دائماً يظهر
+    role_row = []
+    for r in roles:
+        role_row.append(Paragraph(ar(r[1]) + "\n" + r[2], s_role))
     
-    # صف QR - يظهر فقط للموقعين
+    # صف QR - يظهر فقط للموقعين الفعليين
     qr_row = []
     for r in roles:
-        if r[5]:  # إذا وقع
-            qr_row.append(make_qr(f"SIG-{r[2]}-{ref}", 8))
+        stage_key = r[0]
+        # التحقق من التوقيع الفعلي
+        if stage_key == 'employee':
+            # الموظف دائماً وقع (هو من أنشأ المعاملة)
+            qr_row.append(make_qr(f"SIG-{r[2]}-{ref}", 6))
+        elif stage_key in signed_stages:
+            # وقع فعلياً
+            qr_row.append(make_qr(f"SIG-{r[2]}-{ref}", 6))
         else:
-            qr_row.append(Paragraph("", s_role))  # فارغ
+            # لم يوقع - خانة فارغة
+            qr_row.append(Paragraph("—", s_empty))
     
-    # صف الأسماء - يظهر فقط للموقعين
+    # صف الأسماء - يظهر فقط للموقعين الفعليين
     name_row = []
     for r in roles:
-        if r[5]:  # إذا وقع
-            name_row.append(Paragraph(ar(r[3]) + "\n" + r[4], s_sig))
+        stage_key = r[0]
+        if stage_key == 'employee':
+            name_row.append(Paragraph(ar(r[3]) if r[3] else "—", s_name))
+        elif stage_key in signed_stages:
+            name_row.append(Paragraph(ar(r[3]), s_name))
         else:
-            name_row.append(Paragraph("", s_role))  # فارغ
+            name_row.append(Paragraph("—", s_empty))
     
-    # صف التواريخ - يظهر فقط للموقعين
+    # صف التواريخ - يظهر فقط للموقعين الفعليين
     date_row = []
     for r in roles:
-        if r[5] and r[6]:  # إذا وقع وله تاريخ
-            date_row.append(Paragraph(dt(r[6]), s_role))
+        stage_key = r[0]
+        if stage_key == 'employee':
+            date_row.append(Paragraph(dt(created).split(' | ')[0], s_date))
+        elif stage_key in signed_stages:
+            date_row.append(Paragraph(dt(signed_stages[stage_key]).split(' | ')[0], s_date))
         else:
-            date_row.append(Paragraph("", s_role))  # فارغ
+            date_row.append(Paragraph("—", s_empty))
     
-    sig_tbl = Table([role_row, qr_row, name_row, date_row], colWidths=[col5]*5)
+    sig_tbl = Table([role_row, qr_row, name_row, date_row], colWidths=[col5]*5, rowHeights=[6*mm, 8*mm, 5*mm, 4*mm])
     sig_tbl.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BACKGROUND', (0,0), (-1,0), NAVY),
         ('BOX', (0,0), (-1,-1), 0.5, NAVY),
-        ('INNERGRID', (0,0), (-1,-1), 0.5, LIGHT_GRAY),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+        ('TOPPADDING', (0,0), (-1,-1), 1),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 1),
     ]))
     els.append(sig_tbl)
-    els.append(Spacer(1, 3*mm))
+    els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
     # 5. QR للمعاملة (فوق خط القص)
