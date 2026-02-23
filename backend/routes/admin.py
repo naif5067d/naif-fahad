@@ -312,6 +312,41 @@ async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
 
 
 # ============================================================
+# إصلاح إعدادات الشركة (إزالة دار الأركان)
+# ============================================================
+
+@router.post("/fix-company-branding")
+async def fix_company_branding(body: ResetStasPasswordRequest):
+    """
+    إصلاح إعدادات الشركة - تغيير دار الأركان إلى دار الكود
+    """
+    if body.emergency_key != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديث إعدادات الشركة
+    await db.company_settings.update_one(
+        {"key": "login_page"},
+        {"$set": {
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "company_name_en": "DAR AL CODE",
+            "welcome_text_ar": "أنتم الدار ونحن الكود",
+            "welcome_text_en": "You are the Home, We are the Code",
+            "updated_at": now
+        }},
+        upsert=True
+    )
+    
+    return {
+        "message_ar": "تم تحديث إعدادات الشركة بنجاح - أصبح الاسم: دار الكود",
+        "message_en": "Company branding updated - Now: DAR AL CODE",
+        "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+        "company_name_en": "DAR AL CODE"
+    }
+
+
+# ============================================================
 # إعادة تهيئة قاعدة البيانات بالكامل (للنشر الأولي)
 # ============================================================
 
