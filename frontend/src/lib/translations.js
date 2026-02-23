@@ -7,7 +7,7 @@ export const translations = {
       attendance: "Attendance", finance: "Finance", contracts: "Contracts",
       contractsManagement: "Contracts (V2)", settlement: "Settlement", employees: "Employees", settings: "Settings", stasMirror: "STAS Mirror",
       logout: "Logout", profile: "Profile", workLocations: "Work Locations",
-      custody: "Tangible Custody", financialCustody: "Financial Custody",
+      custody: "In-Kind Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
       attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS",
@@ -128,7 +128,7 @@ export const translations = {
       asset: "Asset",
       attendance_correction: "Attendance Correction",
       add_finance_code: "Add Finance Code",
-      tangible_custody: "Tangible Custody",
+      tangible_custody: "In-Kind Custody",
       tangible_custody_return: "Custody Return"
     },
     stages: {
@@ -169,7 +169,7 @@ export const translations = {
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
       contractsManagement: "إدارة العقود", settlement: "المخالصات", employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
       logout: "تسجيل الخروج", profile: "الملف الشخصي", workLocations: "مواقع العمل",
-      custody: "العهد الملموسة", financialCustody: "العهدة المالية",
+      custody: "العهد العينية", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
       attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
@@ -296,7 +296,7 @@ export const translations = {
       asset: "أصول",
       attendance_correction: "تصحيح حضور",
       add_finance_code: "إضافة رمز مالي",
-      tangible_custody: "عهدة ملموسة",
+      tangible_custody: "عهدة عينية",
       tangible_custody_return: "إرجاع عهدة"
     },
     stages: {
