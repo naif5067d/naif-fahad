@@ -239,6 +239,49 @@ async def reset_test_data(user=Depends(require_roles('stas'))):
 
 
 # ============================================================
+# إعادة تعيين كلمة مرور STAS (للطوارئ)
+# ============================================================
+
+class ResetStasPasswordRequest(BaseModel):
+    emergency_key: str
+
+@router.post("/emergency-reset-stas-password")
+async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
+    """
+    إعادة تعيين كلمة مرور STAS للطوارئ
+    كلمة المرور الجديدة: 123456
+    """
+    from utils.auth import hash_password
+    
+    # مفتاح الطوارئ
+    if body.emergency_key != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    # البحث عن مستخدم stas
+    stas_user = await db.users.find_one({"username": "stas"})
+    
+    if not stas_user:
+        raise HTTPException(status_code=404, detail="مستخدم stas غير موجود")
+    
+    # تشفير كلمة المرور الجديدة
+    new_hash = hash_password("123456")
+    
+    # تحديث كلمة المرور
+    await db.users.update_one(
+        {"username": "stas"},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {
+        "message_ar": "تم إعادة تعيين كلمة مرور STAS بنجاح",
+        "message_en": "STAS password has been reset successfully",
+        "username": "stas",
+        "new_password": "123456",
+        "warning": "يرجى تغيير كلمة المرور بعد تسجيل الدخول"
+    }
+
+
+# ============================================================
 # إعادة تهيئة قاعدة البيانات بالكامل (للنشر الأولي)
 # ============================================================
 
