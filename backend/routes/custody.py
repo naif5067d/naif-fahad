@@ -1,12 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 from database import db
-from utils.auth import get_current_user
+from utils.auth import get_current_user, require_roles
 from utils.workflow import WORKFLOW_MAP, can_initiate_transaction
 from routes.transactions import get_next_ref_no
+from utils.inkind_custody_pdf import generate_inkind_custody_pdf, generate_custody_return_pdf
 from datetime import datetime, timezone
 import uuid
+import io
 
 router = APIRouter(prefix="/api/custody", tags=["custody"])
 
