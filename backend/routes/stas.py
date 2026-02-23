@@ -900,3 +900,52 @@ async def set_map_visibility(show: bool, user=Depends(require_roles('stas'))):
         "message": "تم تحديث إعداد الخريطة",
         "show_map_to_employees": show
     }
+
+
+# ==================== PDF DOWNLOAD ====================
+
+from fastapi.responses import StreamingResponse
+import io
+
+@router.get("/transaction/{transaction_id}/pdf")
+async def download_transaction_pdf(transaction_id: str, user=Depends(get_current_user)):
+    """
+    تحميل PDF للمعاملة المنفذة
+    يعمل مع جميع أنواع المعاملات
+    """
+    tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="المعاملة غير موجودة")
+    
+    # جلب بيانات الموظف
+    emp_id = tx.get('employee_id')
+    emp = await db.employees.find_one({"id": emp_id}, {"_id": 0}) if emp_id else None
+    
+    # جلب بيانات العلامة التجارية
+    branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+    if not branding:
+        branding = {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي",
+            "logo_data": None
+        }
+    
+    # توليد PDF
+    pdf_bytes, pdf_hash, integrity_id = generate_professional_transaction_pdf(tx, emp, branding)
+    
+    # إرجاع PDF
+    ref_no = tx.get('ref_no', 'document')
+    filename = f"{ref_no}_{integrity_id}.pdf"
+    
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename={filename}",
+            "X-Integrity-ID": integrity_id,
+            "X-PDF-Hash": pdf_hash
+        }
+    )
+
