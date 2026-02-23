@@ -312,12 +312,13 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     # كل معاملة لها workflow مختلف حسب وجود مشرف أو لا
     
     # الأدوار الثابتة مع المسميات الرسمية
+    # ملاحظة: الاسم الفعلي سيأتي من approval_chain
     role_definitions = {
         'employee': ('الموظف', 'Employee', emp_ar, emp_en),
         'supervisor': ('المشرف', 'Supervisor', sup_ar, sup_en),
-        'ops': ('المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),  # سلطان كـ ops
-        'hr': ('المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),
-        'ceo': ('المدير التنفيذي', 'Exec. Manager', 'م.محمد الثنيان', 'M. Al-Thunayan'),
+        'ops': ('المدير الإداري', 'Admin Manager', '', ''),  # الاسم من approval_chain
+        'hr': ('المدير الإداري', 'Admin Manager', '', ''),  # الاسم من approval_chain
+        'ceo': ('المدير التنفيذي', 'Exec. Manager', '', ''),  # الاسم من approval_chain
         'stas': ('STAS', 'STAS', 'STAS', 'STAS'),
     }
     
