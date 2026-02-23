@@ -407,6 +407,32 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
     if emp and emp.get('supervisor_id'):
         supervisor = await db.employees.find_one({"id": emp['supervisor_id']}, {"_id": 0})
     
+    # إثراء approval_chain بالأسماء العربية والإنجليزية من قاعدة البيانات
+    approval_chain = tx.get('approval_chain', [])
+    enriched_chain = []
+    for approval in approval_chain:
+        enriched = {**approval}
+        approver_id = approval.get('approver_id', '')
+        
+        # إذا لم يكن الاسم العربي موجوداً، جلبه من قاعدة البيانات
+        if approver_id and not approval.get('approver_name_ar'):
+            # جرب جلب من users أولاً
+            approver_user = await db.users.find_one({"id": approver_id}, {"_id": 0})
+            if approver_user:
+                enriched['approver_name_ar'] = approver_user.get('full_name_ar', '')
+                enriched['approver_name_en'] = approver_user.get('full_name', approver_user.get('username', ''))
+            else:
+                # جرب جلب من employees
+                approver_emp = await db.employees.find_one({"user_id": approver_id}, {"_id": 0})
+                if approver_emp:
+                    enriched['approver_name_ar'] = approver_emp.get('full_name_ar', '')
+                    enriched['approver_name_en'] = approver_emp.get('full_name', '')
+        
+        enriched_chain.append(enriched)
+    
+    # تحديث المعاملة مع الـ approval_chain المُثرى
+    tx['approval_chain'] = enriched_chain
+    
     # Fetch company branding for PDF
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
     if not branding:
