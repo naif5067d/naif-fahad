@@ -279,6 +279,44 @@ export default function EmployeesPage() {
     }
   };
 
+  // فتح dialog الاستدعاء
+  const openSummonDialog = (emp) => {
+    setSummonDialog(emp);
+    setSummonForm({ priority: 'normal', comment: '' });
+  };
+
+  // إرسال الاستدعاء
+  const handleSendSummon = async () => {
+    if (!summonDialog) return;
+    setSendingSummon(true);
+    
+    try {
+      await api.post('/api/notifications/summon', {
+        employee_id: summonDialog.id,
+        employee_name: summonDialog.full_name_ar || summonDialog.full_name,
+        priority: summonForm.priority,
+        comment: summonForm.comment
+      });
+      
+      const priorityText = {
+        urgent: lang === 'ar' ? 'طارئ' : 'Urgent',
+        normal: lang === 'ar' ? 'عادي' : 'Normal',
+        medium: lang === 'ar' ? 'متوسط' : 'Medium'
+      };
+      
+      toast.success(
+        lang === 'ar' 
+          ? `تم إرسال استدعاء ${priorityText[summonForm.priority]} للموظف "${summonDialog.full_name_ar || summonDialog.full_name}"` 
+          : `${priorityText[summonForm.priority]} summon sent to "${summonDialog.full_name}"`
+      );
+      setSummonDialog(null);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to send summon');
+    } finally {
+      setSendingSummon(false);
+    }
+  };
+
   return (
     <div className="space-y-4" data-testid="employees-page">
       <div className="flex items-center justify-between">
