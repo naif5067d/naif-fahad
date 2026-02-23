@@ -13,6 +13,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 export default function LoginPage() {
   const { login } = useAuth();
   const { t, lang, toggleLang } = useLanguage();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
