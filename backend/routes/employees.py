@@ -687,8 +687,9 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "contract": contract,
         "service_info": service_info,
         "attendance": {
-            "today_status": "present" if today_attendance else "not_checked_in",
-            "today_status_ar": "حاضر" if today_attendance else "لم يسجل الحضور",
+            "today_status": today_status,
+            "today_status_ar": today_status_ar,
+            "check_in_time": check_in_time,
             "monthly_hours": monthly_hours,
             "required_monthly_hours": required_monthly_hours,
             "remaining_hours": max(0, required_monthly_hours - monthly_hours),
