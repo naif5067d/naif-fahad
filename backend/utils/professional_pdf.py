@@ -380,7 +380,6 @@ def create_tear_off_coupon(doc_type: str, ref_no: str, employee_name_ar: str, em
     
     style_title = ParagraphStyle('coupon_title', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
     style_title_en = ParagraphStyle('coupon_title_en', fontName=ENGLISH_FONT_BOLD, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
-    style_label = ParagraphStyle('coupon_label', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, wordWrap='RTL', textColor=TEXT_GRAY)
     style_value = ParagraphStyle('coupon_value', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_RIGHT, wordWrap='RTL')
     style_value_en = ParagraphStyle('coupon_value_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_LEFT)
     style_small = ParagraphStyle('coupon_small', fontName=ENGLISH_FONT, fontSize=6, alignment=TA_CENTER, textColor=TEXT_GRAY)
