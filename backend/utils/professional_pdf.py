@@ -359,24 +359,24 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         else:
             qr_row.append(Paragraph("—", s_empty))
     
-    # صف الأسماء - يظهر فقط للموقعين الفعليين
-    # الاسم عربي أولاً، ثم إنجليزي صغير أسفل
+    # صف الأسماء - عربي + إنجليزي صغير (إلا STAS إنجليزي فقط بالأزرق)
+    s_name_stas = ParagraphStyle('name_stas', fontName='Helvetica-Bold', fontSize=5, alignment=TA_CENTER, textColor=NAVY, leading=6)
     name_row = []
     for r in roles:
         stage_key = r[0]
         ar_name = r[3]  # الاسم العربي
         en_name = r[4]  # الاسم الإنجليزي
         
-        if stage_key == 'employee':
-            # عربي + إنجليزي صغير
-            name_text = f"{ar(ar_name)}\n{en_name}" if ar_name else "—"
-            name_row.append(Paragraph(name_text, s_name))
-        elif stage_key == 'stas':
-            # STAS يبقى إنجليزي فقط
+        if stage_key == 'stas':
+            # STAS إنجليزي فقط بالأزرق
             if stage_key in signed_stages:
-                name_row.append(Paragraph("STAS", s_name))
+                name_row.append(Paragraph("STAS", s_name_stas))
             else:
                 name_row.append(Paragraph("—", s_empty))
+        elif stage_key == 'employee':
+            # عربي + إنجليزي صغير
+            name_text = ar(ar_name) + "\n" + en_name if ar_name else "—"
+            name_row.append(Paragraph(name_text, s_name))
         elif stage_key in signed_stages:
             # استخدام اسم الموقع الفعلي إذا متوفر
             signer_info = signed_stages[stage_key]
@@ -384,13 +384,12 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
             actual_en = en_name
             if isinstance(signer_info, dict) and signer_info.get('signer'):
                 signer_name = signer_info.get('signer')
-                # تحديد إذا الاسم عربي أم إنجليزي
                 if any('\u0600' <= c <= '\u06FF' for c in signer_name):
                     actual_ar = signer_name
                 else:
                     actual_en = signer_name
             # عربي + إنجليزي صغير
-            name_text = f"{ar(actual_ar)}\n{actual_en}"
+            name_text = ar(actual_ar) + "\n" + actual_en
             name_row.append(Paragraph(name_text, s_name))
         else:
             name_row.append(Paragraph("—", s_empty))
