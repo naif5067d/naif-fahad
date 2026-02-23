@@ -68,6 +68,25 @@ def clear_failed_attempts(request: Request):
         del login_attempts[client_ip]
 
 
+@router.post("/clear-all-blocks")
+async def clear_all_blocks(request: Request):
+    """
+    رفع جميع الحظر - للطوارئ
+    يتطلب مفتاح سري
+    """
+    body = await request.json()
+    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+        raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
+    
+    # مسح جميع الحظر
+    login_attempts.clear()
+    
+    return {
+        "message_ar": "تم رفع جميع الحظر بنجاح",
+        "message_en": "All blocks have been cleared"
+    }
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
