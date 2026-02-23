@@ -101,7 +101,15 @@ export default function EmployeesPage() {
   });
 
   const openEdit = (emp) => {
-    setEditForm({ full_name: emp.full_name, full_name_ar: emp.full_name_ar, is_active: emp.is_active });
+    setEditForm({ 
+      full_name: emp.full_name, 
+      full_name_ar: emp.full_name_ar, 
+      department: emp.department,
+      department_ar: emp.department_ar,
+      position: emp.position,
+      position_ar: emp.position_ar,
+      is_active: emp.is_active 
+    });
     setEditDialog(emp);
   };
 
