@@ -194,6 +194,9 @@ async def create_settlement(req: SettlementRequest, user=Depends(require_roles('
     - Only Sultan (Ops Admin) can initiate
     - Mohammed (CEO) must approve
     - STAS executes and locks the account
+    
+    قبل المخالصة:
+    - يجب إرجاع جميع العهد العينية
     """
     emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
     if not emp:
@@ -202,6 +205,24 @@ async def create_settlement(req: SettlementRequest, user=Depends(require_roles('
     # Check employee is active
     if not emp.get('is_active', True):
         raise HTTPException(status_code=400, detail="الموظف غير نشط بالفعل")
+    
+    # ==================== التحقق من العهد العينية ====================
+    active_custodies = await db.custody_ledger.find(
+        {"employee_id": req.employee_id, "status": "active"},
+        {"_id": 0, "item_name_ar": 1, "item_name": 1, "serial_number": 1}
+    ).to_list(100)
+    
+    if active_custodies:
+        items = [c.get('item_name_ar', c.get('item_name', '')) for c in active_custodies]
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "message_ar": f"لا يمكن إنشاء مخالصة. يوجد {len(active_custodies)} عهدة عينية لم تُرجَع: {', '.join(items)}",
+                "message_en": f"Cannot create settlement. {len(active_custodies)} active custody items not returned",
+                "active_custodies": active_custodies
+            }
+        )
+    # ================================================================
     
     # Check for existing pending settlement
     existing = await db.transactions.find_one({
