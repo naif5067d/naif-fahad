@@ -2,7 +2,11 @@ import uuid
 from datetime import datetime, timezone
 from utils.auth import hash_password
 
-DEFAULT_PASSWORD = "DarAlCode2026!"
+# كلمة المرور الموحدة لجميع المستخدمين
+DEFAULT_PASSWORD = "123456"
+
+# إصدار التطبيق
+APP_VERSION = "22.0"
 
 SEED_USERS = [
     {
