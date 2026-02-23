@@ -70,7 +70,7 @@ def register_fonts():
                 ARABIC_FONT = font_name
                 ARABIC_FONT_BOLD = f'{font_name}Bold'
                 return True
-        except Exception as e:
+        except Exception:
             continue
     return False
 
@@ -114,7 +114,7 @@ def format_saudi_time(ts):
             dt = dt.replace(tzinfo=timezone.utc)
         saudi_time = dt + timedelta(hours=3)
         return saudi_time.strftime('%Y-%m-%d %H:%M')
-    except:
+    except Exception:
         return str(ts)[:16] if ts else '-'
 
 
