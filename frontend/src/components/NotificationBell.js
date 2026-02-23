@@ -43,55 +43,6 @@ const playNotificationSound = () => {
   }
 };
 
-const playNotificationSound = () => {
-  try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-    
-    // إنشاء نغمة هندسية راقية - مستوحاة من أصوات البناء والتصميم
-    const playTone = (freq, startTime, duration, volume = 0.15) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
-      
-      // فلتر لصوت أنعم وأرقى
-      filter.type = 'lowpass';
-      filter.frequency.value = 2000;
-      filter.Q.value = 1;
-      
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-      
-      // تدرج الصوت - بداية ناعمة ونهاية سلسة
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
-      gain.gain.setValueAtTime(volume, startTime + duration - 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-    
-    // نغمة "دار الكود" - تصاعدية هندسية أنيقة
-    // مبنية على سلم موسيقي متناسق (C Major 7th chord)
-    playTone(523.25, now, 0.12, 0.12);        // C5 - الأساس
-    playTone(659.25, now + 0.08, 0.12, 0.14); // E5 - التناغم
-    playTone(783.99, now + 0.16, 0.15, 0.16); // G5 - الذروة
-    playTone(987.77, now + 0.24, 0.20, 0.12); // B5 - اللمسة النهائية الراقية
-    
-    // صدى خفيف للإحساس بالعمق (مثل صدى في مبنى)
-    playTone(783.99, now + 0.35, 0.25, 0.06); // G5 echo
-    playTone(523.25, now + 0.45, 0.30, 0.04); // C5 final echo
-    
-  } catch (e) {
-    console.log('Audio not supported:', e);
-  }
-};
-
 // تنسيق الوقت النسبي
 const formatRelativeTime = (dateStr, lang) => {
   if (!dateStr) return '';
