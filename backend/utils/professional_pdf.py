@@ -57,7 +57,8 @@ def dt(ts):
         return d.strftime('%Y.%m.%d | %H:%M')
     except: return str(ts)[:16]
 
-def make_qr(data, sz=8):
+def make_qr(data, sz=6):
+    """QR code بحجم صغير ومتناسب"""
     try:
         q = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=2, border=0)
         q.add_data(data)
@@ -69,7 +70,8 @@ def make_qr(data, sz=8):
         return RLImage(b, width=sz*mm, height=sz*mm)
     except: return None
 
-def make_logo(logo_data, sz=12):
+def make_logo(logo_data, sz=10):
+    """شعار بحجم متناسب"""
     if logo_data:
         try:
             if ',' in logo_data:
@@ -82,6 +84,7 @@ def make_logo(logo_data, sz=12):
 
 
 def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dict = None) -> tuple:
+    """توليد PDF احترافي متوازن ومتناسب"""
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=M, bottomMargin=M, leftMargin=M, rightMargin=M)
     els = []
@@ -109,17 +112,28 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     stats = {'executed':('منفذة','Executed'), 'pending':('معلقة','Pending'), 'stas':('STAS','Pending'), 'ceo':('CEO','Pending')}
     st_ar, st_en = stats.get(status, (status, status))
     
-    # Styles - أحجام صغيرة
-    s_title = ParagraphStyle('title', fontName=ARB, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
-    s_sub = ParagraphStyle('sub', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=NAVY)
-    s_small = ParagraphStyle('small', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY)
-    s_lbl = ParagraphStyle('lbl', fontName=AR, fontSize=6, alignment=TA_CENTER, textColor=GRAY)
-    s_val = ParagraphStyle('val', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=BLACK)
-    s_sec = ParagraphStyle('sec', fontName=ARB, fontSize=7, alignment=TA_CENTER, textColor=NAVY)
-    s_sig_h = ParagraphStyle('sigh', fontName=ARB, fontSize=5, alignment=TA_CENTER, textColor=WHITE)
-    s_sig = ParagraphStyle('sig', fontName=ARB, fontSize=5, alignment=TA_CENTER, textColor=BLACK)
-    s_role = ParagraphStyle('role', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=GRAY)
-    s_tear = ParagraphStyle('tear', fontName='Helvetica', fontSize=6, alignment=TA_CENTER, textColor=GRAY)
+    # ═══════════════════════════════════════════════════════════════════
+    # Styles - أحجام صغيرة ومتناسبة (لا تضخيم)
+    # ═══════════════════════════════════════════════════════════════════
+    s_co_ar = ParagraphStyle('co_ar', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=NAVY, leading=10)
+    s_co_en = ParagraphStyle('co_en', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=DARK_GRAY, leading=8)
+    s_info = ParagraphStyle('info', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY, leading=6)
+    
+    s_title = ParagraphStyle('title', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=NAVY, leading=10)
+    s_ref = ParagraphStyle('ref', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=DARK_GRAY)
+    
+    s_hdr = ParagraphStyle('hdr', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=WHITE, leading=7)
+    s_val = ParagraphStyle('val', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=BLACK, leading=7)
+    s_val_en = ParagraphStyle('val_en', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=DARK_GRAY, leading=6)
+    
+    s_sec = ParagraphStyle('sec', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY, leading=8)
+    s_role = ParagraphStyle('role', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=WHITE, leading=6)
+    s_name = ParagraphStyle('name', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=BLACK, leading=6)
+    s_date = ParagraphStyle('date', fontName='Helvetica', fontSize=4, alignment=TA_CENTER, textColor=GRAY, leading=5)
+    s_empty = ParagraphStyle('empty', fontName=AR, fontSize=4, alignment=TA_CENTER, textColor=LIGHT_GRAY, leading=5)
+    
+    s_tear = ParagraphStyle('tear', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY)
+    s_coupon = ParagraphStyle('coupon', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=NAVY, leading=7)
     
     # ═══════════════════════════════════════════════════════════════════
     # 1. الترويسة
