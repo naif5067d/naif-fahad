@@ -133,7 +133,11 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     
     s_sec = ParagraphStyle('sec', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY, leading=8)
     s_role = ParagraphStyle('role', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=WHITE, leading=6)
-    s_name = ParagraphStyle('name', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=BLACK, leading=6)
+    # اسم عربي كبير + إنجليزي صغير
+    s_name = ParagraphStyle('name', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=BLACK, leading=7)
+    s_name_en_small = ParagraphStyle('name_en_small', fontName='Helvetica', fontSize=3.5, alignment=TA_CENTER, textColor=GRAY, leading=5)
+    # STAS بالأزرق
+    s_name_stas = ParagraphStyle('name_stas', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=NAVY, leading=7)
     s_date = ParagraphStyle('date', fontName=AR, fontSize=4, alignment=TA_CENTER, textColor=GRAY, leading=5)
     s_empty = ParagraphStyle('empty', fontName=AR, fontSize=4, alignment=TA_CENTER, textColor=LIGHT_GRAY, leading=5)
     
