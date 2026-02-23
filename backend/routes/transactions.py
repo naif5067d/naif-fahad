@@ -388,6 +388,11 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
         raise HTTPException(status_code=404, detail="Transaction not found")
     emp = await db.employees.find_one({"id": tx.get('employee_id')}, {"_id": 0})
     
+    # جلب بيانات المشرف
+    supervisor = None
+    if emp and emp.get('supervisor_id'):
+        supervisor = await db.employees.find_one({"id": emp['supervisor_id']}, {"_id": 0})
+    
     # Fetch company branding for PDF
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
     if not branding:
@@ -400,7 +405,7 @@ async def get_transaction_pdf(transaction_id: str, lang: str = 'ar', user=Depend
         }
     
     # استخدام التصميم الاحترافي الجديد
-    pdf_bytes, pdf_hash, integrity_id = generate_professional_transaction_pdf(tx, emp, branding)
+    pdf_bytes, pdf_hash, integrity_id = generate_professional_transaction_pdf(tx, emp, branding, supervisor)
 
     await db.transactions.update_one(
         {"id": transaction_id},
