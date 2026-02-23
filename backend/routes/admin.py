@@ -252,17 +252,28 @@ async def full_reset_for_production(body: FullResetRequest):
     إعادة تهيئة قاعدة البيانات بالكامل للنشر الأولي
     تحذير: هذا سيحذف جميع البيانات!
     
-    يتطلب مفتاح سري للتأكيد
+    يتطلب مفتاح سري من environment variable
     """
+    import os
+    
+    # المفتاح السري من environment variable (أكثر أماناً)
+    expected_key = os.environ.get('RESET_SECRET_KEY', '')
+    
+    # إذا لم يكن المفتاح موجوداً في البيئة، الـ endpoint معطل
+    if not expected_key:
+        raise HTTPException(
+            status_code=403, 
+            detail="هذا الـ endpoint معطل. يجب تعيين RESET_SECRET_KEY في environment variables"
+        )
+    
     # التحقق من المفتاح السري
-    if body.secret_key != "RESET_PRODUCTION_2026_DAR_AL_CODE":
+    if body.secret_key != expected_key:
         raise HTTPException(status_code=403, detail="مفتاح سري غير صحيح")
     
     if not body.confirm:
         raise HTTPException(status_code=400, detail="يجب تأكيد العملية")
     
     from seed import seed_database
-    from utils.auth import hash_password
     
     now = datetime.now(timezone.utc).isoformat()
     
@@ -292,6 +303,7 @@ async def full_reset_for_production(body: FullResetRequest):
         "deleted": deleted_counts,
         "seed_result": result,
         "timestamp": now,
-        "note": "كلمة المرور لجميع المستخدمين: 123456"
+        "note": "كلمة المرور لجميع المستخدمين: 123456",
+        "warning": "يُنصح بإزالة RESET_SECRET_KEY من environment variables بعد الاستخدام"
     }
 
