@@ -23,7 +23,7 @@ const NAV_ITEMS = {
   // محمد CEO - استعراض الموظفين + التقارير
   mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody', 'policies', 'employees'],
   // ستاس إداري + صلاحيات كاملة (loginSessions خاصة به فقط)
-  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
+  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'soundSettings', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
 };
 
 // Mobile bottom nav - only show first 4-5 items
