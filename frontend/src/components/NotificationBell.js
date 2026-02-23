@@ -164,19 +164,20 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
-  // تحديد إشعار كمقروء
+  // تحديد إشعار كمقروء وحذفه
   const handleMarkRead = async (notificationId, e) => {
     e?.stopPropagation();
     if (notificationId.startsWith('pending-') || notificationId.startsWith('contract-')) {
-      // إشعارات حية - لا نحتاج تحديثها
+      // إشعارات حية - نحذفها من العرض مباشرة
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
       return;
     }
     
     try {
       await api.patch(`/api/notifications/${notificationId}/read`);
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
-      );
+      // حذف الإشعار من القائمة مباشرة بعد قراءته
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {}
   };
