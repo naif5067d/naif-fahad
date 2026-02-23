@@ -133,10 +133,18 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup():
+    # 1. Seed الأساسي
     result = await seed_database(db)
     logger.info(f"Seed: {result['message']}")
     
-    # تشغيل جدولة المهام
+    # 2. التزامن التلقائي للبيانات الأساسية
+    sync_result = await auto_sync_database(db)
+    if sync_result["actions"]:
+        logger.info(f"Auto-Sync: {len(sync_result['actions'])} actions performed")
+    else:
+        logger.info("Auto-Sync: Database is in sync")
+    
+    # 3. تشغيل جدولة المهام
     from services.scheduler import init_scheduler
     init_scheduler()
     logger.info("✅ Scheduler initialized")
