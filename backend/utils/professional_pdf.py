@@ -302,49 +302,35 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         if stage and ts:
             signed_stages[stage] = {'timestamp': ts, 'signer': signer}
     
-    # التعامل مع المراحل البديلة (ops = supervisor)
-    if 'ops' in signed_stages and 'supervisor' not in signed_stages:
-        signed_stages['supervisor'] = signed_stages['ops']
-    # التعامل مع أسماء المراحل البديلة
-    if 'sultan' in signed_stages and 'hr' not in signed_stages:
-        signed_stages['hr'] = signed_stages['sultan']
-    if 'mohammed' in signed_stages and 'ceo' not in signed_stages:
-        signed_stages['ceo'] = signed_stages['mohammed']
+    # الحصول على الـ workflow الفعلي للمعاملة
+    actual_workflow = tx.get('workflow', [])
     
     # تحديد المراحل التي وصلت لها المعاملة بناءً على الحالة
-    # الترتيب: pending -> supervisor -> hr -> ceo -> stas -> executed
     current_status = status.lower()
     
-    # تحديد عدد الأعمدة بناءً على الحالة الحالية
-    stage_order = ['employee', 'supervisor', 'hr', 'ceo', 'stas']
-    status_to_max_stage = {
-        'pending': 1,      # فقط الموظف
-        'supervisor': 2,   # موظف + مشرف
-        'hr': 3,           # موظف + مشرف + المدير الإداري
-        'sultan': 3,       # نفس hr
-        'ceo': 4,          # موظف + مشرف + المدير الإداري + المدير التنفيذي
-        'mohammed': 4,     # نفس ceo
-        'stas': 5,         # الكل
-        'executed': 5      # الكل
+    # بناء قائمة الأدوار بناءً على الـ workflow الفعلي
+    # كل معاملة لها workflow مختلف حسب وجود مشرف أو لا
+    
+    # الأدوار الثابتة مع المسميات الرسمية
+    role_definitions = {
+        'employee': ('الموظف', 'Employee', emp_ar, emp_en),
+        'supervisor': ('المشرف', 'Supervisor', sup_ar, sup_en),
+        'ops': ('المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),  # سلطان كـ ops
+        'hr': ('المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),
+        'ceo': ('المدير التنفيذي', 'Exec. Manager', 'م.محمد الثنيان', 'M. Al-Thunayan'),
+        'stas': ('STAS', 'STAS', 'STAS', 'STAS'),
     }
-    max_stages = status_to_max_stage.get(current_status, 5)
     
-    # إذا المعاملة منفذة، نعرض كل المراحل
-    if current_status == 'executed':
-        max_stages = 5
+    # بناء الأدوار بناءً على الـ workflow الفعلي
+    # الموظف دائماً أولاً
+    roles = [('employee', *role_definitions['employee'])]
     
-    # الأدوار مع المسميات الرسمية
-    # (stage_key, ar_role_title, en_role_title, ar_name, en_name)
-    all_roles = [
-        ('employee', 'الموظف', 'Employee', emp_ar, emp_en),
-        ('supervisor', 'المشرف', 'Supervisor', sup_ar, sup_en),
-        ('hr', 'المدير الإداري', 'Admin. Manager', 'أ.سلطان', 'Sultan'),
-        ('ceo', 'المدير التنفيذي', 'Exec. Manager', 'م.محمد الثنيان', 'M. Al-Thunayan'),
-        ('stas', 'STAS', 'STAS', 'STAS', 'STAS'),
-    ]
+    # إضافة باقي المراحل من الـ workflow
+    for stage in actual_workflow:
+        if stage in role_definitions and stage != 'employee':
+            roles.append((stage, *role_definitions[stage]))
     
-    # فقط الأدوار التي وصلت لها المعاملة
-    roles = all_roles[:max_stages]
+    # إذا المعاملة منفذة أو في مرحلة stas، نعرض كل الـ workflow
     num_cols = len(roles)
     col_width = CW / num_cols
     
