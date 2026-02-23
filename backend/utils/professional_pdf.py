@@ -267,8 +267,8 @@ def create_tear_off_line():
 # ==================== SIGNATURES TABLE / جدول التوقيعات ====================
 def create_signatures_table(signatures: list, ref_no: str):
     """
-    إنشاء جدول التوقيعات المنظم
-    كل توقيع في خانة منفصلة مع QR Code واسم الموقع (عربي + إنجليزي)
+    إنشاء جدول التوقيعات الاحترافي
+    جدول منظم بأعمدة: الدور | الاسم (عربي + إنجليزي) | QR Code | التاريخ
     
     signatures: قائمة التوقيعات
     [
@@ -278,15 +278,48 @@ def create_signatures_table(signatures: list, ref_no: str):
         {"role": "stas", "name_ar": "STAS", "name_en": "STAS", "signed": True, "timestamp": "..."},
     ]
     """
-    style_header = ParagraphStyle('sig_header', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=WHITE, wordWrap='RTL')
-    style_name = ParagraphStyle('sig_name', fontName=ARABIC_FONT, fontSize=7, alignment=TA_CENTER, wordWrap='RTL')
-    style_name_en = ParagraphStyle('sig_name_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER)
-    style_date = ParagraphStyle('sig_date', fontName=ENGLISH_FONT, fontSize=6, alignment=TA_CENTER, textColor=TEXT_GRAY)
-    style_status = ParagraphStyle('sig_status', fontName=ARABIC_FONT, fontSize=6, alignment=TA_CENTER, textColor=SUCCESS_GREEN, wordWrap='RTL')
+    # Styles
+    style_header_ar = ParagraphStyle('sig_header_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=WHITE, wordWrap='RTL')
+    style_header_en = ParagraphStyle('sig_header_en', fontName=ENGLISH_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=WHITE)
+    style_role_ar = ParagraphStyle('sig_role_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_CENTER, textColor=NAVY, wordWrap='RTL')
+    style_role_en = ParagraphStyle('sig_role_en', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    style_name_ar = ParagraphStyle('sig_name_ar', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER, wordWrap='RTL')
+    style_name_en = ParagraphStyle('sig_name_en', fontName=ENGLISH_FONT, fontSize=8, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    style_date = ParagraphStyle('sig_date', fontName=ENGLISH_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY)
+    style_signed = ParagraphStyle('sig_signed', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_CENTER, textColor=SUCCESS_GREEN, wordWrap='RTL')
+    style_pending = ParagraphStyle('sig_pending', fontName=ARABIC_FONT, fontSize=7, alignment=TA_CENTER, textColor=TEXT_GRAY, wordWrap='RTL')
     
-    # Build signature cells
-    sig_cells = []
+    # Role labels mapping
+    role_labels = {
+        'employee': ('الموظف', 'Employee'),
+        'hr': ('الموارد البشرية', 'HR'),
+        'ceo': ('الرئيس التنفيذي', 'CEO'),
+        'stas': ('STAS', 'STAS'),
+        'ops': ('العمليات', 'Operations'),
+        'finance': ('المالية', 'Finance'),
+        'supervisor': ('المشرف', 'Supervisor'),
+    }
     
+    if not signatures:
+        return None
+    
+    # Column widths
+    col_role = 35 * mm      # الدور
+    col_name = 55 * mm      # الاسم
+    col_qr = 30 * mm        # QR
+    col_date = 45 * mm      # التاريخ والحالة
+    
+    # Table header row
+    header_row = [
+        Paragraph(reshape_arabic("الدور"), style_header_ar),
+        Paragraph(reshape_arabic("الاسم"), style_header_ar),
+        Paragraph("QR", style_header_en),
+        Paragraph(reshape_arabic("التاريخ / الحالة"), style_header_ar),
+    ]
+    
+    table_data = [header_row]
+    
+    # Build rows for each signature
     for sig in signatures:
         role = sig.get('role', 'unknown')
         name_ar = sig.get('name_ar', '')
@@ -294,75 +327,75 @@ def create_signatures_table(signatures: list, ref_no: str):
         signed = sig.get('signed', False)
         timestamp = sig.get('timestamp', '')
         
-        # QR code for this signature
-        qr_data = f"SIG-{role.upper()}-{ref_no}"
-        qr_img = create_qr_image(qr_data, size=15) if signed else None
-        
-        # Role labels
-        role_labels = {
-            'employee': ('الموظف', 'Employee'),
-            'hr': ('الموارد البشرية', 'HR'),
-            'ceo': ('الرئيس التنفيذي', 'CEO'),
-            'stas': ('STAS', 'STAS'),
-            'ops': ('العمليات', 'Operations'),
-            'finance': ('المالية', 'Finance'),
-            'supervisor': ('المشرف', 'Supervisor'),
-        }
-        
         role_ar, role_en = role_labels.get(role, (role, role))
         
-        # Build cell content
-        cell_content = []
-        
-        # Header with role
-        cell_content.append([Paragraph(reshape_arabic(role_ar), style_header)])
-        cell_content.append([Paragraph(role_en, style_name_en)])
-        
-        # QR or signature line
-        if signed and qr_img:
-            cell_content.append([qr_img])
-        else:
-            cell_content.append([Paragraph("________________", style_name_en)])
-        
-        # Name
-        cell_content.append([Paragraph(reshape_arabic(name_ar), style_name)])
-        cell_content.append([Paragraph(name_en, style_name_en)])
-        
-        # Date/Status
-        if signed and timestamp:
-            cell_content.append([Paragraph(format_saudi_time(timestamp), style_date)])
-            cell_content.append([Paragraph(reshape_arabic("✓ تم التوقيع"), style_status)])
-        else:
-            cell_content.append([Paragraph("____/____/____", style_date)])
-        
-        # Create cell table
-        cell_table = Table(cell_content, colWidths=[40*mm])
-        cell_table.setStyle(TableStyle([
+        # Column 1: Role (Arabic + English)
+        role_cell = Table([
+            [Paragraph(reshape_arabic(role_ar), style_role_ar)],
+            [Paragraph(role_en, style_role_en)],
+        ], colWidths=[col_role - 4*mm])
+        role_cell.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BACKGROUND', (0, 0), (0, 0), NAVY),
-            ('TOPPADDING', (0, 0), (-1, -1), 2),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
         ]))
         
-        sig_cells.append(cell_table)
+        # Column 2: Name (Arabic + English)
+        name_cell = Table([
+            [Paragraph(reshape_arabic(name_ar), style_name_ar)],
+            [Paragraph(name_en, style_name_en)],
+        ], colWidths=[col_name - 4*mm])
+        name_cell.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        # Column 3: QR Code
+        if signed:
+            qr_data = f"SIG-{role.upper()}-{ref_no}"
+            qr_img = create_qr_image(qr_data, size=18)
+            qr_cell = qr_img if qr_img else Paragraph("-", style_date)
+        else:
+            qr_cell = Paragraph("____", style_date)
+        
+        # Column 4: Date + Status
+        if signed and timestamp:
+            date_cell = Table([
+                [Paragraph(format_saudi_time(timestamp), style_date)],
+                [Paragraph(reshape_arabic("✓ تم التوقيع"), style_signed)],
+            ], colWidths=[col_date - 4*mm])
+        else:
+            date_cell = Table([
+                [Paragraph("____/____/____", style_date)],
+                [Paragraph(reshape_arabic("بانتظار التوقيع"), style_pending)],
+            ], colWidths=[col_date - 4*mm])
+        date_cell.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        
+        # Add row
+        table_data.append([role_cell, name_cell, qr_cell, date_cell])
     
-    # Calculate columns based on number of signatures
-    num_sigs = len(sig_cells)
-    if num_sigs == 0:
-        return None
-    
-    col_width = CONTENT_WIDTH / num_sigs
-    
-    # Create main signatures table
-    main_table = Table([sig_cells], colWidths=[col_width] * num_sigs)
+    # Create main table
+    main_table = Table(table_data, colWidths=[col_role, col_name, col_qr, col_date])
     main_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('BOX', (0, 0), (-1, -1), 1, BORDER_GRAY),
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
+        # Grid
+        ('BOX', (0, 0), (-1, -1), 1.5, NAVY),
         ('INNERGRID', (0, 0), (-1, -1), 0.5, BORDER_GRAY),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LINEBELOW', (0, 0), (-1, 0), 1.5, NAVY),
+        # Alignment
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        # Alternating row colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, LIGHT_GRAY]),
     ]))
     
     return main_table
