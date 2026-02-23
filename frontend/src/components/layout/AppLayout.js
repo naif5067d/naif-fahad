@@ -45,7 +45,7 @@ const PATHS = {
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance', myFinances: '/my-finances', teamAttendance: '/team-attendance', penalties: '/penalties',
   attendancePenalties: '/team-attendance', loginSessions: '/login-sessions', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
-  executive: '/executive', ats: '/ats', policies: '/policies',
+  executive: '/executive', ats: '/ats', policies: '/policies', soundSettings: '/sound-settings',
 };
 
 const ROLE_COLORS = {
