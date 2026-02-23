@@ -243,7 +243,9 @@ export default function AppLayout({ children }) {
         <h1 className="text-base font-bold tracking-tight text-foreground" data-testid="app-title">
           {lang === 'ar' ? companyName.ar : companyName.en}
         </h1>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t('app.company')}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          {lang === 'ar' ? 'تطبيق الموارد البشرية' : 'HR Management System'}
+        </p>
       </div>
       
       {/* Navigation */}
