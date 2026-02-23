@@ -397,22 +397,10 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         elif stage_key in signed_stages:
             # الاسم من approval_chain
             signer_info = signed_stages[stage_key]
-            actual_ar = default_ar
-            actual_en = default_en
             
-            if isinstance(signer_info, dict):
-                # جرب الحصول على الاسم العربي والإنجليزي
-                signer_name = signer_info.get('signer', '')
-                signer_name_ar = signer_info.get('signer_ar', '')
-                signer_name_en = signer_info.get('signer_en', '')
-                
-                # إذا الاسم عربي، استخدمه كعربي
-                if signer_name and any('\u0600' <= c <= '\u06FF' for c in signer_name):
-                    actual_ar = signer_name
-                # إذا الاسم إنجليزي، استخدمه كإنجليزي لكن أبقِ العربي الافتراضي
-                elif signer_name:
-                    actual_en = signer_name
-                    # لا تغير actual_ar - استخدم الافتراضي
+            # الحصول على الاسم العربي والإنجليزي من approval_chain
+            actual_ar = signer_info.get('signer_ar', '') or default_ar
+            actual_en = signer_info.get('signer_en', '') or default_en
             
             # عربي فوق + إنجليزي تحت
             name_content = Table([
