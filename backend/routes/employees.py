@@ -38,8 +38,20 @@ class SupervisorAssignment(BaseModel):
 @router.get("")
 async def list_employees(user=Depends(get_current_user)):
     role = user.get('role')
+    
+    # تحديد الحقول المطلوبة
+    fields = {
+        "_id": 0, "id": 1, "employee_number": 1, "full_name": 1, "full_name_ar": 1, 
+        "department": 1, "department_ar": 1, "position": 1, "position_ar": 1, 
+        "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, 
+        "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, 
+        "start_date": 1, "created_at": 1
+    }
+    
     if role == 'employee':
         emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+        if emp:
+            emp = await _add_experience_years(emp)
         return [emp] if emp else []
     elif role == 'supervisor':
         emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
@@ -47,11 +59,56 @@ async def list_employees(user=Depends(get_current_user)):
             return []
         reports = await db.employees.find(
             {"$or": [{"id": emp['id']}, {"supervisor_id": emp['id']}]}, 
-            {"_id": 0, "id": 1, "employee_number": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "department_ar": 1, "position": 1, "position_ar": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, "start_date": 1, "created_at": 1}
+            fields
         ).to_list(100)
+        # إضافة سنوات الخبرة لكل موظف
+        reports = [await _add_experience_years(e) for e in reports]
         return reports
     else:
-        return await db.employees.find({}, {"_id": 0, "id": 1, "employee_number": 1, "full_name": 1, "full_name_ar": 1, "department": 1, "department_ar": 1, "position": 1, "position_ar": 1, "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, "start_date": 1, "created_at": 1}).to_list(500)
+        employees = await db.employees.find({}, fields).to_list(500)
+        # إضافة سنوات الخبرة لكل موظف
+        employees = [await _add_experience_years(e) for e in employees]
+        return employees
+
+
+async def _add_experience_years(emp: dict) -> dict:
+    """إضافة سنوات الخبرة للموظف بناءً على hire_date أو start_date من العقد"""
+    if not emp:
+        return emp
+    
+    # محاولة الحصول على تاريخ التعيين
+    hire_date = emp.get('hire_date') or emp.get('start_date')
+    
+    # إذا لم يوجد، نحاول من العقد
+    if not hire_date:
+        contract = await db.contracts_v2.find_one(
+            {"employee_id": emp.get('id'), "status": {"$in": ["active", "active_renewed"]}},
+            {"_id": 0, "start_date": 1}
+        )
+        if contract:
+            hire_date = contract.get('start_date')
+    
+    # حساب سنوات الخبرة
+    if hire_date:
+        try:
+            from datetime import datetime
+            if isinstance(hire_date, str):
+                hire_dt = datetime.strptime(hire_date[:10], "%Y-%m-%d")
+            else:
+                hire_dt = hire_date
+            
+            today = datetime.now()
+            years = (today - hire_dt).days / 365.25
+            emp['experience_years'] = round(years, 1)
+            emp['years_of_service'] = int(years)
+        except:
+            emp['experience_years'] = 0
+            emp['years_of_service'] = 0
+    else:
+        emp['experience_years'] = 0
+        emp['years_of_service'] = 0
+    
+    return emp
 
 
 @router.get("/{employee_id}")
