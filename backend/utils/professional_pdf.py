@@ -1,6 +1,6 @@
 """
-PDF احترافي مدمج - صفحة واحدة A4
-تصميم أفقي متوازن ومتناسق
+PDF بسيط ومنظم - مثل Excel
+صفحة واحدة A4
 """
 
 from reportlab.lib.pagesizes import A4
@@ -11,30 +11,27 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image as RLImage
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.graphics.shapes import Drawing, Rect
 import arabic_reshaper
 from bidi.algorithm import get_display
 import qrcode
 import hashlib
+import base64
 import io
 import os
 from datetime import datetime, timezone, timedelta
 
-# A4
 W, H = A4
 M = 10*mm
 CW = W - 2*M
 
-# ألوان الشركة الرسمية
-NAVY = colors.Color(0.118, 0.227, 0.373)  # #1E3A5F
-GOLD = colors.Color(0.753, 0.620, 0.349)  # #C09E59
+NAVY = colors.Color(0.118, 0.227, 0.373)
+GOLD = colors.Color(0.753, 0.620, 0.349)
 WHITE = colors.white
 LIGHT = colors.Color(0.96, 0.96, 0.97)
-GRAY = colors.Color(0.6, 0.6, 0.65)
+GRAY = colors.Color(0.5, 0.5, 0.55)
 DARK = colors.Color(0.2, 0.2, 0.22)
-GREEN = colors.Color(0.2, 0.6, 0.4)
+GREEN = colors.Color(0.2, 0.55, 0.35)
 
-# Fonts
 FD = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
 AR, ARB = 'Helvetica', 'Helvetica-Bold'
 try:
@@ -60,7 +57,7 @@ def dt(ts):
         return d.strftime('%Y.%m.%d | %H:%M')
     except: return str(ts)[:16]
 
-def qr(data, s=8):
+def make_qr(data, sz=10):
     try:
         q = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=2, border=0)
         q.add_data(data)
@@ -69,26 +66,19 @@ def qr(data, s=8):
         b = io.BytesIO()
         img.save(b, format='PNG')
         b.seek(0)
-        return RLImage(b, width=s*mm, height=s*mm)
+        return RLImage(b, width=sz*mm, height=sz*mm)
     except: return None
 
-def logo(logo_data=None, size=12):
-    """لوجو الشركة - من البيانات أو شكل افتراضي"""
+def make_logo(logo_data, sz=15):
     if logo_data:
         try:
-            import base64
             if ',' in logo_data:
                 logo_data = logo_data.split(',')[1]
             img_bytes = base64.b64decode(logo_data)
             buf = io.BytesIO(img_bytes)
-            return RLImage(buf, width=size*mm, height=size*mm)
-        except:
-            pass
-    # شكل افتراضي بألوان الشركة
-    d = Drawing(size*mm, size*mm)
-    d.add(Rect(0, 0, size*mm, size*mm, fillColor=NAVY, strokeColor=GOLD, strokeWidth=1))
-    d.add(Rect(1*mm, 1*mm, (size-2)*mm, (size-2)*mm, fillColor=None, strokeColor=GOLD, strokeWidth=0.5))
-    return d
+            return RLImage(buf, width=sz*mm, height=sz*mm)
+        except: pass
+    return None
 
 
 def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dict = None) -> tuple:
@@ -96,7 +86,6 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=M, bottomMargin=M, leftMargin=M, rightMargin=M)
     els = []
     
-    # Data
     ref = tx.get('ref_no', 'TXN-0000')
     typ = tx.get('type', '')
     status = tx.get('status', '')
@@ -109,6 +98,7 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     
     co_ar = brand.get('company_name_ar', 'شركة دار الكود للاستشارات الهندسية') if brand else 'شركة دار الكود للاستشارات الهندسية'
     co_en = brand.get('company_name_en', 'DAR AL CODE Engineering Consultancy') if brand else 'DAR AL CODE Engineering Consultancy'
+    logo_data = brand.get('logo_data') if brand else None
     
     emp_ar = data.get('employee_name_ar', emp.get('full_name_ar','') if emp else '')
     emp_en = data.get('employee_name', emp.get('full_name','') if emp else '')
@@ -116,205 +106,239 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     types = {'leave_request':('طلب إجازة','Leave Request'), 'tangible_custody':('عهدة عينية','In-Kind Custody'), 'salary_advance':('سلفة راتب','Salary Advance'), 'settlement':('مخالصة','Settlement')}
     typ_ar, typ_en = types.get(typ, (typ, typ))
     
-    stats = {'executed':('منفذة','Executed',GREEN), 'pending':('معلقة','Pending',GRAY), 'stas':('STAS','Pending STAS',GOLD), 'ceo':('CEO','Pending CEO',GOLD)}
-    st_ar, st_en, st_c = stats.get(status, (status, status, GRAY))
+    stats = {'executed':('منفذة','Executed'), 'pending':('معلقة','Pending'), 'stas':('STAS','Pending'), 'ceo':('CEO','Pending')}
+    st_ar, st_en = stats.get(status, (status, status))
     
     # Styles
-    s = {
-        'h_ar': ParagraphStyle('har', fontName=ARB, fontSize=9, alignment=TA_RIGHT, textColor=NAVY),
-        'h_en': ParagraphStyle('hen', fontName='Helvetica-Bold', fontSize=7, alignment=TA_LEFT, textColor=NAVY),
-        'h_sm': ParagraphStyle('hsm', fontName='Helvetica', fontSize=6, alignment=TA_CENTER, textColor=GRAY),
-        't': ParagraphStyle('t', fontName=ARB, fontSize=10, alignment=TA_CENTER, textColor=NAVY),
-        'ref': ParagraphStyle('ref', fontName='Helvetica-Bold', fontSize=8, alignment=TA_CENTER, textColor=GOLD),
-        'la': ParagraphStyle('la', fontName=AR, fontSize=7, alignment=TA_RIGHT, textColor=GRAY),
-        'va': ParagraphStyle('va', fontName=ARB, fontSize=7, alignment=TA_RIGHT, textColor=DARK),
-        'le': ParagraphStyle('le', fontName='Helvetica', fontSize=6, alignment=TA_LEFT, textColor=GRAY),
-        've': ParagraphStyle('ve', fontName='Helvetica-Bold', fontSize=6, alignment=TA_LEFT, textColor=DARK),
-        'sec': ParagraphStyle('sec', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=NAVY),
-        'sh': ParagraphStyle('sh', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=WHITE),
-        'sn': ParagraphStyle('sn', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=DARK),
-        'sd': ParagraphStyle('sd', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY),
-        'ok': ParagraphStyle('ok', fontName=ARB, fontSize=5, alignment=TA_CENTER, textColor=GREEN),
-        'cp': ParagraphStyle('cp', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=DARK),
-        'cpa': ParagraphStyle('cpa', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY),
-    }
+    s_title = ParagraphStyle('title', fontName=ARB, fontSize=11, alignment=TA_CENTER, textColor=NAVY)
+    s_sub = ParagraphStyle('sub', fontName='Helvetica-Bold', fontSize=8, alignment=TA_CENTER, textColor=NAVY)
+    s_small = ParagraphStyle('small', fontName='Helvetica', fontSize=6, alignment=TA_CENTER, textColor=GRAY)
+    s_lbl = ParagraphStyle('lbl', fontName=AR, fontSize=7, alignment=TA_CENTER, textColor=GRAY)
+    s_val = ParagraphStyle('val', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=DARK)
+    s_sec = ParagraphStyle('sec', fontName=ARB, fontSize=9, alignment=TA_CENTER, textColor=NAVY)
+    s_sig = ParagraphStyle('sig', fontName=ARB, fontSize=7, alignment=TA_CENTER, textColor=DARK)
+    s_role = ParagraphStyle('role', fontName=AR, fontSize=6, alignment=TA_CENTER, textColor=GRAY)
+    s_ok = ParagraphStyle('ok', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=GREEN)
+    s_tear = ParagraphStyle('tear', fontName='Helvetica', fontSize=7, alignment=TA_CENTER, textColor=GRAY)
     
-    # Get logo from branding
-    logo_data = brand.get('logo_data', None) if brand else None
+    # ═══════════════════════════════════════════════════════════════════
+    # 1. الترويسة الكاملة
+    # ═══════════════════════════════════════════════════════════════════
+    logo_img = make_logo(logo_data, 18)
     
-    # ═══════════════════════════════════════════════════════════════
-    # HEADER: اسم الشركة (يمين) | لوجو (وسط) | الترخيص (يسار)
-    # ═══════════════════════════════════════════════════════════════
-    third = CW / 3
+    if logo_img:
+        header = Table([
+            [logo_img],
+            [Paragraph(ar(co_ar), s_title)],
+            [Paragraph(co_en, s_sub)],
+            [Paragraph("Kingdom of Saudi Arabia | License: 5110004935 | CR: 1010463476", s_small)],
+        ], colWidths=[CW])
+    else:
+        header = Table([
+            [Paragraph(ar(co_ar), s_title)],
+            [Paragraph(co_en, s_sub)],
+            [Paragraph("Kingdom of Saudi Arabia | License: 5110004935 | CR: 1010463476", s_small)],
+        ], colWidths=[CW])
     
-    hdr_r = Table([[Paragraph(ar(co_ar), s['h_ar'])], [Paragraph(co_en, s['h_en'])]], colWidths=[third])
-    hdr_r.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'RIGHT'), ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
-    
-    hdr_c = Table([[logo(logo_data, 15)]], colWidths=[third])
-    hdr_c.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'CENTER'), ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
-    
-    hdr_l = Table([[Paragraph("KSA | 5110004935", s['h_sm'])]], colWidths=[third])
-    hdr_l.setStyle(TableStyle([('ALIGN',(0,0),(-1,-1),'LEFT'), ('VALIGN',(0,0),(-1,-1),'MIDDLE')]))
-    
-    header = Table([[hdr_l, hdr_c, hdr_r]], colWidths=[third, third, third])
     header.setStyle(TableStyle([
-        ('LINEBELOW', (0,0), (-1,-1), 1, NAVY),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('LINEBELOW', (0,-1), (-1,-1), 1.5, NAVY),
+        ('BOTTOMPADDING', (0,-1), (-1,-1), 3),
     ]))
     els.append(header)
-    els.append(Spacer(1, 2*mm))
+    els.append(Spacer(1, 4*mm))
     
-    # ═══════════════════════════════════════════════════════════════
-    # TITLE
-    # ═══════════════════════════════════════════════════════════════
-    els.append(Paragraph(ar(typ_ar) + " | " + typ_en, s['t']))
-    els.append(Paragraph(ref + " | " + integrity, s['ref']))
-    els.append(Spacer(1, 2*mm))
+    # ═══════════════════════════════════════════════════════════════════
+    # 2. نوع المعاملة ورقمها
+    # ═══════════════════════════════════════════════════════════════════
+    els.append(Paragraph(ar(typ_ar) + " | " + typ_en, s_title))
+    els.append(Paragraph(ref, ParagraphStyle('ref', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER, textColor=GOLD)))
+    els.append(Spacer(1, 3*mm))
     
-    # ═══════════════════════════════════════════════════════════════
-    # INFO: ثلثين (معلومات) | ثلث (حالة + QR)
-    # ═══════════════════════════════════════════════════════════════
-    two_third = CW * 0.65
-    one_third = CW * 0.35
+    # ═══════════════════════════════════════════════════════════════════
+    # 3. معلومات المعاملة والموظف - جدول أفقي
+    # ═══════════════════════════════════════════════════════════════════
+    # صف العناوين
+    labels_ar = [ar("الحالة"), ar("التاريخ"), ar("الموظف"), ar("المعرف")]
+    labels_en = ["Status", "Date", "Employee", "ID"]
+    values = [ar(st_ar) + " | " + st_en, dt(created), ar(emp_ar), integrity]
     
-    # معلومات - جدول أفقي: English Left | Arabic Right
-    info = []
-    info.append([Paragraph(emp_en, s['ve']), Paragraph("Employee", s['le']), Paragraph(ar("الموظف"), s['la']), Paragraph(ar(emp_ar), s['va'])])
+    col_w = CW / 4
     
-    if typ == 'leave_request':
-        lt = data.get('leave_type', '')
-        lt_m = {'annual':('سنوية','Annual'), 'sick':('مرضية','Sick'), 'emergency':('طارئة','Emergency')}
-        lt_ar, lt_en = lt_m.get(lt, (lt, lt))
-        info.append([Paragraph(lt_en, s['ve']), Paragraph("Type", s['le']), Paragraph(ar("النوع"), s['la']), Paragraph(ar(lt_ar), s['va'])])
-        info.append([Paragraph(data.get('start_date','-').replace('-','.'), s['ve']), Paragraph("From", s['le']), Paragraph(ar("من"), s['la']), Paragraph(data.get('start_date','-').replace('-','.'), s['va'])])
-        info.append([Paragraph(data.get('end_date','-').replace('-','.'), s['ve']), Paragraph("To", s['le']), Paragraph(ar("إلى"), s['la']), Paragraph(data.get('end_date','-').replace('-','.'), s['va'])])
-        info.append([Paragraph(str(data.get('working_days','-')), s['ve']), Paragraph("Days", s['le']), Paragraph(ar("الأيام"), s['la']), Paragraph(str(data.get('working_days','-')), s['va'])])
-    
-    elif typ == 'tangible_custody':
-        info.append([Paragraph(data.get('item_name','-'), s['ve']), Paragraph("Item", s['le']), Paragraph(ar("العنصر"), s['la']), Paragraph(ar(data.get('item_name_ar',data.get('item_name','-'))), s['va'])])
-        info.append([Paragraph(f"{data.get('estimated_value',0):,.0f}", s['ve']), Paragraph("Value", s['le']), Paragraph(ar("القيمة"), s['la']), Paragraph(f"{data.get('estimated_value',0):,.0f}", s['va'])])
-    
-    elif typ == 'salary_advance':
-        info.append([Paragraph(f"{data.get('amount',0):,.0f}", s['ve']), Paragraph("Amount", s['le']), Paragraph(ar("المبلغ"), s['la']), Paragraph(f"{data.get('amount',0):,.0f}", s['va'])])
-    
-    info.append([Paragraph(dt(created), s['ve']), Paragraph("Date", s['le']), Paragraph(ar("التاريخ"), s['la']), Paragraph(dt(created), s['va'])])
-    
-    iw = two_third / 4
-    info_tbl = Table(info, colWidths=[iw, iw, iw, iw])
-    info_tbl.setStyle(TableStyle([
-        ('ALIGN', (0,0), (1,-1), 'LEFT'),
-        ('ALIGN', (2,0), (3,-1), 'RIGHT'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('GRID', (0,0), (-1,-1), 0.5, LIGHT),
-        ('BACKGROUND', (1,0), (2,-1), LIGHT),
+    info_header = Table([[Paragraph(l, s_lbl) for l in labels_ar]], colWidths=[col_w]*4)
+    info_header.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (-1,-1), NAVY),
+        ('TEXTCOLOR', (0,0), (-1,-1), WHITE),
         ('TOPPADDING', (0,0), (-1,-1), 2),
         ('BOTTOMPADDING', (0,0), (-1,-1), 2),
-        ('LEFTPADDING', (0,0), (-1,-1), 3),
-        ('RIGHTPADDING', (0,0), (-1,-1), 3),
     ]))
     
-    # حالة + QR
-    vqr = qr(f"V-{ref}", 15)
-    status_tbl = Table([
-        [Paragraph(ar(st_ar), ParagraphStyle('st', fontName=ARB, fontSize=9, alignment=TA_CENTER, textColor=st_c))],
-        [Paragraph(st_en, ParagraphStyle('ste', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=st_c))],
-        [Spacer(1, 1*mm)],
-        [vqr if vqr else Paragraph("QR", s['cp'])],
-        [Paragraph("Verify", s['cp'])],
-    ], colWidths=[one_third - 5*mm])
-    status_tbl.setStyle(TableStyle([
+    info_values = Table([[Paragraph(v, s_val) for v in values]], colWidths=[col_w]*4)
+    info_values.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BOX', (0,0), (-1,-1), 1, NAVY),
-        ('BACKGROUND', (0,0), (-1,-1), LIGHT),
+        ('BOX', (0,0), (-1,-1), 0.5, NAVY),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, LIGHT),
         ('TOPPADDING', (0,0), (-1,-1), 3),
         ('BOTTOMPADDING', (0,0), (-1,-1), 3),
     ]))
     
-    main = Table([[info_tbl, status_tbl]], colWidths=[two_third, one_third])
-    main.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP')]))
-    els.append(main)
-    els.append(Spacer(1, 3*mm))
+    els.append(info_header)
+    els.append(info_values)
+    els.append(Spacer(1, 2*mm))
     
-    # ═══════════════════════════════════════════════════════════════
-    # SIGNATURES: جدول أفقي منظم
-    # ═══════════════════════════════════════════════════════════════
-    els.append(Paragraph(ar("التوقيعات") + " | Signatures", s['sec']))
-    els.append(Spacer(1, 1*mm))
+    # تفاصيل حسب نوع المعاملة
+    if typ == 'leave_request':
+        lt = data.get('leave_type', '')
+        lt_m = {'annual':('سنوية','Annual'), 'sick':('مرضية','Sick'), 'emergency':('طارئة','Emergency')}
+        lt_ar, lt_en = lt_m.get(lt, (lt, lt))
+        
+        det_labels = [ar("النوع"), ar("من"), ar("إلى"), ar("الأيام")]
+        det_values = [ar(lt_ar), data.get('start_date','-').replace('-','.'), data.get('end_date','-').replace('-','.'), str(data.get('working_days','-'))]
+        
+        det_header = Table([[Paragraph(l, s_lbl) for l in det_labels]], colWidths=[col_w]*4)
+        det_header.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('BACKGROUND', (0,0), (-1,-1), GOLD),
+            ('TEXTCOLOR', (0,0), (-1,-1), WHITE),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        
+        det_values_tbl = Table([[Paragraph(v, s_val) for v in det_values]], colWidths=[col_w]*4)
+        det_values_tbl.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('BOX', (0,0), (-1,-1), 0.5, GOLD),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, LIGHT),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ]))
+        
+        els.append(det_header)
+        els.append(det_values_tbl)
+    
+    elif typ == 'tangible_custody':
+        det_labels = [ar("العنصر"), ar("الرقم التسلسلي"), ar("القيمة"), ""]
+        det_values = [ar(data.get('item_name_ar', data.get('item_name','-'))), data.get('serial_number','-'), f"{data.get('estimated_value',0):,.0f} SAR", ""]
+        
+        det_header = Table([[Paragraph(l, s_lbl) for l in det_labels]], colWidths=[col_w]*4)
+        det_header.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (-1,-1), GOLD), ('TEXTCOLOR', (0,0), (-1,-1), WHITE), ('TOPPADDING', (0,0), (-1,-1), 2), ('BOTTOMPADDING', (0,0), (-1,-1), 2)]))
+        
+        det_values_tbl = Table([[Paragraph(v, s_val) for v in det_values]], colWidths=[col_w]*4)
+        det_values_tbl.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BOX', (0,0), (-1,-1), 0.5, GOLD), ('INNERGRID', (0,0), (-1,-1), 0.5, LIGHT), ('TOPPADDING', (0,0), (-1,-1), 3), ('BOTTOMPADDING', (0,0), (-1,-1), 3)]))
+        
+        els.append(det_header)
+        els.append(det_values_tbl)
+    
+    elif typ == 'salary_advance':
+        det_labels = [ar("المبلغ"), ar("السبب"), "", ""]
+        det_values = [f"{data.get('amount',0):,.0f} SAR", ar(data.get('reason','-')), "", ""]
+        
+        det_header = Table([[Paragraph(l, s_lbl) for l in det_labels]], colWidths=[col_w]*4)
+        det_header.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (-1,-1), GOLD), ('TEXTCOLOR', (0,0), (-1,-1), WHITE), ('TOPPADDING', (0,0), (-1,-1), 2), ('BOTTOMPADDING', (0,0), (-1,-1), 2)]))
+        
+        det_values_tbl = Table([[Paragraph(v, s_val) for v in det_values]], colWidths=[col_w]*4)
+        det_values_tbl.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BOX', (0,0), (-1,-1), 0.5, GOLD), ('INNERGRID', (0,0), (-1,-1), 0.5, LIGHT), ('TOPPADDING', (0,0), (-1,-1), 3), ('BOTTOMPADDING', (0,0), (-1,-1), 3)]))
+        
+        els.append(det_header)
+        els.append(det_values_tbl)
+    
+    els.append(Spacer(1, 5*mm))
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # 4. جدول التوقيعات - 3 مستطيلات أفقية
+    # ═══════════════════════════════════════════════════════════════════
+    els.append(Paragraph(ar("التوقيعات") + " | Signatures", s_sec))
+    els.append(Spacer(1, 2*mm))
     
     signed = {a.get('stage'): a.get('timestamp','') for a in chain}
     
-    # التسلسل: موظف → HR → CEO → STAS
-    sigs = [
-        ('creator', ar('المنشئ'), 'Creator', emp_ar, emp_en, True, created),
-        ('hr', 'HR', 'HR', 'سلطان', 'Sultan', 'hr' in signed or 'sultan' in signed, signed.get('hr', signed.get('sultan', ''))),
-        ('ceo', 'CEO', 'CEO', 'محمد', 'Mohammed', 'ceo' in signed, signed.get('ceo', '')),
-        ('stas', 'STAS', 'STAS', 'STAS', 'STAS', status == 'executed', signed.get('stas', tx.get('executed_at', ''))),
-    ]
+    # 3 أشخاص: سلطان (HR) | محمد (CEO) | STAS
+    sig_w = CW / 3
     
-    n = len(sigs)
-    sw = CW / n
+    # سلطان
+    sultan_signed = 'hr' in signed or 'sultan' in signed
+    sultan_ts = signed.get('hr', signed.get('sultan', ''))
     
-    # Header
-    hr = [Paragraph(f"{x[1]}\n{x[2]}", s['sh']) for x in sigs]
-    # QR (only if signed)
-    qr_r = [qr(f"S-{x[2]}-{ref}", 7) if x[5] else Paragraph("—", s['sd']) for x in sigs]
-    # Name
-    nr = [Paragraph(ar(x[3]) + "\n" + x[4], s['sn']) if x[5] else Paragraph("—", s['sd']) for x in sigs]
-    # Date
-    dr = [Paragraph(dt(x[6]), s['sd']) if x[5] and x[6] else Paragraph("—", s['sd']) for x in sigs]
-    # Status
-    sr = [Paragraph("✓", s['ok']) if x[5] else Paragraph("", s['sd']) for x in sigs]
+    # محمد
+    ceo_signed = 'ceo' in signed
+    ceo_ts = signed.get('ceo', '')
     
-    sig_tbl = Table([hr, qr_r, nr, dr, sr], colWidths=[sw]*n)
-    sig_tbl.setStyle(TableStyle([
+    # STAS
+    stas_signed = status == 'executed' or 'stas' in signed
+    stas_ts = signed.get('stas', tx.get('executed_at', ''))
+    
+    def make_sig_box(name_ar, name_en, role_ar, role_en, is_signed, timestamp):
+        qr_img = make_qr(f"SIG-{name_en}-{ref}", 12) if is_signed else Paragraph("—", s_role)
+        return Table([
+            [Paragraph(ar("توقيع"), s_lbl)],
+            [qr_img],
+            [Paragraph(ar(name_ar), s_sig)],
+            [Paragraph(name_en, s_role)],
+            [Paragraph(ar(role_ar), s_role)],
+            [Paragraph(role_en, s_role)],
+            [Paragraph(dt(timestamp) if is_signed else "—", s_role)],
+            [Paragraph("✓" if is_signed else "", s_ok)],
+        ], colWidths=[sig_w - 4*mm])
+    
+    sultan_box = make_sig_box("سلطان", "Sultan", "الموارد البشرية", "HR", sultan_signed, sultan_ts)
+    mohammed_box = make_sig_box("محمد", "Mohammed", "الرئيس التنفيذي", "CEO", ceo_signed, ceo_ts)
+    stas_box = make_sig_box("STAS", "STAS", "التنفيذ", "Execution", stas_signed, stas_ts)
+    
+    sig_table = Table([[sultan_box, mohammed_box, stas_box]], colWidths=[sig_w, sig_w, sig_w])
+    sig_table.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
         ('BOX', (0,0), (-1,-1), 1, NAVY),
-        ('INNERGRID', (0,1), (-1,-1), 0.5, LIGHT),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, NAVY),
+        ('BACKGROUND', (0,0), (-1,-1), LIGHT),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
     ]))
-    els.append(sig_tbl)
+    els.append(sig_table)
+    els.append(Spacer(1, 4*mm))
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # 5. QR للمعاملة (فوق خط القص)
+    # ═══════════════════════════════════════════════════════════════════
+    tx_qr = make_qr(f"TX-{ref}-{integrity}", 15)
+    
+    qr_above = Table([
+        [tx_qr if tx_qr else Paragraph("QR", s_role)],
+        [Paragraph(ar("رمز التحقق من المعاملة"), s_role)],
+        [Paragraph(integrity, s_small)],
+    ], colWidths=[CW])
+    qr_above.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    els.append(qr_above)
     els.append(Spacer(1, 3*mm))
     
-    # ═══════════════════════════════════════════════════════════════
-    # TEAR-OFF
-    # ═══════════════════════════════════════════════════════════════
-    els.append(Paragraph("─ ─ ─ ─ ─ ─ ✂ " + ar("قص هنا") + " | Cut Here ✂ ─ ─ ─ ─ ─ ─", ParagraphStyle('tear', fontName='Helvetica', fontSize=6, alignment=TA_CENTER, textColor=GRAY)))
-    els.append(Spacer(1, 2*mm))
+    # ═══════════════════════════════════════════════════════════════════
+    # 6. خط القص
+    # ═══════════════════════════════════════════════════════════════════
+    els.append(Paragraph("─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂ " + ar("قص هنا") + " | Cut Here ✂ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─", s_tear))
+    els.append(Spacer(1, 3*mm))
     
-    # ═══════════════════════════════════════════════════════════════
-    # COUPON
-    # ═══════════════════════════════════════════════════════════════
-    stas_qr = qr(f"STAS-{ref}", 10) if status == 'executed' else Paragraph("—", s['cp'])
+    # ═══════════════════════════════════════════════════════════════════
+    # 7. QR للملفات (تحت خط القص)
+    # ═══════════════════════════════════════════════════════════════════
+    file_qr = make_qr(f"FILE-{ref}-{integrity}", 15)
     
-    cp_l = Table([[stas_qr], [Paragraph("STAS", s['cp'])]], colWidths=[15*mm])
-    cp_l.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-    
-    cp_m = Table([
-        [Paragraph(ar(co_ar), s['cpa'])],
-        [Paragraph(f"{typ_en} | {ref}", s['cp'])],
-        [Paragraph(ar(emp_ar) + " | " + emp_en, s['cp'])],
-        [Paragraph(ar("✓ صحيحة") if status == 'executed' else ar("بانتظار"), ParagraphStyle('v', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=GREEN if status == 'executed' else GRAY))],
-    ], colWidths=[CW - 40*mm])
-    cp_m.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-    
-    verify = qr(f"V-{ref}", 10)
-    cp_r = Table([[verify], [Paragraph("Verify", s['cp'])]], colWidths=[15*mm])
-    cp_r.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-    
-    coupon = Table([[cp_l, cp_m, cp_r]], colWidths=[20*mm, CW - 40*mm, 20*mm])
-    coupon.setStyle(TableStyle([
+    qr_below = Table([
+        [file_qr if file_qr else Paragraph("QR", s_role)],
+        [Paragraph(ar("للملفات اليدوية"), s_role)],
+        [Paragraph(ar(co_ar), ParagraphStyle('co', fontName=ARB, fontSize=7, alignment=TA_CENTER, textColor=NAVY))],
+        [Paragraph(f"{typ_en} | {ref}", s_small)],
+        [Paragraph(ar(emp_ar) + " | " + emp_en, s_small)],
+        [Paragraph(ar("✓ معاملة صحيحة") if status == 'executed' else ar("بانتظار"), s_ok if status == 'executed' else s_role)],
+    ], colWidths=[CW])
+    qr_below.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BOX', (0,0), (-1,-1), 1, GOLD),
         ('BACKGROUND', (0,0), (-1,-1), LIGHT),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
     ]))
-    els.append(coupon)
+    els.append(qr_below)
     
     doc.build(els)
     pdf = buf.getvalue()
