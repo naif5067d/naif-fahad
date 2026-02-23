@@ -250,22 +250,22 @@ export default function NotificationBell() {
   };
   
   return (
-    <div className="relative" ref={bellRef}>
+    <div className="relative flex-shrink-0" ref={bellRef}>
       {/* زر الجرس */}
       <button
         data-testid="notification-bell-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2.5 rounded-xl transition-all touch-target ${
+        className={`relative p-2 sm:p-2.5 rounded-xl transition-all ${
           isOpen ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'
         }`}
         title={lang === 'ar' ? 'الإشعارات' : 'Notifications'}
       >
-        <Bell size={20} className={hasCritical ? 'animate-bounce' : ''} />
+        <Bell size={18} className={hasCritical ? 'animate-bounce' : ''} />
         
         {/* شارة العدد */}
         {unreadCount > 0 && (
           <span 
-            className={`absolute -top-1 -end-1 min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-bold text-white rounded-full transition-all ${
+            className={`absolute -top-0.5 -end-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold text-white rounded-full transition-all ${
               hasCritical ? 'bg-destructive/100 animate-pulse' : 'bg-primary'
             }`}
           >
@@ -277,8 +277,12 @@ export default function NotificationBell() {
       {/* القائمة المنسدلة */}
       {isOpen && (
         <div 
-          className="absolute top-full mt-2 end-0 w-[340px] sm:w-96 max-w-[calc(100vw-1rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50"
-          style={{ right: 'auto', left: lang === 'ar' ? 'auto' : '0' }}
+          className="absolute top-full mt-2 w-[320px] sm:w-96 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in z-50"
+          style={{ 
+            right: lang === 'ar' ? '0' : 'auto', 
+            left: lang === 'ar' ? 'auto' : '0',
+            transform: 'translateX(0)'
+          }}
           data-testid="notification-dropdown"
         >
           {/* Header */}
