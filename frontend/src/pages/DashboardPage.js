@@ -73,7 +73,12 @@ const getStatusColor = (status) => {
   switch (status) {
     case 'present': return 'navy';
     case 'late': return 'lavender';
-    case 'absent': return 'slate';
+    case 'absent': return 'destructive';
+    case 'leave': return 'success';
+    case 'holiday': return 'success';
+    case 'weekend': return 'success';
+    case 'mission': return 'info';
+    case 'not_checked_in': return 'warning';
     default: return 'slate';
   }
 };
