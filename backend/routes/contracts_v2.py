@@ -875,8 +875,8 @@ async def delete_contract(
     if not contract:
         raise HTTPException(status_code=404, detail="العقد غير موجود")
     
-    # STAS can delete any contract
-    is_stas = user.get('username') == 'stas'
+    # STAS can delete any contract (check by role, not username)
+    is_stas = user.get('role') == 'stas'
     
     if not is_stas and contract["status"] not in ("draft", "pending_stas"):
         raise HTTPException(
