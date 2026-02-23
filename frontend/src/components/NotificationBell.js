@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import pushService from '@/services/pushNotifications';
+import { playNotificationSound as playSoundFromLibrary } from '@/utils/soundLibrary';
 
 // مطابقة الأيقونات
 const ICON_MAP = {
@@ -32,18 +33,14 @@ const ICON_MAP = {
   'Settings': Settings,
 };
 
-// صوت الإشعار - يحتاج تفاعل المستخدم أولاً في المتصفحات الحديثة
-let audioContext = null;
-
-const getAudioContext = () => {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+// تشغيل صوت الإشعار من المكتبة
+const playNotificationSound = () => {
+  try {
+    const soundKey = localStorage.getItem('dar_notification_sound') || 'dar_notification';
+    playSoundFromLibrary(soundKey);
+  } catch (e) {
+    console.log('Audio not supported:', e);
   }
-  // Resume if suspended (Chrome autoplay policy)
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
-  return audioContext;
 };
 
 const playNotificationSound = () => {
