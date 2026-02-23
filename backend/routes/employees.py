@@ -521,10 +521,10 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "date": {"$gte": month_start, "$lte": month_end}
     }, {"_id": 0}).to_list(31)
     
-    late_count = sum(1 for a in month_attendance if a.get('is_late') or 'LATE' in a.get('final_status', ''))
+    late_count = sum(1 for a in month_attendance if a.get('is_late') or 'LATE' in str(a.get('final_status', '')))
     absent_count = sum(1 for a in month_attendance if a.get('final_status') == 'ABSENT')
-    total_late_minutes = sum(a.get('late_minutes', 0) for a in month_attendance)
-    monthly_hours = round(sum(a.get('actual_hours', a.get('worked_hours', 0)) for a in month_attendance), 1)
+    total_late_minutes = sum(a.get('late_minutes', 0) or 0 for a in month_attendance)
+    monthly_hours = round(sum((a.get('actual_hours') or a.get('worked_hours') or 0) for a in month_attendance), 1)
     
     # المعاملات المعلقة للموظف
     pending_txs = await db.transactions.count_documents({
