@@ -143,14 +143,16 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     # ═══════════════════════════════════════════════════════════════════
     # 1. الترويسة - متوازنة ومركزة
     # ═══════════════════════════════════════════════════════════════════
-    logo_img = make_logo(logo_data, 10)
+    logo_img = make_logo(logo_data, 12)
     
+    # الترويسة الكاملة
     header_rows = []
     if logo_img:
         header_rows.append([logo_img])
     header_rows.append([Paragraph(ar(co_ar), s_co_ar)])
     header_rows.append([Paragraph(co_en, s_co_en)])
-    header_rows.append([Paragraph("Kingdom of Saudi Arabia | CR: 1010463476", s_info)])
+    header_rows.append([Paragraph(ar("المملكة العربية السعودية") + " | Kingdom of Saudi Arabia", s_info)])
+    header_rows.append([Paragraph("CR: 1010463476 | License: 5110004935", s_info)])
     
     header = Table(header_rows, colWidths=[CW])
     header.setStyle(TableStyle([
