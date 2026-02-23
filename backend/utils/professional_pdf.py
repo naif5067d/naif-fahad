@@ -35,8 +35,9 @@ WHITE = colors.white
 FD = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
 AR, ARB = 'Helvetica', 'Helvetica-Bold'
 try:
-    pdfmetrics.registerFont(TTFont('Ar', os.path.join(FD, 'NotoNaskhArabic-Regular.ttf')))
-    pdfmetrics.registerFont(TTFont('ArB', os.path.join(FD, 'NotoNaskhArabic-Bold.ttf')))
+    # استخدام NotoSansArabic لدعم أفضل للحروف اللاتينية والعربية
+    pdfmetrics.registerFont(TTFont('Ar', os.path.join(FD, 'NotoSansArabic-Regular.ttf')))
+    pdfmetrics.registerFont(TTFont('ArB', os.path.join(FD, 'NotoSansArabic-Bold.ttf')))
     AR, ARB = 'Ar', 'ArB'
 except: pass
 
