@@ -121,7 +121,7 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     # ═══════════════════════════════════════════════════════════════════
     s_co_ar = ParagraphStyle('co_ar', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=NAVY, leading=10)
     s_co_en = ParagraphStyle('co_en', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=DARK_GRAY, leading=8)
-    s_info = ParagraphStyle('info', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY, leading=6)
+    s_info = ParagraphStyle('info', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=GRAY, leading=6)
     
     s_title = ParagraphStyle('title', fontName=ARB, fontSize=8, alignment=TA_CENTER, textColor=NAVY, leading=10)
     s_ref = ParagraphStyle('ref', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=DARK_GRAY)
@@ -133,10 +133,10 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     s_sec = ParagraphStyle('sec', fontName=ARB, fontSize=6, alignment=TA_CENTER, textColor=NAVY, leading=8)
     s_role = ParagraphStyle('role', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=WHITE, leading=6)
     s_name = ParagraphStyle('name', fontName=AR, fontSize=4.5, alignment=TA_CENTER, textColor=BLACK, leading=6)
-    s_date = ParagraphStyle('date', fontName='Helvetica', fontSize=4, alignment=TA_CENTER, textColor=GRAY, leading=5)
+    s_date = ParagraphStyle('date', fontName=AR, fontSize=4, alignment=TA_CENTER, textColor=GRAY, leading=5)
     s_empty = ParagraphStyle('empty', fontName=AR, fontSize=4, alignment=TA_CENTER, textColor=LIGHT_GRAY, leading=5)
     
-    s_tear = ParagraphStyle('tear', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=GRAY)
+    s_tear = ParagraphStyle('tear', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=GRAY)
     s_coupon = ParagraphStyle('coupon', fontName=AR, fontSize=5, alignment=TA_CENTER, textColor=NAVY, leading=7)
     
     # ═══════════════════════════════════════════════════════════════════
