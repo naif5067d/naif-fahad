@@ -277,8 +277,13 @@ export default function DashboardPage() {
                     } ${
                       employeeSummary?.attendance?.today_status === 'present' ? 'bg-[hsl(var(--navy))]' :
                       employeeSummary?.attendance?.today_status === 'late' ? 'bg-[hsl(var(--lavender))]' :
-                      employeeSummary?.attendance?.today_status === 'absent' ? 'bg-slate-500' : 'bg-slate-400'
-                    }`} />
+                      employeeSummary?.attendance?.today_status === 'absent' ? 'bg-red-500' :
+                      employeeSummary?.attendance?.today_status === 'leave' ? 'bg-green-500' :
+                      employeeSummary?.attendance?.today_status === 'holiday' ? 'bg-green-500' :
+                      employeeSummary?.attendance?.today_status === 'weekend' ? 'bg-green-500' :
+                      employeeSummary?.attendance?.today_status === 'mission' ? 'bg-blue-500' :
+                      employeeSummary?.attendance?.today_status === 'not_checked_in' ? 'bg-amber-500' : 'bg-slate-400'
+                    }`} title={employeeSummary?.attendance?.today_status_ar} />
                   )}
                 </div>
                 
