@@ -125,10 +125,12 @@ async def get_profile_360(employee_id: str, user=Depends(get_current_user)):
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     role = user.get('role')
-    if role == 'employee':
-        own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
-        if not own or own['id'] != employee_id:
-            raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
+    # السماح للمدراء والـ CEO بالاطلاع على بيانات الموظفين
+    if role not in ['stas', 'sultan', 'naif', 'mohammed', 'supervisor']:
+        if role == 'employee':
+            own = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+            if not own or own['id'] != employee_id:
+                raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
 
     leave_entries = await db.leave_ledger.find({"employee_id": employee_id}, {"_id": 0}).to_list(1000)
     leave_balance = {}
