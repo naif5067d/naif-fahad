@@ -360,25 +360,38 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
             qr_row.append(Paragraph("—", s_empty))
     
     # صف الأسماء - يظهر فقط للموقعين الفعليين
+    # الاسم عربي أولاً، ثم إنجليزي صغير أسفل
     name_row = []
     for r in roles:
         stage_key = r[0]
+        ar_name = r[3]  # الاسم العربي
+        en_name = r[4]  # الاسم الإنجليزي
+        
         if stage_key == 'employee':
-            name_row.append(Paragraph(ar(r[3]) if r[3] else "—", s_name))
-        elif stage_key in signed_stages:
-            # استخدام اسم الموقع الفعلي إذا متوفر، وإلا استخدم الاسم الافتراضي
-            signer_info = signed_stages[stage_key]
-            actual_name = r[3]  # الاسم الافتراضي
-            if isinstance(signer_info, dict) and signer_info.get('signer'):
-                actual_name = signer_info.get('signer')
-            # تحديد الخط بناءً على نوع النص (عربي أم إنجليزي)
-            if actual_name and any('\u0600' <= c <= '\u06FF' for c in actual_name):
-                # نص عربي
-                name_row.append(Paragraph(ar(actual_name), s_name))
+            # عربي + إنجليزي صغير
+            name_text = f"{ar(ar_name)}\n{en_name}" if ar_name else "—"
+            name_row.append(Paragraph(name_text, s_name))
+        elif stage_key == 'stas':
+            # STAS يبقى إنجليزي فقط
+            if stage_key in signed_stages:
+                name_row.append(Paragraph("STAS", s_name))
             else:
-                # نص إنجليزي - استخدم خط مختلف
-                s_name_en = ParagraphStyle('name_en', fontName='Helvetica', fontSize=4.5, alignment=TA_CENTER, textColor=BLACK, leading=6)
-                name_row.append(Paragraph(actual_name if actual_name else "—", s_name_en))
+                name_row.append(Paragraph("—", s_empty))
+        elif stage_key in signed_stages:
+            # استخدام اسم الموقع الفعلي إذا متوفر
+            signer_info = signed_stages[stage_key]
+            actual_ar = ar_name
+            actual_en = en_name
+            if isinstance(signer_info, dict) and signer_info.get('signer'):
+                signer_name = signer_info.get('signer')
+                # تحديد إذا الاسم عربي أم إنجليزي
+                if any('\u0600' <= c <= '\u06FF' for c in signer_name):
+                    actual_ar = signer_name
+                else:
+                    actual_en = signer_name
+            # عربي + إنجليزي صغير
+            name_text = f"{ar(actual_ar)}\n{actual_en}"
+            name_row.append(Paragraph(name_text, s_name))
         else:
             name_row.append(Paragraph("—", s_empty))
     
