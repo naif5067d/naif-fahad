@@ -492,12 +492,18 @@ async def get_bell_notifications(user=Depends(get_current_user)):
         "categories": {}
     }
     
-    # 1. الإشعارات المخزنة (تدعم البنية القديمة والجديدة)
+    employee_id_for_summons = user.get('employee_id', '')
+    
+    # 1. الإشعارات المخزنة (تدعم البنية القديمة والجديدة + الاستدعاءات)
     stored_notifications = await db.notifications.find(
         {
             "$or": [
                 {"recipient_id": user_id},
-                {"recipient_role": role}
+                {"recipient_role": role},
+                # الاستدعاءات للموظف
+                {"notification_type": "summon", "employee_id": employee_id_for_summons},
+                # الاستدعاءات للإدارة
+                {"notification_type": "summon_sent", "target_roles": role} if is_admin else {"_id": None}
             ]
         },
         {"_id": 0}
