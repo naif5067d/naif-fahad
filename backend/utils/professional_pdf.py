@@ -86,7 +86,7 @@ def reshape_arabic(text):
     try:
         reshaped = arabic_reshaper.reshape(str(text))
         return get_display(reshaped)
-    except:
+    except Exception:
         return str(text)
 
 
