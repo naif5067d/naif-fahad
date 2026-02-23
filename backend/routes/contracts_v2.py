@@ -701,6 +701,157 @@ async def return_to_draft(
 
 
 # ============================================================
+# ACTIVATE SYSTEM TRACKING (Start counting attendance, leaves, etc.)
+# ============================================================
+
+class ActivateSystemRequest(BaseModel):
+    """طلب تفعيل النظام للعقد"""
+    system_start_date: Optional[str] = None  # إذا لم يُحدد، يستخدم تاريخ اليوم
+    note: Optional[str] = None
+
+
+@router.post("/{contract_id}/activate-system")
+async def activate_system_tracking(
+    contract_id: str,
+    req: ActivateSystemRequest = ActivateSystemRequest(),
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    تفعيل نظام الاحتساب للعقد.
+    
+    هذا يختلف عن تنفيذ العقد (execute):
+    - execute: تفعيل العقد قانونياً (إنشاء المستخدم، الحساب، إلخ)
+    - activate-system: بدء احتساب الحضور والغياب والإجازات
+    
+    بعد التفعيل:
+    - يُسجَّل تاريخ بدء النظام (system_start_date)
+    - يُفعَّل الاحتساب (system_active = true)
+    - لن يُحتسب أي غياب أو تأخير قبل هذا التاريخ
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    # التحقق من أن العقد مُفعَّل (active)
+    if contract.get("status") not in ("active", "active_renewed"):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"لا يمكن تفعيل النظام إلا للعقود الفعالة. الحالة الحالية: {contract.get('status')}"
+        )
+    
+    # التحقق من أن النظام غير مُفعَّل مسبقاً
+    if contract.get("system_active"):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"النظام مُفعَّل مسبقاً منذ {contract.get('system_start_date')}"
+        )
+    
+    # تحديد تاريخ البدء
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    
+    system_start_date = req.system_start_date or today
+    
+    # التأكد من أن التاريخ ليس قبل تاريخ بدء العقد
+    if system_start_date < contract.get("start_date", ""):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"تاريخ بدء النظام ({system_start_date}) لا يمكن أن يكون قبل تاريخ بدء العقد ({contract.get('start_date')})"
+        )
+    
+    # تحديث العقد
+    update_data = {
+        "system_active": True,
+        "system_start_date": system_start_date,
+        "system_activated_at": now.isoformat(),
+        "system_activated_by": user["user_id"],
+        "system_activated_by_name": user.get("full_name", user.get("username")),
+        "system_activation_note": req.note,
+        "updated_at": now.isoformat()
+    }
+    
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {"$set": update_data}
+    )
+    
+    # تحديث الموظف أيضاً
+    await db.employees.update_one(
+        {"id": contract["employee_id"]},
+        {"$set": {
+            "system_active": True,
+            "system_start_date": system_start_date,
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    # سجل التدقيق
+    await db.audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "system_activated",
+        "entity_type": "contract",
+        "entity_id": contract_id,
+        "employee_id": contract["employee_id"],
+        "user_id": user["user_id"],
+        "user_name": user.get("full_name", user.get("username")),
+        "details": {
+            "system_start_date": system_start_date,
+            "note": req.note
+        },
+        "created_at": now.isoformat()
+    })
+    
+    # جلب العقد المُحدَّث
+    updated = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    
+    return {
+        "message": f"تم تفعيل النظام بنجاح. سيبدأ الاحتساب من {system_start_date}",
+        "contract": updated,
+        "system_start_date": system_start_date
+    }
+
+
+@router.post("/{contract_id}/deactivate-system")
+async def deactivate_system_tracking(
+    contract_id: str,
+    user=Depends(require_roles('stas'))
+):
+    """
+    إيقاف نظام الاحتساب (STAS فقط)
+    يُستخدم في حالات خاصة مثل:
+    - إجازة طويلة بدون راتب
+    - إيقاف مؤقت للنظام
+    """
+    contract = await db.contracts_v2.find_one({"id": contract_id}, {"_id": 0})
+    if not contract:
+        raise HTTPException(status_code=404, detail="العقد غير موجود")
+    
+    if not contract.get("system_active"):
+        raise HTTPException(status_code=400, detail="النظام غير مُفعَّل أصلاً")
+    
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    
+    await db.contracts_v2.update_one(
+        {"id": contract_id},
+        {"$set": {
+            "system_active": False,
+            "system_deactivated_at": now.isoformat(),
+            "system_deactivated_by": user["user_id"],
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    await db.employees.update_one(
+        {"id": contract["employee_id"]},
+        {"$set": {"system_active": False, "updated_at": now.isoformat()}}
+    )
+    
+    return {"message": "تم إيقاف النظام بنجاح"}
+
+
+# ============================================================
 # EXECUTE/ACTIVATE CONTRACT (STAS ONLY)
 # ============================================================
 
