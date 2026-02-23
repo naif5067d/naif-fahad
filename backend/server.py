@@ -135,6 +135,20 @@ async def startup():
     result = await seed_database(db)
     logger.info(f"Seed: {result['message']}")
     
+    # إنشاء سجل الإصدار إذا لم يكن موجوداً
+    version_exists = await db.settings.find_one({"type": "app_version"})
+    if not version_exists:
+        await db.settings.insert_one({
+            "type": "app_version",
+            "version": APP_VERSION,
+            "release_notes_ar": "الإصدار الأولي",
+            "release_notes_en": "Initial version",
+            "updated_at": None,
+            "updated_by": None,
+            "version_history": []
+        })
+        logger.info(f"✅ Created default version record: {APP_VERSION}")
+    
     # تشغيل جدولة المهام
     from services.scheduler import init_scheduler
     init_scheduler()
