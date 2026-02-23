@@ -68,7 +68,7 @@ export default function CustodyPage() {
   return (
     <div className="space-y-6" data-testid="custody-page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{lang === 'ar' ? 'العهد الملموسة' : 'Tangible Custody'}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{lang === 'ar' ? 'العهد العينية' : 'In-Kind Custody'}</h1>
         {canCreate && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -77,7 +77,7 @@ export default function CustodyPage() {
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>{lang === 'ar' ? 'إنشاء عهدة ملموسة' : 'Create Tangible Custody'}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{lang === 'ar' ? 'إنشاء عهدة عينية' : 'Create In-Kind Custody'}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div>
                   <Label>{t('transactions.employee')}</Label>
