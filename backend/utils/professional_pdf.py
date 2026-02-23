@@ -83,7 +83,7 @@ def make_logo(logo_data, sz=10):
     return None
 
 
-def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dict = None) -> tuple:
+def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dict = None, supervisor: dict = None) -> tuple:
     """توليد PDF احترافي متوازن ومتناسب"""
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=M, bottomMargin=M, leftMargin=M, rightMargin=M)
@@ -105,6 +105,10 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
     
     emp_ar = data.get('employee_name_ar', emp.get('full_name_ar','') if emp else '')
     emp_en = data.get('employee_name', emp.get('full_name','') if emp else '')
+    
+    # بيانات المشرف
+    sup_ar = supervisor.get('full_name_ar', 'المشرف') if supervisor else 'المشرف'
+    sup_en = supervisor.get('full_name', 'Supervisor') if supervisor else 'Supervisor'
     
     types = {'leave_request':('طلب إجازة','Leave Request'), 'tangible_custody':('عهدة عينية','In-Kind Custody'), 'salary_advance':('سلفة راتب','Salary Advance'), 'settlement':('مخالصة','Settlement')}
     typ_ar, typ_en = types.get(typ, (typ, typ))
