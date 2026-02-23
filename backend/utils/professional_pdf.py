@@ -371,7 +371,14 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
             actual_name = r[3]  # الاسم الافتراضي
             if isinstance(signer_info, dict) and signer_info.get('signer'):
                 actual_name = signer_info.get('signer')
-            name_row.append(Paragraph(ar(actual_name) if actual_name else "—", s_name))
+            # تحديد الخط بناءً على نوع النص (عربي أم إنجليزي)
+            if actual_name and any('\u0600' <= c <= '\u06FF' for c in actual_name):
+                # نص عربي
+                name_row.append(Paragraph(ar(actual_name), s_name))
+            else:
+                # نص إنجليزي - استخدم خط مختلف
+                s_name_en = ParagraphStyle('name_en', fontName='Helvetica', fontSize=4.5, alignment=TA_CENTER, textColor=BLACK, leading=6)
+                name_row.append(Paragraph(actual_name if actual_name else "—", s_name_en))
         else:
             name_row.append(Paragraph("—", s_empty))
     
