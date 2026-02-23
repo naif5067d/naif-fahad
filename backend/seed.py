@@ -447,5 +447,26 @@ async def seed_database(db):
         {},
         {"$set": {"has_active_contract": True}}
     )
+    
+    # إنشاء سجل الإصدار
+    await db.settings.insert_one({
+        "type": "app_version",
+        "version": APP_VERSION,
+        "release_notes_ar": "الإصدار الأولي",
+        "release_notes_en": "Initial version",
+        "updated_at": now,
+        "updated_by": "system",
+        "version_history": []
+    })
+    
+    # إنشاء إعدادات التعويض الشهري
+    await db.settings.insert_one({
+        "type": "compensation_allowance",
+        "monthly_compensation_hours": 0,
+        "updated_at": now,
+        "updated_by": "system",
+        "description_ar": "سماح التعويض الشهري",
+        "description_en": "Monthly compensation allowance"
+    })
 
     return {"message": "Database seeded successfully", "seeded": True}
