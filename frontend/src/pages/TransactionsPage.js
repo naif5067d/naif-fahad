@@ -147,25 +147,65 @@ export default function TransactionsPage() {
       
       // استخراج رقم المعاملة من الـ QR
       let txRef = null;
+      let qrType = 'transaction';
       
       // التحقق من أنماط مختلفة للـ QR
       if (qrData.includes('TXN-')) {
         // QR يحتوي على رقم المعاملة مباشرة
         const match = qrData.match(/TXN-\d{4}-\d+/);
         if (match) txRef = match[0];
-      } else if (qrData.startsWith('INT-')) {
+      } else if (qrData.startsWith('INT-') || qrData.startsWith('VERIFY:')) {
         // QR رقم السلامة (Integrity ID)
-        txRef = qrData;
+        txRef = qrData.replace('VERIFY:', '');
+      } else if (qrData.startsWith('DAR-CUSTODY:')) {
+        // QR عهدة عينية
+        const parts = qrData.split(':');
+        if (parts.length >= 2) {
+          txRef = parts[1];
+          qrType = 'custody';
+        }
+      } else if (qrData.startsWith('DAR-RETURN:')) {
+        // QR إرجاع عهدة
+        const parts = qrData.split(':');
+        if (parts.length >= 2) {
+          txRef = parts[1];
+          qrType = 'custody_return';
+        }
+      } else if (qrData.startsWith('DAR-CONTRACT:')) {
+        // QR عقد
+        const parts = qrData.split(':');
+        if (parts.length >= 2) {
+          txRef = parts[1];
+          qrType = 'contract';
+        }
+      } else if (qrData.startsWith('DAR-SETTLEMENT:')) {
+        // QR مخالصة
+        const parts = qrData.split(':');
+        if (parts.length >= 2) {
+          txRef = parts[1];
+          qrType = 'settlement';
+        }
       } else if (qrData.includes('/transactions/')) {
         // QR رابط
         const match = qrData.match(/TXN-\d{4}-\d+/);
         if (match) txRef = match[0];
+      } else if (qrData.startsWith('CUS-') || qrData.startsWith('RET-')) {
+        // QR عهدة/إرجاع بصيغة integrity_id
+        txRef = qrData;
+        qrType = qrData.startsWith('CUS-') ? 'custody' : 'custody_return';
       }
       
       if (txRef) {
         stopScanner();
         setSearch(txRef);
-        toast.success(lang === 'ar' ? `تم العثور على: ${txRef}` : `Found: ${txRef}`);
+        const typeLabel = {
+          'transaction': lang === 'ar' ? 'معاملة' : 'Transaction',
+          'custody': lang === 'ar' ? 'عهدة عينية' : 'Custody',
+          'custody_return': lang === 'ar' ? 'إرجاع عهدة' : 'Custody Return',
+          'contract': lang === 'ar' ? 'عقد' : 'Contract',
+          'settlement': lang === 'ar' ? 'مخالصة' : 'Settlement',
+        };
+        toast.success(lang === 'ar' ? `تم العثور على ${typeLabel[qrType]}: ${txRef}` : `Found ${typeLabel[qrType]}: ${txRef}`);
       }
     }
   }, [lang]);
