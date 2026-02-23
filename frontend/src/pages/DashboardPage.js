@@ -178,7 +178,7 @@ export default function DashboardPage() {
 
   const role = user?.role || 'employee';
   const isManager = ['stas', 'mohammed', 'salah', 'naif', 'sultan'].includes(role);
-  const showsAttendance = role === 'sultan' || role === 'employee' || role === 'supervisor';
+  const showsAttendance = (role === 'sultan' || role === 'employee' || role === 'supervisor') && role !== 'salah';
   const isAdmin = ['sultan', 'naif', 'stas'].includes(role);
   
   const [employeeSummary, setEmployeeSummary] = useState(null);
