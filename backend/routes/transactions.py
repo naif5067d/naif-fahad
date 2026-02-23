@@ -171,6 +171,19 @@ async def transaction_action(transaction_id: str, body: ApprovalAction, user=Dep
     if not validation['valid']:
         raise HTTPException(status_code=403, detail=validation['error_detail'])
 
+    # منع الموافقة المتكررة من نفس المرحلة
+    approval_chain = tx.get('approval_chain', [])
+    already_approved_stages = [a.get('stage') for a in approval_chain if a.get('status') == 'approve']
+    if stage in already_approved_stages and body.action == 'approve':
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "ALREADY_APPROVED",
+                "message_ar": f"تمت الموافقة على هذه المرحلة ({stage}) مسبقاً",
+                "message_en": f"This stage ({stage}) has already been approved"
+            }
+        )
+
     timeline_event = {
         "event": f"{body.action}d" if body.action == 'approve' else ('rejected' if body.action == 'reject' else body.action),
         "actor": user['user_id'],
