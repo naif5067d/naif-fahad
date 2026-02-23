@@ -408,19 +408,6 @@ export default function LoginPage() {
     >
       {/* Left: Form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative">
-        {/* Music Toggle */}
-        <button
-          onClick={toggleMusic}
-          className={`absolute top-4 right-4 rtl:right-auto rtl:left-4 p-3 rounded-full transition-all duration-300 ${
-            musicEnabled 
-              ? 'bg-accent/20 text-accent' 
-              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-          }`}
-          title={musicEnabled ? (lang === 'ar' ? 'إيقاف الموسيقى' : 'Mute') : (lang === 'ar' ? 'تشغيل الموسيقى' : 'Play music')}
-        >
-          {musicEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-        </button>
-        
         <div className={`w-full max-w-sm transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           {/* Logo & Company Name */}
           <div className="mb-10 text-center">
