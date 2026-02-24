@@ -547,30 +547,45 @@ async def update_employee_status(
         'LATE': 'متأخر',
         'ON_LEAVE': 'إجازة',
         'EXCUSED': 'معذور',
-        'ON_MISSION': 'مهمة خارجية'
+        'ON_MISSION': 'مهمة خارجية',
+        'PERMISSION': 'استئذان',
+        'GIFT_LEAVE': 'إجازة مكافأة'
     }
     
+    # معالجة خاصة لإجازة المكافأة
+    is_gift_leave = body.new_status == 'GIFT_LEAVE'
+    final_status_to_save = 'ON_ADMIN_LEAVE' if is_gift_leave else body.new_status
+    
     correction = {
-        "from_status": daily.get('final_status'),
+        "from_status": daily.get('final_status') if daily else 'UNKNOWN',
         "to_status": body.new_status,
         "reason": body.reason,
         "corrected_by": user['user_id'],
         "corrected_by_name": user.get('full_name', user['user_id']),
         "corrected_at": now,
         "check_in_time": body.check_in_time,
-        "check_out_time": body.check_out_time
+        "check_out_time": body.check_out_time,
+        "is_gift_leave": is_gift_leave
     }
+    
+    # تحديد السبب المعروض
+    reason_text = body.reason
+    if is_gift_leave:
+        reason_text = f"⭐ إجازة مكافأة من {user.get('full_name', '')}: {body.reason}"
+    else:
+        reason_text = f"تم التعديل بواسطة {user.get('full_name', user['user_id'])}: {body.reason}"
     
     await db.daily_status.update_one(
         {"employee_id": employee_id, "date": date},
         {
             "$set": {
-                "final_status": body.new_status,
+                "final_status": final_status_to_save,
                 "status_ar": status_ar_map.get(body.new_status, body.new_status),
-                "decision_reason_ar": f"تم التعديل بواسطة {user.get('full_name', user['user_id'])}: {body.reason}",
-                "decision_source": "manual_correction",
-                "check_in_time": body.check_in_time or daily.get('check_in_time'),
-                "check_out_time": body.check_out_time or daily.get('check_out_time'),
+                "decision_reason_ar": reason_text,
+                "decision_source": "gift_leave" if is_gift_leave else "manual_correction",
+                "is_gift_leave": is_gift_leave,
+                "check_in_time": body.check_in_time or (daily.get('check_in_time') if daily else None),
+                "check_out_time": body.check_out_time or (daily.get('check_out_time') if daily else None),
                 "updated_at": now,
                 "updated_by": user['user_id']
             },
@@ -580,6 +595,35 @@ async def update_employee_status(
         },
         upsert=True
     )
+    
+    # إذا كانت إجازة مكافأة، نسجلها كمعاملة حتى تظهر في النظام بالكامل
+    if is_gift_leave:
+        gift_leave_tx = {
+            "id": str(uuid.uuid4()),
+            "ref_no": f"GL-{date.replace('-', '')}-{employee_id[-4:]}",
+            "type": "gift_leave",
+            "status": "executed",
+            "employee_id": employee_id,
+            "data": {
+                "employee_id": employee_id,
+                "employee_name_ar": emp.get('full_name_ar', ''),
+                "employee_name_en": emp.get('full_name', ''),
+                "start_date": date,
+                "end_date": date,
+                "days": 1,
+                "reason": body.reason,
+                "leave_type": "gift_leave",
+                "is_gift": True,
+                "does_not_deduct_balance": True
+            },
+            "created_at": now,
+            "created_by": user['user_id'],
+            "approved_by": user['user_id'],
+            "approved_by_name": user.get('full_name', ''),
+            "executed_at": now,
+            "executed_by": user['user_id']
+        }
+        await db.transactions.insert_one(gift_leave_tx)
     
     # حفظ في أرشيف STAS السنوي (قرارات سلطان المباشرة)
     year = date[:4]
