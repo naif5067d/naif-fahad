@@ -714,3 +714,172 @@ async def upload_and_restore_archive(
             status_code=500, 
             detail=f"خطأ في الاستعادة: {str(e)}"
         )
+
+
+
+# ============================================================
+# معلومات تشغيل السيرفر (System Metrics)
+# ============================================================
+
+# Store server start time at module load
+_SERVER_START_TIME = time.time()
+
+@router.get("/system-metrics")
+async def get_system_metrics(user=Depends(require_roles('stas'))):
+    """
+    الحصول على معلومات تشغيل السيرفر الحقيقية
+    - RAM usage (الذاكرة)
+    - CPU usage (المعالج)
+    - Storage usage (التخزين)
+    - File storage breakdown (ملفات ATS والمعاملات)
+    - Uptime (مدة التشغيل)
+    """
+    try:
+        # RAM Usage
+        memory = psutil.virtual_memory()
+        ram_info = {
+            "total_gb": round(memory.total / (1024 ** 3), 2),
+            "used_gb": round(memory.used / (1024 ** 3), 2),
+            "available_gb": round(memory.available / (1024 ** 3), 2),
+            "percentage": memory.percent
+        }
+        
+        # CPU Usage
+        cpu_percent = psutil.cpu_percent(interval=0.5)
+        cpu_count = psutil.cpu_count()
+        cpu_info = {
+            "percentage": cpu_percent,
+            "cores": cpu_count
+        }
+        
+        # Storage Usage (Disk)
+        disk = psutil.disk_usage('/')
+        storage_info = {
+            "total_gb": round(disk.total / (1024 ** 3), 2),
+            "used_gb": round(disk.used / (1024 ** 3), 2),
+            "free_gb": round(disk.free / (1024 ** 3), 2),
+            "percentage": round(disk.percent, 1)
+        }
+        
+        # File Storage Analysis
+        file_storage = await _analyze_file_storage()
+        
+        # Uptime
+        uptime_seconds = time.time() - _SERVER_START_TIME
+        uptime_info = _format_uptime(uptime_seconds)
+        
+        # Process Info
+        process = psutil.Process()
+        process_info = {
+            "memory_mb": round(process.memory_info().rss / (1024 ** 2), 2),
+            "cpu_percent": process.cpu_percent(),
+            "threads": process.num_threads()
+        }
+        
+        return {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "ram": ram_info,
+            "cpu": cpu_info,
+            "storage": storage_info,
+            "file_storage": file_storage,
+            "uptime": uptime_info,
+            "process": process_info,
+            "status": "healthy"
+        }
+        
+    except Exception as e:
+        return {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "error": str(e),
+            "status": "error"
+        }
+
+
+async def _analyze_file_storage():
+    """
+    تحليل حجم ملفات التخزين (ATS, المعاملات، المرفقات)
+    """
+    file_storage = {
+        "total_mb": 0,
+        "ats_files_mb": 0,
+        "transaction_files_mb": 0,
+        "other_files_mb": 0,
+        "breakdown": []
+    }
+    
+    # Define upload directories to check
+    upload_dirs = [
+        ("/app/uploads", "uploads"),
+        ("/app/backend/uploads", "backend_uploads"),
+        ("/app/backend/static", "static"),
+    ]
+    
+    for dir_path, dir_name in upload_dirs:
+        if os.path.exists(dir_path):
+            dir_size = 0
+            file_count = 0
+            
+            for root, dirs, files in os.walk(dir_path):
+                for file in files:
+                    try:
+                        file_path = os.path.join(root, file)
+                        file_size = os.path.getsize(file_path)
+                        dir_size += file_size
+                        file_count += 1
+                        
+                        # Categorize by path
+                        if 'ats' in root.lower() or 'cv' in root.lower() or 'resume' in root.lower():
+                            file_storage["ats_files_mb"] += file_size / (1024 ** 2)
+                        elif 'transaction' in root.lower() or 'attachment' in root.lower():
+                            file_storage["transaction_files_mb"] += file_size / (1024 ** 2)
+                        else:
+                            file_storage["other_files_mb"] += file_size / (1024 ** 2)
+                            
+                    except (OSError, PermissionError):
+                        continue
+            
+            size_mb = dir_size / (1024 ** 2)
+            file_storage["total_mb"] += size_mb
+            
+            if size_mb > 0 or file_count > 0:
+                file_storage["breakdown"].append({
+                    "directory": dir_name,
+                    "size_mb": round(size_mb, 2),
+                    "file_count": file_count
+                })
+    
+    # Round values
+    file_storage["total_mb"] = round(file_storage["total_mb"], 2)
+    file_storage["ats_files_mb"] = round(file_storage["ats_files_mb"], 2)
+    file_storage["transaction_files_mb"] = round(file_storage["transaction_files_mb"], 2)
+    file_storage["other_files_mb"] = round(file_storage["other_files_mb"], 2)
+    
+    return file_storage
+
+
+def _format_uptime(seconds):
+    """
+    تنسيق مدة التشغيل بشكل مقروء
+    """
+    days = int(seconds // 86400)
+    hours = int((seconds % 86400) // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    
+    parts = []
+    if days > 0:
+        parts.append(f"{days}d")
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    parts.append(f"{secs}s")
+    
+    return {
+        "total_seconds": int(seconds),
+        "formatted": " ".join(parts),
+        "days": days,
+        "hours": hours,
+        "minutes": minutes,
+        "seconds": secs
+    }
