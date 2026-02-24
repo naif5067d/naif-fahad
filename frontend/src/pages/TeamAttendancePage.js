@@ -88,6 +88,7 @@ const STATUS_AR = {
   'LATE': 'متأخر',
   'ON_LEAVE': 'إجازة',
   'ON_ADMIN_LEAVE': 'إجازة إدارية',
+  'GIFT_LEAVE': 'إجازة مكافأة ⭐',
   'WEEKEND': 'عطلة نهاية أسبوع',
   'HOLIDAY': 'عطلة رسمية',
   'ON_MISSION': 'مهمة خارجية',
