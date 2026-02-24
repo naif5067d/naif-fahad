@@ -1103,7 +1103,7 @@ export default function FinancialCustodyPage() {
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      handleAddExpense();
+                      handleSubmitExpense();
                     }
                   }}
                   className="h-10 font-mono text-end"
@@ -1113,7 +1113,7 @@ export default function FinancialCustodyPage() {
               </div>
               
               <Button 
-                onClick={handleAddExpense} 
+                onClick={handleSubmitExpense} 
                 disabled={submitting}
                 className="h-10 px-6 bg-primary hover:bg-primary/90"
                 data-testid="add-expense-btn"
