@@ -1,6 +1,6 @@
 # DAR AL CODE HR OS - Changelog
 
-## [2026-02-24] شريط التقدم ورصيد الخروج المبكر + حالة الإعفاء
+## [2026-02-24] شريط التقدم ورصيد الخروج المبكر + نظام التعويضات
 
 ### المميزات الجديدة
 1. **شريط تقدم ساعات الشهر**: 
@@ -17,29 +17,44 @@
    - قرار إداري بعدم المحاسبة على الغياب/التأخير
    - مختلفة عن "حاضر" - ليست تزويراً للحضور
    - متاحة فقط لسلطان وستاس
-   - تُسجل كمعاملة منفصلة
 
-4. **إصلاح عرض حضور المدير**:
+4. **نظام التعويضات**:
+   - API لجلب الموظفين الذين لديهم عجز (تأخيرات/غيابات)
+   - API للتعويض: تحويل غياب إلى حضور مع توثيق
+   - API للإعفاء: قرار إداري بعدم المحاسبة
+   - تبويب "التعويضات" في صفحة الحضور والعقوبات
+
+5. **إصلاح عرض حضور المدير**:
    - سلطان الآن يرى حالة حضوره كما يراها الموظفون
 
+6. **إصلاح خطأ 447 دقيقة تأخير**:
+   - عند تعديل الحالة إلى حاضر/إعفاء/إجازة، يتم تصفير دقائق التأخير تلقائياً
+
+7. **إخفاء رسالة التعديل الإداري**:
+   - الموظف لا يرى تفاصيل التعديل الإداري (فقط الحالة)
+
 ### Backend APIs الجديدة
-- `GET /api/settings/early-leave-balance` - جلب إعدادات رصيد الخروج المبكر
-- `PUT /api/settings/early-leave-balance` - تحديث الرصيد الشهري
-- `POST /api/team-attendance/{employee_id}/update-status` - يدعم حالة EXEMPTED
+- `GET /api/team-attendance/compensation-requests` - قائمة الموظفين للتعويض
+- `POST /api/team-attendance/compensate/{emp_id}/{date}` - تعويض أو إعفاء
+- `POST /api/team-attendance/early-leave-request` - طلب خروج مبكر
+- `POST /api/team-attendance/early-leave-execute/{tx_id}` - تنفيذ مع خيار الخصم
+- `GET /api/settings/early-leave-balance` - إعدادات رصيد الخروج المبكر
+- `PUT /api/settings/early-leave-balance` - تحديث الرصيد
 
 ### ملفات معدّلة
 - `backend/routes/employees.py`: إضافة `early_leave_balance` للـ summary
-- `backend/routes/team_attendance.py`: حالة الإعفاء ومعالجتها
+- `backend/routes/team_attendance.py`: نظام التعويضات + تصفير دقائق التأخير
 - `backend/routes/settings.py`: إعدادات رصيد الخروج المبكر
-- `frontend/src/pages/DashboardPage.js`: شريطا التقدم + إصلاح عرض المدير
-- `frontend/src/pages/TeamAttendancePage.js`: خيار الإعفاء في التعديل
+- `frontend/src/pages/DashboardPage.js`: شريطا التقدم + إخفاء رسالة التعديل
+- `frontend/src/pages/TeamAttendancePage.js`: تبويب التعويضات + خيار الإعفاء
 
 ### التحقق
 - ✅ سلطان يرى حالة حضوره في Dashboard
 - ✅ شريط ساعات الشهر يعمل (0/144 رمضان)
 - ✅ شريط رصيد الخروج المبكر يعمل (3/3 ساعات)
 - ✅ حالة الإعفاء تُحفظ وتُعرض بشكل صحيح
-- ✅ إعدادات الرصيد قابلة للتعديل
+- ✅ نظام التعويض يعمل (تحويل غياب إلى حضور)
+- ✅ دقائق التأخير تُصفّر عند تغيير الحالة
 
 ---
 
