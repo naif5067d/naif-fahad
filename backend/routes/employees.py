@@ -952,6 +952,12 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
             "hours_until_deduction": max(0, 8 - deficit_hours),
             "days_to_deduct": round(deficit_hours / 8, 2) if deficit_hours >= 8 else 0
         },
+        "early_leave_balance": {
+            "monthly_allowance": monthly_early_leave_balance,
+            "used_hours": used_early_leave_hours,
+            "remaining_hours": remaining_early_leave_balance,
+            "used_minutes": used_early_leave_minutes
+        },
         "annual_leave": {
             "balance": round(pro_rata.get('available_balance', 0), 2),
             "policy_days": policy['days'],
