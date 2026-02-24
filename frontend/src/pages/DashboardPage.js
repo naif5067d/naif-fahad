@@ -778,20 +778,25 @@ export default function DashboardPage() {
                 )}
               </div>
               
-              {/* رصيد الخروج المبكر */}
+              {/* الاستئذان المستهلك */}
               <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-4">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-purple-700 dark:text-purple-300 font-medium">
-                    {lang === 'ar' ? 'رصيد الخروج المبكر' : 'Early Leave Balance'}
+                    {lang === 'ar' ? 'الاستئذان المستهلك' : 'Permission Used'}
                   </span>
                   <span className="font-bold text-purple-700 dark:text-purple-300">
-                    {employeeSummary?.early_leave_balance?.remaining_hours ?? 3} / {employeeSummary?.early_leave_balance?.monthly_allowance || 3} {lang === 'ar' ? 'ساعات' : 'hrs'}
+                    {employeeSummary?.early_leave_balance?.used_hours || 0} / {employeeSummary?.early_leave_balance?.monthly_allowance || 2} {lang === 'ar' ? 'ساعات' : 'hrs'}
                   </span>
                 </div>
                 <Progress 
-                  value={((employeeSummary?.early_leave_balance?.remaining_hours ?? 3) / (employeeSummary?.early_leave_balance?.monthly_allowance || 3)) * 100} 
+                  value={((employeeSummary?.early_leave_balance?.used_hours || 0) / (employeeSummary?.early_leave_balance?.monthly_allowance || 2)) * 100} 
                   className="h-2"
                 />
+                {(employeeSummary?.early_leave_balance?.remaining_hours || 0) > 0 && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                    {lang === 'ar' ? `متبقي: ${employeeSummary?.early_leave_balance?.remaining_hours} ساعات` : `Remaining: ${employeeSummary?.early_leave_balance?.remaining_hours} hrs`}
+                  </p>
+                )}
               </div>
             </div>
           )}
