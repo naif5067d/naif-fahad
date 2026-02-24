@@ -373,7 +373,19 @@ export default function SystemMaintenancePage() {
             </div>
           ) : systemMetrics ? (
             <>
-              {/* Main Metrics Grid */}
+              {/* Kubernetes Limits Banner */}
+              <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white border-0" data-testid="k8s-limits-banner">
+                <CardContent className="py-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-5 h-5 text-blue-400" />
+                    <h3 className="font-semibold">حدود Kubernetes المخصصة لتطبيقك</h3>
+                    <Badge variant="outline" className="text-xs text-blue-300 border-blue-400">Pod Limits</Badge>
+                  </div>
+                  <p className="text-xs text-slate-400">القيم التالية هي الحدود الفعلية المطبقة على الـ Pod الخاص بتطبيقك</p>
+                </CardContent>
+              </Card>
+
+              {/* Main Metrics Grid - K8s Limits */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* RAM Card */}
                 <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50" data-testid="ram-card">
@@ -390,13 +402,17 @@ export default function SystemMaintenancePage() {
                     <Progress value={systemMetrics.ram?.percentage} className="h-2 mb-3" />
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-white/60 p-2 rounded">
-                        <span className="text-muted-foreground">الإجمالي</span>
-                        <p className="font-semibold">{systemMetrics.ram?.total_gb} GB</p>
+                        <span className="text-muted-foreground">الحد المخصص</span>
+                        <p className="font-bold text-blue-700">{systemMetrics.ram?.limit_gb} GB</p>
                       </div>
                       <div className="bg-white/60 p-2 rounded">
                         <span className="text-muted-foreground">المستخدم</span>
-                        <p className="font-semibold">{systemMetrics.ram?.used_gb} GB</p>
+                        <p className="font-semibold">{systemMetrics.ram?.used_mb} MB</p>
                       </div>
+                    </div>
+                    <div className="mt-2 p-2 bg-red-50 rounded text-xs">
+                      <span className="text-red-600 font-medium">عند التجاوز:</span>
+                      <p className="text-red-700">OOMKilled - إيقاف الـ Pod</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -417,14 +433,25 @@ export default function SystemMaintenancePage() {
                       value={systemMetrics.cpu?.percentage} 
                       className="h-2 mb-3"
                     />
-                    <div className="bg-white/60 p-2 rounded text-xs">
-                      <span className="text-muted-foreground">عدد الأنوية</span>
-                      <p className="font-semibold">{systemMetrics.cpu?.cores} Cores</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">الحد المخصص</span>
+                        <p className="font-bold text-green-700">{systemMetrics.cpu?.limit_cores} Cores</p>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">Millicores</span>
+                        <p className="font-semibold">{systemMetrics.cpu?.limit_millicores}m</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 p-2 bg-amber-50 rounded text-xs">
+                      <span className="text-amber-600 font-medium">Throttled:</span>
+                      <span className="text-amber-700 mr-1">{systemMetrics.cpu?.throttled_percent}%</span>
+                      <p className="text-amber-600">عند التجاوز: إبطاء العملية</p>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Storage Card */}
+                {/* Ephemeral Storage Card */}
                 <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50" data-testid="storage-card">
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-4">
@@ -432,22 +459,143 @@ export default function SystemMaintenancePage() {
                         <HardDrive className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-purple-700">التخزين (Disk)</p>
-                        <p className="text-2xl font-bold text-purple-900">{systemMetrics.storage?.percentage}%</p>
+                        <p className="text-sm text-purple-700">التخزين المؤقت</p>
+                        <p className="text-2xl font-bold text-purple-900">{systemMetrics.storage?.usage_percent}%</p>
                       </div>
                     </div>
                     <Progress 
-                      value={systemMetrics.storage?.percentage} 
+                      value={systemMetrics.storage?.usage_percent} 
                       className="h-2 mb-3"
                     />
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-white/60 p-2 rounded">
-                        <span className="text-muted-foreground">الإجمالي</span>
-                        <p className="font-semibold">{systemMetrics.storage?.total_gb} GB</p>
+                        <span className="text-muted-foreground">الحد المخصص</span>
+                        <p className="font-bold text-purple-700">{systemMetrics.storage?.limit_gb} GB</p>
                       </div>
                       <div className="bg-white/60 p-2 rounded">
                         <span className="text-muted-foreground">المتاح</span>
-                        <p className="font-semibold">{systemMetrics.storage?.free_gb} GB</p>
+                        <p className="font-semibold">{systemMetrics.storage?.available_gb} GB</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 p-2 bg-red-50 rounded text-xs">
+                      <span className="text-red-600 font-medium">عند التجاوز:</span>
+                      <p className="text-red-700">رفض الكتابة</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Uptime Card */}
+                <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50" data-testid="uptime-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-amber-500 rounded-lg">
+                        <Timer className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-amber-700">مدة التشغيل</p>
+                        <p className="text-2xl font-bold text-amber-900">{systemMetrics.uptime?.formatted}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1 text-xs text-center">
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.days}</p>
+                        <span className="text-muted-foreground">يوم</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.hours}</p>
+                        <span className="text-muted-foreground">ساعة</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.minutes}</p>
+                        <span className="text-muted-foreground">دقيقة</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.seconds}</p>
+                        <span className="text-muted-foreground">ثانية</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed Limits Table */}
+              <Card data-testid="limits-detail-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-primary" />
+                    <CardTitle>جدول حدود الموارد المفصل</CardTitle>
+                  </div>
+                  <CardDescription>
+                    الحدود الفعلية المطبقة على Kubernetes Pod
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="text-right p-3">المورد</th>
+                          <th className="text-right p-3">الحد المخصص</th>
+                          <th className="text-right p-3">المستخدم حالياً</th>
+                          <th className="text-right p-3">النسبة</th>
+                          <th className="text-right p-3">عند التجاوز</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-t">
+                          <td className="p-3 font-medium">Memory Limit</td>
+                          <td className="p-3 font-bold text-blue-600">{systemMetrics.limits?.memory?.limit}</td>
+                          <td className="p-3">{systemMetrics.limits?.memory?.used}</td>
+                          <td className="p-3">
+                            <Badge variant={systemMetrics.ram?.percentage > 80 ? "destructive" : "secondary"}>
+                              {systemMetrics.ram?.percentage}%
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-xs text-red-600">OOMKilled</td>
+                        </tr>
+                        <tr className="border-t bg-muted/30">
+                          <td className="p-3 font-medium">CPU Limit</td>
+                          <td className="p-3 font-bold text-green-600">{systemMetrics.limits?.cpu?.limit}</td>
+                          <td className="p-3">{systemMetrics.limits?.cpu?.current_usage}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary">{systemMetrics.cpu?.percentage}%</Badge>
+                          </td>
+                          <td className="p-3 text-xs text-amber-600">Throttle</td>
+                        </tr>
+                        <tr className="border-t">
+                          <td className="p-3 font-medium">Ephemeral Storage</td>
+                          <td className="p-3 font-bold text-purple-600">{systemMetrics.limits?.ephemeral_storage?.limit}</td>
+                          <td className="p-3">{systemMetrics.limits?.ephemeral_storage?.used}</td>
+                          <td className="p-3">
+                            <Badge variant={systemMetrics.storage?.usage_percent > 80 ? "destructive" : "secondary"}>
+                              {systemMetrics.storage?.usage_percent}%
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-xs text-red-600">Reject Write</td>
+                        </tr>
+                        <tr className="border-t bg-muted/30">
+                          <td className="p-3 font-medium">Database Storage</td>
+                          <td className="p-3 font-bold text-indigo-600">{systemMetrics.limits?.database_storage?.partition_limit}</td>
+                          <td className="p-3">{systemMetrics.limits?.database_storage?.used}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary">
+                              {systemMetrics.db_storage?.usage_percent}%
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-xs text-red-600">DB Error</td>
+                        </tr>
+                        <tr className="border-t">
+                          <td className="p-3 font-medium">File Upload Max</td>
+                          <td className="p-3 font-bold text-cyan-600">{systemMetrics.limits?.file_upload?.max_size}</td>
+                          <td className="p-3">-</td>
+                          <td className="p-3">-</td>
+                          <td className="p-3 text-xs text-red-600">413 Error</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
                       </div>
                     </div>
                   </CardContent>
