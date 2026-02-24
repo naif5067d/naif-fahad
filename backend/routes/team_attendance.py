@@ -1883,3 +1883,357 @@ async def print_employee_attendance_report(
         employee_id=employee_id,
         user=user
     )
+
+
+# ==================== نظام تعويض التأخيرات والخروج المبكر ====================
+
+class CompensationDecision(BaseModel):
+    action: str  # 'compensate' or 'exempt'
+    reason: str
+    compensate_with_date: Optional[str] = None  # تاريخ اليوم الذي يعوض به
+
+
+@router.get("/compensation-requests")
+async def get_compensation_requests(
+    month: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    جلب قائمة الموظفين الذين لديهم عجز في الساعات (تأخيرات/غيابات) للتعويض
+    """
+    if not month:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    
+    employees = await db.employees.find(
+        {"status": "active", "is_hidden": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(100)
+    
+    compensation_list = []
+    
+    for emp in employees:
+        # جلب حالات الشهر
+        statuses = await db.daily_status.find({
+            "employee_id": emp['id'],
+            "date": {"$regex": f"^{month}"}
+        }, {"_id": 0}).to_list(100)
+        
+        # حساب العجز
+        total_late_minutes = 0
+        total_absent_days = 0
+        late_days = []
+        absent_days = []
+        outside_hours_days = []  # أيام العمل خارج الدوام
+        
+        for s in statuses:
+            status = s.get('final_status', '')
+            late_min = s.get('late_minutes', 0) or 0
+            date = s.get('date', '')
+            
+            if status == 'LATE' and late_min > 0:
+                total_late_minutes += late_min
+                late_days.append({
+                    "date": date,
+                    "late_minutes": late_min,
+                    "check_in_time": s.get('check_in_time', '')
+                })
+            elif status == 'ABSENT':
+                total_absent_days += 1
+                absent_days.append({"date": date})
+            elif status == 'OUTSIDE_HOURS':
+                # يوم عمل خارج ساعات الدوام (يمكن استخدامه للتعويض)
+                outside_hours_days.append({
+                    "date": date,
+                    "check_in_time": s.get('check_in_time', ''),
+                    "check_out_time": s.get('check_out_time', ''),
+                    "worked_hours": s.get('worked_hours', 0)
+                })
+        
+        # إذا كان هناك عجز، نضيفه للقائمة
+        if total_late_minutes > 0 or total_absent_days > 0:
+            compensation_list.append({
+                "employee_id": emp['id'],
+                "employee_name_ar": emp.get('full_name_ar', ''),
+                "employee_name_en": emp.get('full_name', ''),
+                "employee_number": emp.get('employee_number', ''),
+                "total_late_minutes": total_late_minutes,
+                "total_late_hours": round(total_late_minutes / 60, 2),
+                "total_absent_days": total_absent_days,
+                "late_days": late_days,
+                "absent_days": absent_days,
+                "outside_hours_days": outside_hours_days,  # أيام متاحة للتعويض
+                "can_compensate": len(outside_hours_days) > 0
+            })
+    
+    return {
+        "month": month,
+        "employees": compensation_list
+    }
+
+
+@router.post("/compensate/{employee_id}/{date}")
+async def compensate_attendance(
+    employee_id: str,
+    date: str,
+    body: CompensationDecision,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    تعويض غياب أو تأخير موظف
+    - action: 'compensate' = تحويل اليوم إلى حضور (التعويض بيوم عمل إضافي)
+    - action: 'exempt' = إعفاء إداري (لا يُحتسب كغياب)
+    """
+    emp = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    daily = await db.daily_status.find_one(
+        {"employee_id": employee_id, "date": date},
+        {"_id": 0}
+    )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    original_status = daily.get('final_status', 'UNKNOWN') if daily else 'UNKNOWN'
+    
+    if body.action == 'compensate':
+        # تحويل إلى حضور (مع توثيق التعويض)
+        new_status = 'PRESENT'
+        reason_text = f"✓ تم التعويض بواسطة {user.get('full_name', '')}: {body.reason}"
+        if body.compensate_with_date:
+            reason_text += f" (عُوّض بتاريخ {body.compensate_with_date})"
+    elif body.action == 'exempt':
+        # إعفاء إداري
+        new_status = 'EXEMPTED'
+        reason_text = f"✓ إعفاء إداري من {user.get('full_name', '')}: {body.reason}"
+    else:
+        raise HTTPException(status_code=400, detail="إجراء غير صالح")
+    
+    # تحديث الحالة
+    correction = {
+        "from_status": original_status,
+        "to_status": new_status,
+        "action": body.action,
+        "reason": body.reason,
+        "compensate_with_date": body.compensate_with_date,
+        "corrected_by": user['user_id'],
+        "corrected_by_name": user.get('full_name', ''),
+        "corrected_at": now,
+        "is_compensation": body.action == 'compensate',
+        "is_exemption": body.action == 'exempt'
+    }
+    
+    await db.daily_status.update_one(
+        {"employee_id": employee_id, "date": date},
+        {
+            "$set": {
+                "final_status": new_status,
+                "status_ar": "حاضر" if body.action == 'compensate' else "إعفاء",
+                "decision_reason_ar": reason_text,
+                "decision_source": body.action,
+                "is_compensation": body.action == 'compensate',
+                "is_exemption": body.action == 'exempt',
+                "late_minutes": 0 if body.action in ['compensate', 'exempt'] else (daily.get('late_minutes', 0) if daily else 0),
+                "updated_at": now,
+                "updated_by": user['user_id']
+            },
+            "$push": {"corrections": correction}
+        },
+        upsert=True
+    )
+    
+    # تسجيل المعاملة
+    tx = {
+        "id": str(uuid.uuid4()),
+        "ref_no": f"CMP-{date.replace('-', '')}-{employee_id[-4:]}",
+        "type": "compensation" if body.action == 'compensate' else "exemption",
+        "status": "executed",
+        "employee_id": employee_id,
+        "data": {
+            "employee_id": employee_id,
+            "employee_name_ar": emp.get('full_name_ar', ''),
+            "date": date,
+            "original_status": original_status,
+            "new_status": new_status,
+            "action": body.action,
+            "reason": body.reason,
+            "compensate_with_date": body.compensate_with_date
+        },
+        "created_at": now,
+        "executed_at": now,
+        "executed_by": user['user_id'],
+        "executed_by_name": user.get('full_name', '')
+    }
+    await db.transactions.insert_one(tx)
+    
+    return {
+        "success": True,
+        "message": f"تم {'التعويض' if body.action == 'compensate' else 'الإعفاء'} بنجاح",
+        "employee_name": emp.get('full_name_ar', ''),
+        "date": date,
+        "from_status": original_status,
+        "to_status": new_status
+    }
+
+
+# ==================== إدارة رصيد الخروج المبكر ====================
+
+class EarlyLeaveRequest(BaseModel):
+    date: str
+    from_time: str
+    to_time: str
+    reason: str
+    deduct_from_balance: bool = True  # هل تُخصم من الرصيد؟
+
+
+@router.post("/early-leave-request")
+async def create_early_leave_request(
+    body: EarlyLeaveRequest,
+    user=Depends(get_current_user)
+):
+    """
+    إنشاء طلب خروج مبكر (للموظف)
+    """
+    emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # حساب مدة الخروج المبكر
+    try:
+        from_dt = datetime.strptime(body.from_time, "%H:%M")
+        to_dt = datetime.strptime(body.to_time, "%H:%M")
+        duration_minutes = (to_dt - from_dt).seconds // 60
+        duration_hours = round(duration_minutes / 60, 2)
+    except:
+        raise HTTPException(status_code=400, detail="صيغة الوقت غير صحيحة")
+    
+    # التحقق من الرصيد إذا كان الخصم مطلوباً
+    if body.deduct_from_balance:
+        current_month = body.date[:7]
+        
+        # جلب الإعدادات
+        settings = await db.settings.find_one({"type": "early_leave_balance"}, {"_id": 0})
+        monthly_allowance = settings.get('monthly_hours', 3) if settings else 3
+        
+        # حساب المستخدم
+        used_requests = await db.transactions.find({
+            "$or": [
+                {"employee_id": emp['id']},
+                {"data.employee_id": emp['id']}
+            ],
+            "type": {"$in": ["early_leave", "early_leave_request"]},
+            "status": "executed",
+            "data.date": {"$regex": f"^{current_month}"},
+            "data.deduct_from_balance": True
+        }, {"_id": 0, "data.hours": 1, "data.minutes": 1}).to_list(50)
+        
+        used_minutes = sum(
+            (r.get('data', {}).get('hours', 0) or 0) * 60 + (r.get('data', {}).get('minutes', 0) or 0)
+            for r in used_requests
+        )
+        remaining_minutes = (monthly_allowance * 60) - used_minutes
+        
+        if duration_minutes > remaining_minutes:
+            return {
+                "success": False,
+                "error": "insufficient_balance",
+                "message_ar": f"الرصيد المتبقي ({round(remaining_minutes/60, 2)} ساعة) لا يكفي",
+                "remaining_hours": round(remaining_minutes / 60, 2),
+                "requested_hours": duration_hours
+            }
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # إنشاء الطلب
+    tx = {
+        "id": str(uuid.uuid4()),
+        "ref_no": f"EL-{body.date.replace('-', '')}-{emp['id'][-4:]}",
+        "type": "early_leave_request",
+        "category": "attendance",
+        "status": "pending_ops",
+        "current_stage": "ops",
+        "workflow": ["ops", "stas"],
+        "employee_id": emp['id'],
+        "employee_name": emp.get('full_name', ''),
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "data": {
+            "employee_id": emp['id'],
+            "date": body.date,
+            "from_time": body.from_time,
+            "to_time": body.to_time,
+            "hours": int(duration_minutes // 60),
+            "minutes": int(duration_minutes % 60),
+            "reason": body.reason,
+            "deduct_from_balance": body.deduct_from_balance
+        },
+        "created_at": now,
+        "created_by": user['user_id'],
+        "timeline": [{
+            "action": "created",
+            "actor_id": user['user_id'],
+            "actor_name": user.get('full_name', ''),
+            "timestamp": now,
+            "note": "طلب خروج مبكر"
+        }],
+        "approval_chain": []
+    }
+    
+    await db.transactions.insert_one(tx)
+    tx.pop('_id', None)
+    
+    return {
+        "success": True,
+        "message": "تم إرسال طلب الخروج المبكر",
+        "transaction": tx
+    }
+
+
+@router.post("/early-leave-execute/{transaction_id}")
+async def execute_early_leave(
+    transaction_id: str,
+    deduct_from_balance: bool = True,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    تنفيذ طلب خروج مبكر مع خيار الخصم من الرصيد أو الإعفاء
+    """
+    tx = await db.transactions.find_one({"id": transaction_id}, {"_id": 0})
+    if not tx:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    
+    if tx.get('type') != 'early_leave_request':
+        raise HTTPException(status_code=400, detail="هذا ليس طلب خروج مبكر")
+    
+    if tx.get('status') == 'executed':
+        raise HTTPException(status_code=400, detail="تم تنفيذ الطلب مسبقاً")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديث الطلب
+    await db.transactions.update_one(
+        {"id": transaction_id},
+        {
+            "$set": {
+                "status": "executed",
+                "current_stage": "executed",
+                "executed_at": now,
+                "executed_by": user['user_id'],
+                "executed_by_name": user.get('full_name', ''),
+                "data.deduct_from_balance": deduct_from_balance
+            },
+            "$push": {
+                "timeline": {
+                    "action": "executed",
+                    "actor_id": user['user_id'],
+                    "actor_name": user.get('full_name', ''),
+                    "timestamp": now,
+                    "note": f"تم التنفيذ {'مع الخصم من الرصيد' if deduct_from_balance else 'بدون خصم (إعفاء)'}"
+                }
+            }
+        }
+    )
+    
+    return {
+        "success": True,
+        "message": f"تم تنفيذ الطلب {'مع الخصم' if deduct_from_balance else 'كإعفاء'}",
+        "deducted": deduct_from_balance
+    }
