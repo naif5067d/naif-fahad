@@ -1756,8 +1756,24 @@ export default function TeamAttendancePage() {
                   <option value="LATE">{lang === 'ar' ? 'متأخر' : 'Late'}</option>
                   <option value="EXCUSED">{lang === 'ar' ? 'معذور' : 'Excused'}</option>
                   <option value="ON_MISSION">{lang === 'ar' ? 'مهمة خارجية' : 'On Mission'}</option>
+                  <option value="PERMISSION">{lang === 'ar' ? 'استئذان' : 'Permission'}</option>
+                  {/* إجازة مكافأة - فقط للمدراء */}
+                  {(isStas || isSultan) && (
+                    <option value="GIFT_LEAVE">{lang === 'ar' ? 'إجازة مكافأة' : 'Gift Leave'}</option>
+                  )}
                 </select>
               </div>
+              
+              {/* رسالة توضيحية للإجازة المكافأة */}
+              {editForm.new_status === 'GIFT_LEAVE' && (
+                <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200">
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    {lang === 'ar' 
+                      ? '⭐ إجازة مكافأة: لن تُخصم من رصيد الموظف وستُحتسب كحضور مدفوع' 
+                      : '⭐ Gift Leave: Will not deduct from balance, counts as paid attendance'}
+                  </p>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
