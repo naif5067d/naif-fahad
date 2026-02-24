@@ -127,6 +127,7 @@ export default function STASMirrorPage() {
     fetchMyTransactions();
     fetchVersion();
     fetchCompanySettings();
+    fetchSignatureSettings();
   }, []);
 
   const fetchPending = () => {
