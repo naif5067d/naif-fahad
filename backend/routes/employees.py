@@ -918,6 +918,7 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
             "early_leave_minutes": total_early_leave_minutes,
             "work_days_in_month": work_days_count,
             "daily_hours": daily_hours,
+            "is_ramadan_active": is_ramadan_active,
             "hours_until_deduction": max(0, 8 - deficit_hours),
             "days_to_deduct": round(deficit_hours / 8, 2) if deficit_hours >= 8 else 0
         },
