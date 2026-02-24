@@ -991,14 +991,6 @@ async def get_system_metrics(user=Depends(require_roles('stas'))):
             "process": process_info,
             "status": "healthy"
         }
-            "ram": ram_info,
-            "cpu": cpu_info,
-            "storage": storage_info,
-            "file_storage": file_storage,
-            "uptime": uptime_info,
-            "process": process_info,
-            "status": "healthy"
-        }
         
     except Exception as e:
         return {
