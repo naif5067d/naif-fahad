@@ -852,8 +852,8 @@ async def generate_custody_pdf(custody_id: str, lang: str = 'ar', user=Depends(g
 
 @router.delete("/bulk")
 async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_current_user)):
-    """حذف متعدد للعهد (STAS فقط)"""
-    check_role(user, ['stas'])
+    """حذف متعدد للعهد (سلطان/صلاح/ستاس)"""
+    check_role(user, ['stas', 'sultan', 'salah'])
     
     deleted_count = 0
     failed_ids = []
