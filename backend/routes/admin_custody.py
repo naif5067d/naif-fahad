@@ -1108,7 +1108,6 @@ async def update_custody(custody_id: str, data: CustodyUpdate, user=Depends(get_
     update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
     
     if data.amount is not None:
-        old_amount = custody.get('amount', 0)
         update_data['amount'] = data.amount
         # تحديث المتبقي
         spent = custody.get('spent', 0)
