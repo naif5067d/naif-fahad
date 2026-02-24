@@ -624,24 +624,88 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         "type": "check_in"
     })
     
-    # تحديد حالة اليوم
-    if today_daily_status:
+    # التحقق من الإجازات النشطة من جدول transactions
+    active_leave = await db.transactions.find_one({
+        "data.employee_id": employee_id,
+        "type": {"$regex": "leave", "$options": "i"},
+        "status": "executed",
+        "data.start_date": {"$lte": today},
+        "data.end_date": {"$gte": today}
+    }, {"_id": 0, "type": 1, "data.start_date": 1, "data.end_date": 1})
+    
+    # التحقق من المهمات النشطة
+    active_mission = await db.transactions.find_one({
+        "data.employee_id": employee_id,
+        "type": {"$regex": "mission|assignment", "$options": "i"},
+        "status": "executed",
+        "data.start_date": {"$lte": today},
+        "data.end_date": {"$gte": today}
+    }, {"_id": 0, "type": 1})
+    
+    # التحقق من العطل الرسمية
+    holiday_today = await db.holidays.find_one({
+        "date": today,
+        "is_active": {"$ne": False}
+    }, {"_id": 0})
+    
+    # التحقق من عطلة نهاية الأسبوع
+    from datetime import datetime as dt
+    day_of_week = dt.strptime(today, "%Y-%m-%d").weekday()  # 0=Monday, 4=Friday, 5=Saturday, 6=Sunday
+    is_weekend = day_of_week == 4  # Friday
+    
+    # تحديد حالة اليوم بالترتيب الصحيح
+    today_status = 'not_checked_in'
+    today_status_ar = 'لم يسجل'
+    
+    # 1. أولاً: التحقق من الإجازة المعتمدة
+    if active_leave:
+        leave_type = active_leave.get('type', '')
+        if 'admin' in leave_type.lower():
+            today_status = 'leave'
+            today_status_ar = 'إجازة إدارية'
+        elif 'sick' in leave_type.lower():
+            today_status = 'leave'
+            today_status_ar = 'إجازة مرضية'
+        elif 'emergency' in leave_type.lower():
+            today_status = 'leave'
+            today_status_ar = 'إجازة طارئة'
+        else:
+            today_status = 'leave'
+            today_status_ar = 'إجازة'
+    
+    # 2. ثانياً: التحقق من المهمة
+    elif active_mission:
+        today_status = 'mission'
+        today_status_ar = 'في مهمة'
+    
+    # 3. ثالثاً: التحقق من العطلة الرسمية
+    elif holiday_today:
+        today_status = 'holiday'
+        today_status_ar = 'عطلة رسمية'
+    
+    # 4. رابعاً: التحقق من عطلة نهاية الأسبوع
+    elif is_weekend:
+        today_status = 'weekend'
+        today_status_ar = 'عطلة أسبوعية'
+    
+    # 5. خامساً: التحقق من daily_status
+    elif today_daily_status:
         final_status = today_daily_status.get('final_status', '')
         if final_status == 'ABSENT':
             today_status = 'absent'
             today_status_ar = 'غائب'
-        elif final_status == 'LEAVE':
+        elif final_status in ('ON_LEAVE', 'LEAVE', 'ON_ADMIN_LEAVE'):
             today_status = 'leave'
-            today_status_ar = 'إجازة'
+            today_status_ar = today_daily_status.get('decision_reason_ar', 'إجازة') or 'إجازة'
         elif final_status == 'HOLIDAY':
             today_status = 'holiday'
-            today_status_ar = 'عطلة'
+            today_status_ar = 'عطلة رسمية'
         elif final_status == 'WEEKEND':
             today_status = 'weekend'
             today_status_ar = 'عطلة أسبوعية'
-        elif final_status == 'MISSION':
+        elif final_status in ('ON_MISSION', 'MISSION'):
             today_status = 'mission'
-            today_status_ar = 'مهمة خارجية'
+            today_status_ar = 'في مهمة'
         elif 'LATE' in final_status:
             today_status = 'late'
             today_status_ar = 'متأخر'
@@ -651,10 +715,11 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         else:
             today_status = 'present' if today_attendance else 'not_checked_in'
             today_status_ar = 'حاضر' if today_attendance else 'لم يسجل'
-    else:
-        # لا يوجد سجل في daily_status - نتحقق من البصمة
-        today_status = 'present' if today_attendance else 'not_checked_in'
-        today_status_ar = 'حاضر' if today_attendance else 'لم يسجل'
+    
+    # 6. سادساً: التحقق من البصمة فقط
+    elif today_attendance:
+        today_status = 'present'
+        today_status_ar = 'حاضر'
     
     # وقت الحضور
     check_in_time = None
