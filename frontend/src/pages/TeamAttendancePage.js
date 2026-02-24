@@ -811,12 +811,31 @@ export default function TeamAttendancePage() {
         <TabsContent value="attendance">
           {/* Sub Tabs */}
           <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="daily">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
-          <TabsTrigger value="weekly">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
-          <TabsTrigger value="monthly">{lang === 'ar' ? 'شهري' : 'Monthly'}</TabsTrigger>
-          <TabsTrigger value="yearly">{lang === 'ar' ? 'سنوي' : 'Yearly'}</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <TabsList>
+            <TabsTrigger value="daily">{lang === 'ar' ? 'يومي' : 'Daily'}</TabsTrigger>
+            <TabsTrigger value="weekly">{lang === 'ar' ? 'أسبوعي' : 'Weekly'}</TabsTrigger>
+            <TabsTrigger value="monthly">{lang === 'ar' ? 'شهري' : 'Monthly'}</TabsTrigger>
+            <TabsTrigger value="yearly">{lang === 'ar' ? 'سنوي' : 'Yearly'}</TabsTrigger>
+          </TabsList>
+          
+          {/* Print Button */}
+          <Button
+            variant="outline"
+            onClick={handlePrintReport}
+            disabled={isPrinting}
+            className="flex items-center gap-2"
+            data-testid="print-attendance-btn"
+          >
+            {isPrinting ? (
+              <Loader2 className="animate-spin w-4 h-4" />
+            ) : (
+              <Printer className="w-4 h-4" />
+            )}
+            <QrCode className="w-4 h-4 text-muted-foreground" />
+            {lang === 'ar' ? 'طباعة مع QR' : 'Print with QR'}
+          </Button>
+        </div>
 
         {/* Daily Tab */}
         <TabsContent value="daily">
