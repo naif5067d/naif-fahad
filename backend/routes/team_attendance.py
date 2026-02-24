@@ -1634,11 +1634,12 @@ async def print_attendance_report(
     # إنشاء الجدول
     col_widths = None
     if period == "daily":
-        col_widths = [30, 150, 60, 70, 60, 60, 50, 150]
+        # زيادة عرض الملاحظات لعرض التعليق كامل
+        col_widths = [25, 120, 50, 60, 50, 50, 40, 200]
     elif period == "weekly":
-        col_widths = [30, 100] + [45]*7 + [40, 40]
+        col_widths = [25, 90] + [40]*7 + [35, 35]
     else:
-        col_widths = [30, 150, 60, 50, 50, 50, 50, 50, 70]
+        col_widths = [25, 120, 50, 40, 40, 40, 40, 40, 60]
     
     table = Table(table_data, colWidths=col_widths)
     table.setStyle(TableStyle([
@@ -1646,18 +1647,20 @@ async def print_attendance_report(
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, -1), font_name),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),  # خط أصغر للعنوان
+        ('FONTSIZE', (0, 1), (-1, -1), 7),  # خط أصغر للبيانات
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ('TOPPADDING', (0, 0), (-1, 0), 6),
         # Data rows
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
-        ('TOPPADDING', (0, 1), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+        ('TOPPADDING', (0, 1), (-1, -1), 4),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
         # Alternating row colors
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+        # الملاحظات بمحاذاة لليمين
+        ('ALIGN', (-1, 1), (-1, -1), 'RIGHT'),
     ]))
     
     elements.append(table)
