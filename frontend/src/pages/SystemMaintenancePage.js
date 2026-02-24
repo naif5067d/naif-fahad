@@ -326,8 +326,11 @@ export default function SystemMaintenancePage() {
       </div>
 
       {/* Tabs for different sections */}
-      <Tabs defaultValue="announcements" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+      <Tabs defaultValue="monitoring" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsTrigger value="monitoring" className="flex items-center gap-2">
+            <Activity size={16} /> المراقبة
+          </TabsTrigger>
           <TabsTrigger value="announcements" className="flex items-center gap-2">
             <Megaphone size={16} /> الإشعارات
           </TabsTrigger>
@@ -338,6 +341,254 @@ export default function SystemMaintenancePage() {
             <Archive size={16} /> الأرشيف
           </TabsTrigger>
         </TabsList>
+
+        {/* MONITORING TAB - System Metrics */}
+        <TabsContent value="monitoring" className="space-y-6">
+          {/* Header with Refresh */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold">مراقبة النظام الحية</h2>
+              {systemMetrics && (
+                <Badge variant="outline" className="text-xs">
+                  يُحدث كل 30 ثانية
+                </Badge>
+              )}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => loadSystemMetrics()} 
+              disabled={metricsLoading}
+              data-testid="refresh-metrics-btn"
+            >
+              <RefreshCw className={`w-4 h-4 ml-2 ${metricsLoading ? 'animate-spin' : ''}`} />
+              تحديث الآن
+            </Button>
+          </div>
+
+          {metricsLoading && !systemMetrics ? (
+            <div className="flex items-center justify-center h-64">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : systemMetrics ? (
+            <>
+              {/* Main Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* RAM Card */}
+                <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50" data-testid="ram-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-blue-500 rounded-lg">
+                        <MemoryStick className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-blue-700">الذاكرة (RAM)</p>
+                        <p className="text-2xl font-bold text-blue-900">{systemMetrics.ram?.percentage}%</p>
+                      </div>
+                    </div>
+                    <Progress value={systemMetrics.ram?.percentage} className="h-2 mb-3" />
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">الإجمالي</span>
+                        <p className="font-semibold">{systemMetrics.ram?.total_gb} GB</p>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">المستخدم</span>
+                        <p className="font-semibold">{systemMetrics.ram?.used_gb} GB</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* CPU Card */}
+                <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100/50" data-testid="cpu-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-green-500 rounded-lg">
+                        <Cpu className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-green-700">المعالج (CPU)</p>
+                        <p className="text-2xl font-bold text-green-900">{systemMetrics.cpu?.percentage}%</p>
+                      </div>
+                    </div>
+                    <Progress 
+                      value={systemMetrics.cpu?.percentage} 
+                      className="h-2 mb-3"
+                    />
+                    <div className="bg-white/60 p-2 rounded text-xs">
+                      <span className="text-muted-foreground">عدد الأنوية</span>
+                      <p className="font-semibold">{systemMetrics.cpu?.cores} Cores</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Storage Card */}
+                <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100/50" data-testid="storage-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-purple-500 rounded-lg">
+                        <HardDrive className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-purple-700">التخزين (Disk)</p>
+                        <p className="text-2xl font-bold text-purple-900">{systemMetrics.storage?.percentage}%</p>
+                      </div>
+                    </div>
+                    <Progress 
+                      value={systemMetrics.storage?.percentage} 
+                      className="h-2 mb-3"
+                    />
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">الإجمالي</span>
+                        <p className="font-semibold">{systemMetrics.storage?.total_gb} GB</p>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <span className="text-muted-foreground">المتاح</span>
+                        <p className="font-semibold">{systemMetrics.storage?.free_gb} GB</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Uptime Card */}
+                <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50" data-testid="uptime-card">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-amber-500 rounded-lg">
+                        <Timer className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-amber-700">مدة التشغيل</p>
+                        <p className="text-2xl font-bold text-amber-900">{systemMetrics.uptime?.formatted}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1 text-xs text-center">
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.days}</p>
+                        <span className="text-muted-foreground">يوم</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.hours}</p>
+                        <span className="text-muted-foreground">ساعة</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.minutes}</p>
+                        <span className="text-muted-foreground">دقيقة</span>
+                      </div>
+                      <div className="bg-white/60 p-2 rounded">
+                        <p className="font-bold text-lg">{systemMetrics.uptime?.seconds}</p>
+                        <span className="text-muted-foreground">ثانية</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* File Storage Breakdown */}
+              <Card data-testid="file-storage-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-5 h-5 text-primary" />
+                    <CardTitle>تفاصيل ملفات التخزين</CardTitle>
+                  </div>
+                  <CardDescription>
+                    تحليل حجم الملفات المرفوعة في النظام
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <div className="bg-slate-100 p-4 rounded-xl text-center">
+                      <Server className="w-6 h-6 mx-auto mb-2 text-slate-600" />
+                      <p className="text-2xl font-bold">{systemMetrics.file_storage?.total_mb} MB</p>
+                      <p className="text-xs text-muted-foreground">إجمالي الملفات</p>
+                    </div>
+                    <div className="bg-blue-100 p-4 rounded-xl text-center">
+                      <FileUp className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                      <p className="text-2xl font-bold">{systemMetrics.file_storage?.ats_files_mb} MB</p>
+                      <p className="text-xs text-muted-foreground">ملفات ATS</p>
+                    </div>
+                    <div className="bg-green-100 p-4 rounded-xl text-center">
+                      <FileJson className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                      <p className="text-2xl font-bold">{systemMetrics.file_storage?.transaction_files_mb} MB</p>
+                      <p className="text-xs text-muted-foreground">ملفات المعاملات</p>
+                    </div>
+                    <div className="bg-amber-100 p-4 rounded-xl text-center">
+                      <Folder className="w-6 h-6 mx-auto mb-2 text-amber-600" />
+                      <p className="text-2xl font-bold">{systemMetrics.file_storage?.other_files_mb} MB</p>
+                      <p className="text-xs text-muted-foreground">ملفات أخرى</p>
+                    </div>
+                  </div>
+                  
+                  {/* Directory Breakdown Table */}
+                  {systemMetrics.file_storage?.breakdown?.length > 0 && (
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted">
+                          <tr>
+                            <th className="text-right p-3">المجلد</th>
+                            <th className="text-right p-3">الحجم</th>
+                            <th className="text-right p-3">عدد الملفات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {systemMetrics.file_storage.breakdown.map((item, idx) => (
+                            <tr key={idx} className="border-t">
+                              <td className="p-3 font-mono text-xs">{item.directory}</td>
+                              <td className="p-3">{item.size_mb} MB</td>
+                              <td className="p-3">{item.file_count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Process Info */}
+              <Card data-testid="process-info-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Gauge className="w-5 h-5 text-primary" />
+                    <CardTitle>معلومات العملية الحالية</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-muted/50 p-4 rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">ذاكرة العملية</p>
+                      <p className="text-xl font-bold">{systemMetrics.process?.memory_mb} MB</p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">استهلاك المعالج</p>
+                      <p className="text-xl font-bold">{systemMetrics.process?.cpu_percent}%</p>
+                    </div>
+                    <div className="bg-muted/50 p-4 rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-1">عدد الخيوط</p>
+                      <p className="text-xl font-bold">{systemMetrics.process?.threads}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Last Update Timestamp */}
+              <div className="text-center text-xs text-muted-foreground">
+                آخر تحديث: {systemMetrics.timestamp ? new Date(systemMetrics.timestamp).toLocaleString('ar-SA') : '-'}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Activity className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>لا يمكن تحميل بيانات المراقبة</p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => loadSystemMetrics()}>
+                إعادة المحاولة
+              </Button>
+            </div>
+          )}
+        </TabsContent>
 
         {/* ANNOUNCEMENTS TAB */}
         <TabsContent value="announcements" className="space-y-6">
