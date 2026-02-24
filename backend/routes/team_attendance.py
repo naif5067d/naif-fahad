@@ -27,6 +27,8 @@ import uuid
 import io
 import qrcode
 import base64
+import arabic_reshaper
+from bidi.algorithm import get_display
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
