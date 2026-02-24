@@ -768,8 +768,30 @@ export default function DashboardPage() {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{lang === 'ar' ? 'ساعات الشهر' : 'Monthly Hours'}</span>
-                  <span className="font-medium">{employeeSummary?.attendance?.monthly_hours || 0} / {employeeSummary?.attendance?.required_monthly_hours || 176}</span>
+                  <span className="font-medium">{employeeSummary?.attendance?.monthly_hours || 0} / {employeeSummary?.attendance?.required_monthly_hours || 194}</span>
                 </div>
+                {employeeSummary?.attendance?.deficit_hours > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{lang === 'ar' ? 'عجز الساعات' : 'Deficit'}</span>
+                    <span className="font-medium text-red-600">{employeeSummary?.attendance?.deficit_hours} {lang === 'ar' ? 'ساعة' : 'hrs'}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* رصيد الخروج المبكر */}
+              <div className="bg-purple-50 dark:bg-purple-950/30 rounded-lg p-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-purple-700 dark:text-purple-300 font-medium">
+                    {lang === 'ar' ? 'رصيد الخروج المبكر' : 'Early Leave Balance'}
+                  </span>
+                  <span className="font-bold text-purple-700 dark:text-purple-300">
+                    {employeeSummary?.early_leave_balance?.remaining_hours ?? 3} / {employeeSummary?.early_leave_balance?.monthly_allowance || 3} {lang === 'ar' ? 'ساعات' : 'hrs'}
+                  </span>
+                </div>
+                <Progress 
+                  value={((employeeSummary?.early_leave_balance?.remaining_hours ?? 3) / (employeeSummary?.early_leave_balance?.monthly_allowance || 3)) * 100} 
+                  className="h-2"
+                />
               </div>
               
               {/* ملاحظة إذا وجدت */}
