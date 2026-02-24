@@ -350,6 +350,59 @@ async def get_available_surplus(user=Depends(get_current_user)):
     }
 
 
+# ==================== طباعة التقرير الشهري ====================
+
+@router.get("/print-month")
+async def print_monthly_report(
+    month: str,
+    lang: str = 'ar',
+    user=Depends(get_current_user)
+):
+    """
+    طباعة تقرير شهري كامل للعهد المالية
+    يشمل: الترويسة، الملخص، كل العهد مع مصروفاتها، التواقيع، QR
+    """
+    check_role(user, ['sultan', 'salah', 'stas', 'mohammed'])
+    
+    from utils.custody_pdf import generate_monthly_custody_report
+    
+    # جلب جميع العهد للشهر
+    custodies = await db.admin_custodies.find({
+        "created_at": {"$regex": f"^{month}"}
+    }, {"_id": 0}).sort("custody_number", 1).to_list(500)
+    
+    if not custodies:
+        raise HTTPException(status_code=404, detail="لا توجد عهد في هذا الشهر")
+    
+    # جلب المصروفات لكل عهدة
+    for custody in custodies:
+        expenses = await db.custody_expenses.find(
+            {"custody_id": custody['id'], "status": "active"},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(200)
+        custody['expenses'] = expenses
+    
+    # جلب إعدادات الشركة
+    branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
+    
+    # توليد PDF
+    pdf_buffer = generate_monthly_custody_report(
+        custodies=custodies,
+        month=month,
+        lang=lang,
+        branding=branding
+    )
+    
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename=monthly_custody_{month}.pdf"
+        }
+    )
+
+
 @router.get("/{custody_id}")
 async def get_custody(custody_id: str, user=Depends(get_current_user)):
     """جلب عهدة محددة مع مصروفاتها"""
