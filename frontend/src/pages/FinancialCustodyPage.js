@@ -263,6 +263,38 @@ export default function FinancialCustodyPage() {
     }
   };
 
+  // ==================== CODE EDIT/DELETE ====================
+  
+  const handleSaveCodeEdit = async (code) => {
+    if (!editCodeName.trim()) {
+      toast.error(lang === 'ar' ? 'أدخل اسم الكود' : 'Enter code name');
+      return;
+    }
+    
+    try {
+      await api.put(`/api/admin-custody/codes/${code}`, { name_ar: editCodeName });
+      toast.success(lang === 'ar' ? 'تم تحديث الكود' : 'Code updated');
+      setEditingCode(null);
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    }
+  };
+  
+  const handleDeleteCode = async (code) => {
+    if (!window.confirm(lang === 'ar' ? `هل أنت متأكد من حذف الكود ${code}؟` : `Delete code ${code}?`)) {
+      return;
+    }
+    
+    try {
+      await api.delete(`/api/admin-custody/codes/${code}`);
+      toast.success(lang === 'ar' ? 'تم حذف الكود' : 'Code deleted');
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    }
+  };
+
   // ==================== ACTIONS ====================
 
   const handleCreate = async () => {
