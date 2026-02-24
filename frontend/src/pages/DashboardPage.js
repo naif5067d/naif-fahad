@@ -793,11 +793,6 @@ export default function DashboardPage() {
                   className="h-2"
                 />
               </div>
-              
-              {/* ملاحظة إذا وجدت */}
-              {employeeSummary?.attendance?.decision_reason_ar && (
-                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
                     <Info className="inline w-3 h-3 me-1" />
                     {employeeSummary?.attendance?.decision_reason_ar}
                   </p>
