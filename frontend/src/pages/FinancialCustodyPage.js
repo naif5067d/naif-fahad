@@ -1355,10 +1355,28 @@ export default function FinancialCustodyPage() {
               <Input
                 type="month"
                 value={selectedMonth}
-                onChange={e => setSelectedMonth(e.target.value)}
+                onChange={e => {
+                  const newMonth = e.target.value;
+                  if (newMonth) {
+                    setSelectedMonth(newMonth);
+                  }
+                }}
                 className="w-40 h-9 text-sm"
+                data-testid="month-selector"
               />
-              <Button variant="outline" size="sm" onClick={handlePrintMonth} disabled={submitting}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  if (!selectedMonth) {
+                    toast.error(lang === 'ar' ? 'اختر الشهر أولاً' : 'Select month first');
+                    return;
+                  }
+                  handlePrintMonth();
+                }} 
+                disabled={submitting}
+                data-testid="print-month-btn"
+              >
                 <Printer size={14} className="me-1" />
                 {lang === 'ar' ? 'طباعة الشهر' : 'Print Month'}
               </Button>
