@@ -78,10 +78,18 @@ export default function FinancialCustodyPage() {
   const canCreate = ['sultan', 'mohammed'].includes(role);
   const canAddExpense = ['sultan', 'mohammed'].includes(role);
   const canAudit = ['salah', 'stas'].includes(role);
-  const canEditExpense = ['salah', 'stas'].includes(role);
+  const canEditExpense = ['salah', 'stas', 'sultan'].includes(role);
   const canExecute = role === 'stas';
   const canClose = ['sultan', 'mohammed', 'stas'].includes(role);
-  const canDelete = role === 'stas';
+  const canDelete = ['stas', 'sultan', 'salah'].includes(role);
+  const canEditCustody = ['stas', 'sultan', 'salah'].includes(role);
+  
+  // States for new features
+  const [allCodes, setAllCodes] = useState([]);
+  const [showCodesDropdown, setShowCodesDropdown] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [editCustodyOpen, setEditCustodyOpen] = useState(false);
+  const [editCustodyForm, setEditCustodyForm] = useState({ amount: '', custody_number: '', notes: '' });
 
   // ==================== DATA FETCHING ====================
 
