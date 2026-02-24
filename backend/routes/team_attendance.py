@@ -587,8 +587,9 @@ async def update_employee_status(
                 "final_status": final_status_to_save,
                 "status_ar": status_ar_map.get(body.new_status, body.new_status),
                 "decision_reason_ar": reason_text,
-                "decision_source": "gift_leave" if is_gift_leave else "manual_correction",
+                "decision_source": "exemption" if is_exemption else ("gift_leave" if is_gift_leave else "manual_correction"),
                 "is_gift_leave": is_gift_leave,
+                "is_exemption": is_exemption,
                 "check_in_time": body.check_in_time or (daily.get('check_in_time') if daily else None),
                 "check_out_time": body.check_out_time or (daily.get('check_out_time') if daily else None),
                 "updated_at": now,
@@ -600,6 +601,33 @@ async def update_employee_status(
         },
         upsert=True
     )
+    
+    # إذا كان إعفاء، نسجله كمعاملة
+    if is_exemption:
+        exemption_tx = {
+            "id": str(uuid.uuid4()),
+            "ref_no": f"EX-{date.replace('-', '')}-{employee_id[-4:]}",
+            "type": "exemption",
+            "status": "executed",
+            "employee_id": employee_id,
+            "data": {
+                "employee_id": employee_id,
+                "employee_name_ar": emp.get('full_name_ar', ''),
+                "employee_name_en": emp.get('full_name', ''),
+                "date": date,
+                "reason": body.reason,
+                "original_status": daily.get('final_status', 'UNKNOWN') if daily else 'UNKNOWN',
+                "exemption_type": "administrative",
+                "is_exemption": True
+            },
+            "created_at": now,
+            "created_by": user['user_id'],
+            "approved_by": user['user_id'],
+            "approved_by_name": user.get('full_name', ''),
+            "executed_at": now,
+            "executed_by": user['user_id']
+        }
+        await db.transactions.insert_one(exemption_tx)
     
     # إذا كانت إجازة مكافأة، نسجلها كمعاملة حتى تظهر في النظام بالكامل
     if is_gift_leave:
