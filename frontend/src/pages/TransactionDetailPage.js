@@ -469,18 +469,12 @@ export default function TransactionDetailPage() {
           </div>
         )}
         
-        {/* PDF Hash Info */}
-        {tx.pdf_hash && (
+        {/* Integrity ID only - without PDF hash */}
+        {tx.integrity_id && (
           <div className="mt-6 pt-4 border-t border-border">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
-                <span className="font-mono">{tx.integrity_id}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">{lang === 'ar' ? 'تجزئة PDF:' : 'PDF Hash:'} </span>
-                <span className="font-mono text-[10px]">{tx.pdf_hash?.slice(0, 32)}...</span>
-              </div>
+            <div className="text-xs">
+              <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
+              <span className="font-mono">{tx.integrity_id}</span>
             </div>
           </div>
         )}
