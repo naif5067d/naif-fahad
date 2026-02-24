@@ -375,20 +375,34 @@ export default function DashboardPage() {
                     </div>
                   )}
                   
-                  {/* نقطة الحالة - ألوان الشركة */}
+                  {/* نقطة الحالة المضيئة - قابلة للنقر */}
                   {showsAttendance && (
-                    <span className={`absolute -bottom-1 -end-1 w-5 h-5 rounded-full border-2 ${
-                      isManager ? 'border-[hsl(var(--charcoal))]' : 'border-[hsl(var(--navy))]'
-                    } ${
-                      employeeSummary?.attendance?.today_status === 'present' ? 'bg-[hsl(var(--navy))]' :
-                      employeeSummary?.attendance?.today_status === 'late' ? 'bg-[hsl(var(--lavender))]' :
-                      employeeSummary?.attendance?.today_status === 'absent' ? 'bg-red-500' :
-                      employeeSummary?.attendance?.today_status === 'leave' ? 'bg-green-500' :
-                      employeeSummary?.attendance?.today_status === 'holiday' ? 'bg-green-500' :
-                      employeeSummary?.attendance?.today_status === 'weekend' ? 'bg-green-500' :
-                      employeeSummary?.attendance?.today_status === 'mission' ? 'bg-blue-500' :
-                      employeeSummary?.attendance?.today_status === 'not_checked_in' ? 'bg-amber-500' : 'bg-slate-400'
-                    }`} title={employeeSummary?.attendance?.today_status_ar} />
+                    <button
+                      onClick={() => setShowStatusDialog(true)}
+                      className="absolute -bottom-2 -end-2 group cursor-pointer"
+                      data-testid="attendance-status-indicator"
+                    >
+                      {/* النقطة المضيئة */}
+                      <span className={`
+                        block w-6 h-6 rounded-full border-2
+                        ${isManager ? 'border-[hsl(var(--charcoal))]' : 'border-[hsl(var(--navy))]'}
+                        ${getStatusConfig(employeeSummary?.attendance?.today_status).color}
+                        ${getStatusConfig(employeeSummary?.attendance?.today_status).glow}
+                        ${getStatusConfig(employeeSummary?.attendance?.today_status).pulse ? 'animate-pulse' : ''}
+                        transition-all duration-300 group-hover:scale-125
+                      `} />
+                      {/* نص الحالة المختصر */}
+                      <span className={`
+                        absolute -bottom-5 start-1/2 -translate-x-1/2 whitespace-nowrap
+                        text-[10px] font-bold px-1.5 py-0.5 rounded
+                        ${getStatusConfig(employeeSummary?.attendance?.today_status).color}
+                        text-white shadow-lg
+                      `}>
+                        {lang === 'ar' 
+                          ? getStatusConfig(employeeSummary?.attendance?.today_status).label_ar 
+                          : getStatusConfig(employeeSummary?.attendance?.today_status).label_en}
+                      </span>
+                    </button>
                   )}
                 </div>
                 
