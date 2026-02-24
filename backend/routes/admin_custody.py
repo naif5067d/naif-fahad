@@ -912,3 +912,197 @@ async def delete_single_custody(custody_id: str, user=Depends(get_current_user))
         "success": True,
         "message_ar": f"تم حذف العهدة رقم {custody_number} نهائياً"
     }
+
+
+# ==================== تعديل العهدة ====================
+
+class CustodyUpdate(BaseModel):
+    amount: Optional[float] = None
+    custody_number: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.put("/{custody_id}")
+async def update_custody(custody_id: str, data: CustodyUpdate, user=Depends(get_current_user)):
+    """تعديل العهدة (المبلغ / الرقم / الملاحظات) - سلطان/صلاح/ستاس"""
+    check_role(user, ['sultan', 'salah', 'stas'])
+    
+    custody = await db.admin_custodies.find_one({"id": custody_id})
+    if not custody:
+        raise HTTPException(status_code=404, detail="العهدة غير موجودة")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if data.amount is not None:
+        old_amount = custody.get('amount', 0)
+        update_data['amount'] = data.amount
+        # تحديث المتبقي
+        spent = custody.get('spent', 0)
+        update_data['remaining'] = data.amount - spent + custody.get('surplus_amount', 0)
+        
+    if data.custody_number is not None:
+        update_data['custody_number'] = data.custody_number
+        
+    if data.notes is not None:
+        update_data['notes'] = data.notes
+    
+    await db.admin_custodies.update_one(
+        {"id": custody_id},
+        {"$set": update_data}
+    )
+    
+    # تسجيل التعديل
+    await db.custody_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "custody_id": custody_id,
+        "action": "updated",
+        "actor_id": user['user_id'],
+        "actor_name": user.get('full_name', ''),
+        "details": update_data,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "success": True,
+        "message_ar": "تم تحديث العهدة بنجاح"
+    }
+
+
+# ==================== طباعة الشهر ====================
+
+@router.get("/print-month")
+async def print_month_pdf(month: str, lang: str = 'ar', user=Depends(get_current_user)):
+    """طباعة جميع العهد والمصروفات لشهر معين"""
+    check_role(user, ['sultan', 'salah', 'stas', 'mohammed'])
+    
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    import io
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    
+    # جلب العهد للشهر
+    custodies = await db.admin_custodies.find({
+        "created_at": {"$regex": f"^{month}"}
+    }, {"_id": 0}).sort("created_at", 1).to_list(500)
+    
+    if not custodies:
+        raise HTTPException(status_code=404, detail="لا توجد عهد في هذا الشهر")
+    
+    # إعداد الخط العربي
+    font_path = "/app/backend/fonts/Amiri-Regular.ttf"
+    if os.path.exists(font_path):
+        try:
+            pdfmetrics.registerFont(TTFont('Amiri', font_path))
+            arabic_font = 'Amiri'
+        except:
+            arabic_font = 'Helvetica'
+    else:
+        arabic_font = 'Helvetica'
+    
+    def arabic_text(text):
+        if not text:
+            return ''
+        try:
+            reshaped = arabic_reshaper.reshape(str(text))
+            return get_display(reshaped)
+        except:
+            return str(text)
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'Title', parent=styles['Title'],
+        fontName=arabic_font, fontSize=18, alignment=TA_CENTER,
+        textColor=colors.HexColor('#1e3a5f')
+    )
+    
+    elements = []
+    
+    # العنوان
+    title = arabic_text(f"تقرير العهد المالية - {month}") if lang == 'ar' else f"Financial Custody Report - {month}"
+    elements.append(Paragraph(title, title_style))
+    elements.append(Spacer(1, 20))
+    
+    # ملخص
+    total_budget = sum(c.get('amount', 0) for c in custodies)
+    total_spent = sum(c.get('spent', 0) for c in custodies)
+    total_remaining = sum(c.get('remaining', 0) for c in custodies)
+    
+    summary_data = [
+        [arabic_text('إجمالي الميزانية'), f"{total_budget:,.2f}"],
+        [arabic_text('إجمالي المصروف'), f"{total_spent:,.2f}"],
+        [arabic_text('إجمالي المتبقي'), f"{total_remaining:,.2f}"],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[200, 150])
+    summary_table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+        ('FONTSIZE', (0, 0), (-1, -1), 12),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0f4f8')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#1e3a5f')),
+        ('PADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # تفاصيل كل عهدة
+    for custody in custodies:
+        # عنوان العهدة
+        custody_title = arabic_text(f"عهدة رقم {custody['custody_number']}") if lang == 'ar' else f"Custody #{custody['custody_number']}"
+        elements.append(Paragraph(custody_title, ParagraphStyle('H2', fontName=arabic_font, fontSize=14, textColor=colors.HexColor('#1e3a5f'))))
+        elements.append(Spacer(1, 5))
+        
+        # جلب المصروفات
+        expenses = await db.custody_expenses.find(
+            {"custody_id": custody['id'], "status": "active"},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(100)
+        
+        if expenses:
+            header = [arabic_text('الكود'), arabic_text('البيان'), arabic_text('المبلغ')]
+            expense_data = [header]
+            for exp in expenses:
+                expense_data.append([
+                    str(exp.get('code', '')),
+                    arabic_text(exp.get('description', '')),
+                    f"{exp.get('amount', 0):,.2f}"
+                ])
+            
+            exp_table = Table(expense_data, colWidths=[60, 300, 100])
+            exp_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+                ('PADDING', (0, 0), (-1, -1), 6),
+            ]))
+            elements.append(exp_table)
+        else:
+            elements.append(Paragraph(arabic_text("لا توجد مصروفات"), ParagraphStyle('Normal', fontName=arabic_font, fontSize=10)))
+        
+        elements.append(Spacer(1, 15))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename=custody_report_{month}.pdf"
+        }
+    )
