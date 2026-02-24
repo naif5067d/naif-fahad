@@ -155,14 +155,14 @@ class NumberedCanvas(canvas.Canvas):
         num_pages = len(self._saved_page_states)
         for state in self._saved_page_states:
             self.__dict__.update(state)
-            self.draw_page_number(num_pages)
             self.draw_border()
+            self.draw_page_number(num_pages)
             canvas.Canvas.showPage(self)
         canvas.Canvas.save(self)
     
     def draw_border(self):
-        """Draw professional side border"""
-        # الإطار الخارجي
+        """Draw professional border on every page"""
+        # الإطار الخارجي - أزرق داكن
         self.setStrokeColor(NAVY)
         self.setLineWidth(2)
         self.rect(10*mm, 10*mm, PAGE_WIDTH - 20*mm, PAGE_HEIGHT - 20*mm)
@@ -173,15 +173,13 @@ class NumberedCanvas(canvas.Canvas):
         self.rect(12*mm, 12*mm, PAGE_WIDTH - 24*mm, PAGE_HEIGHT - 24*mm)
     
     def draw_page_number(self, page_count):
-        """Draw page number at bottom"""
+        """Draw page number at bottom center"""
+        # استخدام أرقام عربية بسيطة
+        page_text = str(self._pageNumber) + " / " + str(page_count)
+        
         self.setFont('Helvetica', 9)
         self.setFillColor(TEXT_MUTED)
-        
-        page_num = f"صفحة {self._pageNumber} من {page_count}"
-        # Arabic text needs reshaping
-        page_text = reshape_arabic(page_num)
-        
-        self.drawCentredString(PAGE_WIDTH / 2, 15*mm, page_text)
+        self.drawCentredString(PAGE_WIDTH / 2, 13*mm, page_text)
 
 
 # ==================== SINGLE CUSTODY PDF ====================
