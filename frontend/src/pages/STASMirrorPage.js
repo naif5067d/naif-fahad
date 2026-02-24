@@ -105,6 +105,17 @@ export default function STASMirrorPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingSideImage, setUploadingSideImage] = useState(false);
   const [uploadingPwaIcon, setUploadingPwaIcon] = useState(false);
+  
+  // === Custody Signatures State ===
+  const [signatureSettings, setSignatureSettings] = useState({
+    admin_name: 'أ.سلطان الزامل',
+    admin_title: 'المدير الإداري',
+    accountant_name: 'أ.صلاح صحبي',
+    accountant_title: 'المحاسب المالي',
+    ceo_name: 'م.محمد الثنيان',
+    ceo_title: 'المدير التنفيذي'
+  });
+  const [savingSignatures, setSavingSignatures] = useState(false);
 
   useEffect(() => {
     fetchPending();
