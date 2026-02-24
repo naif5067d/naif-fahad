@@ -934,7 +934,7 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     for req in early_leave_requests:
         data = req.get('data', {})
         hours = data.get('hours', 0) or 0
-        minutes = data.get('minutes', 0) or 0
+        minutes = data.get('minutes', 0) or data.get('duration_minutes', 0) or 0
         used_early_leave_minutes += (hours * 60) + minutes
     
     used_early_leave_hours = round(used_early_leave_minutes / 60, 2)
