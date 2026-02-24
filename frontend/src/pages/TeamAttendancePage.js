@@ -1765,6 +1765,10 @@ export default function TeamAttendancePage() {
                   {(isStas || isSultan) && (
                     <option value="GIFT_LEAVE">{lang === 'ar' ? 'إجازة مكافأة' : 'Gift Leave'}</option>
                   )}
+                  {/* إعفاء إداري - فقط للمدراء */}
+                  {(isStas || isSultan) && (
+                    <option value="EXEMPTED">{lang === 'ar' ? 'إعفاء' : 'Exemption'}</option>
+                  )}
                 </select>
               </div>
               
@@ -1775,6 +1779,17 @@ export default function TeamAttendancePage() {
                     {lang === 'ar' 
                       ? '⭐ إجازة مكافأة: لن تُخصم من رصيد الموظف وستُحتسب كحضور مدفوع' 
                       : '⭐ Gift Leave: Will not deduct from balance, counts as paid attendance'}
+                  </p>
+                </div>
+              )}
+              
+              {/* رسالة توضيحية للإعفاء */}
+              {editForm.new_status === 'EXEMPTED' && (
+                <div className="p-3 bg-teal-50 dark:bg-teal-950/30 rounded-lg border border-teal-200">
+                  <p className="text-sm text-teal-700 dark:text-teal-300">
+                    {lang === 'ar' 
+                      ? '✓ إعفاء: قرار إداري بعدم المحاسبة على الغياب أو التأخير (ليس تزويراً للحضور)' 
+                      : '✓ Exemption: Administrative decision to waive absence/lateness (not falsifying attendance)'}
                   </p>
                 </div>
               )}
