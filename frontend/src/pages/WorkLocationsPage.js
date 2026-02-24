@@ -113,7 +113,7 @@ export default function WorkLocationsPage() {
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
-  }, [canManageCompensation]);
+  }, []);
 
   useEffect(() => {
     fetchData();
