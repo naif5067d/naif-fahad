@@ -181,6 +181,7 @@ export default function DashboardPage() {
   const [announcements, setAnnouncements] = useState({ pinned: [], regular: [] });
   const [appVersion, setAppVersion] = useState('');
   const [expiringContracts, setExpiringContracts] = useState({ employees: [], summary: {} });
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   const role = user?.role || 'employee';
   const isManager = ['stas', 'mohammed', 'salah', 'naif', 'sultan'].includes(role);
@@ -189,6 +190,104 @@ export default function DashboardPage() {
   
   const [employeeSummary, setEmployeeSummary] = useState(null);
   const [loadingEmployeeSummary, setLoadingEmployeeSummary] = useState(false);
+
+  // Status configurations with glow colors
+  const STATUS_CONFIG_GLOW = {
+    present: { 
+      color: 'bg-green-500', 
+      glow: 'shadow-[0_0_15px_rgba(34,197,94,0.8)]',
+      pulse: true,
+      label_ar: 'حاضر',
+      label_en: 'Present',
+      icon: '✓',
+      description_ar: 'تم تسجيل حضورك بنجاح',
+      description_en: 'Your attendance has been recorded'
+    },
+    late: { 
+      color: 'bg-yellow-500', 
+      glow: 'shadow-[0_0_15px_rgba(234,179,8,0.8)]',
+      pulse: true,
+      label_ar: 'متأخر',
+      label_en: 'Late',
+      icon: '⚠',
+      description_ar: 'تم تسجيل حضورك مع تأخير',
+      description_en: 'Your attendance was recorded with delay'
+    },
+    absent: { 
+      color: 'bg-red-500', 
+      glow: 'shadow-[0_0_15px_rgba(239,68,68,0.8)]',
+      pulse: true,
+      label_ar: 'غائب',
+      label_en: 'Absent',
+      icon: '✗',
+      description_ar: 'لم يتم تسجيل حضورك اليوم',
+      description_en: 'Your attendance was not recorded today'
+    },
+    leave: { 
+      color: 'bg-blue-500', 
+      glow: 'shadow-[0_0_15px_rgba(59,130,246,0.8)]',
+      pulse: false,
+      label_ar: 'إجازة',
+      label_en: 'On Leave',
+      icon: '🏖',
+      description_ar: 'أنت في إجازة معتمدة',
+      description_en: 'You are on approved leave'
+    },
+    holiday: { 
+      color: 'bg-emerald-500', 
+      glow: 'shadow-[0_0_15px_rgba(16,185,129,0.8)]',
+      pulse: false,
+      label_ar: 'عطلة رسمية',
+      label_en: 'Holiday',
+      icon: '🎉',
+      description_ar: 'اليوم عطلة رسمية',
+      description_en: 'Today is an official holiday'
+    },
+    weekend: { 
+      color: 'bg-emerald-400', 
+      glow: 'shadow-[0_0_15px_rgba(52,211,153,0.8)]',
+      pulse: false,
+      label_ar: 'عطلة أسبوعية',
+      label_en: 'Weekend',
+      icon: '📅',
+      description_ar: 'اليوم عطلة نهاية الأسبوع',
+      description_en: 'Today is a weekend day'
+    },
+    mission: { 
+      color: 'bg-purple-500', 
+      glow: 'shadow-[0_0_15px_rgba(168,85,247,0.8)]',
+      pulse: false,
+      label_ar: 'في مهمة',
+      label_en: 'On Mission',
+      icon: '🚀',
+      description_ar: 'أنت في مهمة عمل خارجية',
+      description_en: 'You are on an external work mission'
+    },
+    not_checked_in: { 
+      color: 'bg-amber-500', 
+      glow: 'shadow-[0_0_15px_rgba(245,158,11,0.8)]',
+      pulse: true,
+      label_ar: 'لم يسجل بعد',
+      label_en: 'Not Checked In',
+      icon: '⏳',
+      description_ar: 'لم تسجل حضورك بعد، يرجى تسجيل البصمة',
+      description_en: 'You have not checked in yet, please record attendance'
+    },
+    unknown: { 
+      color: 'bg-slate-400', 
+      glow: 'shadow-[0_0_10px_rgba(148,163,184,0.5)]',
+      pulse: false,
+      label_ar: 'غير محدد',
+      label_en: 'Unknown',
+      icon: '?',
+      description_ar: 'حالة الحضور غير محددة',
+      description_en: 'Attendance status is unknown'
+    }
+  };
+
+  const getStatusConfig = (status) => {
+    return STATUS_CONFIG_GLOW[status] || STATUS_CONFIG_GLOW.unknown;
+  };
 
   useEffect(() => {
     api.get('/api/dashboard/stats').then(r => setStats(r.data)).catch(() => {});
