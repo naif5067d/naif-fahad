@@ -630,13 +630,14 @@ async def update_employee_status(
     archive_entry = {
         "id": str(uuid.uuid4()),
         "year": year,
-        "type": "direct_correction",
+        "type": "gift_leave" if is_gift_leave else "direct_correction",
         "employee_id": employee_id,
         "employee_name_ar": emp.get('full_name_ar', ''),
         "date": date,
         "original_status": daily.get('final_status', 'UNKNOWN') if daily else 'UNKNOWN',
-        "final_status": body.new_status,
+        "final_status": final_status_to_save,
         "reason": body.reason,
+        "is_gift_leave": is_gift_leave,
         "decided_by": user['user_id'],
         "decided_by_name": user.get('full_name_ar', user.get('full_name', '')),
         "decided_at": now,
@@ -648,16 +649,20 @@ async def update_employee_status(
     try:
         from services.notification_service import create_notification
         from models.notifications import NotificationType, NotificationPriority
+        
+        title_ar = "إجازة مكافأة ⭐" if is_gift_leave else "تحديث حالة الحضور"
+        message_ar = f"تم منحك إجازة مكافأة ليوم {date}" if is_gift_leave else f"تم تعديل حالتك ليوم {date} إلى: {status_ar_map.get(body.new_status, body.new_status)}"
+        
         await create_notification(
             recipient_id=employee_id,
             notification_type=NotificationType.INFO,
-            title="Attendance Status Updated",
-            title_ar="تحديث حالة الحضور",
-            message=f"Your attendance status for {date} has been updated",
-            message_ar=f"تم تعديل حالتك ليوم {date} إلى: {status_ar_map.get(body.new_status, body.new_status)}",
+            title="Gift Leave Granted" if is_gift_leave else "Attendance Status Updated",
+            title_ar=title_ar,
+            message=f"You have been granted a gift leave for {date}" if is_gift_leave else f"Your attendance status for {date} has been updated",
+            message_ar=message_ar,
             priority=NotificationPriority.NORMAL,
             recipient_role="employee",
-            reference_type="daily_status",
+            reference_type="gift_leave" if is_gift_leave else "daily_status",
             reference_url="/attendance"
         )
     except Exception as e:
