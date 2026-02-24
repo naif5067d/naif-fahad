@@ -1,155 +1,213 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user's initial request was for a comprehensive HR system. The primary focus of recent sessions has been fixing critical bugs and implementing specific feature requests.
+The user's initial request was for a comprehensive HR system. During this session, the user's focus was on enhancing system monitoring, improving the attendance module, and fixing various UI/logic bugs.
 
-During this session, the user's focus shifted to:
-1.  **PDF Logic Fixes:** Correcting the display of roles (e.g., Supervisor vs. Admin Manager) and name formatting (Arabic/English) in transaction PDFs. This was a long-standing issue.
-2.  **Holiday Day Count Bug:** A bug where single-day holidays were counted as two days. The user specified this issue occurs in the production environment but not in the preview environment.
-3.  **Attendance Calculation Bug:** The user reported a significant discrepancy in the late-time calculation, showing an employee as  and questioning the entire attendance system's integrity.
-4.  **System Information Request:** The user asked for specific details on database and file storage limits.
+Key requests addressed:
+1.  **System Monitoring Dashboard:** Implemented a new screen to display real-time Kubernetes pod-specific resource usage (Memory, CPU, Storage) by reading  files, replacing an initial implementation that showed host-level metrics.
+2.  **Attendance Module Enhancements:**
+    *   **Printing with QR Codes:** Added a feature to print daily, weekly, monthly, or yearly attendance reports in a professional PDF format, including a QR code for tracking.
+    *   **Reward Leave:** Implemented a new leave type for managers to grant that does not deduct from the employee's balance.
+    *   **Flexible Clock-in:** Modified the system to accept clock-ins at any time but flag those outside official hours for manager review.
+    *   **Early Leave Balance:** The user requested a feature for a monthly balance of 2-3 hours for early leave. This has been noted but not yet implemented.
+3.  **Bug Fixes:**
+    *   **Ramadan Hours:** Fixed the system to correctly calculate the monthly required work hours based on the 6-hour workday when Ramadan mode is active.
+    *   **Arabic PDF Rendering:** Resolved an issue where Arabic text appeared as squares in generated PDFs by implementing the  font with  and .
+    *   **Incorrect Attendance Status:** Fixed a critical bug where employees on approved leave were shown as Not Registered. The logic was updated to prioritize checking for leaves, missions, and holidays.
+    *   **UI Updates:** Fixed issues where manual attendance edits were not reflected in the UI, added a Comments column, and implemented a more intuitive, interactive attendance status indicator (glowing dot with a pop-up) on the employee dashboard.
+    *   **Manager View:** Addressed a bug preventing managers from seeing their own attendance status on their dashboard.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-A full-stack HR application with a React frontend, FastAPI backend, and MongoDB database. Key modules include employees, transactions, policies, holidays, and attendance. The agent successfully refactored the PDF generation logic and diagnosed the holiday bug as a data issue specific to the production environment. A new critical bug in the attendance calculation system has been identified by the user and is now the primary focus. The agent also used the  to answer a user query about system storage limits.
+A full-stack HR application (React/FastAPI/MongoDB). The application now includes a detailed system monitoring dashboard displaying Kubernetes pod resource limits. The attendance module has been significantly enhanced with advanced printing capabilities (including QR codes), a Reward Leave feature, and more accurate status calculations that account for Ramadan, holidays, and approved leaves. Numerous UI and logic bugs have been fixed, particularly in PDF generation and attendance status display.
 
 **Last working item**:
--   **Last item agent was working:** The agent was actively investigating two concurrent user requests:
-    1.  **Attendance Bug (P0):** Investigating why the system calculated  of lateness for an employee, as reported by the user with a screenshot. The user suspects a major flaw in the attendance module. The agent had started by examining the relevant work location to find the shift start time.
-    2.  **Storage Limits Query (P1):** The user asked for specifics on database and file storage limits. The agent called the  and relayed the information to the user. This query is considered resolved.
--   **Status:** IN PROGRESS (for the attendance bug investigation).
+-   **Last item agent was working:** Fixing a bug where the manager Sultan could not see his own attendance status on his personal dashboard. The agent identified that a condition  in  was preventing the component from rendering. A fix was applied to remove this condition.
+-   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** backend testing agent. The agent must trace the calculation logic in  and verify it against the user's shift data in the  collection.
--   **User Testing Done:** Y (User reported the bug).
+-   **Which testing method agent to use?** screenshot tool. The agent needs to log in as  and take a screenshot of the dashboard to verify that the attendance status indicator is now visible.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Investigate '447 minutes late' Calculation Bug (P0)**
--   **Issue 2: Incorrect Holiday/Leave Day Count in Production (P1)**
--   **Issue 3: Verify Duplicate Transaction Approval Prevention (P2)**
--   **Issue 4: Severe Mobile Responsiveness Problems (P3)**
+-   **Issue 1: Verify Fix for Manager's Dashboard View (P0)**
+-   **Issue 2: Implement Full Workflow for Outside Work Hours Compensation (P1)**
+-   **Issue 3: Fix 447 Minutes Late Recalculation Bug (P2)**
+-   **Issue 4: Incorrect Holiday/Leave Day Count in Production (P2)**
+-   **Issue 5: Severe Mobile Responsiveness Problems (P3)**
 
 **Issues Detail:**
--   **Issue 1: Investigate '447 minutes late' Calculation Bug**
-    -   **Attempted fixes:** The agent began an investigation by listing attendance-related files and viewing the  collection to determine the expected shift start time ().
+-   **Issue 1: Verify Fix for Manager's Dashboard View**
+    -   **Attempted fixes:** The agent identified the line  in  as the cause and used  to remove the  condition.
     -   **Next debug checklist:**
-        1.  Analyze  to understand the  calculation logic.
-        2.  Compare the recorded  (17:27 from the user's image) with the  and  from the employee's assigned work location.
-        3.  Investigate the user's claim that manually editing clock-in/out times does not trigger a recalculation.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical bug impacting payroll and attendance, which are core functions of the HR system. A fix is essential to restore trust and ensure accurate records.
+        1.  Log in with credentials for sultan.
+        2.  Navigate to the main dashboard.
+        3.  Use the  tool to capture the screen and verify that the attendance status component (the glowing dot and text) is now visible for Sultan.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure all users, including managers, can see their own attendance status, providing a consistent user experience.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+
+-   **Issue 2: Implement Full Workflow for Outside Work Hours Compensation**
+    -   **Attempted fixes:** The backend logic to accept clock-ins at any time has been implemented.
+    -   **Next debug checklist:**
+        1.  Design and create a new UI component for managers (Sultan, STAS, Naif).
+        2.  This UI should list all Outside Work Hours punches for employees.
+        3.  It should display the total accumulated late hours for each employee.
+        4.  Provide a button for the manager to convert a selected Outside Work Hours day into a Present day to compensate for lateness.
+        5.  Create backend endpoints to support this functionality if needed.
+    -   **Why fix this issue and what will be achieved with the fix?** This will complete the user's requested workflow for allowing employees to compensate for tardiness by working extra hours, without it being considered overtime.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both
+
+-   **Issue 3: Fix 447 Minutes Late Recalculation Bug**
+    -   **Attempted fixes:** The agent analyzed the calculation and found it arithmetically correct. The hypothesis is that the system does not automatically recalculate  when an attendance record is manually edited.
+    -   **Next debug checklist:**
+        1.  Modify the backend endpoint that handles manual attendance updates ().
+        2.  After updating the status (e.g., to 'Present'), trigger the  logic again to recalculate  and other derived fields.
+        3.  Test by manually editing a record with a large late-minute value and confirming the value is reset to 0 or recalculated correctly.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a critical bug that undermines trust in the attendance system. A fix is essential for accurate payroll and attendance records.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Backend
 
--   **Issue 2: Incorrect Holiday/Leave Day Count in Production**
-    -   **Attempted fixes:** The agent confirmed the calculation logic is correct in the preview environment. The issue was diagnosed as a data problem (duplicate records) in the production database. A cleanup endpoint, , was created in  to resolve this.
+-   **Issue 4: Incorrect Holiday/Leave Day Count in Production**
+    -   **Attempted fixes:** A cleanup endpoint () was created in a previous session. The issue was diagnosed as a data duplication problem in the production database.
     -   **Next debug checklist:**
-        1.  Clearly explain the diagnosis (production data duplication) to the user.
-        2.  Request permission to run the cleanup endpoint on the production environment.
-        3.  After running the cleanup, ask the user to verify the holiday day counts are correct in the production UI.
-    -   **Why fix this issue and what will be achieved with the fix?** It corrects a data integrity problem that makes leave management unreliable.
-    -   **Status:** BLOCKED (Requires user permission to modify production data).
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Backend (for running the endpoint) and Frontend (for user verification).
+        1.  Re-confirm with the user that this issue still exists in their production environment.
+        2.  Clearly explain the diagnosis (production data duplication) and the solution (running the cleanup script).
+        3.  Request explicit permission to run the cleanup endpoint.
+    -   **Why fix this issue and what will be achieved with the fix?** It corrects a data integrity problem that makes leave management unreliable in the production environment.
+    -   **Status:** BLOCKED (Requires user permission).
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Backend (running the script) and Frontend (user verification).
+
+-   **Issue 5: Severe Mobile Responsiveness Problems**
+    -   **Attempted fixes:** None in this session.
+    -   **Next debug checklist:** Review key pages (, ) and apply responsive design principles using Tailwind CSS classes.
+    -   **Why fix this issue and what will be achieved with the fix?** Improves usability for users on mobile devices.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend
 
 **In progress Task List**:
--   **Task 1: Debug and Fix Attendance System Logic (P0)**
-    -   **Where to resume:** Continue the investigation in .
-    -   **What will be achieved with this?** A reliable and accurate attendance tracking and payroll calculation system.
+-   **Task 1: Complete and Verify Manager Dashboard Fix (P0)**
+    -   **Where to resume:** Use the screenshot tool to verify the UI change for the user sultan.
+    -   **What will be achieved with this?** Managers will be able to see their own attendance status on their dashboard.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Should Test frontend/backend/both after fix?** Frontend
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **Implement Canva-like Smart Editor (P1):** For the Policies module.
-    *   **Allow STAS to manage App Branding (P1):** Create a UI for the STAS role to change the application name and icon.
-    *   **Add Images to In-Kind Custody (P2):** Allow attaching images to custody items.
+    *   **(P1) Implement Early Leave Balance:** Create a system where employees have a monthly balance (e.g., 2-3 hours) for early departures. This balance should be deducted from upon approved requests and reset monthly.
+    *   **(P1) Implement Canva-like Smart Editor:** For the Policies module.
+    *   **(P1) Allow STAS to manage App Branding:** Create a UI for the STAS role to change the application name and icon.
 *   **Future Tasks:**
+    *   **(P2) Add Images to In-Kind Custody:** Allow attaching images to custody items.
     *   Merge MyFinances & Attendance/Penalties pages.
-    *   Implement the Frontend UI for the Annual Performance Review module.
-    *   Implement the Loans Module.
+    -   Implement the Frontend UI for the Annual Performance Review module.
+    -   Implement the Loans Module.
     *   Address old UI issues:  crash and the broken Branding tab.
-    *   Refactor permissions to a centralized Role-Based Access Control (RBAC) system.
+    -   Refactor permissions to a centralized Role-Based Access Control (RBAC) system.
 
 **Completed work in this session**
--   **PDF Generation Logic (FIXED):**
-    -   Completely refactored the PDF signature table logic in .
-    -   It now correctly displays the approver's role title (e.g., المدير الإداري) by dynamically mapping it.
-    -   It now correctly displays both Arabic and English names for all approvers by fetching full employee details in  before generation.
--   **Holiday Bug Data Cleanup Endpoint (CREATED):**
-    -   Created a new endpoint  to remove duplicate holiday records from the production database.
--   **Comprehensive Testing (DONE):**
-    -   Successfully ran , which passed all 16 tests, verifying the PDF and Holiday API fixes in the preview environment.
--   **User Query Resolution (DONE):**
-    -   Answered the user's question about system storage limits using the .
+-   **System Monitoring Dashboard (DONE):** Implemented a dashboard showing real-time Kubernetes Pod resource limits and usage (, , ).
+-   **Attendance Report Printing (DONE):** Added a feature to print attendance reports with QR codes, custom date ranges, and a professional header.
+-   **Arabic PDF Rendering (FIXED):** Resolved an issue of garbled Arabic text in PDFs by correctly implementing  font and RTL text processing libraries.
+-   **Attendance Status Logic (FIXED):** Corrected the logic to properly show an employee's status as On Leave or On Mission instead of Not Registered.
+-   **Dashboard UI (IMPROVED):** Implemented a new interactive attendance status indicator (glowing dot and pop-up) on the main dashboard.
+-   **Ramadan Hours Calculation (FIXED):** Ensured the system uses the correct 6-hour workday for calculations when Ramadan mode is active.
+-   **Feature Cleanup (DONE):** Removed the Monthly Compensation Allowance feature from the UI and backend as requested.
+-   **Reward Leave Feature (DONE):** Added an option for managers to grant a special leave type that does not deduct from the employee's balance.
 
 **Earlier issues found/mentioned but not fixed**
--   The hardcoded  key in  remains a security risk.
--    crash and the broken Branding tab are still pending.
+-   **Issue 1: Hardcoded Security Key**
+    -   **Debug checklist:** The hardcoded  key in  should be moved to an environment variable.
+    -   **Why to solve this issue and what will be achieved with this?** It is a security risk to have credentials hardcoded in the source code.
+    -   **Should Test frontend/backend/both after fix:** Backend
+    -   **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** PDF design and logic was a highly recurring issue.
+-   **Issue recurrence in previous fork:** PDF Generation Logic.
 -   **Recurrence count:** High
--   **Status:** RESOLVED (The agent successfully fixed the issues and confirmed with the testing agent in this session).
+-   **Status:** RESOLVED. A bug related to Arabic font rendering appeared in this session and was successfully fixed, making the PDF module more robust.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Data-Driven PDF Generation:** The agent successfully shifted from a hardcoded PDF template to a dynamic one that fetches and renders data (roles, multi-language names) directly from the database, making it resilient to workflow changes.
--   **Distinguishing Code vs. Data Bugs:** The agent correctly identified that the holiday day-count issue was due to bad data in production, not faulty code, and provided a targeted data-cleanup solution instead of incorrectly modifying working code.
--   **Attendance & Payroll Logic:** The current focus is on time calculation based on defined work shifts, grace periods, and user check-in times.
+-   **Kubernetes Resource Monitoring:** Reading pod-specific resource limits and usage directly from cgroup virtual files () within the container.
+-   **Dynamic PDF Generation:** Using  in combination with  and  to correctly render complex, multi-language documents.
+-   **Complex State Logic:** The attendance system now manages a hierarchy of statuses: Leave > Mission > Holiday > Clock-in, and respects global settings like Ramadan mode.
+-   **Role-Based UI:** Dynamically rendering UI components and options (e.g., Reward Leave) based on the logged-in user's role.
 
 **key DB schema**
--   **attendance:** Contains  and , which are central to the current bug investigation.
--   **work_locations:** Contains  and , which are essential for calculating lateness.
--   **holidays:** Suspected of containing duplicate records in the production environment.
+-   **transactions:** Stores  records. It is also the source of truth for checking if an employee is on an active leave or mission.
+-   **work_locations:** The primary reference for daily work hours (both normal and Ramadan).
+-   **settings:** Contains the global  toggle, which affects the entire system's calculations.
+-   **attendance_v3:** Stores the raw check-in/out data and calculated daily status.
 
 **All files of reference**
--   : **Primary file for the current investigation.**
--   : Contains shift data needed for debugging.
--   : Location of the new holiday cleanup endpoint.
--   : Contains the recently fixed PDF logic.
--   : Contains changes related to the PDF fix.
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-   
 
 **Critical Info for New Agent**
--   **You MUST respond in Arabic.**
--   **The absolute highest priority (P0) is investigating the  attendance bug.** The user has lost trust in this core feature. Start your investigation in  and analyze the calculation logic against the user's shift schedule.
--   **The holiday bug is a PRODUCTION DATA issue.** The code is correct. You need to communicate this diagnosis to the user and ask for permission to run the cleanup endpoint () that was already created. Do not attempt to fix the frontend or backend holiday code further.
--   **The PDF generation issues are SOLVED.** They have been verified by the testing agent. Do not revisit this unless the user reports a new, specific regression.
+-   **You MUST respond in Arabic.** The user exclusively communicates in Arabic.
+-   **The user does NOT want screenshots.** Verify your work through other means like  commands for API checks or by describing the expected UI changes. Do not use the  tool unless absolutely necessary for internal verification before describing the result to the user.
+-   **The highest priority is to verify the fix for Sultan's dashboard.** Confirm the attendance status component is now visible for managers.
+-   **The next most important tasks are implementing the Early Leave Balance feature and the manager UI for approving Outside Work Hours compensation.** These are key features the user is waiting for.
+-   **Be thorough.** When you implement a fix, the user expects you to perform a full check () on all related system parts to ensure consistency.
+
+**documents and test reports created in this job**
+-   /app/memory/PRD.md
+-   /app/memory/CHANGELOG.md
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** I need to know our storage limits for the database and file uploads, specifically in MB/GB. (Status: **Completed**)
-2.  **User:** How did the system calculate 447 late minutes? This doesn't seem right. Also, editing attendance times doesn't update the record. I suspect a huge mistake in the whole attendance system. Check everything, don't just send a screenshot. (Status: **Current task, P0**)
-3.  **User:** Fixed the PDF, but the holiday issue remains. It works in preview but not in production. (Status: Diagnosed as data issue, Blocked on user).
-4.  **User:** The supervisor's name is only English in the PDF. Fix it. Holiday days are doubled. (Status: Completed)
-5.  **User:** STAS's name is not blue in the PDF. (Status: Completed)
-6.  **User:** PDF header needs official labels. (Status: Completed)
-7.  **User:** Repeated company name in the sidebar. (Status: Completed)
-8.  **User:** PDF has squares and missing names. (Status: Completed)
-9.  **User:** Notifications should disappear on click. (Status: Completed)
-10. **User:** STAS can approve the same transaction twice. I can't edit an employee's department. (Status: Addressed)
+1.  **User:** Sultan can't see his attendance status like other employees! (Status: **In Progress**)
+2.  **User:** Fixed Ramadan, now fix the Early Leave balance. (Status: **Pending**)
+3.  **User:** Explain what you fixed regarding Ramadan hours. (Status: **Completed**)
+4.  **User:** The source of truth for work hours is Work Locations, not contracts. (Status: **Completed**)
+5.  **User:** Remove the Monthly Compensation Allowance feature. (Status: **Completed**)
+6.  **User:** Explained the desired workflow for compensating late hours with extra work. (Status: **Acknowledged, Pending Implementation**)
+7.  **User:** Add Reward Leave for managers and remove the PDF Hash from the UI. (Status: **Completed**)
+8.  **User:** An employee on leave shows as Not Registered. All parts of the system must know the employee's true status! (Status: **Completed**)
+9.  **User:** Make the attendance status clearer with a glowing light and show details on click. (Status: **Completed**)
+10. **User:** Where does my attendance status appear on my dashboard? (Status: **Completed**)
 
 **Project Health Check:**
 -   **Broken:**
-    -   Attendance Calculation: The logic for calculating late minutes is producing incorrect and untrustworthy results.
+    -   The view for managers to see their own attendance status is not yet verified.
+    -   The system for tracking and deducting a monthly Early Leave Balance does not exist.
+    -   The root cause of the 447 minutes late bug (lack of recalculation on manual edit) is not fixed.
 -   **Mocked:**
-    -   The Smart Editor for the policies module has not been implemented.
+    -   The manager-facing UI for reviewing and approving Outside working hours compensation punches has not been built.
 
 **3rd Party Integrations**
--   None.
+-   **qrcode:** Installed via pip for generating QR codes in PDF reports.
+-   **arabic_reshaper:** Dependency for rendering Arabic text in PDFs.
+-   **python-bidi:** Dependency for right-to-left text layout in PDFs.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. Used successfully to validate the PDF generation and Holiday API fixes.
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
--   **Known regressions:** A major bug in the attendance calculation system has been discovered.
+-   **Known regressions:** None identified in this session.
 
 **Credentials to test flow:**
--   **Admin:**  / 
+-   **Admin/Manager:**  / 
 -   **CEO:**  / 
--   **HR/Admin Manager:**  / 
+-   **SysAdmin:**  / 
 
 **What agent forgot to execute**
--   The agent has not yet addressed older, lower-priority issues like mobile responsiveness, verifying the QR scanner functionality, fixing the  crash, or removing the hardcoded  security key. The focus has been on user-reported critical bugs.</analysis>
+-   The agent did not implement the Early Leave Balance feature (2-3 hours/month) as requested.
+-   The agent acknowledged but did not build the manager UI for the Outside working hours compensation workflow.
+-   The agent analyzed the 447 minutes late bug but did not implement the necessary fix (recalculation on manual edit), getting diverted to other user requests.
+-   Older, lower-priority issues from the previous handoff (mobile responsiveness,  crash, broken Branding tab, hardcoded security key) remain unaddressed.</analysis>
