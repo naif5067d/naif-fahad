@@ -1733,6 +1733,37 @@ export default function TeamAttendancePage() {
             </Card>
           </TabsContent>
         )}
+        
+        {/* Compensation Tab Content - تبويب التعويضات */}
+        {(isStas || isSultan) && (
+          <TabsContent value="compensation">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  {lang === 'ar' ? 'إدارة التعويضات والإعفاءات' : 'Compensation & Exemption Management'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                    {lang === 'ar' ? 'نظام التعويض والإعفاء' : 'Compensation System'}
+                  </h4>
+                  <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                    <li>{lang === 'ar' ? 'التعويض: تحويل غياب/تأخير إلى حضور (مع توثيق يوم العمل الإضافي)' : 'Compensate: Convert absence to present with extra work day'}</li>
+                    <li>{lang === 'ar' ? 'الإعفاء: قرار إداري بعدم المحاسبة (ليس تزويراً للحضور)' : 'Exempt: Administrative waiver (not falsifying attendance)'}</li>
+                  </ul>
+                </div>
+                
+                <p className="text-center text-muted-foreground py-8">
+                  {lang === 'ar' 
+                    ? 'استخدم تبويب "الحضور" لعرض الموظفين الذين لديهم تأخيرات أو غيابات، ثم استخدم زر "تعديل" لتحويلهم إلى "إعفاء" أو "حاضر" بعد التعويض' 
+                    : 'Use the Attendance tab to view employees with lateness or absences, then use "Edit" button to mark them as "Exempted" or "Present" after compensation'}
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Edit Dialog */}
