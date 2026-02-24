@@ -592,6 +592,9 @@ async def update_employee_status(
                 "is_exemption": is_exemption,
                 "check_in_time": body.check_in_time or (daily.get('check_in_time') if daily else None),
                 "check_out_time": body.check_out_time or (daily.get('check_out_time') if daily else None),
+                # إعادة تصفير دقائق التأخير عند تغيير الحالة إلى حاضر/إعفاء/إجازة
+                "late_minutes": 0 if body.new_status in ['PRESENT', 'EXEMPTED', 'GIFT_LEAVE', 'ON_LEAVE', 'ON_MISSION', 'EXCUSED'] else (daily.get('late_minutes', 0) if daily else 0),
+                "early_leave_minutes": 0 if body.new_status in ['PRESENT', 'EXEMPTED', 'GIFT_LEAVE', 'ON_LEAVE', 'ON_MISSION', 'EXCUSED'] else (daily.get('early_leave_minutes', 0) if daily else 0),
                 "updated_at": now,
                 "updated_by": user['user_id']
             },
