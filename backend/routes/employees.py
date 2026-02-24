@@ -899,13 +899,21 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     required_monthly_hours = work_days_count * daily_hours
     
-    # === رصيد الخروج المبكر (3 ساعات شهرياً) ===
-    # جلب إعداد رصيد الخروج المبكر
-    early_leave_settings = await db.settings.find_one(
-        {"type": "early_leave_balance"},
-        {"_id": 0}
-    )
-    monthly_early_leave_balance = early_leave_settings.get('monthly_hours', 3) if early_leave_settings else 3  # 3 ساعات افتراضياً
+    # === رصيد الخروج المبكر ===
+    # الأولوية: 1) من العقد  2) من الإعدادات العامة  3) الافتراضي (3 ساعات)
+    monthly_early_leave_balance = 3  # الافتراضي
+    
+    # أولاً: من العقد
+    if contract and contract.get('early_leave_balance') is not None:
+        monthly_early_leave_balance = contract.get('early_leave_balance')
+    else:
+        # ثانياً: من الإعدادات العامة
+        early_leave_settings = await db.settings.find_one(
+            {"type": "early_leave_balance"},
+            {"_id": 0}
+        )
+        if early_leave_settings:
+            monthly_early_leave_balance = early_leave_settings.get('monthly_hours', 3)
     
     # حساب الخروج المبكر المستخدم هذا الشهر (من طلبات الخروج المبكر المعتمدة)
     early_leave_requests = await db.transactions.find({
