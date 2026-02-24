@@ -22,6 +22,7 @@ class ContractCreate(BaseModel):
     other_allowances: float = 0
     probation_months: int = 3
     notice_period_days: int = 30
+    early_leave_balance: Optional[int] = 3  # رصيد الخروج المبكر الشهري (بالساعات)
     notes: str = ""
 
 
@@ -31,6 +32,7 @@ class ContractUpdate(BaseModel):
     transport_allowance: Optional[float] = None
     other_allowances: Optional[float] = None
     end_date: Optional[str] = None
+    early_leave_balance: Optional[int] = None  # رصيد الخروج المبكر الشهري
     notes: Optional[str] = None
 
 
