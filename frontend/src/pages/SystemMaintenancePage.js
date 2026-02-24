@@ -33,7 +33,13 @@ import {
   Bell,
   Pin,
   Send,
-  Megaphone
+  Megaphone,
+  Cpu,
+  MemoryStick,
+  Activity,
+  Folder,
+  Timer,
+  Gauge
 } from 'lucide-react';
 
 export default function SystemMaintenancePage() {
