@@ -598,6 +598,7 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
 def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar', branding: dict = None):
     """
     توليد تقرير شهري كامل للعهد المالية
+    يشمل: الترويسة، الملخص، كل العهد مع مصروفاتها، التواقيع، QR
     """
     import io
     import qrcode
@@ -605,7 +606,7 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
     from reportlab.lib.units import mm
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
     from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
     from reportlab.lib import colors
     
     is_ar = lang == 'ar'
@@ -636,17 +637,25 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
     
     # الألوان
     PRIMARY = colors.HexColor('#1e3a5f')
+    GOLD = colors.HexColor('#BF9E59')
     WHITE = colors.white
     LIGHT_BG = colors.HexColor('#f8fafc')
+    LIGHT_GOLD = colors.HexColor('#EBE0C7')
+    RED = colors.HexColor('#dc2626')
+    GREEN = colors.HexColor('#16a34a')
     
     # الأنماط
+    style_company = ParagraphStyle(
+        'Company', fontName=ARABIC_FONT_BOLD, fontSize=18, alignment=TA_CENTER, 
+        textColor=PRIMARY, spaceAfter=5
+    )
     style_title = ParagraphStyle(
-        'Title', fontName=ARABIC_FONT_BOLD, fontSize=16, alignment=TA_CENTER, 
+        'Title', fontName=ARABIC_FONT_BOLD, fontSize=14, alignment=TA_CENTER, 
         textColor=PRIMARY, spaceAfter=10
     )
     style_subtitle = ParagraphStyle(
-        'Subtitle', fontName=ARABIC_FONT, fontSize=12, alignment=TA_CENTER,
-        textColor=PRIMARY, spaceAfter=5
+        'Subtitle', fontName=ARABIC_FONT, fontSize=11, alignment=TA_CENTER,
+        textColor=GOLD, spaceAfter=5
     )
     style_normal = ParagraphStyle(
         'Normal', fontName=ARABIC_FONT, fontSize=10, alignment=TA_RIGHT,
@@ -660,47 +669,71 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
         'Cell', fontName=ARABIC_FONT, fontSize=9, alignment=TA_RIGHT,
         textColor=colors.black
     )
+    style_cell_center = ParagraphStyle(
+        'CellCenter', fontName=ARABIC_FONT, fontSize=9, alignment=TA_CENTER,
+        textColor=colors.black
+    )
+    style_amount_red = ParagraphStyle(
+        'AmountRed', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER,
+        textColor=RED
+    )
+    style_amount_green = ParagraphStyle(
+        'AmountGreen', fontName='Helvetica-Bold', fontSize=9, alignment=TA_CENTER,
+        textColor=GREEN
+    )
+    style_sig_name = ParagraphStyle(
+        'SigName', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER,
+        textColor=PRIMARY
+    )
+    style_sig_title = ParagraphStyle(
+        'SigTitle', fontName=ARABIC_FONT, fontSize=9, alignment=TA_CENTER,
+        textColor=colors.HexColor('#64748b')
+    )
     
     elements = []
     page_width = A4[0] - 30*mm
     
     # === الترويسة ===
     company_name = branding.get('company_name_ar', 'دار الكود للاستشارات الهندسية') if branding else 'دار الكود للاستشارات الهندسية'
+    company_slogan = branding.get('slogan_ar', 'التميز الهندسي') if branding else 'التميز الهندسي'
     
-    header_data = [[
-        ar_para(company_name, style_title)
-    ]]
-    header_table = Table(header_data, colWidths=[page_width])
-    header_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('LINEBELOW', (0, 0), (-1, -1), 2, PRIMARY),
+    # ترويسة الشركة
+    elements.append(ar_para(company_name, style_company))
+    elements.append(ar_para(company_slogan, style_subtitle))
+    
+    # خط زخرفي
+    line_data = [['', '', '']]
+    line_table = Table(line_data, colWidths=[page_width*0.35, page_width*0.3, page_width*0.35])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (0, 0), 1.5, GOLD),
+        ('LINEABOVE', (1, 0), (1, 0), 3, PRIMARY),
+        ('LINEABOVE', (2, 0), (2, 0), 1.5, GOLD),
     ]))
-    elements.append(header_table)
+    elements.append(line_table)
     elements.append(Spacer(1, 10))
     
     # عنوان التقرير
-    month_name = month  # يمكن تحويله لاسم الشهر لاحقاً
-    elements.append(ar_para(f'تقرير العهد المالية - {month}', style_subtitle))
+    elements.append(ar_para(f'التقرير الشهري للعهد المالية', style_title))
+    elements.append(ar_para(f'شهر: {month}', style_subtitle))
     elements.append(Spacer(1, 15))
     
     # === الملخص العام ===
-    total_budget = sum(c.get('amount', 0) or 0 for c in custodies)
+    total_budget = sum(c.get('budget', 0) or c.get('amount', 0) or 0 for c in custodies)
     total_spent = sum(c.get('spent', 0) or 0 for c in custodies)
     total_remaining = sum(c.get('remaining', 0) or 0 for c in custodies)
     total_surplus = sum(c.get('surplus_amount', 0) or 0 for c in custodies)
     
-    summary_data = [
-        [ar_para('القيمة', style_header), ar_para('البيان', style_header)],
-        [f'{total_budget:,.2f}', ar_para('إجمالي الميزانية', style_cell)],
-        [f'{total_spent:,.2f}', ar_para('إجمالي المصروفات', style_cell)],
-        [f'{total_remaining:,.2f}', ar_para('إجمالي المتبقي', style_cell)],
+    summary_header = [
+        ar_para('القيمة (ريال)', style_header), 
+        ar_para('البيان', style_header)
     ]
+    summary_data = [summary_header]
+    summary_data.append([f'{total_budget:,.2f}', ar_para('إجمالي الميزانية', style_cell)])
+    summary_data.append([f'{total_spent:,.2f}', ar_para('إجمالي المصروفات', style_cell)])
+    summary_data.append([f'{total_remaining:,.2f}', ar_para('إجمالي المتبقي', style_cell)])
     if total_surplus > 0:
         summary_data.append([f'{total_surplus:,.2f}', ar_para('فائض مرحّل', style_cell)])
+    summary_data.append([str(len(custodies)), ar_para('عدد العهد', style_cell)])
     
     summary_table = Table(summary_data, colWidths=[60*mm, 80*mm])
     summary_table.setStyle(TableStyle([
@@ -712,77 +745,101 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), LIGHT_BG),
     ]))
     elements.append(summary_table)
-    elements.append(Spacer(1, 20))
+    elements.append(Spacer(1, 25))
     
     # === تفاصيل كل عهدة ===
+    elements.append(ar_para('تفاصيل العهد والمصروفات', style_title))
+    elements.append(Spacer(1, 10))
+    
     for idx, custody in enumerate(custodies):
-        custody_num = custody.get('custody_number', f'#{idx+1}')
-        custody_amount = custody.get('amount', 0) or 0
+        custody_num = custody.get('custody_number', f'{idx+1}')
+        custody_budget = custody.get('budget', 0) or custody.get('amount', 0) or 0
         custody_spent = custody.get('spent', 0) or 0
         custody_remaining = custody.get('remaining', 0) or 0
+        surplus = custody.get('surplus_amount', 0) or 0
         expenses = custody.get('expenses', [])
         
         # عنوان العهدة
         custody_title_style = ParagraphStyle(
             'CustodyTitle', fontName=ARABIC_FONT_BOLD, fontSize=11, alignment=TA_RIGHT,
-            textColor=PRIMARY, spaceBefore=10, spaceAfter=5
+            textColor=PRIMARY, spaceBefore=10, spaceAfter=5, 
+            borderColor=GOLD, borderWidth=1, borderPadding=5
         )
-        elements.append(ar_para(f'عهدة رقم {custody_num} - الميزانية: {custody_amount:,.2f} ريال', custody_title_style))
+        
+        custody_info = f'عهدة رقم {custody_num}'
+        if surplus > 0:
+            custody_info += f' (+ فائض {surplus:,.0f})'
+        custody_info += f' | الميزانية: {custody_budget:,.2f} ريال'
+        
+        elements.append(ar_para(custody_info, custody_title_style))
         
         if expenses:
             # جدول المصروفات
             exp_header = [
                 ar_para('الرصيد', style_header),
                 ar_para('المبلغ', style_header),
+                ar_para('الوصف', style_header),
                 ar_para('البيان', style_header),
                 ar_para('الكود', style_header),
                 ar_para('م', style_header),
             ]
             exp_data = [exp_header]
             
-            running_balance = custody_amount + custody.get('surplus_amount', 0)
+            running_balance = custody_budget
             for i, exp in enumerate(expenses):
                 amount = exp.get('amount', 0) or 0
                 running_balance -= amount
                 
                 code = exp.get('code', '')
-                desc = exp.get('description', '') or exp.get('code_name_ar', '')
+                code_name = exp.get('code_name_ar', '') or exp.get('code_name', '')
+                desc = exp.get('description', '')
+                
+                # تنسيق المبالغ
+                balance_style = style_amount_green if running_balance >= 0 else style_amount_red
                 
                 exp_data.append([
-                    f'{running_balance:,.2f}',
-                    f'{amount:,.2f}',
+                    Paragraph(f'{running_balance:,.2f}', balance_style),
+                    Paragraph(f'-{amount:,.2f}', style_amount_red),
                     ar_para(desc, style_cell),
-                    str(code),
-                    str(i + 1),
+                    ar_para(code_name, style_cell),
+                    Paragraph(str(code), style_cell_center),
+                    Paragraph(str(i + 1), style_cell_center),
                 ])
             
             # صف الإجمالي
+            total_style = ParagraphStyle(
+                'Total', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER,
+                textColor=PRIMARY
+            )
             exp_data.append([
-                f'{custody_remaining:,.2f}',
-                f'{custody_spent:,.2f}',
-                ar_para('الإجمالي', style_cell),
+                Paragraph(f'{custody_remaining:,.2f}', style_amount_green if custody_remaining >= 0 else style_amount_red),
+                Paragraph(f'-{custody_spent:,.2f}', style_amount_red),
+                ar_para('الإجمالي', total_style),
+                '',
                 '',
                 '',
             ])
             
-            exp_table = Table(exp_data, colWidths=[28*mm, 25*mm, 70*mm, 20*mm, 12*mm])
+            exp_table = Table(exp_data, colWidths=[25*mm, 22*mm, 55*mm, 40*mm, 15*mm, 10*mm])
             exp_table.setStyle(TableStyle([
                 ('FONTNAME', (0, 0), (-1, -1), ARABIC_FONT),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('BACKGROUND', (0, 0), (-1, 0), PRIMARY),
                 ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
-                ('BACKGROUND', (0, -1), (-1, -1), LIGHT_BG),
+                ('BACKGROUND', (0, -1), (-1, -1), LIGHT_GOLD),
                 ('FONTNAME', (0, -1), (-1, -1), ARABIC_FONT_BOLD),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
+                ('ALIGN', (2, 1), (3, -2), 'RIGHT'),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 ('TOPPADDING', (0, 0), (-1, -1), 5),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('LINEABOVE', (0, -1), (-1, -1), 2, GOLD),
             ]))
             elements.append(exp_table)
         else:
@@ -790,34 +847,58 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
         
         elements.append(Spacer(1, 15))
     
-    # === التواقيع ===
+    # === فاصل صفحة قبل التواقيع ===
     elements.append(Spacer(1, 30))
     
-    sig_data = [[
-        ar_para('المدير العام', style_cell),
-        ar_para('المحاسب', style_cell),
-        ar_para('أمين الصندوق', style_cell),
-    ], [
-        '_________________',
-        '_________________',
-        '_________________',
-    ]]
+    # === خط زخرفي قبل التواقيع ===
+    elements.append(line_table)
+    elements.append(Spacer(1, 20))
     
-    sig_table = Table(sig_data, colWidths=[page_width/3]*3)
+    # === التواقيع (سلطان - صلاح - محمد الثنيان) ===
+    elements.append(ar_para('التوقيعات والاعتمادات', style_title))
+    elements.append(Spacer(1, 15))
+    
+    # صف الأسماء
+    sig_names = [
+        [
+            ar_para('محمد الثنيان', style_sig_name),
+            ar_para('صلاح', style_sig_name),
+            ar_para('سلطان', style_sig_name),
+        ],
+        [
+            ar_para('المدير التنفيذي', style_sig_title),
+            ar_para('المحاسب المالي', style_sig_title),
+            ar_para('المدير الإداري', style_sig_title),
+        ],
+        [
+            '_________________',
+            '_________________',
+            '_________________',
+        ],
+        [
+            ar_para('التاريخ: ____/____/____', style_sig_title),
+            ar_para('التاريخ: ____/____/____', style_sig_title),
+            ar_para('التاريخ: ____/____/____', style_sig_title),
+        ],
+    ]
+    
+    sig_table = Table(sig_names, colWidths=[page_width/3]*3)
     sig_table.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (-1, -1), ARABIC_FONT),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('BACKGROUND', (0, 0), (-1, 0), LIGHT_GOLD),
+        ('BOX', (0, 0), (-1, -1), 1, PRIMARY),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
     ]))
     elements.append(sig_table)
+    elements.append(Spacer(1, 25))
     
-    # === QR Code ===
-    elements.append(Spacer(1, 20))
-    
-    qr_data = f"DAR-CUSTODY-REPORT|{month}|BUDGET:{total_budget}|SPENT:{total_spent}"
+    # === QR Code و تاريخ الطباعة ===
+    qr_data = f"DAR-CUSTODY-REPORT|{month}|BUDGET:{total_budget:.0f}|SPENT:{total_spent:.0f}|COUNT:{len(custodies)}"
     qr = qrcode.QRCode(version=1, box_size=3, border=1)
     qr.add_data(qr_data)
     qr.make(fit=True)
@@ -829,13 +910,22 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
     
     qr_image = Image(qr_buffer, width=25*mm, height=25*mm)
     
-    # رقم الصفحة والتاريخ مع QR
+    # تاريخ ووقت الطباعة
     from datetime import datetime
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     
+    footer_style = ParagraphStyle(
+        'Footer', fontName=ARABIC_FONT, fontSize=8, alignment=TA_RIGHT,
+        textColor=colors.HexColor('#64748b')
+    )
+    
     footer_data = [[
         qr_image,
-        ar_para(f'تاريخ الطباعة: {now}', style_normal),
+        [
+            ar_para(f'تاريخ الطباعة: {now}', footer_style),
+            Spacer(1, 3),
+            ar_para('نظام دار الكود للموارد البشرية', footer_style),
+        ],
     ]]
     footer_table = Table(footer_data, colWidths=[30*mm, page_width - 30*mm])
     footer_table.setStyle(TableStyle([
