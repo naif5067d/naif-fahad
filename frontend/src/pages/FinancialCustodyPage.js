@@ -390,8 +390,8 @@ export default function FinancialCustodyPage() {
             // عند قراءة الكود
             const codeNum = parseInt(decodedText);
             if (!isNaN(codeNum)) {
-              setCodeInput(codeNum.toString());
-              handleCodeInput(codeNum.toString());
+              setExpForm(f => ({ ...f, code: codeNum.toString() }));
+              lookupCode(codeNum.toString());
               stopScanner();
               toast.success(lang === 'ar' ? `تم قراءة الكود: ${codeNum}` : `Code scanned: ${codeNum}`);
             }
