@@ -98,6 +98,18 @@ export default function FinancialCustodyPage() {
   // Code edit/delete states
   const [editingCode, setEditingCode] = useState(null);
   const [editCodeName, setEditCodeName] = useState('');
+  
+  // Signature settings states
+  const [signatureSettings, setSignatureSettings] = useState({
+    admin_name: 'أ.سلطان الزامل',
+    admin_title: 'المدير الإداري',
+    accountant_name: 'أ.صلاح صحبي',
+    accountant_title: 'المحاسب المالي',
+    ceo_name: 'م.محمد الثنيان',
+    ceo_title: 'المدير التنفيذي'
+  });
+  const [signaturesOpen, setSignaturesOpen] = useState(false);
+  const [savingSignatures, setSavingSignatures] = useState(false);
 
   // ==================== DATA FETCHING ====================
 
