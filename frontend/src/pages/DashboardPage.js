@@ -503,18 +503,18 @@ export default function DashboardPage() {
                   )}
                 </div>
                 
-                {/* شريط رصيد الخروج المبكر */}
+                {/* شريط رصيد الخروج المبكر - يعكس المستهلك */}
                 <div>
                   <div className="flex justify-between text-[10px] mb-1 opacity-70">
-                    <span>{lang === 'ar' ? 'رصيد الخروج المبكر' : 'Early Leave Balance'}</span>
+                    <span>{lang === 'ar' ? 'الاستئذان المستهلك' : 'Permission Used'}</span>
                     <span className="font-medium">
-                      {employeeSummary?.early_leave_balance?.remaining_hours ?? 3}/
-                      {employeeSummary?.early_leave_balance?.monthly_allowance || 3}
+                      {employeeSummary?.early_leave_balance?.used_hours || 0}/
+                      {employeeSummary?.early_leave_balance?.monthly_allowance || 2}
                       {lang === 'ar' ? ' س' : ' hrs'}
                     </span>
                   </div>
                   <Progress 
-                    value={((employeeSummary?.early_leave_balance?.remaining_hours ?? 3) / (employeeSummary?.early_leave_balance?.monthly_allowance || 3)) * 100} 
+                    value={((employeeSummary?.early_leave_balance?.used_hours || 0) / (employeeSummary?.early_leave_balance?.monthly_allowance || 2)) * 100} 
                     className="h-1.5 bg-white/10"
                   />
                 </div>
