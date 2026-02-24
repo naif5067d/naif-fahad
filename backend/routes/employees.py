@@ -733,25 +733,26 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     late_minutes_today = 0
     decision_reason_ar = None
     
-    if today_attendance:
+    # أولاً: من daily_status (التعديل الإداري)
+    if today_daily_status:
+        check_in_time = today_daily_status.get('check_in_time') or today_daily_status.get('check_in')
+        check_out_time = today_daily_status.get('check_out_time') or today_daily_status.get('check_out')
+        late_minutes_today = today_daily_status.get('late_minutes', 0) or 0
+        decision_reason_ar = today_daily_status.get('decision_reason_ar', '')
+        
+        # تنسيق الوقت إذا كان timestamp
+        if check_in_time and 'T' in str(check_in_time):
+            check_in_time = str(check_in_time).split('T')[1][:5]
+        if check_out_time and 'T' in str(check_out_time):
+            check_out_time = str(check_out_time).split('T')[1][:5]
+    
+    # ثانياً: من attendance_ledger (البصمة الفعلية)
+    if not check_in_time and today_attendance:
         check_in_time = today_attendance.get('time', today_attendance.get('timestamp', ''))
         if check_in_time and 'T' in check_in_time:
             check_in_time = check_in_time.split('T')[1][:5]
-    elif today_daily_status and today_daily_status.get('check_in'):
-        check_in_time = today_daily_status['check_in']
-        if check_in_time and 'T' in check_in_time:
-            check_in_time = check_in_time.split('T')[1][:5]
     
-    # Get check_out_time and additional info from daily_status
-    if today_daily_status:
-        if today_daily_status.get('check_out'):
-            check_out_time = today_daily_status['check_out']
-            if check_out_time and 'T' in check_out_time:
-                check_out_time = check_out_time.split('T')[1][:5]
-        late_minutes_today = today_daily_status.get('late_minutes', 0) or 0
-        decision_reason_ar = today_daily_status.get('decision_reason_ar', '')
-    
-    # Also check attendance_ledger for check_out
+    # Get check_out from attendance_ledger if not found
     if not check_out_time:
         today_checkout = await db.attendance_ledger.find_one({
             "employee_id": employee_id,
