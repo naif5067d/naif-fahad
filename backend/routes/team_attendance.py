@@ -1521,7 +1521,11 @@ async def print_attendance_report(
                 check_out = check_out.split('T')[1][:5]
             
             late_min = status_data.get('late_minutes', 0)
-            note = status_data.get('decision_reason_ar', '')[:30] if status_data.get('decision_reason_ar') else ''
+            # التعليق كامل - يشمل سبب التعديل ومصدر القرار
+            note = status_data.get('decision_reason_ar', '') or ''
+            source = status_data.get('decision_source', '')
+            if source == 'manual_correction':
+                note = note or arabic_text('تعديل يدوي')
             
             table_data.append([
                 str(idx),
@@ -1531,7 +1535,7 @@ async def print_attendance_report(
                 check_in or '-',
                 check_out or '-',
                 arabic_text(f"{late_min} د") if late_min > 0 else '-',
-                arabic_text(note) if note else ''
+                arabic_text(note[:60]) if note else ''
             ])
     
     elif period == "weekly":
