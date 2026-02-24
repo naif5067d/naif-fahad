@@ -350,6 +350,84 @@ export default function FinancialCustodyPage() {
   };
 
   const handleAddExpense = async () => {
+    if (!codeInfo || !expenseAmount || parseFloat(expenseAmount) <= 0) {
+      toast.error(lang === 'ar' ? 'أدخل الكود والمبلغ' : 'Enter code and amount');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await api.post(`/api/admin-custody/${selected.id}/expense`, {
+        code: codeInfo.code,
+        description: expenseDescription || codeInfo.name_ar || codeInfo.name,
+        amount: parseFloat(expenseAmount)
+      });
+      
+      toast.success(lang === 'ar' ? 'تم إضافة المصروف' : 'Expense added');
+      setCodeInput('');
+      setCodeInfo(null);
+      setExpenseAmount('');
+      setExpenseDescription('');
+      fetchDetail(selected.id);
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // === ماسح الكود بالكاميرا ===
+  const startScanner = async () => {
+    setScannerOpen(true);
+    setTimeout(async () => {
+      try {
+        html5QrCodeRef.current = new Html5Qrcode("qr-reader");
+        await html5QrCodeRef.current.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            // عند قراءة الكود
+            const codeNum = parseInt(decodedText);
+            if (!isNaN(codeNum)) {
+              setCodeInput(codeNum.toString());
+              handleCodeInput(codeNum.toString());
+              stopScanner();
+              toast.success(lang === 'ar' ? `تم قراءة الكود: ${codeNum}` : `Code scanned: ${codeNum}`);
+            }
+          },
+          (errorMessage) => {
+            // تجاهل أخطاء القراءة المستمرة
+          }
+        );
+      } catch (err) {
+        console.error('Scanner error:', err);
+        toast.error(lang === 'ar' ? 'تعذر تشغيل الكاميرا' : 'Failed to start camera');
+        setScannerOpen(false);
+      }
+    }, 100);
+  };
+
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current = null;
+      } catch (e) {
+        console.error('Stop scanner error:', e);
+      }
+    }
+    setScannerOpen(false);
+  };
+
+  // تنظيف الكاميرا عند الخروج
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current) {
+        html5QrCodeRef.current.stop().catch(() => {});
+      }
+    };
+  }, []);
     const code = parseInt(expForm.code);
     const amount = parseFloat(expForm.amount);
     
