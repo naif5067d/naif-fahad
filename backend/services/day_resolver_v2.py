@@ -539,10 +539,21 @@ class DayResolverV2:
         grace_period_out = 15
         is_ramadan = False
         
+        # التحقق من وضع رمضان من الإعدادات العامة أولاً
+        ramadan_settings = await db.settings.find_one({"type": "ramadan_mode"}, {"_id": 0})
+        global_ramadan_active = False
+        if ramadan_settings:
+            is_active = ramadan_settings.get('is_active', False)
+            start_date = ramadan_settings.get('start_date', '')
+            end_date = ramadan_settings.get('end_date', '')
+            if is_active and start_date and end_date:
+                if start_date <= self.date <= end_date:
+                    global_ramadan_active = True
+        
         # من موقع العمل - قراءة الحقول بالأسماء الصحيحة
         if self.work_location:
-            # فحص رمضان أولاً
-            ramadan_active = self.work_location.get('ramadan_hours_active', False)
+            # فحص رمضان أولاً (من الموقع أو الإعدادات العامة)
+            ramadan_active = self.work_location.get('ramadan_hours_active', False) or global_ramadan_active
             
             if ramadan_active:
                 # استخدام ساعات رمضان
@@ -558,6 +569,12 @@ class DayResolverV2:
             
             grace_period_in = self.work_location.get('grace_checkin_minutes', 15)
             grace_period_out = self.work_location.get('grace_checkout_minutes', 15)
+        elif global_ramadan_active:
+            # لا يوجد موقع عمل لكن رمضان مفعّل عالمياً
+            is_ramadan = True
+            work_start = "09:00"
+            work_end = "15:00"
+            required_hours = 6.0
         
         # تحويل وقت البصمة من UTC إلى توقيت الرياض
         check_in_timestamp = check_in['timestamp']
