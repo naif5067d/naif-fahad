@@ -254,3 +254,69 @@ async def check_for_update(user=Depends(get_current_user)):
 
 
 # === تم إزالة "سماح التعويض الشهري" - تم استبدالها بنظام جديد ===
+
+
+# ==================== رصيد الخروج المبكر (Early Leave Balance) ====================
+
+class EarlyLeaveBalanceSettings(BaseModel):
+    monthly_hours: int = 3  # 3 ساعات افتراضياً
+
+
+@router.get("/early-leave-balance")
+async def get_early_leave_balance_settings(user=Depends(get_current_user)):
+    """
+    جلب إعدادات رصيد الخروج المبكر الشهري
+    """
+    # فقط الإدارة تستطيع رؤية الإعدادات
+    if user.get('role') not in ['sultan', 'naif', 'stas']:
+        raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
+    
+    settings = await db.settings.find_one({"type": "early_leave_balance"}, {"_id": 0})
+    if not settings:
+        return {
+            "type": "early_leave_balance",
+            "monthly_hours": 3,
+            "description_ar": "رصيد الخروج المبكر الشهري (بالساعات)",
+            "description_en": "Monthly early leave balance (in hours)"
+        }
+    return settings
+
+
+@router.put("/early-leave-balance")
+async def update_early_leave_balance_settings(
+    body: EarlyLeaveBalanceSettings,
+    user=Depends(get_current_user)
+):
+    """
+    تحديث إعدادات رصيد الخروج المبكر - سلطان/ستاس/نايف فقط
+    """
+    if user.get('role') not in ['sultan', 'naif', 'stas']:
+        raise HTTPException(status_code=403, detail="فقط الإدارة يمكنها تعديل الإعدادات")
+    
+    # التحقق من الحد الأقصى (0-5 ساعات)
+    if body.monthly_hours < 0 or body.monthly_hours > 5:
+        raise HTTPException(status_code=400, detail="الرصيد يجب أن يكون بين 0 و 5 ساعات")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    update_data = {
+        "type": "early_leave_balance",
+        "monthly_hours": body.monthly_hours,
+        "description_ar": "رصيد الخروج المبكر الشهري (بالساعات)",
+        "description_en": "Monthly early leave balance (in hours)",
+        "updated_at": now,
+        "updated_by": user.get('user_id'),
+        "updated_by_name": user.get('full_name', '')
+    }
+    
+    await db.settings.update_one(
+        {"type": "early_leave_balance"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message_ar": f"تم تحديث رصيد الخروج المبكر إلى {body.monthly_hours} ساعات شهرياً",
+        "settings": update_data
+    }
