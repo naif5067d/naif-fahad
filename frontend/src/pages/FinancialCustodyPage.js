@@ -1329,7 +1329,7 @@ export default function FinancialCustodyPage() {
             </div>
           )}
           
-          {/* استعراض الأكواد */}
+              {/* استعراض الأكواد */}
           {canEditCustody && !selectMode && (
             <Dialog open={showCodesDropdown} onOpenChange={setShowCodesDropdown}>
               <DialogTrigger asChild>
@@ -1338,7 +1338,7 @@ export default function FinancialCustodyPage() {
                   {lang === 'ar' ? 'استعراض الأكواد' : 'View Codes'}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[80vh]">
+              <DialogContent className="max-w-lg max-h-[80vh]">
                 <DialogHeader>
                   <DialogTitle>{lang === 'ar' ? 'قائمة الأكواد' : 'Codes List'}</DialogTitle>
                 </DialogHeader>
@@ -1348,13 +1348,50 @@ export default function FinancialCustodyPage() {
                       <tr className="border-b">
                         <th className="text-start p-2 font-medium">{lang === 'ar' ? 'الكود' : 'Code'}</th>
                         <th className="text-start p-2 font-medium">{lang === 'ar' ? 'البيان' : 'Description'}</th>
+                        <th className="text-start p-2 font-medium w-20">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {allCodes.map(c => (
                         <tr key={c.code} className="border-b hover:bg-muted/50">
                           <td className="p-2 font-mono font-bold text-primary">{c.code}</td>
-                          <td className="p-2">{c.name_ar || c.name}</td>
+                          <td className="p-2">
+                            {editingCode === c.code ? (
+                              <Input
+                                value={editCodeName}
+                                onChange={e => setEditCodeName(e.target.value)}
+                                className="h-8 text-sm"
+                                autoFocus
+                              />
+                            ) : (
+                              c.name_ar || c.name
+                            )}
+                          </td>
+                          <td className="p-2">
+                            {c.code > 60 && (
+                              <div className="flex gap-1">
+                                {editingCode === c.code ? (
+                                  <>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSaveCodeEdit(c.code)}>
+                                      <Check size={14} className="text-green-600" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingCode(null)}>
+                                      <X size={14} className="text-red-600" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingCode(c.code); setEditCodeName(c.name_ar || c.name); }}>
+                                      <Pencil size={12} />
+                                    </Button>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => handleDeleteCode(c.code)}>
+                                      <Trash2 size={12} />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
