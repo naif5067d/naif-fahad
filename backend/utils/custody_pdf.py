@@ -555,8 +555,8 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
             ],
             [
                 ltr_para(custody_number, style_ltr),
-                Paragraph(audited_by, style_ar_small),
-                Paragraph(executed_by, style_ar_small),
+                Paragraph(audited_by_raw, style_ar_small),
+                Paragraph(executed_by_raw, style_ar_small),
             ],
         ]
     
