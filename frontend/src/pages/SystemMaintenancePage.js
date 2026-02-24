@@ -82,7 +82,32 @@ export default function SystemMaintenancePage() {
 
   useEffect(() => {
     loadData();
+    loadSystemMetrics();
+    
+    // Auto-refresh system metrics every 30 seconds
+    metricsIntervalRef.current = setInterval(() => {
+      loadSystemMetrics(true);
+    }, 30000);
+    
+    return () => {
+      if (metricsIntervalRef.current) {
+        clearInterval(metricsIntervalRef.current);
+      }
+    };
   }, []);
+
+  const loadSystemMetrics = async (silent = false) => {
+    if (!silent) setMetricsLoading(true);
+    try {
+      const res = await api.get('/api/maintenance/system-metrics');
+      setSystemMetrics(res.data);
+    } catch (error) {
+      if (!silent) {
+        console.error('Error loading system metrics:', error);
+      }
+    }
+    if (!silent) setMetricsLoading(false);
+  };
 
   const loadData = async () => {
     setLoading(true);
