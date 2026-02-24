@@ -428,6 +428,8 @@ export default function FinancialCustodyPage() {
       }
     };
   }, []);
+
+  const handleSubmitExpense = async () => {
     const code = parseInt(expForm.code);
     const amount = parseFloat(expForm.amount);
     
