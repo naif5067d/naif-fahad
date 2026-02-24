@@ -149,10 +149,11 @@ async def get_employee_custodies(employee_id: str, user=Depends(get_current_user
 
 @router.get("/all")
 async def get_all_custodies(user=Depends(get_current_user)):
-    """Get all custody records (for admins)."""
+    """Get all custody records (for admins) - includes pending transactions."""
     role = user.get('role')
+    
     if role in ('employee', 'supervisor'):
-        # Employees see only their own
+        # Employees see only their own from custody_ledger
         emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
         if not emp:
             return []
@@ -160,9 +161,45 @@ async def get_all_custodies(user=Depends(get_current_user)):
             {"employee_id": emp['id']}, {"_id": 0}
         ).sort("assigned_at", -1).to_list(100)
         return custodies
-
-    custodies = await db.custody_ledger.find({}, {"_id": 0}).sort("assigned_at", -1).to_list(500)
-    return custodies
+    
+    # للإدارة: نجمع من custody_ledger + transactions المعلقة والمنفذة
+    result = []
+    
+    # 1. العهد النشطة من custody_ledger
+    active_custodies = await db.custody_ledger.find({}, {"_id": 0}).sort("assigned_at", -1).to_list(500)
+    for c in active_custodies:
+        c['source'] = 'ledger'
+        result.append(c)
+    
+    # 2. معاملات العهد المعلقة (لم تُنفذ بعد)
+    pending_custody_txs = await db.transactions.find({
+        "type": "tangible_custody",
+        "status": {"$nin": ["executed", "rejected", "cancelled"]}
+    }, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    for tx in pending_custody_txs:
+        data = tx.get('data', {})
+        # تحويل المعاملة إلى صيغة العهدة
+        custody_item = {
+            "id": tx['id'],
+            "ref_no": tx.get('ref_no', ''),
+            "employee_id": tx.get('employee_id', ''),
+            "employee_name": data.get('employee_name', ''),
+            "employee_name_ar": data.get('employee_name_ar', ''),
+            "item_name": data.get('item_name', ''),
+            "item_name_ar": data.get('item_name_ar', ''),
+            "description": data.get('description', ''),
+            "serial_number": data.get('serial_number', ''),
+            "estimated_value": data.get('estimated_value', 0),
+            "status": "pending",  # معلقة
+            "tx_status": tx.get('status', ''),
+            "current_stage": tx.get('current_stage', ''),
+            "assigned_at": tx.get('created_at', ''),
+            "source": 'transaction'
+        }
+        result.append(custody_item)
+    
+    return result
 
 
 @router.get("/check-clearance/{employee_id}")
