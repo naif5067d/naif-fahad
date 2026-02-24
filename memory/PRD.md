@@ -34,6 +34,21 @@
      - `/app/frontend/src/pages/SystemMaintenancePage.js` - إضافة تبويب "المراقبة"
    - **تثبيت**: مكتبة `psutil` للحصول على معلومات النظام
 
+2. **عرض حدود Kubernetes الفعلية** ✅
+   - **المتطلب**: عرض الحدود المخصصة للـ Pod وليس موارد الـ host
+   - **الميزات المنجزة**:
+     - قراءة حدود cgroup v2 الفعلية
+     - عرض Memory Limit: 8 GB
+     - عرض CPU Limit: 2 Cores (2000 millicores)
+     - عرض Ephemeral Storage: 9.75 GB
+     - عرض Database Storage: 9.75 GB
+     - عرض File Upload Max: 100 MB
+     - عرض سلوك التجاوز لكل مورد (OOMKilled, Throttle, etc.)
+     - جدول مفصل للحدود مع النسب والحالة
+   - **الملفات المعدلة**:
+     - `/app/backend/routes/maintenance.py` - دالة `_get_kubernetes_limits()`
+     - `/app/frontend/src/pages/SystemMaintenancePage.js` - جدول الحدود المفصل
+
 ### 2026-02-22 (Session 3)
 
 1. **إصلاح مشكلة عدم تحديث رقم الإصدار في Footer (P0)** ✅
