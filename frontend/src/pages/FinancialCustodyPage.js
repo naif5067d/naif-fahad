@@ -404,6 +404,7 @@ export default function FinancialCustodyPage() {
   const handleSubmitExpense = async () => {
     const code = parseInt(expForm.code);
     const amount = parseFloat(expForm.amount);
+    const isNewCode = code >= 61 && !codeInfo?.found;
     
     if (!code || code < 1) {
       toast.error(lang === 'ar' ? 'أدخل كود صحيح' : 'Enter valid code');
@@ -413,6 +414,14 @@ export default function FinancialCustodyPage() {
       toast.error(lang === 'ar' ? 'أدخل مبلغ صحيح' : 'Enter valid amount');
       return;
     }
+    
+    // التحقق من البيان للكود الجديد
+    if (isNewCode && !expForm.statement.trim()) {
+      toast.error(lang === 'ar' ? 'أدخل البيان (اسم الحساب الجديد)' : 'Enter statement (new account name)');
+      return;
+    }
+    
+    // التحقق من الوصف
     if (!expForm.description.trim()) {
       toast.error(lang === 'ar' ? 'أدخل وصف المصروف (لماذا صرفت؟)' : 'Enter expense description');
       return;
@@ -424,11 +433,12 @@ export default function FinancialCustodyPage() {
         code,
         description: expForm.description,
         amount,
-        custom_name: code > 60 && !codeInfo?.found ? expForm.description : null
+        // البيان (اسم الحساب) يُرسل فقط للكود الجديد
+        custom_name: isNewCode ? expForm.statement : null
       });
       
       toast.success(lang === 'ar' ? 'تم إضافة المصروف' : 'Expense added');
-      setExpForm({ code: '', description: '', amount: '' });
+      setExpForm({ code: '', statement: '', description: '', amount: '' });
       setCodeInfo(null);
       fetchDetail(selected.id);
       fetchList();
