@@ -680,6 +680,79 @@ export default function DashboardPage() {
           v{appVersion}
         </div>
       )}
+
+      {/* نافذة تفاصيل حالة الحضور */}
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent className="max-w-sm" data-testid="attendance-status-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {lang === 'ar' ? 'حالة الحضور' : 'Attendance Status'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {employeeSummary?.attendance && (
+            <div className="space-y-4">
+              {/* الأيقونة الكبيرة */}
+              <div className="flex justify-center">
+                <div className={`
+                  w-20 h-20 rounded-full flex items-center justify-center text-4xl
+                  ${getStatusConfig(employeeSummary?.attendance?.today_status).color}
+                  ${getStatusConfig(employeeSummary?.attendance?.today_status).glow}
+                  ${getStatusConfig(employeeSummary?.attendance?.today_status).pulse ? 'animate-pulse' : ''}
+                `}>
+                  {getStatusConfig(employeeSummary?.attendance?.today_status).icon}
+                </div>
+              </div>
+              
+              {/* الحالة */}
+              <div className="text-center">
+                <h3 className="text-2xl font-bold">
+                  {lang === 'ar' 
+                    ? getStatusConfig(employeeSummary?.attendance?.today_status).label_ar 
+                    : getStatusConfig(employeeSummary?.attendance?.today_status).label_en}
+                </h3>
+                <p className="text-muted-foreground text-sm mt-1">
+                  {lang === 'ar' 
+                    ? getStatusConfig(employeeSummary?.attendance?.today_status).description_ar 
+                    : getStatusConfig(employeeSummary?.attendance?.today_status).description_en}
+                </p>
+              </div>
+              
+              {/* التفاصيل */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{lang === 'ar' ? 'وقت الدخول' : 'Check In'}</span>
+                  <span className="font-medium">{employeeSummary?.attendance?.check_in_time || '--:--'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{lang === 'ar' ? 'وقت الخروج' : 'Check Out'}</span>
+                  <span className="font-medium">{employeeSummary?.attendance?.check_out_time || '--:--'}</span>
+                </div>
+                {employeeSummary?.attendance?.late_minutes > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{lang === 'ar' ? 'دقائق التأخير' : 'Late Minutes'}</span>
+                    <span className="font-medium text-amber-600">{employeeSummary?.attendance?.late_minutes} {lang === 'ar' ? 'دقيقة' : 'min'}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{lang === 'ar' ? 'ساعات الشهر' : 'Monthly Hours'}</span>
+                  <span className="font-medium">{employeeSummary?.attendance?.monthly_hours || 0} / {employeeSummary?.attendance?.required_monthly_hours || 176}</span>
+                </div>
+              </div>
+              
+              {/* ملاحظة إذا وجدت */}
+              {employeeSummary?.attendance?.decision_reason_ar && (
+                <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <Info className="inline w-3 h-3 me-1" />
+                    {employeeSummary?.attendance?.decision_reason_ar}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
