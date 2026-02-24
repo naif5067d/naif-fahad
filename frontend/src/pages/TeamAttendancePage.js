@@ -809,6 +809,14 @@ export default function TeamAttendancePage() {
               )}
             </TabsTrigger>
           )}
+          
+          {/* Compensation Tab - للتعويضات */}
+          {(isStas || isSultan) && (
+            <TabsTrigger value="compensation" className="flex-1 md:flex-none gap-2">
+              <Clock className="w-4 h-4" />
+              {lang === 'ar' ? 'التعويضات' : 'Compensation'}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Attendance Tab Content */}
