@@ -1048,20 +1048,45 @@ export default function FinancialCustodyPage() {
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'الكود' : 'Code'}
                 </Label>
-                <Input 
-                  ref={codeInputRef}
-                  type="number"
-                  min="1"
-                  value={expForm.code}
-                  onChange={e => {
-                    setExpForm(f => ({ ...f, code: e.target.value }));
-                    lookupCode(e.target.value);
-                  }}
-                  className="h-10 text-center font-mono font-bold text-lg"
-                  placeholder="5"
-                  data-testid="exp-code"
-                />
+                <div className="flex gap-1">
+                  <Input 
+                    ref={codeInputRef}
+                    type="number"
+                    min="1"
+                    value={expForm.code}
+                    onChange={e => {
+                      setExpForm(f => ({ ...f, code: e.target.value }));
+                      lookupCode(e.target.value);
+                    }}
+                    className="h-10 text-center font-mono font-bold text-lg"
+                    placeholder="5"
+                    data-testid="exp-code"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={startScanner}
+                    title={lang === 'ar' ? 'مسح بالكاميرا' : 'Scan with camera'}
+                  >
+                    <Camera size={16} />
+                  </Button>
+                </div>
               </div>
+              
+              {/* Scanner Dialog */}
+              <Dialog open={scannerOpen} onOpenChange={(open) => !open && stopScanner()}>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>{lang === 'ar' ? 'مسح الكود' : 'Scan Code'}</DialogTitle>
+                  </DialogHeader>
+                  <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />
+                  <Button variant="outline" onClick={stopScanner}>
+                    {lang === 'ar' ? 'إغلاق' : 'Close'}
+                  </Button>
+                </DialogContent>
+              </Dialog>
               
               <div className="w-40">
                 <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
