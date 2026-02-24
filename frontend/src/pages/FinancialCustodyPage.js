@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, CheckCircle, AlertCircle, ArrowLeft, Trash2, Send, Check, X, 
   Loader2, Clock, DollarSign, ChevronRight, FileText, AlertTriangle,
-  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download, Camera
+  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download, Camera, Pencil
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
