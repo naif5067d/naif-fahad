@@ -287,6 +287,64 @@ export default function FinancialCustodyPage() {
     }
   };
 
+  // === تعديل العهدة (المبلغ / الرقم / الملاحظات) ===
+  const openEditCustody = (custody) => {
+    setEditCustodyForm({
+      amount: custody.amount?.toString() || '',
+      custody_number: custody.custody_number || '',
+      notes: custody.notes || ''
+    });
+    setEditCustodyOpen(true);
+  };
+
+  const handleEditCustody = async () => {
+    if (!editCustodyForm.amount || parseFloat(editCustodyForm.amount) <= 0) {
+      toast.error(lang === 'ar' ? 'أدخل مبلغ صحيح' : 'Enter valid amount');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await api.put(`/api/admin-custody/${selected.id}`, {
+        amount: parseFloat(editCustodyForm.amount),
+        custody_number: editCustodyForm.custody_number || null,
+        notes: editCustodyForm.notes || null
+      });
+      
+      toast.success(lang === 'ar' ? 'تم تحديث العهدة' : 'Custody updated');
+      setEditCustodyOpen(false);
+      fetchDetail(selected.id);
+      fetchList();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // === طباعة بالشهر ===
+  const handlePrintMonth = async () => {
+    setSubmitting(true);
+    try {
+      const response = await api.get(`/api/admin-custody/print-month?month=${selectedMonth}&lang=${lang}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => printWindow.print();
+      }
+      
+      toast.success(lang === 'ar' ? 'جاري طباعة الشهر...' : 'Printing month...');
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error printing');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleAddExpense = async () => {
     const code = parseInt(expForm.code);
     const amount = parseFloat(expForm.amount);
