@@ -206,29 +206,39 @@ async def get_team_daily(
     
     # جلب الإجازات النشطة لجميع الموظفين في هذا التاريخ
     active_leaves = await db.transactions.find({
-        "data.employee_id": {"$in": emp_ids},
+        "$or": [
+            {"employee_id": {"$in": emp_ids}},
+            {"data.employee_id": {"$in": emp_ids}}
+        ],
         "type": {"$regex": "leave", "$options": "i"},
         "status": "executed",
         "data.start_date": {"$lte": target_date},
         "data.end_date": {"$gte": target_date}
-    }, {"_id": 0, "data.employee_id": 1, "type": 1}).to_list(500)
+    }, {"_id": 0, "employee_id": 1, "data.employee_id": 1, "type": 1}).to_list(500)
     
     leave_map = {}
     for l in active_leaves:
-        emp_id = l.get('data', {}).get('employee_id')
+        emp_id = l.get('employee_id') or l.get('data', {}).get('employee_id')
         if emp_id:
             leave_map[emp_id] = l.get('type', 'leave')
     
     # جلب المهمات النشطة
     active_missions = await db.transactions.find({
-        "data.employee_id": {"$in": emp_ids},
+        "$or": [
+            {"employee_id": {"$in": emp_ids}},
+            {"data.employee_id": {"$in": emp_ids}}
+        ],
         "type": {"$regex": "mission|assignment", "$options": "i"},
         "status": "executed",
         "data.start_date": {"$lte": target_date},
         "data.end_date": {"$gte": target_date}
-    }, {"_id": 0, "data.employee_id": 1}).to_list(500)
+    }, {"_id": 0, "employee_id": 1, "data.employee_id": 1}).to_list(500)
     
-    mission_map = {m.get('data', {}).get('employee_id'): True for m in active_missions}
+    mission_map = {}
+    for m in active_missions:
+        emp_id = m.get('employee_id') or m.get('data', {}).get('employee_id')
+        if emp_id:
+            mission_map[emp_id] = True
     
     # التحقق من العطلة الرسمية
     holiday_today = await db.holidays.find_one({
