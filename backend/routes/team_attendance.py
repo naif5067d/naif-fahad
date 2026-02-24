@@ -1460,13 +1460,13 @@ async def print_attendance_report(
     header_data = [
         [
             qr_image,
-            Paragraph(branding.get('company_name_ar', 'شركة دار الكود'), title_style),
-            Paragraph(f"رقم التقرير: {report_id}", header_style)
+            Paragraph(arabic_text(branding.get('company_name_ar', 'شركة دار الكود')), title_style),
+            Paragraph(arabic_text(f"رقم التقرير: {report_id}"), header_style)
         ],
         [
             '',
-            Paragraph(period_title_ar, header_style),
-            Paragraph(f"تاريخ الطباعة: {now.strftime('%Y-%m-%d %H:%M')}", header_style)
+            Paragraph(arabic_text(period_title_ar), header_style),
+            Paragraph(f"{now.strftime('%Y-%m-%d %H:%M')} :{arabic_text('تاريخ الطباعة')}", header_style)
         ]
     ]
     
@@ -1483,24 +1483,25 @@ async def print_attendance_report(
     
     # ترجمات الحالات
     status_ar_map = {
-        'PRESENT': 'حاضر',
-        'ABSENT': 'غائب',
-        'LATE': 'متأخر',
-        'ON_LEAVE': 'إجازة',
-        'ON_ADMIN_LEAVE': 'إجازة إدارية',
-        'WEEKEND': 'عطلة',
-        'HOLIDAY': 'عطلة رسمية',
-        'ON_MISSION': 'مهمة',
-        'NOT_REGISTERED': 'لم يسجل',
-        'NOT_PROCESSED': 'غير محلل',
-        'EARLY_LEAVE': 'خروج مبكر',
-        'PERMISSION': 'استئذان'
+        'PRESENT': arabic_text('حاضر'),
+        'ABSENT': arabic_text('غائب'),
+        'LATE': arabic_text('متأخر'),
+        'ON_LEAVE': arabic_text('إجازة'),
+        'ON_ADMIN_LEAVE': arabic_text('إجازة إدارية'),
+        'WEEKEND': arabic_text('عطلة'),
+        'HOLIDAY': arabic_text('عطلة رسمية'),
+        'ON_MISSION': arabic_text('مهمة'),
+        'NOT_REGISTERED': arabic_text('لم يسجل'),
+        'NOT_PROCESSED': arabic_text('غير محلل'),
+        'EARLY_LEAVE': arabic_text('خروج مبكر'),
+        'PERMISSION': arabic_text('استئذان')
     }
     
     # بناء جدول البيانات حسب الفترة
     if period == "daily":
         # جدول يومي
-        table_header = ['#', 'الموظف', 'الرقم', 'الحالة', 'الدخول', 'الخروج', 'التأخير', 'ملاحظات']
+        table_header = ['#', arabic_text('الموظف'), arabic_text('الرقم'), arabic_text('الحالة'), 
+                       arabic_text('الدخول'), arabic_text('الخروج'), arabic_text('التأخير'), arabic_text('ملاحظات')]
         table_data = [table_header]
         
         for idx, emp_id in enumerate(emp_ids, 1):
@@ -1524,13 +1525,13 @@ async def print_attendance_report(
             
             table_data.append([
                 str(idx),
-                emp.get('full_name_ar', emp.get('full_name', '')),
+                arabic_text(emp.get('full_name_ar', emp.get('full_name', ''))),
                 emp.get('employee_number', ''),
                 status_ar_map.get(final_status, final_status),
                 check_in or '-',
                 check_out or '-',
-                f"{late_min} د" if late_min > 0 else '-',
-                note
+                arabic_text(f"{late_min} د") if late_min > 0 else '-',
+                arabic_text(note) if note else ''
             ])
     
     elif period == "weekly":
