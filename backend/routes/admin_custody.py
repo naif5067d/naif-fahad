@@ -366,13 +366,24 @@ async def print_monthly_report(
     
     from utils.custody_pdf import generate_monthly_custody_report
     
-    # جلب جميع العهد للشهر
+    # جلب جميع العهد للشهر (بحث محسّن)
+    # month format: "2026-02"
+    start_date = f"{month}-01T00:00:00"
+    # حساب نهاية الشهر
+    year, mon = month.split('-')
+    mon = int(mon)
+    if mon == 12:
+        end_date = f"{int(year)+1}-01-01T00:00:00"
+    else:
+        end_date = f"{year}-{str(mon+1).zfill(2)}-01T00:00:00"
+    
     custodies = await db.admin_custodies.find({
-        "created_at": {"$regex": f"^{month}"}
-    }, {"_id": 0}).sort("custody_number", 1).to_list(500)
+        "created_at": {"$gte": start_date, "$lt": end_date},
+        "status": {"$ne": "deleted"}
+    }, {"_id": 0}).sort("custody_number_int", 1).to_list(500)
     
     if not custodies:
-        raise HTTPException(status_code=404, detail="لا توجد عهد في هذا الشهر")
+        raise HTTPException(status_code=404, detail=f"لا توجد عهد في شهر {month}")
     
     # جلب المصروفات لكل عهدة
     for custody in custodies:
@@ -385,12 +396,16 @@ async def print_monthly_report(
     # جلب إعدادات الشركة
     branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
     
+    # جلب إعدادات التوقيعات
+    signatures = await db.settings.find_one({"type": "custody_signatures"}, {"_id": 0})
+    
     # توليد PDF
     pdf_buffer = generate_monthly_custody_report(
         custodies=custodies,
         month=month,
         lang=lang,
-        branding=branding
+        branding=branding,
+        signatures=signatures
     )
     
     from fastapi.responses import StreamingResponse
@@ -401,6 +416,112 @@ async def print_monthly_report(
             "Content-Disposition": f"inline; filename=monthly_custody_{month}.pdf"
         }
     )
+
+
+# ==================== إدارة التوقيعات ====================
+
+class SignatureSettings(BaseModel):
+    admin_name: str = "أ.سلطان الزامل"
+    admin_title: str = "المدير الإداري"
+    accountant_name: str = "أ.صلاح صحبي"
+    accountant_title: str = "المحاسب المالي"
+    ceo_name: str = "م.محمد الثنيان"
+    ceo_title: str = "المدير التنفيذي"
+
+
+@router.get("/settings/signatures")
+async def get_signature_settings(user=Depends(get_current_user)):
+    """جلب إعدادات التوقيعات"""
+    check_role(user, ALLOWED_ROLES)
+    
+    settings = await db.settings.find_one({"type": "custody_signatures"}, {"_id": 0})
+    if not settings:
+        return {
+            "admin_name": "أ.سلطان الزامل",
+            "admin_title": "المدير الإداري",
+            "accountant_name": "أ.صلاح صحبي",
+            "accountant_title": "المحاسب المالي",
+            "ceo_name": "م.محمد الثنيان",
+            "ceo_title": "المدير التنفيذي"
+        }
+    return settings
+
+
+@router.put("/settings/signatures")
+async def update_signature_settings(data: SignatureSettings, user=Depends(get_current_user)):
+    """تحديث إعدادات التوقيعات (STAS فقط)"""
+    check_role(user, ['stas'])
+    
+    await db.settings.update_one(
+        {"type": "custody_signatures"},
+        {"$set": {
+            "type": "custody_signatures",
+            "admin_name": data.admin_name,
+            "admin_title": data.admin_title,
+            "accountant_name": data.accountant_name,
+            "accountant_title": data.accountant_title,
+            "ceo_name": data.ceo_name,
+            "ceo_title": data.ceo_title,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    
+    return {"success": True, "message_ar": "تم تحديث إعدادات التوقيعات"}
+
+
+# ==================== تعديل وحذف الأكواد ====================
+
+class CodeUpdate(BaseModel):
+    name_ar: str
+    name_en: Optional[str] = None
+    category_ar: Optional[str] = None
+
+
+@router.put("/codes/{code}")
+async def update_code(code: int, data: CodeUpdate, user=Depends(get_current_user)):
+    """تعديل كود (61+ فقط)"""
+    check_role(user, ['stas', 'sultan'])
+    
+    if code <= 60:
+        raise HTTPException(status_code=400, detail="لا يمكن تعديل الأكواد الأساسية (1-60)")
+    
+    existing = await db.expense_codes.find_one({"code": code})
+    if not existing:
+        raise HTTPException(status_code=404, detail="الكود غير موجود")
+    
+    await db.expense_codes.update_one(
+        {"code": code},
+        {"$set": {
+            "name_ar": data.name_ar,
+            "name_en": data.name_en or data.name_ar,
+            "category_ar": data.category_ar or "غير مصنف",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "updated_by": user.get('user_id')
+        }}
+    )
+    
+    return {"success": True, "message_ar": f"تم تحديث الكود {code}"}
+
+
+@router.delete("/codes/{code}")
+async def delete_code(code: int, user=Depends(get_current_user)):
+    """حذف كود (61+ فقط)"""
+    check_role(user, ['stas'])
+    
+    if code <= 60:
+        raise HTTPException(status_code=400, detail="لا يمكن حذف الأكواد الأساسية (1-60)")
+    
+    # التحقق من عدم استخدامه في مصروفات
+    used = await db.custody_expenses.count_documents({"code": code, "status": "active"})
+    if used > 0:
+        raise HTTPException(status_code=400, detail=f"الكود مستخدم في {used} مصروف")
+    
+    result = await db.expense_codes.delete_one({"code": code})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الكود غير موجود")
+    
+    return {"success": True, "message_ar": f"تم حذف الكود {code}"}
 
 
 @router.get("/{custody_id}")
