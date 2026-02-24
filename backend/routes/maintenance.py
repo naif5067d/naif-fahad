@@ -724,6 +724,164 @@ async def upload_and_restore_archive(
 # Store server start time at module load
 _SERVER_START_TIME = time.time()
 
+def _read_cgroup_file(path: str, default=None):
+    """قراءة ملف cgroup بأمان"""
+    try:
+        with open(path, 'r') as f:
+            content = f.read().strip()
+            if content == 'max':
+                return None  # unlimited
+            return content
+    except:
+        return default
+
+def _get_kubernetes_limits():
+    """
+    الحصول على حدود Kubernetes الفعلية من cgroup v2
+    """
+    limits = {}
+    
+    # Memory Limits
+    try:
+        mem_max = _read_cgroup_file('/sys/fs/cgroup/memory.max')
+        mem_current = _read_cgroup_file('/sys/fs/cgroup/memory.current')
+        mem_peak = _read_cgroup_file('/sys/fs/cgroup/memory.peak')
+        mem_swap_max = _read_cgroup_file('/sys/fs/cgroup/memory.swap.max')
+        
+        if mem_max and mem_max != 'max':
+            mem_max_bytes = int(mem_max)
+            limits['memory'] = {
+                'limit_bytes': mem_max_bytes,
+                'limit_gb': round(mem_max_bytes / (1024**3), 2),
+                'limit_mb': round(mem_max_bytes / (1024**2), 0),
+                'current_bytes': int(mem_current) if mem_current else 0,
+                'current_mb': round(int(mem_current) / (1024**2), 2) if mem_current else 0,
+                'peak_mb': round(int(mem_peak) / (1024**2), 2) if mem_peak else 0,
+                'usage_percent': round((int(mem_current) / mem_max_bytes) * 100, 1) if mem_current else 0,
+                'swap_max_bytes': int(mem_swap_max) if mem_swap_max and mem_swap_max != '0' else 0,
+                'oom_behavior': 'Pod يُقتل (OOMKilled) عند تجاوز الحد'
+            }
+        else:
+            limits['memory'] = {'limit_gb': 'unlimited', 'error': 'No cgroup limit set'}
+    except Exception as e:
+        limits['memory'] = {'error': str(e)}
+    
+    # CPU Limits
+    try:
+        cpu_max = _read_cgroup_file('/sys/fs/cgroup/cpu.max')
+        if cpu_max:
+            parts = cpu_max.split()
+            if len(parts) == 2:
+                quota = int(parts[0]) if parts[0] != 'max' else None
+                period = int(parts[1])
+                
+                if quota:
+                    # Calculate CPU cores equivalent
+                    cpu_cores = quota / period
+                    cpu_millicores = int(cpu_cores * 1000)
+                    
+                    # Get CPU stats for throttling info
+                    cpu_stat = _read_cgroup_file('/sys/fs/cgroup/cpu.stat')
+                    throttled_periods = 0
+                    total_periods = 0
+                    if cpu_stat:
+                        for line in cpu_stat.split('\n'):
+                            if 'nr_throttled' in line:
+                                throttled_periods = int(line.split()[1])
+                            if 'nr_periods' in line:
+                                total_periods = int(line.split()[1])
+                    
+                    limits['cpu'] = {
+                        'limit_cores': round(cpu_cores, 2),
+                        'limit_millicores': cpu_millicores,
+                        'quota_us': quota,
+                        'period_us': period,
+                        'throttled_periods': throttled_periods,
+                        'total_periods': total_periods,
+                        'throttle_percent': round((throttled_periods / total_periods) * 100, 2) if total_periods > 0 else 0,
+                        'throttle_behavior': 'العملية تُبطأ (Throttled) عند تجاوز الحد'
+                    }
+                else:
+                    limits['cpu'] = {'limit_cores': 'unlimited'}
+    except Exception as e:
+        limits['cpu'] = {'error': str(e)}
+    
+    # Storage Limits (Ephemeral)
+    try:
+        # Check /app partition (usually ephemeral storage for the app)
+        app_disk = psutil.disk_usage('/app')
+        limits['ephemeral_storage'] = {
+            'limit_gb': round(app_disk.total / (1024**3), 2),
+            'used_gb': round(app_disk.used / (1024**3), 2),
+            'available_gb': round(app_disk.free / (1024**3), 2),
+            'usage_percent': round(app_disk.percent, 1),
+            'reject_behavior': 'رفض الكتابة عند امتلاء القرص'
+        }
+    except:
+        limits['ephemeral_storage'] = {'error': 'Cannot read /app disk'}
+    
+    # Database Storage
+    try:
+        db_path = '/data/db'
+        if os.path.exists(db_path):
+            db_size = sum(
+                os.path.getsize(os.path.join(dirpath, filename))
+                for dirpath, dirnames, filenames in os.walk(db_path)
+                for filename in filenames
+            )
+            db_disk = psutil.disk_usage(db_path)
+            limits['database_storage'] = {
+                'db_used_mb': round(db_size / (1024**2), 2),
+                'partition_limit_gb': round(db_disk.total / (1024**3), 2),
+                'partition_available_gb': round(db_disk.free / (1024**3), 2),
+                'usage_percent': round((db_size / db_disk.total) * 100, 2)
+            }
+    except Exception as e:
+        limits['database_storage'] = {'error': str(e)}
+    
+    # PIDs Limit
+    try:
+        pids_max = _read_cgroup_file('/sys/fs/cgroup/pids.max')
+        pids_current = _read_cgroup_file('/sys/fs/cgroup/pids.current')
+        limits['pids'] = {
+            'limit': int(pids_max) if pids_max and pids_max != 'max' else 'unlimited',
+            'current': int(pids_current) if pids_current else 0
+        }
+    except Exception as e:
+        limits['pids'] = {'error': str(e)}
+    
+    # File Upload Limit (check common locations)
+    upload_limit_mb = 100  # Default assumption
+    try:
+        # Check nginx config
+        for conf_path in ['/etc/nginx/nginx.conf', '/etc/nginx/conf.d/default.conf']:
+            if os.path.exists(conf_path):
+                with open(conf_path, 'r') as f:
+                    content = f.read()
+                    if 'client_max_body_size' in content:
+                        # Extract value
+                        import re
+                        match = re.search(r'client_max_body_size\s+(\d+)([mMgGkK])?', content)
+                        if match:
+                            val = int(match.group(1))
+                            unit = match.group(2).lower() if match.group(2) else 'm'
+                            if unit == 'g':
+                                upload_limit_mb = val * 1024
+                            elif unit == 'k':
+                                upload_limit_mb = val / 1024
+                            else:
+                                upload_limit_mb = val
+                        break
+    except:
+        pass
+    
+    limits['file_upload'] = {
+        'max_size_mb': upload_limit_mb,
+        'reject_behavior': 'رفض الرفع مع خطأ 413 Request Entity Too Large'
+    }
+    
+    return limits
+
 @router.get("/system-metrics")
 async def get_system_metrics(user=Depends(require_roles('stas'))):
     """
@@ -735,31 +893,41 @@ async def get_system_metrics(user=Depends(require_roles('stas'))):
     - Uptime (مدة التشغيل)
     """
     try:
-        # RAM Usage
-        memory = psutil.virtual_memory()
+        # Get Kubernetes/Container Limits (the actual allocated limits)
+        k8s_limits = _get_kubernetes_limits()
+        
+        # Current RAM Usage (within the container limit)
+        mem_limit_bytes = k8s_limits.get('memory', {}).get('limit_bytes', 0)
+        mem_current_bytes = k8s_limits.get('memory', {}).get('current_bytes', 0)
+        
         ram_info = {
-            "total_gb": round(memory.total / (1024 ** 3), 2),
-            "used_gb": round(memory.used / (1024 ** 3), 2),
-            "available_gb": round(memory.available / (1024 ** 3), 2),
-            "percentage": memory.percent
+            "limit_gb": k8s_limits.get('memory', {}).get('limit_gb', 'N/A'),
+            "limit_mb": k8s_limits.get('memory', {}).get('limit_mb', 'N/A'),
+            "used_mb": k8s_limits.get('memory', {}).get('current_mb', 0),
+            "peak_mb": k8s_limits.get('memory', {}).get('peak_mb', 0),
+            "percentage": k8s_limits.get('memory', {}).get('usage_percent', 0),
+            "swap_enabled": k8s_limits.get('memory', {}).get('swap_max_bytes', 0) > 0,
+            "oom_behavior": k8s_limits.get('memory', {}).get('oom_behavior', '')
         }
         
-        # CPU Usage
-        cpu_percent = psutil.cpu_percent(interval=0.5)
-        cpu_count = psutil.cpu_count()
+        # CPU Info (within container limit)
         cpu_info = {
-            "percentage": cpu_percent,
-            "cores": cpu_count
+            "limit_cores": k8s_limits.get('cpu', {}).get('limit_cores', 'N/A'),
+            "limit_millicores": k8s_limits.get('cpu', {}).get('limit_millicores', 'N/A'),
+            "percentage": psutil.cpu_percent(interval=0.5),
+            "throttled_percent": k8s_limits.get('cpu', {}).get('throttle_percent', 0),
+            "throttle_behavior": k8s_limits.get('cpu', {}).get('throttle_behavior', '')
         }
         
-        # Storage Usage (Disk)
-        disk = psutil.disk_usage('/')
-        storage_info = {
-            "total_gb": round(disk.total / (1024 ** 3), 2),
-            "used_gb": round(disk.used / (1024 ** 3), 2),
-            "free_gb": round(disk.free / (1024 ** 3), 2),
-            "percentage": round(disk.percent, 1)
-        }
+        # Storage Info (ephemeral storage for /app)
+        storage_info = k8s_limits.get('ephemeral_storage', {})
+        storage_info['behavior'] = storage_info.pop('reject_behavior', 'رفض الكتابة')
+        
+        # Database Storage
+        db_storage = k8s_limits.get('database_storage', {})
+        
+        # File Upload Limit
+        file_upload = k8s_limits.get('file_upload', {})
         
         # File Storage Analysis
         file_storage = await _analyze_file_storage()
@@ -776,8 +944,53 @@ async def get_system_metrics(user=Depends(require_roles('stas'))):
             "threads": process.num_threads()
         }
         
+        # PIDs
+        pids_info = k8s_limits.get('pids', {})
+        
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "environment": "Kubernetes Pod",
+            "limits": {
+                "memory": {
+                    "limit": f"{ram_info['limit_gb']} GB ({ram_info['limit_mb']} MB)",
+                    "used": f"{ram_info['used_mb']} MB",
+                    "peak": f"{ram_info['peak_mb']} MB",
+                    "percentage": ram_info['percentage'],
+                    "on_exceed": ram_info['oom_behavior']
+                },
+                "cpu": {
+                    "limit": f"{cpu_info['limit_cores']} cores ({cpu_info['limit_millicores']}m)",
+                    "current_usage": f"{cpu_info['percentage']}%",
+                    "throttled": f"{cpu_info['throttled_percent']}%",
+                    "on_exceed": cpu_info['throttle_behavior']
+                },
+                "ephemeral_storage": {
+                    "limit": f"{storage_info.get('limit_gb', 'N/A')} GB",
+                    "used": f"{storage_info.get('used_gb', 'N/A')} GB",
+                    "available": f"{storage_info.get('available_gb', 'N/A')} GB",
+                    "percentage": storage_info.get('usage_percent', 0),
+                    "on_exceed": storage_info.get('behavior', '')
+                },
+                "database_storage": {
+                    "used": f"{db_storage.get('db_used_mb', 'N/A')} MB",
+                    "partition_limit": f"{db_storage.get('partition_limit_gb', 'N/A')} GB",
+                    "available": f"{db_storage.get('partition_available_gb', 'N/A')} GB"
+                },
+                "file_upload": {
+                    "max_size": f"{file_upload.get('max_size_mb', 'N/A')} MB",
+                    "on_exceed": file_upload.get('reject_behavior', '')
+                },
+                "pids": pids_info
+            },
+            "ram": ram_info,
+            "cpu": cpu_info,
+            "storage": storage_info,
+            "db_storage": db_storage,
+            "file_storage": file_storage,
+            "uptime": uptime_info,
+            "process": process_info,
+            "status": "healthy"
+        }
             "ram": ram_info,
             "cpu": cpu_info,
             "storage": storage_info,
