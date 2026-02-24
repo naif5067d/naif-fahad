@@ -714,8 +714,8 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
     elements.append(Spacer(1, 10))
     
     # عنوان التقرير
-    elements.append(ar_para(f'التقرير الشهري للعهد المالية', style_title))
-    elements.append(ar_para(f'شهر: {month}', style_subtitle))
+    elements.append(ar_para('التقرير الشهري للعهد المالية', style_title))
+    elements.append(ar_para('شهر: ' + month, style_subtitle))
     elements.append(Spacer(1, 15))
     
     # === الملخص العام ===
