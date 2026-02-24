@@ -62,7 +62,7 @@ export default function CustodyPage() {
     } finally { setSubmitting(false); }
   };
 
-  const activeCustodies = custodies.filter(c => c.status === 'active');
+  const activeCustodies = custodies.filter(c => c.status === 'active' || c.status === 'pending');
   const returnedCustodies = custodies.filter(c => c.status === 'returned');
 
   return (
