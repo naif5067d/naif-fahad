@@ -1144,6 +1144,57 @@ export default function FinancialCustodyPage() {
               </DialogContent>
             </Dialog>
           )}
+          
+          {/* خيار طباعة الشهر */}
+          {!selectMode && (
+            <div className="flex items-center gap-2">
+              <Input
+                type="month"
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(e.target.value)}
+                className="w-40 h-9 text-sm"
+              />
+              <Button variant="outline" size="sm" onClick={handlePrintMonth} disabled={submitting}>
+                <Printer size={14} className="me-1" />
+                {lang === 'ar' ? 'طباعة الشهر' : 'Print Month'}
+              </Button>
+            </div>
+          )}
+          
+          {/* استعراض الأكواد */}
+          {canEditCustody && !selectMode && (
+            <Dialog open={showCodesDropdown} onOpenChange={setShowCodesDropdown}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <FileText size={14} />
+                  {lang === 'ar' ? 'استعراض الأكواد' : 'View Codes'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[80vh]">
+                <DialogHeader>
+                  <DialogTitle>{lang === 'ar' ? 'قائمة الأكواد' : 'Codes List'}</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-background">
+                      <tr className="border-b">
+                        <th className="text-start p-2 font-medium">{lang === 'ar' ? 'الكود' : 'Code'}</th>
+                        <th className="text-start p-2 font-medium">{lang === 'ar' ? 'البيان' : 'Description'}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allCodes.map(c => (
+                        <tr key={c.code} className="border-b hover:bg-muted/50">
+                          <td className="p-2 font-mono font-bold text-primary">{c.code}</td>
+                          <td className="p-2">{c.name_ar || c.name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
