@@ -899,13 +899,16 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     required_monthly_hours = work_days_count * daily_hours
     
-    # === رصيد الخروج المبكر ===
-    # الأولوية: 1) من العقد  2) من الإعدادات العامة  3) الافتراضي (3 ساعات)
+    # === رصيد الخروج المبكر (ساعات الاستئذان) ===
+    # الأولوية: 1) من العقد (monthly_permission_hours)  2) من الإعدادات العامة  3) الافتراضي (3 ساعات)
     monthly_early_leave_balance = 3  # الافتراضي
     
     # أولاً: من العقد
-    if contract and contract.get('early_leave_balance') is not None:
-        monthly_early_leave_balance = contract.get('early_leave_balance')
+    if contract:
+        # يُسمى في العقد "monthly_permission_hours" أو "early_leave_balance"
+        contract_balance = contract.get('monthly_permission_hours') or contract.get('early_leave_balance')
+        if contract_balance is not None:
+            monthly_early_leave_balance = contract_balance
     else:
         # ثانياً: من الإعدادات العامة
         early_leave_settings = await db.settings.find_one(
@@ -915,17 +918,17 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         if early_leave_settings:
             monthly_early_leave_balance = early_leave_settings.get('monthly_hours', 3)
     
-    # حساب الخروج المبكر المستخدم هذا الشهر (من طلبات الخروج المبكر المعتمدة)
+    # حساب الخروج المبكر المستخدم هذا الشهر (من طلبات الخروج المبكر والاستئذان المعتمدة)
     early_leave_requests = await db.transactions.find({
         "$or": [
             {"employee_id": employee_id},
             {"data.employee_id": employee_id}
         ],
-        "type": {"$in": ["early_leave", "early_leave_request", "early_departure"]},
+        "type": {"$in": ["early_leave", "early_leave_request", "early_departure", "permission", "استئذان"]},
         "status": "executed",
         "data.date": {"$regex": f"^{current_month}"},
         "data.deduct_from_balance": {"$ne": False}  # فقط الطلبات التي تُخصم من الرصيد
-    }, {"_id": 0, "data.hours": 1, "data.minutes": 1}).to_list(100)
+    }, {"_id": 0, "data.hours": 1, "data.minutes": 1, "data.duration_minutes": 1}).to_list(100)
     
     used_early_leave_minutes = 0
     for req in early_leave_requests:
