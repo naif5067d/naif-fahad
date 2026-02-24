@@ -147,12 +147,12 @@ async def get_team_daily(
     """
     جدول الحضور اليومي لجميع الموظفين
     يُظهر جميع الموظفين حتى لو لم يسجلوا بصمة
-    يستثني: ستاس، محمد، صلاح، نايف (ليسوا موظفين)
+    يستثني: ستاس، محمد، صلاح، نايف (أدوار إدارية فقط)
     
     المشرف يرى فقط الموظفين المسؤولين عنهم
     """
-    # الموظفون المستثنون من الحضور (ليسوا موظفين)
-    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']
+    # الموظفون المستثنون من الحضور (أدوار إدارية فقط)
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF', 'EMP-004']
     
     target_date = date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
