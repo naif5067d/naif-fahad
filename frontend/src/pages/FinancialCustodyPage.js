@@ -102,7 +102,7 @@ export default function FinancialCustodyPage() {
       ]);
       setCustodies(custodiesRes.data);
       setSummary(summaryRes.data);
-      setAllCodes(codesRes.data || []);
+      setAllCodes(codesRes.data?.codes || []);
     } catch (e) {
       console.error('Error fetching custodies:', e);
     }
