@@ -307,7 +307,8 @@ export default function FinancialCustodyPage() {
     try {
       const res = await api.post('/api/admin-custody/create', {
         amount: parseFloat(form.amount),
-        notes: form.notes || null
+        notes: form.notes || null,
+        target_month: selectedMonth || null  // إرسال الشهر المختار
       });
       
       toast.success(res.data.message_ar || 'تم الإنشاء');
