@@ -271,6 +271,54 @@ export default function TeamAttendancePage() {
     }
   };
 
+  // Print Report Function
+  const handlePrintReport = async () => {
+    setIsPrinting(true);
+    try {
+      // تحديد المعاملات حسب التبويب المحدد
+      const params = { period: tab };
+      
+      if (tab === 'daily') {
+        params.date = date;
+      } else if (tab === 'weekly') {
+        params.date = date;
+      } else if (tab === 'monthly') {
+        params.month = month;
+      } else if (tab === 'yearly') {
+        params.year = year;
+      }
+      
+      // إذا كان عرض موظف واحد
+      if (viewMode === 'single' && selectedEmployee) {
+        params.employee_id = selectedEmployee;
+      }
+      
+      const response = await api.get('/api/team-attendance/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      // إنشاء رابط للتحميل
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // فتح في نافذة جديدة للطباعة
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+      
+      toast.success(lang === 'ar' ? 'تم تحميل التقرير بنجاح' : 'Report downloaded successfully');
+    } catch (err) {
+      console.error('Print error:', err);
+      toast.error(lang === 'ar' ? 'خطأ في طباعة التقرير' : 'Error printing report');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   // Fetch pending deductions for review (Sultan/Naif only)
   useEffect(() => {
     if (isSultan) {
