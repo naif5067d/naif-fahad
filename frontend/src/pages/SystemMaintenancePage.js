@@ -74,6 +74,11 @@ export default function SystemMaintenancePage() {
     message_en: '',
     is_pinned: false
   });
+  
+  // System Metrics
+  const [systemMetrics, setSystemMetrics] = useState(null);
+  const [metricsLoading, setMetricsLoading] = useState(false);
+  const metricsIntervalRef = useRef(null);
 
   useEffect(() => {
     loadData();
