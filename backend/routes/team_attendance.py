@@ -613,6 +613,35 @@ async def update_employee_status(
     # تحديد الساعات المحتسبة
     actual_hours = daily_hours if body.new_status in counted_statuses else 0.0
     
+    # === تحديد أوقات الدخول والخروج ===
+    # إذا كانت الحالة "حاضر" أو "متأخر"، نضع أوقات الدوام الرسمية
+    work_start = "08:00"
+    work_end = "16:00"
+    
+    # جلب أوقات العمل من الموقع
+    if emp.get('work_location_id'):
+        work_loc = await db.work_locations.find_one({"id": emp['work_location_id']}, {"_id": 0})
+        if work_loc:
+            if is_ramadan:
+                work_start = work_loc.get('ramadan_work_start', '09:00')
+                work_end = work_loc.get('ramadan_work_end', '15:00')
+            else:
+                work_start = work_loc.get('work_start', '08:00')
+                work_end = work_loc.get('work_end', '16:00')
+    elif is_ramadan:
+        work_start = "09:00"
+        work_end = "15:00"
+    
+    # تحديد أوقات الدخول والخروج بناءً على الحالة
+    if body.new_status in counted_statuses:
+        # حالات الحضور: نضع أوقات الدوام
+        final_check_in = body.check_in_time or (daily.get('check_in_time') if daily else None) or work_start
+        final_check_out = body.check_out_time or (daily.get('check_out_time') if daily else None) or work_end
+    else:
+        # حالات الغياب/الإجازة: لا أوقات
+        final_check_in = None
+        final_check_out = None
+    
     await db.daily_status.update_one(
         {"employee_id": employee_id, "date": date},
         {
@@ -623,8 +652,8 @@ async def update_employee_status(
                 "decision_source": "exemption" if is_exemption else ("gift_leave" if is_gift_leave else "manual_correction"),
                 "is_gift_leave": is_gift_leave,
                 "is_exemption": is_exemption,
-                "check_in_time": body.check_in_time or (daily.get('check_in_time') if daily else None),
-                "check_out_time": body.check_out_time or (daily.get('check_out_time') if daily else None),
+                "check_in_time": final_check_in,
+                "check_out_time": final_check_out,
                 # ساعات العمل المحتسبة
                 "actual_hours": actual_hours,
                 "worked_hours": actual_hours,
