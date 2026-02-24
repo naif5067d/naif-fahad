@@ -609,7 +609,8 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
     from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
     from reportlab.lib import colors
     
-    is_ar = lang == 'ar'
+    # is_ar will be used for future multi-language support
+    _ = lang == 'ar'
     
     def ar_text(text):
         if not text:
@@ -617,7 +618,7 @@ def generate_monthly_custody_report(custodies: list, month: str, lang: str = 'ar
         try:
             reshaped = arabic_reshaper.reshape(str(text))
             return get_display(reshaped)
-        except:
+        except Exception:
             return str(text)
     
     def ar_para(text, style):
