@@ -62,7 +62,7 @@ export default function FinancialCustodyPage() {
   const [selected, setSelected] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ amount: '', notes: '' });
-  const [expForm, setExpForm] = useState({ code: '', description: '', amount: '' });
+  const [expForm, setExpForm] = useState({ code: '', statement: '', description: '', amount: '' });
   const [codeInfo, setCodeInfo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [view, setView] = useState('list');
