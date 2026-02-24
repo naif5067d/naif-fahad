@@ -94,6 +94,7 @@ EXPENSE_CODES = [
 class CustodyCreate(BaseModel):
     amount: float = Field(..., gt=0, description="مبلغ العهدة")
     notes: Optional[str] = None
+    target_month: Optional[str] = None  # الشهر المستهدف بتنسيق YYYY-MM
 
 class ExpenseCreate(BaseModel):
     code: int = Field(..., ge=1, description="كود المصروف")
