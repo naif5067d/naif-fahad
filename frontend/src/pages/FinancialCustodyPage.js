@@ -349,34 +349,6 @@ export default function FinancialCustodyPage() {
     }
   };
 
-  const handleAddExpense = async () => {
-    if (!codeInfo || !expenseAmount || parseFloat(expenseAmount) <= 0) {
-      toast.error(lang === 'ar' ? 'أدخل الكود والمبلغ' : 'Enter code and amount');
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      await api.post(`/api/admin-custody/${selected.id}/expense`, {
-        code: codeInfo.code,
-        description: expenseDescription || codeInfo.name_ar || codeInfo.name,
-        amount: parseFloat(expenseAmount)
-      });
-      
-      toast.success(lang === 'ar' ? 'تم إضافة المصروف' : 'Expense added');
-      setCodeInput('');
-      setCodeInfo(null);
-      setExpenseAmount('');
-      setExpenseDescription('');
-      fetchDetail(selected.id);
-      fetchList();
-    } catch (e) {
-      toast.error(e.response?.data?.detail || 'Error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   // === ماسح الكود بالكاميرا ===
   const startScanner = async () => {
     setScannerOpen(true);
