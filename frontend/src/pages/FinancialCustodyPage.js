@@ -364,11 +364,24 @@ export default function FinancialCustodyPage() {
 
   // === طباعة بالشهر ===
   const handlePrintMonth = async () => {
+    if (!selectedMonth) {
+      toast.error(lang === 'ar' ? 'اختر الشهر أولاً' : 'Select month first');
+      return;
+    }
+    
     setSubmitting(true);
     try {
       const response = await api.get(`/api/admin-custody/print-month?month=${selectedMonth}&lang=${lang}`, {
         responseType: 'blob'
       });
+      
+      // التحقق من نوع الاستجابة - قد تكون خطأ JSON
+      if (response.data.type === 'application/json') {
+        const text = await response.data.text();
+        const error = JSON.parse(text);
+        toast.error(error.detail || 'خطأ في الطباعة');
+        return;
+      }
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
@@ -377,9 +390,20 @@ export default function FinancialCustodyPage() {
         printWindow.onload = () => printWindow.print();
       }
       
-      toast.success(lang === 'ar' ? 'جاري طباعة الشهر...' : 'Printing month...');
+      toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
     } catch (e) {
-      toast.error(e.response?.data?.detail || 'Error printing');
+      // محاولة قراءة رسالة الخطأ من blob
+      if (e.response?.data instanceof Blob) {
+        try {
+          const text = await e.response.data.text();
+          const error = JSON.parse(text);
+          toast.error(error.detail || 'خطأ في الطباعة');
+        } catch {
+          toast.error(lang === 'ar' ? 'لا توجد عهد في هذا الشهر' : 'No custodies in this month');
+        }
+      } else {
+        toast.error(e.response?.data?.detail || (lang === 'ar' ? 'لا توجد عهد في هذا الشهر' : 'No custodies in this month'));
+      }
     } finally {
       setSubmitting(false);
     }
