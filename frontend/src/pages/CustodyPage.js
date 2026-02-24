@@ -136,6 +136,7 @@ export default function CustodyPage() {
                 <th className="hidden sm:table-cell">{lang === 'ar' ? 'الرقم التسلسلي' : 'Serial'}</th>
                 <th className="hidden sm:table-cell">{lang === 'ar' ? 'القيمة' : 'Value'}</th>
                 <th className="hidden md:table-cell">{lang === 'ar' ? 'تاريخ التسليم' : 'Assigned'}</th>
+                <th>{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                 {canReturn && <th>{t('common.actions')}</th>}
               </tr></thead>
               <tbody>
