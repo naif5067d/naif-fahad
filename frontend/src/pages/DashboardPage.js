@@ -476,18 +476,45 @@ export default function DashboardPage() {
             
             {/* أشرطة التقدم (للجميع الذين لديهم حضور) */}
             {showsAttendance && (
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-3">
+                {/* شريط ساعات الشهر */}
                 <div>
                   <div className="flex justify-between text-[10px] mb-1 opacity-70">
-                    <span>{lang === 'ar' ? 'ساعات الشهر' : 'Monthly'}</span>
-                    <span>
+                    <span>{lang === 'ar' ? 'ساعات الشهر' : 'Monthly Hours'}</span>
+                    <span className="font-medium">
                       {employeeSummary?.attendance?.monthly_hours || 0}/
-                      {employeeSummary?.attendance?.required_monthly_hours || (employeeSummary?.attendance?.is_ramadan_active ? 144 : 176)}
+                      {employeeSummary?.attendance?.required_monthly_hours || (employeeSummary?.attendance?.is_ramadan_active ? 144 : 194)}
                       {employeeSummary?.attendance?.is_ramadan_active && ' 🌙'}
                     </span>
                   </div>
                   <Progress 
-                    value={Math.min(100, ((employeeSummary?.attendance?.monthly_hours || 0) / (employeeSummary?.attendance?.required_monthly_hours || 176)) * 100)} 
+                    value={Math.min(100, ((employeeSummary?.attendance?.monthly_hours || 0) / (employeeSummary?.attendance?.required_monthly_hours || 194)) * 100)} 
+                    className="h-2 bg-white/10"
+                  />
+                  {/* عرض العجز إن وجد */}
+                  {(employeeSummary?.attendance?.deficit_hours || 0) > 0 && (
+                    <div className="flex justify-between text-[9px] mt-1 text-amber-300">
+                      <span className="flex items-center gap-1">
+                        <TrendingDown size={10} />
+                        {lang === 'ar' ? 'عجز الساعات' : 'Deficit'}
+                      </span>
+                      <span>{employeeSummary?.attendance?.deficit_hours} {lang === 'ar' ? 'ساعة' : 'hrs'}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* شريط رصيد الخروج المبكر */}
+                <div>
+                  <div className="flex justify-between text-[10px] mb-1 opacity-70">
+                    <span>{lang === 'ar' ? 'رصيد الخروج المبكر' : 'Early Leave Balance'}</span>
+                    <span className="font-medium">
+                      {employeeSummary?.early_leave_balance?.remaining_hours ?? 3}/
+                      {employeeSummary?.early_leave_balance?.monthly_allowance || 3}
+                      {lang === 'ar' ? ' س' : ' hrs'}
+                    </span>
+                  </div>
+                  <Progress 
+                    value={((employeeSummary?.early_leave_balance?.remaining_hours ?? 3) / (employeeSummary?.early_leave_balance?.monthly_allowance || 3)) * 100} 
                     className="h-1.5 bg-white/10"
                   />
                 </div>
