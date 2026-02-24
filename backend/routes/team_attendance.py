@@ -567,13 +567,16 @@ async def update_employee_status(
         "corrected_at": now,
         "check_in_time": body.check_in_time,
         "check_out_time": body.check_out_time,
-        "is_gift_leave": is_gift_leave
+        "is_gift_leave": is_gift_leave,
+        "is_exemption": is_exemption
     }
     
     # تحديد السبب المعروض
     reason_text = body.reason
     if is_gift_leave:
         reason_text = f"⭐ إجازة مكافأة من {user.get('full_name', '')}: {body.reason}"
+    elif is_exemption:
+        reason_text = f"✓ إعفاء إداري من {user.get('full_name', '')}: {body.reason}"
     else:
         reason_text = f"تم التعديل بواسطة {user.get('full_name', user['user_id'])}: {body.reason}"
     
