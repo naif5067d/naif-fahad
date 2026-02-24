@@ -2053,6 +2053,111 @@ export default function STASMirrorPage() {
           </Card>
         </TabsContent>
 
+        {/* === Signatures Tab === */}
+        <TabsContent value="signatures" className="mt-4">
+          <Card className="border-2 border-accent/30 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-accent/10 to-accent/5">
+              <CardTitle className="text-base flex items-center gap-2 text-accent">
+                <FileText size={20} />
+                {lang === 'ar' ? 'إعدادات توقيعات العهد المالية' : 'Financial Custody Signatures'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-sm text-muted-foreground mb-6">
+                {lang === 'ar' 
+                  ? 'هذه الأسماء ستظهر في التقارير الشهرية للعهد المالية (PDF)'
+                  : 'These names will appear in monthly custody reports (PDF)'
+                }
+              </p>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="space-y-4 p-4 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <h4 className="font-semibold text-center text-[hsl(var(--primary))]">
+                    {lang === 'ar' ? 'المدير الإداري' : 'Admin Manager'}
+                  </h4>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'الاسم' : 'Name'}</Label>
+                    <Input
+                      value={signatureSettings.admin_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, admin_name: e.target.value }))}
+                      placeholder="أ.سلطان الزامل"
+                      data-testid="sig-admin-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'المنصب' : 'Title'}</Label>
+                    <Input
+                      value={signatureSettings.admin_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, admin_title: e.target.value }))}
+                      placeholder="المدير الإداري"
+                      data-testid="sig-admin-title"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4 p-4 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <h4 className="font-semibold text-center text-[hsl(var(--primary))]">
+                    {lang === 'ar' ? 'المحاسب المالي' : 'Financial Accountant'}
+                  </h4>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'الاسم' : 'Name'}</Label>
+                    <Input
+                      value={signatureSettings.accountant_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, accountant_name: e.target.value }))}
+                      placeholder="أ.صلاح صحبي"
+                      data-testid="sig-accountant-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'المنصب' : 'Title'}</Label>
+                    <Input
+                      value={signatureSettings.accountant_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, accountant_title: e.target.value }))}
+                      placeholder="المحاسب المالي"
+                      data-testid="sig-accountant-title"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4 p-4 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                  <h4 className="font-semibold text-center text-[hsl(var(--primary))]">
+                    {lang === 'ar' ? 'المدير التنفيذي' : 'CEO'}
+                  </h4>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'الاسم' : 'Name'}</Label>
+                    <Input
+                      value={signatureSettings.ceo_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, ceo_name: e.target.value }))}
+                      placeholder="م.محمد الثنيان"
+                      data-testid="sig-ceo-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{lang === 'ar' ? 'المنصب' : 'Title'}</Label>
+                    <Input
+                      value={signatureSettings.ceo_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, ceo_title: e.target.value }))}
+                      placeholder="المدير التنفيذي"
+                      data-testid="sig-ceo-title"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <Button 
+                  onClick={handleSaveSignatures} 
+                  disabled={savingSignatures}
+                  className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)]"
+                  data-testid="save-signatures-btn"
+                >
+                  {savingSignatures ? <Loader2 className="animate-spin me-2" size={16} /> : <CheckCircle size={16} className="me-2" />}
+                  {lang === 'ar' ? 'حفظ التوقيعات' : 'Save Signatures'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="mt-4 space-y-4">
           {/* Version Management */}
