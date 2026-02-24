@@ -67,10 +67,6 @@ export default function WorkLocationsPage() {
   const [ramadanDialog, setRamadanDialog] = useState(null);
   const [savingRamadan, setSavingRamadan] = useState(false);
   
-  // Compensation Allowance (Smart Hours) - للمدراء فقط
-  const [compensationAllowance, setCompensationAllowance] = useState(0);
-  const [savingCompensation, setSavingCompensation] = useState(false);
-  
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -105,7 +101,6 @@ export default function WorkLocationsPage() {
   const canEdit = ['sultan', 'naif', 'stas'].includes(user?.role);
   const canAssign = ['sultan', 'naif'].includes(user?.role);
   const isStas = user?.role === 'stas';
-  const canManageCompensation = ['sultan', 'naif', 'stas'].includes(user?.role);
 
   const fetchData = useCallback(async () => {
     try {
@@ -115,17 +110,6 @@ export default function WorkLocationsPage() {
       ]);
       setLocations(locRes.data.filter(l => l.is_active !== false));
       setEmployees(empRes.data);
-      
-      // جلب إعداد سماح التعويض (للمدراء فقط)
-      if (canManageCompensation) {
-        try {
-          const compRes = await api.get('/api/settings/compensation-allowance');
-          setCompensationAllowance(compRes.data.monthly_compensation_hours || 0);
-        } catch (err) {
-          // إعداد جديد لم يُنشأ بعد
-          setCompensationAllowance(0);
-        }
-      }
     } catch (err) {
       console.error('Failed to fetch data:', err);
     }
