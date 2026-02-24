@@ -1513,6 +1513,85 @@ export default function FinancialCustodyPage() {
               </DialogContent>
             </Dialog>
           )}
+          
+          {/* تعديل التوقيعات */}
+          {canEditCustody && !selectMode && (
+            <Dialog open={signaturesOpen} onOpenChange={setSignaturesOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1">
+                  <Edit2 size={14} />
+                  {lang === 'ar' ? 'التوقيعات' : 'Signatures'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>{lang === 'ar' ? 'تعديل توقيعات التقارير' : 'Edit Report Signatures'}</DialogTitle>
+                </DialogHeader>
+                <div className="grid md:grid-cols-3 gap-4 py-4">
+                  <div className="space-y-3 p-3 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                    <h4 className="font-semibold text-center text-sm text-[hsl(var(--primary))]">
+                      {lang === 'ar' ? 'المدير الإداري' : 'Admin Manager'}
+                    </h4>
+                    <Input
+                      value={signatureSettings.admin_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, admin_name: e.target.value }))}
+                      placeholder="أ.سلطان الزامل"
+                      className="text-sm"
+                    />
+                    <Input
+                      value={signatureSettings.admin_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, admin_title: e.target.value }))}
+                      placeholder="المدير الإداري"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-3 p-3 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                    <h4 className="font-semibold text-center text-sm text-[hsl(var(--primary))]">
+                      {lang === 'ar' ? 'المحاسب المالي' : 'Accountant'}
+                    </h4>
+                    <Input
+                      value={signatureSettings.accountant_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, accountant_name: e.target.value }))}
+                      placeholder="أ.صلاح صحبي"
+                      className="text-sm"
+                    />
+                    <Input
+                      value={signatureSettings.accountant_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, accountant_title: e.target.value }))}
+                      placeholder="المحاسب المالي"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-3 p-3 border rounded-lg bg-slate-50 dark:bg-slate-900">
+                    <h4 className="font-semibold text-center text-sm text-[hsl(var(--primary))]">
+                      {lang === 'ar' ? 'المدير التنفيذي' : 'CEO'}
+                    </h4>
+                    <Input
+                      value={signatureSettings.ceo_name}
+                      onChange={e => setSignatureSettings(s => ({ ...s, ceo_name: e.target.value }))}
+                      placeholder="م.محمد الثنيان"
+                      className="text-sm"
+                    />
+                    <Input
+                      value={signatureSettings.ceo_title}
+                      onChange={e => setSignatureSettings(s => ({ ...s, ceo_title: e.target.value }))}
+                      placeholder="المدير التنفيذي"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setSignaturesOpen(false)}>
+                    {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </Button>
+                  <Button onClick={handleSaveSignatures} disabled={savingSignatures}>
+                    {savingSignatures ? <Loader2 className="animate-spin me-1" size={14} /> : <Save size={14} className="me-1" />}
+                    {lang === 'ar' ? 'حفظ' : 'Save'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
