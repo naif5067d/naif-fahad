@@ -898,6 +898,36 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     required_monthly_hours = work_days_count * daily_hours
     
+    # === رصيد الخروج المبكر (3 ساعات شهرياً) ===
+    # جلب إعداد رصيد الخروج المبكر
+    early_leave_settings = await db.settings.find_one(
+        {"type": "early_leave_balance"},
+        {"_id": 0}
+    )
+    monthly_early_leave_balance = early_leave_settings.get('monthly_hours', 3) if early_leave_settings else 3  # 3 ساعات افتراضياً
+    
+    # حساب الخروج المبكر المستخدم هذا الشهر (من طلبات الخروج المبكر المعتمدة)
+    early_leave_requests = await db.transactions.find({
+        "$or": [
+            {"employee_id": employee_id},
+            {"data.employee_id": employee_id}
+        ],
+        "type": {"$in": ["early_leave", "early_leave_request", "early_departure"]},
+        "status": "executed",
+        "data.date": {"$regex": f"^{current_month}"},
+        "data.deduct_from_balance": {"$ne": False}  # فقط الطلبات التي تُخصم من الرصيد
+    }, {"_id": 0, "data.hours": 1, "data.minutes": 1}).to_list(100)
+    
+    used_early_leave_minutes = 0
+    for req in early_leave_requests:
+        data = req.get('data', {})
+        hours = data.get('hours', 0) or 0
+        minutes = data.get('minutes', 0) or 0
+        used_early_leave_minutes += (hours * 60) + minutes
+    
+    used_early_leave_hours = round(used_early_leave_minutes / 60, 2)
+    remaining_early_leave_balance = max(0, monthly_early_leave_balance - used_early_leave_hours)
+    
     employee_summary = {
         "employee": emp,
         "contract": contract,
