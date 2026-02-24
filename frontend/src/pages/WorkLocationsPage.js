@@ -256,22 +256,6 @@ export default function WorkLocationsPage() {
     }
   };
 
-  // === حفظ سماح التعويض (Smart Hours) ===
-  const handleSaveCompensationAllowance = async (value) => {
-    setSavingCompensation(true);
-    try {
-      await api.put('/api/settings/compensation-allowance', {
-        monthly_compensation_hours: value
-      });
-      setCompensationAllowance(value);
-      toast.success(lang === 'ar' ? 'تم حفظ سماح التعويض' : 'Compensation allowance saved');
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to save');
-    } finally {
-      setSavingCompensation(false);
-    }
-  };
-
   return (
     <div className="space-y-6" data-testid="work-locations-page">
       
