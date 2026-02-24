@@ -71,6 +71,8 @@ const STATUS_COLORS = {
   'LATE': 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]',
   'ON_LEAVE': 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.2)]',
   'ON_ADMIN_LEAVE': 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.2)]',
+  'GIFT_LEAVE': 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-700 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-emerald-400',
+  'ON_ADMIN_LEAVE': 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.2)]',
   'WEEKEND': 'bg-muted text-muted-foreground',
   'HOLIDAY': 'bg-accent/15 text-accent dark:bg-accent/20',
   'ON_MISSION': 'bg-[hsl(var(--navy)/0.15)] text-[hsl(var(--navy))] dark:bg-[hsl(var(--navy)/0.2)]',
