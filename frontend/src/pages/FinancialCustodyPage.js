@@ -94,6 +94,10 @@ export default function FinancialCustodyPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
+  
+  // Code edit/delete states
+  const [editingCode, setEditingCode] = useState(null);
+  const [editCodeName, setEditCodeName] = useState('');
 
   // ==================== DATA FETCHING ====================
 
