@@ -40,14 +40,26 @@ DANGER = colors.Color(0.75, 0.15, 0.15)        # أحمر
 
 # ==================== FONTS ====================
 FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
-ARABIC_FONT = 'NotoNaskhArabic'
-ARABIC_FONT_BOLD = 'NotoNaskhArabicBold'
+ARABIC_FONT = 'Amiri'
+ARABIC_FONT_BOLD = 'Amiri'
 
 
 def register_fonts():
     """Register Arabic fonts"""
     global ARABIC_FONT, ARABIC_FONT_BOLD
     
+    # أولاً: جرب خط Amiri (الأفضل للعربية)
+    amiri_path = os.path.join(FONTS_DIR, 'Amiri-Regular.ttf')
+    if os.path.exists(amiri_path) and os.path.getsize(amiri_path) > 1000:
+        try:
+            pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
+            ARABIC_FONT = 'Amiri'
+            ARABIC_FONT_BOLD = 'Amiri'
+            return True
+        except Exception as e:
+            print(f"Failed to register Amiri: {e}")
+    
+    # احتياطي: خطوط Noto
     font_pairs = [
         ('NotoNaskhArabic', 'NotoNaskhArabic-Regular.ttf', 'NotoNaskhArabic-Bold.ttf'),
         ('NotoSansArabic', 'NotoSansArabic-Regular.ttf', 'NotoSansArabic-Bold.ttf'),
