@@ -889,8 +889,8 @@ async def bulk_delete_custodies(data: BulkDeleteRequest, user=Depends(get_curren
 
 @router.delete("/{custody_id}")
 async def delete_single_custody(custody_id: str, user=Depends(get_current_user)):
-    """حذف عهدة واحدة (STAS فقط) - حذف فعلي"""
-    check_role(user, ['stas'])
+    """حذف عهدة واحدة (سلطان/صلاح/ستاس) - حذف فعلي"""
+    check_role(user, ['stas', 'sultan', 'salah'])
     
     custody = await db.admin_custodies.find_one({"id": custody_id})
     if not custody:
