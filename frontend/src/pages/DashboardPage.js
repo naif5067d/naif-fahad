@@ -5,11 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FileText, CalendarDays, Users, Shield, DollarSign, Clock, ChevronRight, 
   Briefcase, MapPin, Wallet, Settings2, Bell, Pin, X, Award, 
-  CheckCircle2, Timer, TrendingDown, Sparkles
+  CheckCircle2, Timer, TrendingDown, Sparkles, Info
 } from 'lucide-react';
 import { formatGregorianHijri } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import api from '@/lib/api';
 
 // ==================== رسائل تحفيزية ====================
