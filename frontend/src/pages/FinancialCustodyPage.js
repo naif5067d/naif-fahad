@@ -1074,18 +1074,19 @@ export default function FinancialCustodyPage() {
                 </DialogContent>
               </Dialog>
               
-              {/* اسم الحساب أو حقل البيان للكود الجديد */}
-              {parseInt(expForm.code) >= 61 ? (
-                <div className="flex-1 min-w-[200px]">
+              {/* عرض اسم الحساب من الأكواد الموجودة أو حقل البيان للكود الجديد */}
+              {parseInt(expForm.code) >= 61 && !codeInfo?.found ? (
+                <div className="w-48">
                   <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                    {lang === 'ar' ? 'البيان' : 'Description'}
+                    {lang === 'ar' ? 'البيان (اسم الحساب)' : 'Statement (Account Name)'}
                     <span className="text-amber-500">*</span>
                   </Label>
                   <Input
-                    value={expForm.description}
-                    onChange={e => setExpForm(f => ({ ...f, description: e.target.value }))}
+                    value={expForm.statement}
+                    onChange={e => setExpForm(f => ({ ...f, statement: e.target.value }))}
                     className="h-10"
-                    placeholder={lang === 'ar' ? 'اكتب اسم الحساب الجديد...' : 'Enter new account name...'}
+                    placeholder={lang === 'ar' ? 'مثال: مواد بناء' : 'e.g., Building materials'}
+                    data-testid="exp-statement"
                   />
                 </div>
               ) : (
