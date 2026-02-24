@@ -872,6 +872,7 @@ export default function TeamAttendancePage() {
                         <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'In'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
+                        <th className="text-start p-3">{lang === 'ar' ? 'الملاحظات' : 'Notes'}</th>
                         <th className="text-center p-3">{lang === 'ar' ? 'إجراء' : 'Action'}</th>
                       </tr>
                     </thead>
