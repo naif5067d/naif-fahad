@@ -576,6 +576,19 @@ export default function FinancialCustodyPage() {
                 PDF
               </Button>
               
+              {/* زر تعديل العهدة */}
+              {canEditCustody && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => openEditCustody(selected)}
+                  className="gap-1.5"
+                >
+                  <Edit2 size={14} />
+                  {lang === 'ar' ? 'تعديل' : 'Edit'}
+                </Button>
+              )}
+              
               {canDeleteThis && (
                 <Button 
                   variant="destructive" 
@@ -591,6 +604,51 @@ export default function FinancialCustodyPage() {
               )}
             </div>
           </div>
+          
+          {/* Dialog تعديل العهدة */}
+          <Dialog open={editCustodyOpen} onOpenChange={setEditCustodyOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{lang === 'ar' ? 'تعديل العهدة' : 'Edit Custody'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div>
+                  <Label>{lang === 'ar' ? 'رقم العهدة' : 'Custody Number'}</Label>
+                  <Input 
+                    value={editCustodyForm.custody_number}
+                    onChange={e => setEditCustodyForm(f => ({ ...f, custody_number: e.target.value }))}
+                    className="font-mono"
+                  />
+                </div>
+                <div>
+                  <Label>{lang === 'ar' ? 'المبلغ الأساسي (ريال)' : 'Base Amount (SAR)'}</Label>
+                  <Input 
+                    type="number"
+                    min="1"
+                    value={editCustodyForm.amount}
+                    onChange={e => setEditCustodyForm(f => ({ ...f, amount: e.target.value }))}
+                    className="font-mono text-lg"
+                  />
+                </div>
+                <div>
+                  <Label>{lang === 'ar' ? 'ملاحظات' : 'Notes'}</Label>
+                  <Textarea 
+                    value={editCustodyForm.notes}
+                    onChange={e => setEditCustodyForm(f => ({ ...f, notes: e.target.value }))}
+                    rows={2}
+                  />
+                </div>
+                <Button 
+                  onClick={handleEditCustody} 
+                  disabled={submitting || !editCustodyForm.amount}
+                  className="w-full"
+                >
+                  {submitting && <Loader2 size={14} className="me-1.5 animate-spin" />}
+                  {lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="flex items-center gap-6 lg:gap-10 mt-4">
             <div className="text-center">
