@@ -1094,9 +1094,6 @@ export default function FinancialCustodyPage() {
                   </div>
                 </div>
               )}
-                  }
-                </div>
-              </div>
               
               <div className="flex-1 min-w-[200px]">
                 <Label className="text-[10px] text-muted-foreground uppercase">
