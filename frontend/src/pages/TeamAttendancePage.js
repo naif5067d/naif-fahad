@@ -923,6 +923,14 @@ export default function TeamAttendancePage() {
                               <span className="text-[hsl(var(--warning))] font-medium">{emp.late_minutes} د</span>
                             )}
                           </td>
+                          {/* Notes Column */}
+                          <td className="p-3 text-start max-w-[200px]">
+                            {emp.decision_reason_ar && (
+                              <span className="text-xs text-muted-foreground truncate block" title={emp.decision_reason_ar}>
+                                {emp.decision_reason_ar}
+                              </span>
+                            )}
+                          </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {emp.can_edit && (
