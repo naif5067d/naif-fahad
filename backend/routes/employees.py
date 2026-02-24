@@ -626,7 +626,10 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     # التحقق من الإجازات النشطة من جدول transactions
     active_leave = await db.transactions.find_one({
-        "data.employee_id": employee_id,
+        "$or": [
+            {"employee_id": employee_id},
+            {"data.employee_id": employee_id}
+        ],
         "type": {"$regex": "leave", "$options": "i"},
         "status": "executed",
         "data.start_date": {"$lte": today},
@@ -635,7 +638,10 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     # التحقق من المهمات النشطة
     active_mission = await db.transactions.find_one({
-        "data.employee_id": employee_id,
+        "$or": [
+            {"employee_id": employee_id},
+            {"data.employee_id": employee_id}
+        ],
         "type": {"$regex": "mission|assignment", "$options": "i"},
         "status": "executed",
         "data.start_date": {"$lte": today},
