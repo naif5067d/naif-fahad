@@ -17,12 +17,24 @@ Team Attendance Routes - الحضور والعقوبات
 4. السجل يُحفظ في أرشيف STAS السنوي
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 from database import db
 from utils.auth import get_current_user, require_roles
 import uuid
+import io
+import qrcode
+import base64
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm, cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 
 router = APIRouter(prefix="/api/team-attendance", tags=["Team Attendance"])
 
