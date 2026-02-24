@@ -549,11 +549,13 @@ async def update_employee_status(
         'EXCUSED': 'معذور',
         'ON_MISSION': 'مهمة خارجية',
         'PERMISSION': 'استئذان',
-        'GIFT_LEAVE': 'إجازة مكافأة'
+        'GIFT_LEAVE': 'إجازة مكافأة',
+        'EXEMPTED': 'إعفاء'
     }
     
-    # معالجة خاصة لإجازة المكافأة
+    # معالجة خاصة لإجازة المكافأة والإعفاء
     is_gift_leave = body.new_status == 'GIFT_LEAVE'
+    is_exemption = body.new_status == 'EXEMPTED'
     final_status_to_save = 'ON_ADMIN_LEAVE' if is_gift_leave else body.new_status
     
     correction = {
