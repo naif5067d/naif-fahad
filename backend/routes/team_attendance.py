@@ -1237,3 +1237,455 @@ async def get_supervisor_team_attendance(
         })
     
     return result
+
+
+
+# ==================== طباعة تقارير الحضور مع QR Code ====================
+
+def generate_qr_code(data: str, size: int = 80) -> bytes:
+    """إنشاء QR Code للتقرير"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=4,
+        border=2,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def register_arabic_font():
+    """تسجيل الخط العربي"""
+    import os
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        "DejaVuSans.ttf"
+    ]
+    for path in font_paths:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont('Arabic', path))
+                return 'Arabic'
+            except:
+                continue
+    return 'Helvetica'
+
+
+@router.get("/print-report")
+async def print_attendance_report(
+    period: str = "daily",  # daily, weekly, monthly, yearly
+    date: str = None,
+    month: str = None,
+    year: str = None,
+    employee_id: str = None,  # None = all employees
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
+):
+    """
+    طباعة تقرير الحضور PDF مع ترويسة رسمية و QR Code
+    
+    - period: daily/weekly/monthly/yearly
+    - date: للتقرير اليومي (YYYY-MM-DD)
+    - month: للتقرير الشهري (YYYY-MM)
+    - year: للتقرير السنوي (YYYY)
+    - employee_id: لموظف محدد (اختياري)
+    """
+    # تحديد التواريخ
+    now = datetime.now(timezone.utc)
+    
+    if period == "daily":
+        target_date = date or now.strftime("%Y-%m-%d")
+        start_date = target_date
+        end_date = target_date
+        period_title_ar = f"تقرير الحضور اليومي - {target_date}"
+    elif period == "weekly":
+        target_date = date or now.strftime("%Y-%m-%d")
+        dt = datetime.strptime(target_date, "%Y-%m-%d")
+        # حساب بداية ونهاية الأسبوع
+        day_of_week = dt.weekday()
+        days_from_sunday = (day_of_week + 1) % 7
+        week_start = dt - timedelta(days=days_from_sunday)
+        week_end = week_start + timedelta(days=6)
+        start_date = week_start.strftime("%Y-%m-%d")
+        end_date = week_end.strftime("%Y-%m-%d")
+        period_title_ar = f"تقرير الحضور الأسبوعي - من {start_date} إلى {end_date}"
+    elif period == "monthly":
+        target_month = month or now.strftime("%Y-%m")
+        start_date = f"{target_month}-01"
+        # حساب آخر يوم في الشهر
+        year_num, month_num = map(int, target_month.split('-'))
+        if month_num == 12:
+            next_month = datetime(year_num + 1, 1, 1)
+        else:
+            next_month = datetime(year_num, month_num + 1, 1)
+        last_day = (next_month - timedelta(days=1)).day
+        end_date = f"{target_month}-{last_day:02d}"
+        period_title_ar = f"تقرير الحضور الشهري - {target_month}"
+    else:  # yearly
+        target_year = year or str(now.year)
+        start_date = f"{target_year}-01-01"
+        end_date = f"{target_year}-12-31"
+        period_title_ar = f"تقرير الحضور السنوي - {target_year}"
+    
+    # جلب بيانات الشركة للترويسة
+    branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+    if not branding:
+        branding = {
+            "company_name_en": "DAR AL CODE ENGINEERING CONSULTANCY",
+            "company_name_ar": "شركة دار الكود للاستشارات الهندسية",
+            "slogan_en": "Engineering Excellence",
+            "slogan_ar": "التميز الهندسي"
+        }
+    
+    # بناء فلتر الموظفين
+    EXEMPT_EMPLOYEE_IDS = ['EMP-STAS', 'EMP-MOHAMMED', 'EMP-NAIF']
+    emp_filter = {
+        "is_active": {"$ne": False},
+        "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
+    }
+    
+    if employee_id:
+        emp_filter["id"] = employee_id
+    elif user.get('role') == 'supervisor':
+        emp_filter["supervisor_id"] = user.get('employee_id')
+    
+    # جلب الموظفين
+    employees = await db.employees.find(
+        emp_filter,
+        {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1, "employee_number": 1, "department": 1, "department_ar": 1}
+    ).to_list(500)
+    
+    emp_map = {e['id']: e for e in employees}
+    emp_ids = list(emp_map.keys())
+    
+    # جلب السجلات اليومية
+    daily_statuses = await db.daily_status.find(
+        {
+            "employee_id": {"$in": emp_ids},
+            "date": {"$gte": start_date, "$lte": end_date}
+        },
+        {"_id": 0}
+    ).to_list(50000)
+    
+    # جلب البصمات
+    attendance = await db.attendance_ledger.find(
+        {
+            "employee_id": {"$in": emp_ids},
+            "date": {"$gte": start_date, "$lte": end_date}
+        },
+        {"_id": 0}
+    ).to_list(50000)
+    
+    # تجميع البيانات
+    attendance_map = {}
+    for a in attendance:
+        key = f"{a['employee_id']}_{a['date']}"
+        if key not in attendance_map:
+            attendance_map[key] = {"check_in": None, "check_out": None}
+        if a['type'] == 'check_in':
+            attendance_map[key]['check_in'] = a.get('timestamp', '')
+        elif a['type'] == 'check_out':
+            attendance_map[key]['check_out'] = a.get('timestamp', '')
+    
+    status_map = {}
+    for s in daily_statuses:
+        key = f"{s['employee_id']}_{s['date']}"
+        status_map[key] = s
+    
+    # إنشاء PDF
+    buffer = io.BytesIO()
+    
+    # استخدام الصفحة الأفقية للجداول الكبيرة
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=landscape(A4),
+        rightMargin=1*cm,
+        leftMargin=1*cm,
+        topMargin=1*cm,
+        bottomMargin=1*cm
+    )
+    
+    # تسجيل الخط العربي
+    font_name = register_arabic_font()
+    
+    # الأنماط
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'TitleArabic',
+        parent=styles['Title'],
+        fontName=font_name,
+        fontSize=16,
+        alignment=TA_CENTER,
+        spaceAfter=10
+    )
+    header_style = ParagraphStyle(
+        'HeaderArabic',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=12,
+        alignment=TA_CENTER,
+        spaceAfter=5
+    )
+    
+    elements = []
+    
+    # إنشاء QR Code للتتبع
+    report_id = str(uuid.uuid4())[:8]
+    qr_data = f"ATT-{period.upper()}-{start_date}-{report_id}"
+    qr_bytes = generate_qr_code(qr_data, 60)
+    qr_image = Image(io.BytesIO(qr_bytes), width=50, height=50)
+    
+    # ترويسة مع الشعار و QR
+    header_data = [
+        [
+            qr_image,
+            Paragraph(branding.get('company_name_ar', 'شركة دار الكود'), title_style),
+            Paragraph(f"رقم التقرير: {report_id}", header_style)
+        ],
+        [
+            '',
+            Paragraph(period_title_ar, header_style),
+            Paragraph(f"تاريخ الطباعة: {now.strftime('%Y-%m-%d %H:%M')}", header_style)
+        ]
+    ]
+    
+    header_table = Table(header_data, colWidths=[60, 500, 150])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('SPAN', (0, 0), (0, 1)),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 20))
+    
+    # ترجمات الحالات
+    status_ar_map = {
+        'PRESENT': 'حاضر',
+        'ABSENT': 'غائب',
+        'LATE': 'متأخر',
+        'ON_LEAVE': 'إجازة',
+        'ON_ADMIN_LEAVE': 'إجازة إدارية',
+        'WEEKEND': 'عطلة',
+        'HOLIDAY': 'عطلة رسمية',
+        'ON_MISSION': 'مهمة',
+        'NOT_REGISTERED': 'لم يسجل',
+        'NOT_PROCESSED': 'غير محلل',
+        'EARLY_LEAVE': 'خروج مبكر',
+        'PERMISSION': 'استئذان'
+    }
+    
+    # بناء جدول البيانات حسب الفترة
+    if period == "daily":
+        # جدول يومي
+        table_header = ['#', 'الموظف', 'الرقم', 'الحالة', 'الدخول', 'الخروج', 'التأخير', 'ملاحظات']
+        table_data = [table_header]
+        
+        for idx, emp_id in enumerate(emp_ids, 1):
+            emp = emp_map.get(emp_id, {})
+            key = f"{emp_id}_{start_date}"
+            status_data = status_map.get(key, {})
+            attend_data = attendance_map.get(key, {})
+            
+            final_status = status_data.get('final_status', 'NOT_REGISTERED')
+            
+            # تنسيق الوقت
+            check_in = attend_data.get('check_in', '')
+            check_out = attend_data.get('check_out', '')
+            if check_in and 'T' in check_in:
+                check_in = check_in.split('T')[1][:5]
+            if check_out and 'T' in check_out:
+                check_out = check_out.split('T')[1][:5]
+            
+            late_min = status_data.get('late_minutes', 0)
+            note = status_data.get('decision_reason_ar', '')[:30] if status_data.get('decision_reason_ar') else ''
+            
+            table_data.append([
+                str(idx),
+                emp.get('full_name_ar', emp.get('full_name', '')),
+                emp.get('employee_number', ''),
+                status_ar_map.get(final_status, final_status),
+                check_in or '-',
+                check_out or '-',
+                f"{late_min} د" if late_min > 0 else '-',
+                note
+            ])
+    
+    elif period == "weekly":
+        # جدول أسبوعي
+        days_ar = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+        
+        # إنشاء قائمة الأيام
+        week_dates = []
+        current = datetime.strptime(start_date, "%Y-%m-%d")
+        for i in range(7):
+            week_dates.append((current + timedelta(days=i)).strftime("%Y-%m-%d"))
+        
+        table_header = ['#', 'الموظف'] + days_ar + ['الحضور', 'الغياب']
+        table_data = [table_header]
+        
+        for idx, emp_id in enumerate(emp_ids, 1):
+            emp = emp_map.get(emp_id, {})
+            row = [str(idx), emp.get('full_name_ar', emp.get('full_name', ''))[:20]]
+            
+            present_count = 0
+            absent_count = 0
+            
+            for d in week_dates:
+                key = f"{emp_id}_{d}"
+                status_data = status_map.get(key, {})
+                final_status = status_data.get('final_status', 'NOT_REGISTERED')
+                
+                # رمز مختصر
+                if final_status in ['PRESENT', 'LATE', 'EARLY_LEAVE']:
+                    row.append('✓')
+                    present_count += 1
+                elif final_status == 'ABSENT':
+                    row.append('✗')
+                    absent_count += 1
+                elif final_status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
+                    row.append('إ')
+                elif final_status in ['WEEKEND', 'HOLIDAY']:
+                    row.append('ع')
+                elif final_status == 'ON_MISSION':
+                    row.append('م')
+                else:
+                    row.append('-')
+            
+            row.extend([str(present_count), str(absent_count)])
+            table_data.append(row)
+    
+    elif period in ["monthly", "yearly"]:
+        # ملخص شهري/سنوي
+        table_header = ['#', 'الموظف', 'الرقم', 'الحضور', 'الغياب', 'التأخير', 'الإجازات', 'المهام', 'إجمالي التأخير']
+        table_data = [table_header]
+        
+        # تجميع البيانات لكل موظف
+        for idx, emp_id in enumerate(emp_ids, 1):
+            emp = emp_map.get(emp_id, {})
+            
+            present = 0
+            absent = 0
+            late_count = 0
+            leave_count = 0
+            mission_count = 0
+            total_late_min = 0
+            
+            for s in daily_statuses:
+                if s.get('employee_id') != emp_id:
+                    continue
+                
+                status = s.get('final_status', '')
+                if status in ['PRESENT', 'EARLY_LEAVE']:
+                    present += 1
+                elif status == 'LATE':
+                    present += 1
+                    late_count += 1
+                    total_late_min += s.get('late_minutes', 0)
+                elif status == 'ABSENT':
+                    absent += 1
+                elif status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
+                    leave_count += 1
+                elif status == 'ON_MISSION':
+                    mission_count += 1
+            
+            table_data.append([
+                str(idx),
+                emp.get('full_name_ar', emp.get('full_name', ''))[:25],
+                emp.get('employee_number', ''),
+                str(present),
+                str(absent),
+                str(late_count),
+                str(leave_count),
+                str(mission_count),
+                f"{total_late_min} د" if total_late_min > 0 else '-'
+            ])
+    
+    # إنشاء الجدول
+    col_widths = None
+    if period == "daily":
+        col_widths = [30, 150, 60, 70, 60, 60, 50, 150]
+    elif period == "weekly":
+        col_widths = [30, 100] + [45]*7 + [40, 40]
+    else:
+        col_widths = [30, 150, 60, 50, 50, 50, 50, 50, 70]
+    
+    table = Table(table_data, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        # Header
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, -1), font_name),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        # Data rows
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+        ('TOPPADDING', (0, 1), (-1, -1), 5),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        # Alternating row colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+    ]))
+    
+    elements.append(table)
+    
+    # تذييل
+    elements.append(Spacer(1, 20))
+    footer_text = f"تم إنشاء هذا التقرير آلياً من نظام إدارة الموارد البشرية | {qr_data}"
+    footer_para = Paragraph(footer_text, header_style)
+    elements.append(footer_para)
+    
+    # بناء PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    
+    # تحديد اسم الملف
+    filename = f"attendance_{period}_{start_date}_{report_id}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename={filename}",
+            "X-Report-ID": report_id,
+            "X-QR-Code": qr_data
+        }
+    )
+
+
+@router.get("/print-employee-report/{employee_id}")
+async def print_employee_attendance_report(
+    employee_id: str,
+    period: str = "monthly",
+    month: str = None,
+    year: str = None,
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor', 'employee'))
+):
+    """
+    طباعة تقرير حضور موظف محدد مع QR Code
+    """
+    # التحقق من الصلاحيات
+    if user.get('role') == 'employee':
+        emp = await db.employees.find_one({"user_id": user['user_id']}, {"_id": 0})
+        if not emp or emp['id'] != employee_id:
+            raise HTTPException(status_code=403, detail="غير مصرح بالوصول")
+    
+    return await print_attendance_report(
+        period=period,
+        month=month,
+        year=year,
+        employee_id=employee_id,
+        user=user
+    )
