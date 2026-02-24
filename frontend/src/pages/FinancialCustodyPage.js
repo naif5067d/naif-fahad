@@ -95,12 +95,14 @@ export default function FinancialCustodyPage() {
 
   const fetchList = useCallback(async () => {
     try {
-      const [custodiesRes, summaryRes] = await Promise.all([
+      const [custodiesRes, summaryRes, codesRes] = await Promise.all([
         api.get('/api/admin-custody/all'),
-        api.get('/api/admin-custody/summary')
+        api.get('/api/admin-custody/summary'),
+        api.get('/api/admin-custody/codes')
       ]);
       setCustodies(custodiesRes.data);
       setSummary(summaryRes.data);
+      setAllCodes(codesRes.data || []);
     } catch (e) {
       console.error('Error fetching custodies:', e);
     }
