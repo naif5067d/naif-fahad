@@ -413,12 +413,12 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
     # Table header
     if is_ar:
         header_row = [
-            ar_para('الرصيد', style_ar_bold),
-            ar_para('المبلغ', style_ar_bold),
-            ar_para('الوصف', style_ar_bold),
-            ar_para('الحساب', style_ar_bold),
-            ar_para('الكود', style_ar_bold),
-            ar_para('م', style_ar_bold),
+            ar_para('الرصيد', style_ar_header),
+            ar_para('المبلغ', style_ar_header),
+            ar_para('الوصف', style_ar_header),
+            ar_para('الحساب', style_ar_header),
+            ar_para('الكود', style_ar_header),
+            ar_para('م', style_ar_header),
         ]
         col_widths = [24*mm, 24*mm, 48*mm, 42*mm, 16*mm, 10*mm]
     else:
