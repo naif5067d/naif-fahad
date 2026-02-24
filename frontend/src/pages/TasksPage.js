@@ -304,15 +304,15 @@ function CreateTaskDialog({ open, onClose, employees, lang, onSuccess }) {
       await api.post('/api/tasks/create', form);
       toast.success(lang === 'ar' ? 'تم إنشاء المهمة بنجاح' : 'Task created successfully');
       setForm({ title: '', title_en: '', description: '', description_en: '', employee_id: '', due_date: '', weight: 10 });
+      onClose();
       onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Error');
+      console.error('Task creation error:', err);
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'حدث خطأ' : 'Error'));
     } finally {
       setSubmitting(false);
     }
   };
-
-  if (!open) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
