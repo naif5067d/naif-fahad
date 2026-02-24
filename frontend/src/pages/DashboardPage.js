@@ -793,11 +793,6 @@ export default function DashboardPage() {
                   className="h-2"
                 />
               </div>
-                    <Info className="inline w-3 h-3 me-1" />
-                    {employeeSummary?.attendance?.decision_reason_ar}
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>
