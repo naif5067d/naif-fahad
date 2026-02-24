@@ -596,44 +596,6 @@ export default function SystemMaintenancePage() {
                   </div>
                 </CardContent>
               </Card>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Uptime Card */}
-                <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50" data-testid="uptime-card">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-amber-500 rounded-lg">
-                        <Timer className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-amber-700">مدة التشغيل</p>
-                        <p className="text-2xl font-bold text-amber-900">{systemMetrics.uptime?.formatted}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1 text-xs text-center">
-                      <div className="bg-white/60 p-2 rounded">
-                        <p className="font-bold text-lg">{systemMetrics.uptime?.days}</p>
-                        <span className="text-muted-foreground">يوم</span>
-                      </div>
-                      <div className="bg-white/60 p-2 rounded">
-                        <p className="font-bold text-lg">{systemMetrics.uptime?.hours}</p>
-                        <span className="text-muted-foreground">ساعة</span>
-                      </div>
-                      <div className="bg-white/60 p-2 rounded">
-                        <p className="font-bold text-lg">{systemMetrics.uptime?.minutes}</p>
-                        <span className="text-muted-foreground">دقيقة</span>
-                      </div>
-                      <div className="bg-white/60 p-2 rounded">
-                        <p className="font-bold text-lg">{systemMetrics.uptime?.seconds}</p>
-                        <span className="text-muted-foreground">ثانية</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
 
               {/* File Storage Breakdown */}
               <Card data-testid="file-storage-card">
