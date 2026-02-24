@@ -473,13 +473,17 @@ export default function DashboardPage() {
               </div>
             </div>
             
-            {/* أشرطة التقدم (للموظفين فقط) */}
-            {showsAttendance && !isManager && (
+            {/* أشرطة التقدم (للجميع الذين لديهم حضور) */}
+            {showsAttendance && (
               <div className="mt-4 space-y-2">
                 <div>
                   <div className="flex justify-between text-[10px] mb-1 opacity-70">
                     <span>{lang === 'ar' ? 'ساعات الشهر' : 'Monthly'}</span>
-                    <span>{employeeSummary?.attendance?.monthly_hours || 0}/{employeeSummary?.attendance?.required_monthly_hours || 176}</span>
+                    <span>
+                      {employeeSummary?.attendance?.monthly_hours || 0}/
+                      {employeeSummary?.attendance?.required_monthly_hours || (employeeSummary?.attendance?.is_ramadan_active ? 144 : 176)}
+                      {employeeSummary?.attendance?.is_ramadan_active && ' 🌙'}
+                    </span>
                   </div>
                   <Progress 
                     value={Math.min(100, ((employeeSummary?.attendance?.monthly_hours || 0) / (employeeSummary?.attendance?.required_monthly_hours || 176)) * 100)} 
