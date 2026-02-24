@@ -1536,7 +1536,8 @@ async def print_attendance_report(
     
     elif period == "weekly":
         # جدول أسبوعي
-        days_ar = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+        days_ar = [arabic_text('الأحد'), arabic_text('الاثنين'), arabic_text('الثلاثاء'), 
+                   arabic_text('الأربعاء'), arabic_text('الخميس'), arabic_text('الجمعة'), arabic_text('السبت')]
         
         # إنشاء قائمة الأيام
         week_dates = []
@@ -1544,12 +1545,12 @@ async def print_attendance_report(
         for i in range(7):
             week_dates.append((current + timedelta(days=i)).strftime("%Y-%m-%d"))
         
-        table_header = ['#', 'الموظف'] + days_ar + ['الحضور', 'الغياب']
+        table_header = ['#', arabic_text('الموظف')] + days_ar + [arabic_text('الحضور'), arabic_text('الغياب')]
         table_data = [table_header]
         
         for idx, emp_id in enumerate(emp_ids, 1):
             emp = emp_map.get(emp_id, {})
-            row = [str(idx), emp.get('full_name_ar', emp.get('full_name', ''))[:20]]
+            row = [str(idx), arabic_text(emp.get('full_name_ar', emp.get('full_name', ''))[:20])]
             
             present_count = 0
             absent_count = 0
@@ -1561,17 +1562,17 @@ async def print_attendance_report(
                 
                 # رمز مختصر
                 if final_status in ['PRESENT', 'LATE', 'EARLY_LEAVE']:
-                    row.append('✓')
+                    row.append('P')
                     present_count += 1
                 elif final_status == 'ABSENT':
-                    row.append('✗')
+                    row.append('A')
                     absent_count += 1
                 elif final_status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
-                    row.append('إ')
+                    row.append('L')
                 elif final_status in ['WEEKEND', 'HOLIDAY']:
-                    row.append('ع')
+                    row.append('W')
                 elif final_status == 'ON_MISSION':
-                    row.append('م')
+                    row.append('M')
                 else:
                     row.append('-')
             
@@ -1580,7 +1581,9 @@ async def print_attendance_report(
     
     elif period in ["monthly", "yearly"]:
         # ملخص شهري/سنوي
-        table_header = ['#', 'الموظف', 'الرقم', 'الحضور', 'الغياب', 'التأخير', 'الإجازات', 'المهام', 'إجمالي التأخير']
+        table_header = ['#', arabic_text('الموظف'), arabic_text('الرقم'), arabic_text('الحضور'), 
+                       arabic_text('الغياب'), arabic_text('التأخير'), arabic_text('الإجازات'), 
+                       arabic_text('المهام'), arabic_text('إجمالي التأخير')]
         table_data = [table_header]
         
         # تجميع البيانات لكل موظف
@@ -1614,7 +1617,7 @@ async def print_attendance_report(
             
             table_data.append([
                 str(idx),
-                emp.get('full_name_ar', emp.get('full_name', ''))[:25],
+                arabic_text(emp.get('full_name_ar', emp.get('full_name', ''))[:25]),
                 emp.get('employee_number', ''),
                 str(present),
                 str(absent),
