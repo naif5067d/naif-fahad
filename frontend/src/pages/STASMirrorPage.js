@@ -838,6 +838,10 @@ export default function STASMirrorPage() {
             <Shield size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'الهوية' : 'Branding'}</span>
           </TabsTrigger>
+          <TabsTrigger value="signatures" data-testid="tab-signatures" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <FileText size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'التوقيعات' : 'Signatures'}</span>
+          </TabsTrigger>
           <TabsTrigger value="maintenance" data-testid="tab-maintenance" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <Settings size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'صيانة' : 'Maintenance'}</span>
