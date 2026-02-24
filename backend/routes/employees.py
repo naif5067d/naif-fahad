@@ -658,6 +658,10 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     
     # وقت الحضور
     check_in_time = None
+    check_out_time = None
+    late_minutes_today = 0
+    decision_reason_ar = None
+    
     if today_attendance:
         check_in_time = today_attendance.get('time', today_attendance.get('timestamp', ''))
         if check_in_time and 'T' in check_in_time:
@@ -666,6 +670,27 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         check_in_time = today_daily_status['check_in']
         if check_in_time and 'T' in check_in_time:
             check_in_time = check_in_time.split('T')[1][:5]
+    
+    # Get check_out_time and additional info from daily_status
+    if today_daily_status:
+        if today_daily_status.get('check_out'):
+            check_out_time = today_daily_status['check_out']
+            if check_out_time and 'T' in check_out_time:
+                check_out_time = check_out_time.split('T')[1][:5]
+        late_minutes_today = today_daily_status.get('late_minutes', 0) or 0
+        decision_reason_ar = today_daily_status.get('decision_reason_ar', '')
+    
+    # Also check attendance_ledger for check_out
+    if not check_out_time:
+        today_checkout = await db.attendance_ledger.find_one({
+            "employee_id": employee_id,
+            "date": today,
+            "type": "check_out"
+        }, {"_id": 0, "timestamp": 1, "time": 1})
+        if today_checkout:
+            check_out_time = today_checkout.get('time', today_checkout.get('timestamp', ''))
+            if check_out_time and 'T' in check_out_time:
+                check_out_time = check_out_time.split('T')[1][:5]
     
     # 7. بيانات الشهر الحالي (للجميع)
     month_start = datetime.now(timezone.utc).replace(day=1).strftime("%Y-%m-%d")
