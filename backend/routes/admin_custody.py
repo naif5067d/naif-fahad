@@ -209,7 +209,13 @@ async def create_custody(data: CustodyCreate, user=Depends(get_current_user)):
     """إنشاء عهدة جديدة"""
     check_role(user, ['sultan', 'mohammed'])
     
-    now = datetime.now(timezone.utc).isoformat()
+    # تحديد تاريخ الإنشاء - إما الشهر المحدد أو الوقت الحالي
+    if data.target_month:
+        # إنشاء تاريخ في منتصف الشهر المحدد
+        now = f"{data.target_month}-15T12:00:00+00:00"
+    else:
+        now = datetime.now(timezone.utc).isoformat()
+    
     custody_number, custody_number_int = await get_next_custody_number()
     
     # فحص الفائض من العهد السابقة
