@@ -1018,21 +1018,23 @@ export default function FinancialCustodyPage() {
             </p>
             
             <div className="flex gap-3 items-end flex-wrap">
-              <div className="w-20">
+              <div className="w-24">
                 <Label className="text-[10px] text-muted-foreground uppercase">
                   {lang === 'ar' ? 'الكود' : 'Code'}
                 </Label>
                 <div className="flex gap-1">
                   <Input 
                     ref={codeInputRef}
-                    type="number"
-                    min="1"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={expForm.code}
                     onChange={e => {
-                      setExpForm(f => ({ ...f, code: e.target.value }));
-                      lookupCode(e.target.value);
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setExpForm(f => ({ ...f, code: val }));
+                      lookupCode(val);
                     }}
-                    className="h-10 text-center font-mono font-bold text-lg"
+                    className="h-10 text-center font-mono font-bold text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="5"
                     data-testid="exp-code"
                   />
@@ -1062,17 +1064,36 @@ export default function FinancialCustodyPage() {
                 </DialogContent>
               </Dialog>
               
-              <div className="w-40">
-                <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
-                  {lang === 'ar' ? 'اسم الحساب' : 'Account'}
-                  {codeInfo?.found && <CheckCircle size={10} className="text-[hsl(var(--success))]" />}
-                </Label>
-                <div className="h-10 px-3 flex items-center bg-slate-100 dark:bg-slate-800 rounded-md text-sm font-medium">
-                  {codeInfo?.found 
-                    ? (lang === 'ar' ? codeInfo.code.name_ar : codeInfo.code.name_en)
-                    : codeInfo && !codeInfo.found
-                      ? <span className="text-[hsl(var(--warning))]">{lang === 'ar' ? 'كود جديد' : 'New code'}</span>
-                      : <span className="text-muted-foreground">-</span>
+              {/* اسم الحساب أو حقل البيان للكود الجديد */}
+              {parseInt(expForm.code) >= 61 ? (
+                <div className="flex-1 min-w-[200px]">
+                  <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                    {lang === 'ar' ? 'البيان' : 'Description'}
+                    <span className="text-amber-500">*</span>
+                  </Label>
+                  <Input
+                    value={expForm.description}
+                    onChange={e => setExpForm(f => ({ ...f, description: e.target.value }))}
+                    className="h-10"
+                    placeholder={lang === 'ar' ? 'اكتب اسم الحساب الجديد...' : 'Enter new account name...'}
+                  />
+                </div>
+              ) : (
+                <div className="w-40">
+                  <Label className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                    {lang === 'ar' ? 'الحساب' : 'Account'}
+                    {codeInfo?.found && <CheckCircle size={10} className="text-[hsl(var(--success))]" />}
+                  </Label>
+                  <div className="h-10 px-3 flex items-center bg-slate-100 dark:bg-slate-800 rounded-md text-sm font-medium">
+                    {codeInfo?.found 
+                      ? (lang === 'ar' ? codeInfo.code.name_ar : codeInfo.code.name_en)
+                      : codeInfo && !codeInfo.found
+                        ? <span className="text-amber-500">{lang === 'ar' ? 'كود جديد' : 'New code'}</span>
+                        : <span className="text-muted-foreground">-</span>
+                    }
+                  </div>
+                </div>
+              )}
                   }
                 </div>
               </div>
