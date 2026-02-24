@@ -11,10 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, CheckCircle, AlertCircle, ArrowLeft, Trash2, Send, Check, X, 
   Loader2, Clock, DollarSign, ChevronRight, FileText, AlertTriangle,
-  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download
+  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download, Camera
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { Html5Qrcode } from 'html5-qrcode';
 
 // ==================== CONSTANTS ====================
 
