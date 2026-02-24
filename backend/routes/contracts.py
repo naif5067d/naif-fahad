@@ -86,6 +86,7 @@ async def create_contract(req: ContractCreate, user=Depends(require_roles('stas'
         "other_allowances": req.other_allowances,
         "probation_months": req.probation_months,
         "notice_period_days": req.notice_period_days,
+        "early_leave_balance": req.early_leave_balance,  # رصيد الخروج المبكر
         "notes": req.notes,
         "status": "active",
         "is_active": True,
