@@ -173,6 +173,9 @@ export default function TeamAttendancePage() {
   });
   const [submittingManual, setSubmittingManual] = useState(false);
   
+  // Print state
+  const [isPrinting, setIsPrinting] = useState(false);
+  
   // Check if user is supervisor
   const isSupervisor = user?.role === 'supervisor';
   const isSultan = ['sultan', 'naif'].includes(user?.role);
