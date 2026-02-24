@@ -137,8 +137,30 @@ export default function FinancialCustodyPage() {
       toast.error(lang === 'ar' ? 'خطأ في تحميل البيانات' : 'Error loading data');
     }
   };
+  
+  const fetchSignatures = async () => {
+    try {
+      const res = await api.get('/api/admin-custody/settings/signatures');
+      setSignatureSettings(res.data);
+    } catch (e) {
+      console.error('Error fetching signatures:', e);
+    }
+  };
+  
+  const handleSaveSignatures = async () => {
+    setSavingSignatures(true);
+    try {
+      await api.put('/api/admin-custody/settings/signatures', signatureSettings);
+      toast.success(lang === 'ar' ? 'تم حفظ التوقيعات' : 'Signatures saved');
+      setSignaturesOpen(false);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error');
+    } finally {
+      setSavingSignatures(false);
+    }
+  };
 
-  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => { fetchList(); fetchSignatures(); }, [fetchList]);
 
   // ==================== CODE LOOKUP ====================
 
