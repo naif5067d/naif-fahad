@@ -1263,13 +1263,25 @@ def generate_qr_code(data: str, size: int = 80) -> bytes:
     return buffer.getvalue()
 
 
+def arabic_text(text: str) -> str:
+    """تحويل النص العربي للعرض الصحيح في PDF"""
+    if not text:
+        return ""
+    try:
+        reshaped = arabic_reshaper.reshape(str(text))
+        return get_display(reshaped)
+    except:
+        return str(text)
+
+
 def register_arabic_font():
     """تسجيل الخط العربي"""
     import os
     font_paths = [
+        "/app/backend/fonts/Amiri-Regular.ttf",
+        "/app/backend/fonts/NotoNaskhArabic-Regular.ttf",
+        "/app/backend/fonts/NotoSansArabic-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-        "DejaVuSans.ttf"
     ]
     for path in font_paths:
         if os.path.exists(path):
