@@ -578,7 +578,40 @@ async def update_employee_status(
     elif is_exemption:
         reason_text = f"✓ إعفاء إداري من {user.get('full_name', '')}: {body.reason}"
     else:
-        reason_text = f"تم التعديل بواسطة {user.get('full_name', user['user_id'])}: {body.reason}"
+        reason_text = f"تعديل إداري: {body.reason}"
+    
+    # === حساب ساعات العمل بناءً على الحالة ===
+    # الحالات التي تُحتسب لها ساعات عمل كاملة
+    counted_statuses = ['PRESENT', 'LATE', 'ON_MISSION', 'PERMISSION']
+    # الحالات التي لا تُحتسب لها ساعات
+    non_counted_statuses = ['ABSENT', 'EXEMPTED', 'ON_LEAVE', 'ON_ADMIN_LEAVE', 'GIFT_LEAVE', 'NOT_REGISTERED', 'EXCUSED']
+    
+    # جلب ساعات الدوام اليومية
+    daily_hours = 8.0  # افتراضي
+    
+    # التحقق من رمضان
+    ramadan_settings = await db.settings.find_one({"type": "ramadan_mode"}, {"_id": 0})
+    is_ramadan = False
+    if ramadan_settings:
+        is_active = ramadan_settings.get('is_active', False)
+        start_date = ramadan_settings.get('start_date', '')
+        end_date = ramadan_settings.get('end_date', '')
+        if is_active and start_date and end_date:
+            if start_date <= date <= end_date:
+                is_ramadan = True
+                daily_hours = 6.0
+    
+    # جلب ساعات من موقع العمل إن وجد
+    if emp.get('work_location_id'):
+        work_loc = await db.work_locations.find_one({"id": emp['work_location_id']}, {"_id": 0})
+        if work_loc:
+            if is_ramadan:
+                daily_hours = work_loc.get('ramadan_daily_hours', 6.0)
+            else:
+                daily_hours = work_loc.get('daily_hours', 8.0)
+    
+    # تحديد الساعات المحتسبة
+    actual_hours = daily_hours if body.new_status in counted_statuses else 0.0
     
     await db.daily_status.update_one(
         {"employee_id": employee_id, "date": date},
@@ -592,7 +625,11 @@ async def update_employee_status(
                 "is_exemption": is_exemption,
                 "check_in_time": body.check_in_time or (daily.get('check_in_time') if daily else None),
                 "check_out_time": body.check_out_time or (daily.get('check_out_time') if daily else None),
-                # إعادة تصفير دقائق التأخير عند تغيير الحالة إلى حاضر/إعفاء/إجازة
+                # ساعات العمل المحتسبة
+                "actual_hours": actual_hours,
+                "worked_hours": actual_hours,
+                "required_hours": daily_hours,
+                # تصفير دقائق التأخير للحالات المناسبة
                 "late_minutes": 0 if body.new_status in ['PRESENT', 'EXEMPTED', 'GIFT_LEAVE', 'ON_LEAVE', 'ON_MISSION', 'EXCUSED'] else (daily.get('late_minutes', 0) if daily else 0),
                 "early_leave_minutes": 0 if body.new_status in ['PRESENT', 'EXEMPTED', 'GIFT_LEAVE', 'ON_LEAVE', 'ON_MISSION', 'EXCUSED'] else (daily.get('early_leave_minutes', 0) if daily else 0),
                 "updated_at": now,
