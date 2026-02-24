@@ -204,6 +204,43 @@ async def get_team_daily(
         elif a['type'] == 'check_out':
             attendance_map[emp_id]['check_out'] = a['timestamp']
     
+    # جلب الإجازات النشطة لجميع الموظفين في هذا التاريخ
+    active_leaves = await db.transactions.find({
+        "data.employee_id": {"$in": emp_ids},
+        "type": {"$regex": "leave", "$options": "i"},
+        "status": "executed",
+        "data.start_date": {"$lte": target_date},
+        "data.end_date": {"$gte": target_date}
+    }, {"_id": 0, "data.employee_id": 1, "type": 1}).to_list(500)
+    
+    leave_map = {}
+    for l in active_leaves:
+        emp_id = l.get('data', {}).get('employee_id')
+        if emp_id:
+            leave_map[emp_id] = l.get('type', 'leave')
+    
+    # جلب المهمات النشطة
+    active_missions = await db.transactions.find({
+        "data.employee_id": {"$in": emp_ids},
+        "type": {"$regex": "mission|assignment", "$options": "i"},
+        "status": "executed",
+        "data.start_date": {"$lte": target_date},
+        "data.end_date": {"$gte": target_date}
+    }, {"_id": 0, "data.employee_id": 1}).to_list(500)
+    
+    mission_map = {m.get('data', {}).get('employee_id'): True for m in active_missions}
+    
+    # التحقق من العطلة الرسمية
+    holiday_today = await db.holidays.find_one({
+        "date": target_date,
+        "is_active": {"$ne": False}
+    }, {"_id": 0})
+    
+    # التحقق من عطلة نهاية الأسبوع
+    from datetime import datetime as dt
+    day_of_week = dt.strptime(target_date, "%Y-%m-%d").weekday()
+    is_weekend = day_of_week == 4  # Friday
+    
     # بناء النتيجة
     result = []
     for emp_id, emp in emp_map.items():
@@ -214,18 +251,58 @@ async def get_team_daily(
         work_loc_id = emp.get('work_location_id', '')
         work_loc = location_map.get(work_loc_id, {})
         
-        # تحديد الحالة
-        final_status = status_data.get('final_status', 'NOT_PROCESSED')
-        status_ar = status_data.get('status_ar', 'لم يُحلل')
+        # تحديد الحالة بالترتيب الصحيح
+        final_status = 'NOT_REGISTERED'
+        status_ar = 'لم يُسجل'
+        decision_reason = status_data.get('decision_reason_ar', '')
         
-        # إذا لم يُحلل بعد، نحدد حسب البصمة
-        if final_status == 'NOT_PROCESSED':
-            if attend_data.get('check_in'):
-                final_status = 'PRESENT'
-                status_ar = 'حاضر (غير مؤكد)'
+        # 1. التحقق من الإجازة المعتمدة أولاً
+        if emp_id in leave_map:
+            leave_type = leave_map[emp_id]
+            final_status = 'ON_LEAVE'
+            if 'admin' in leave_type.lower():
+                status_ar = 'إجازة إدارية'
+            elif 'sick' in leave_type.lower():
+                status_ar = 'إجازة مرضية'
+            elif 'emergency' in leave_type.lower():
+                status_ar = 'إجازة طارئة'
             else:
-                final_status = 'NOT_REGISTERED'
-                status_ar = 'لم يُسجل'
+                status_ar = 'إجازة'
+        
+        # 2. التحقق من المهمة
+        elif emp_id in mission_map:
+            final_status = 'ON_MISSION'
+            status_ar = 'في مهمة'
+        
+        # 3. التحقق من العطلة الرسمية
+        elif holiday_today:
+            final_status = 'HOLIDAY'
+            status_ar = 'عطلة رسمية'
+        
+        # 4. التحقق من عطلة نهاية الأسبوع
+        elif is_weekend:
+            final_status = 'WEEKEND'
+            status_ar = 'عطلة أسبوعية'
+        
+        # 5. التحقق من daily_status
+        elif status_data:
+            final_status = status_data.get('final_status', 'NOT_PROCESSED')
+            status_ar = status_data.get('status_ar', 'لم يُحلل')
+            decision_reason = status_data.get('decision_reason_ar', '')
+            
+            # إذا لم يُحلل بعد
+            if final_status == 'NOT_PROCESSED':
+                if attend_data.get('check_in'):
+                    final_status = 'PRESENT'
+                    status_ar = 'حاضر (غير مؤكد)'
+                else:
+                    final_status = 'NOT_REGISTERED'
+                    status_ar = 'لم يُسجل'
+        
+        # 6. التحقق من البصمة فقط
+        elif attend_data.get('check_in'):
+            final_status = 'PRESENT'
+            status_ar = 'حاضر'
         
         result.append({
             "employee_id": emp_id,
@@ -241,13 +318,13 @@ async def get_team_daily(
             "date": target_date,
             "final_status": final_status,
             "status_ar": status_ar,
-            "decision_reason_ar": status_data.get('decision_reason_ar', ''),
+            "decision_reason_ar": decision_reason,
             "check_in_time": attend_data.get('check_in'),
             "check_out_time": attend_data.get('check_out'),
-            "late_minutes": status_data.get('late_minutes', 0),
-            "early_leave_minutes": status_data.get('early_leave_minutes', 0),
-            "actual_hours": status_data.get('actual_hours', 0),
-            "daily_status_id": status_data.get('id'),
+            "late_minutes": status_data.get('late_minutes', 0) if status_data else 0,
+            "early_leave_minutes": status_data.get('early_leave_minutes', 0) if status_data else 0,
+            "actual_hours": status_data.get('actual_hours', 0) if status_data else 0,
+            "daily_status_id": status_data.get('id') if status_data else None,
             "can_edit": final_status not in ['WEEKEND', 'HOLIDAY'],
             "has_trace": 'trace_log' in status_data
         })
