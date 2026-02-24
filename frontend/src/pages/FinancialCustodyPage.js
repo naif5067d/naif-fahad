@@ -91,6 +91,9 @@ export default function FinancialCustodyPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [editCustodyOpen, setEditCustodyOpen] = useState(false);
   const [editCustodyForm, setEditCustodyForm] = useState({ amount: '', custody_number: '', notes: '' });
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
 
   // ==================== DATA FETCHING ====================
 
