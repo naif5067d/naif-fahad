@@ -850,6 +850,21 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
     daily_hours = work_location.get('daily_hours', 8) if work_location else 8
     work_days_config = work_location.get('work_days', {}) if work_location else {}
     
+    # === التحقق من وضع رمضان ===
+    ramadan_settings = await db.settings.find_one({"type": "ramadan_mode"}, {"_id": 0})
+    is_ramadan_active = False
+    if ramadan_settings:
+        is_active = ramadan_settings.get('is_active', False)
+        start_date = ramadan_settings.get('start_date', '')
+        end_date = ramadan_settings.get('end_date', '')
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        if is_active and start_date and end_date:
+            if start_date <= today <= end_date:
+                is_ramadan_active = True
+                # استخدام ساعات رمضان من موقع العمل أو الافتراضي (6 ساعات)
+                daily_hours = work_location.get('ramadan_daily_hours', 6) if work_location else 6
+    
     # جلب العطل الرسمية لهذا الشهر
     month_holidays = await db.holidays.find({
         "date": {"$regex": f"^{current_month}"},
