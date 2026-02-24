@@ -213,6 +213,11 @@ def generate_custody_pdf(custody: dict, expenses: list, branding: dict = None, l
         'ArBold', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_RIGHT,
         textColor=TEXT_DARK, wordWrap='RTL', leading=13
     )
+    # للـ header بلون أبيض
+    style_ar_header = ParagraphStyle(
+        'ArHeader', fontName=ARABIC_FONT_BOLD, fontSize=9, alignment=TA_CENTER,
+        textColor=WHITE, wordWrap='RTL', leading=13
+    )
     style_ar_small = ParagraphStyle(
         'ArSmall', fontName=ARABIC_FONT, fontSize=8, alignment=TA_RIGHT,
         textColor=TEXT_MUTED, wordWrap='RTL', leading=11
