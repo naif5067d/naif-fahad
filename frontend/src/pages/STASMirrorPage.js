@@ -188,6 +188,28 @@ export default function STASMirrorPage() {
     }
   };
 
+  // === Custody Signatures Functions ===
+  const fetchSignatureSettings = async () => {
+    try {
+      const res = await api.get('/api/admin-custody/settings/signatures');
+      setSignatureSettings(res.data);
+    } catch (err) {
+      console.error('Failed to fetch signature settings:', err);
+    }
+  };
+
+  const handleSaveSignatures = async () => {
+    setSavingSignatures(true);
+    try {
+      await api.put('/api/admin-custody/settings/signatures', signatureSettings);
+      toast.success(lang === 'ar' ? 'تم حفظ إعدادات التوقيعات' : 'Signature settings saved');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل حفظ التوقيعات' : 'Failed to save signatures'));
+    } finally {
+      setSavingSignatures(false);
+    }
+  };
+
   const handleSaveCompanySettings = async () => {
     setSavingSettings(true);
     try {
