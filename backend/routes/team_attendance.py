@@ -1624,7 +1624,7 @@ async def print_attendance_report(
                 str(late_count),
                 str(leave_count),
                 str(mission_count),
-                f"{total_late_min} د" if total_late_min > 0 else '-'
+                arabic_text(f"{total_late_min} د") if total_late_min > 0 else '-'
             ])
     
     # إنشاء الجدول
@@ -1660,7 +1660,7 @@ async def print_attendance_report(
     
     # تذييل
     elements.append(Spacer(1, 20))
-    footer_text = f"تم إنشاء هذا التقرير آلياً من نظام إدارة الموارد البشرية | {qr_data}"
+    footer_text = arabic_text("تم إنشاء هذا التقرير آلياً من نظام إدارة الموارد البشرية") + f" | {qr_data}"
     footer_para = Paragraph(footer_text, header_style)
     elements.append(footer_para)
     
