@@ -140,26 +140,44 @@ export default function CustodyPage() {
               </tr></thead>
               <tbody>
                 {activeCustodies.length === 0 ? (
-                  <tr><td colSpan={canReturn ? 6 : 5} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
+                  <tr><td colSpan={canReturn ? 7 : 6} className="text-center py-8 text-muted-foreground">{t('common.noData')}</td></tr>
                 ) : activeCustodies.map(c => (
-                  <tr key={c.id} data-testid={`custody-row-${c.id}`}>
-                    <td className="text-sm font-medium">{lang === 'ar' ? c.item_name_ar || c.item_name : c.item_name}</td>
+                  <tr key={c.id} data-testid={`custody-row-${c.id}`} className={c.status === 'pending' ? 'bg-warning/5' : ''}>
+                    <td className="text-sm font-medium">
+                      {lang === 'ar' ? c.item_name_ar || c.item_name : c.item_name}
+                      {c.status === 'pending' && (
+                        <span className="ms-2 text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded">
+                          {lang === 'ar' ? 'قيد الموافقة' : 'Pending'}
+                        </span>
+                      )}
+                    </td>
                     <td className="text-sm">{lang === 'ar' ? c.employee_name_ar || c.employee_name : c.employee_name}</td>
                     <td className="hidden sm:table-cell text-xs font-mono">{c.serial_number || '-'}</td>
                     <td className="hidden sm:table-cell text-xs">{c.estimated_value?.toLocaleString() || 0} SAR</td>
                     <td className="hidden md:table-cell text-xs text-muted-foreground">{c.assigned_at?.slice(0, 10)}</td>
+                    <td className="text-xs">
+                      {c.status === 'active' ? (
+                        <span className="text-success">{lang === 'ar' ? 'نشطة' : 'Active'}</span>
+                      ) : c.status === 'pending' ? (
+                        <span className="text-warning">{c.current_stage || (lang === 'ar' ? 'معلقة' : 'Pending')}</span>
+                      ) : c.status}
+                    </td>
                     {canReturn && (
                       <td>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => handleReturn(c.id)}
-                          disabled={submitting}
-                          data-testid={`return-custody-${c.id}`}
-                        >
-                          <RotateCcw size={12} className="me-1" /> {lang === 'ar' ? 'تم الاستلام' : 'Received'}
-                        </Button>
+                        {c.status === 'active' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => handleReturn(c.id)}
+                            disabled={submitting}
+                            data-testid={`return-custody-${c.id}`}
+                          >
+                            <RotateCcw size={12} className="me-1" /> {lang === 'ar' ? 'تم الاستلام' : 'Received'}
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{lang === 'ar' ? 'بانتظار التنفيذ' : 'Awaiting execution'}</span>
+                        )}
                       </td>
                     )}
                   </tr>
