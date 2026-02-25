@@ -230,6 +230,55 @@ export default function SettlementPage() {
     }
   };
 
+  // إضافة خصم يدوي
+  const addManualDeduction = () => {
+    if (!newDeduction.amount || !newDeduction.note) {
+      toast.error('المبلغ والسبب مطلوبان');
+      return;
+    }
+    setManualDeductions([...manualDeductions, {
+      id: Date.now(),
+      amount: parseFloat(newDeduction.amount),
+      note: newDeduction.note,
+      note_en: newDeduction.note
+    }]);
+    setNewDeduction({ amount: '', note: '' });
+    setAddDeductionOpen(false);
+    toast.success('تم إضافة الخصم');
+  };
+
+  // إضافة سلفة يدوية
+  const addManualLoan = () => {
+    if (!newLoan.amount || !newLoan.note) {
+      toast.error('المبلغ والسبب مطلوبان');
+      return;
+    }
+    setManualLoans([...manualLoans, {
+      id: Date.now(),
+      amount: parseFloat(newLoan.amount),
+      note: newLoan.note,
+      note_en: newLoan.note
+    }]);
+    setNewLoan({ amount: '', note: '' });
+    setAddLoanOpen(false);
+    toast.success('تم إضافة السلفة');
+  };
+
+  // حذف خصم
+  const removeDeduction = (id) => {
+    setManualDeductions(manualDeductions.filter(d => d.id !== id));
+  };
+
+  // حذف سلفة
+  const removeLoan = (id) => {
+    setManualLoans(manualLoans.filter(l => l.id !== id));
+  };
+
+  // حساب إجمالي الخصومات اليدوية
+  const totalManualDeductions = manualDeductions.reduce((sum, d) => sum + d.amount, 0);
+  const totalManualLoans = manualLoans.reduce((sum, l) => sum + l.amount, 0);
+  const totalInkindDamages = inkindDamages.reduce((sum, d) => sum + d.amount, 0);
+
   const resetForm = () => {
     setFormData({
       employee_id: '',
