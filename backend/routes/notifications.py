@@ -874,6 +874,42 @@ async def get_summons(
     }
 
 
+@router.get("/summons/active-for-list")
+async def get_active_summons_for_list(
+    user=Depends(get_current_user)
+):
+    """
+    الحصول على الاستدعاءات النشطة لعرضها في قائمة الموظفين
+    - تظهر فقط لـ stas أو المُرسِل الأصلي
+    """
+    role = user.get('role')
+    user_id = user.get('user_id') or user.get('id')
+    
+    # فقط stas أو الإدارة
+    if role not in ['sultan', 'naif', 'stas', 'mohammed', 'salah']:
+        return {"summons": [], "count": 0}
+    
+    # جلب جميع الاستدعاءات النشطة
+    all_summons = await db.notifications.find(
+        {
+            "notification_type": "summon",
+            "acknowledged": {"$ne": True}
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    # فلترة: stas يرى الكل، غيره يرى فقط ما أرسله
+    if role == 'stas':
+        filtered = all_summons
+    else:
+        filtered = [s for s in all_summons if s.get('sender_id') == user_id]
+    
+    return {
+        "summons": filtered,
+        "count": len(filtered)
+    }
+
+
 @router.post("/summons/{summon_id}/acknowledge")
 async def acknowledge_summon(
     summon_id: str,
