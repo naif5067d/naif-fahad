@@ -742,9 +742,12 @@ async def get_smart_monitor(
     if not month:
         month = datetime.now(timezone.utc).strftime("%Y-%m")
     
-    # جلب جميع الموظفين النشطين
+    # جلب الموظفين النشطين غير المستثنين من التقييم
     employees = await db.employees.find(
-        {"status": "active"},
+        {
+            "status": "active",
+            "exclude_from_evaluation": {"$ne": True}
+        },
         {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1, "employee_number": 1, "department": 1, "job_title_ar": 1}
     ).to_list(200)
     
