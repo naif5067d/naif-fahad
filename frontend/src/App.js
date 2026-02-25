@@ -31,7 +31,6 @@ import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
-import SmartMonitorPage from "@/pages/SmartMonitorPage";
 import ATSPage from "@/pages/ATSPage";
 import PublicApplyPage from "@/pages/PublicApplyPage";
 import PublicCareersPage from "@/pages/PublicCareersPage";
