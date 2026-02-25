@@ -112,7 +112,15 @@ export default function SettlementPage() {
     setLoading(false);
   };
 
-  // جلب الموظفين الذين لديهم عقد نشط
+  // جلب المخالصات فقط
+  const fetchSettlements = async () => {
+    try {
+      const res = await api.get('/api/settlement');
+      setSettlements(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch settlements', err);
+    }
+  };
   const eligibleEmployees = employees.filter(emp => {
     const contract = contracts.find(c => 
       c.employee_id === emp.id && 
