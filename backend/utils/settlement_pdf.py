@@ -320,7 +320,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     # حساب مجموع الخصومات اليدوية والعهد العينية
     manual_ded_total = sum(d.get("amount", 0) for d in manual_deductions)
-    manual_loans_total = sum(l.get("amount", 0) for l in manual_loans)
+    manual_loans_total = sum(loan.get("amount", 0) for loan in manual_loans)
     inkind_total = sum(d.get("amount", 0) for d in inkind_damages)
     
     ded_data = []
