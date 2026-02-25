@@ -234,10 +234,17 @@ async def preview_settlement(
         daily_wage=wages["daily_wage"]
     )
     
+    # جلب رصيد العهد المالية
+    custody_balance = await get_custody_balance(req.employee_id)
+    
     # حساب المجاميع
     total_entitlements = eos["final_amount"] + leave_compensation + bonuses_data["total"] + partial_month_salary["amount"]
-    total_deductions = deductions_data["total"] + loans_data["total"]
+    total_deductions = deductions_data["total"] + loans_data["total"] + custody_balance["total"]
     net_amount = total_entitlements - total_deductions
+    
+    # تحويل المبلغ إلى كلمات عربية
+    from utils.arabic_numbers import number_to_arabic
+    net_amount_words = number_to_arabic(net_amount)
     
     return {
         "preview": True,
@@ -246,7 +253,10 @@ async def preview_settlement(
             "name_ar": employee.get("full_name_ar") or employee.get("full_name"),
             "name_en": employee.get("full_name"),
             "employee_number": employee.get("employee_number"),
-            "national_id": employee.get("national_id")
+            "national_id": employee.get("national_id") or employee.get("iqama_number", ""),
+            "iqama_number": employee.get("iqama_number", ""),
+            "job_title": employee.get("job_title") or contract.get("job_title", ""),
+            "department": employee.get("department", "")
         },
         "contract": {
             "id": contract["id"],
@@ -272,6 +282,8 @@ async def preview_settlement(
         "eos": eos,
         "leave": {
             "policy_days": annual_policy,
+            "entitled_days": leave_data.get("total_entitled", 0),
+            "used_days": leave_data.get("used", 0),
             "balance": round(leave_balance, 2),
             "daily_wage": wages["daily_wage"],
             "compensation": leave_compensation,
@@ -280,6 +292,7 @@ async def preview_settlement(
         "bonuses": bonuses_data,
         "deductions": deductions_data,
         "loans": loans_data,
+        "custody_balance": custody_balance,
         "partial_month_salary": partial_month_salary,
         "totals": {
             "entitlements": {
@@ -292,6 +305,7 @@ async def preview_settlement(
             "deductions": {
                 "deductions": deductions_data["total"],
                 "loans": loans_data["total"],
+                "custody": custody_balance["total"],
                 "total": round(total_deductions, 2)
             },
             "net_amount": round(net_amount, 2),
