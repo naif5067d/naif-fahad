@@ -588,6 +588,8 @@ export default function ExecutiveDashboard() {
       {/* ==================== MAIN CONTENT ==================== */}
       <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
         
+        {activeTab === 'overview' ? (
+        <>
         {/* ========== TOP SECTION: Health Score + KPIs ========== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8">
           
