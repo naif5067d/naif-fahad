@@ -129,9 +129,12 @@ export default function EmployeesPage() {
       position: emp.position,
       position_ar: emp.position_ar,
       is_active: emp.is_active,
-      // بيانات الإقامة
+      // بيانات الهوية/الإقامة
+      is_saudi: emp.is_saudi ?? (emp.nationality === 'سعودي' || emp.nationality === 'Saudi'),
+      national_id: emp.national_id || '',
       iqama_number: emp.iqama_number || '',
       iqama_expiry_date: emp.iqama_expiry_date || '',
+      id_expiry_date: emp.id_expiry_date || '',
       nationality: emp.nationality || ''
     });
     setEditDialog(emp);
