@@ -948,24 +948,49 @@ export default function EmployeesPage() {
 
               {/* Quick Stats */}
               {cardSummary && (
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Calendar size={18} className="mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-lg font-bold text-primary">{cardSummary.leave_details?.balance || 0}</p>
-                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'رصيد الإجازة' : 'Leave'}</p>
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="text-center p-2 bg-muted/50 rounded-lg">
+                    <Calendar size={16} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-base font-bold text-primary">{cardSummary.leave_details?.balance || 0}</p>
+                    <p className="text-[9px] text-muted-foreground">{lang === 'ar' ? 'إجازة' : 'Leave'}</p>
                   </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Briefcase size={18} className="mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-lg font-bold text-primary">{cardSummary.service_info?.years_display || '0'}</p>
-                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'سنوات الخدمة' : 'Service Yrs'}</p>
+                  <div className="text-center p-2 bg-muted/50 rounded-lg">
+                    <Briefcase size={16} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-base font-bold text-primary">{cardSummary.service_info?.years_display || '0'}</p>
+                    <p className="text-[9px] text-muted-foreground">{lang === 'ar' ? 'خدمة' : 'Service'}</p>
                   </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Calendar size={18} className="mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-lg font-bold text-primary">
+                  <div className="text-center p-2 bg-muted/50 rounded-lg">
+                    <Calendar size={16} className="mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-base font-bold text-primary">
                       {cardSummary.attendance?.today_status === 'present' ? '✓' : '—'}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">{lang === 'ar' ? 'حضور اليوم' : 'Today'}</p>
+                    <p className="text-[9px] text-muted-foreground">{lang === 'ar' ? 'اليوم' : 'Today'}</p>
                   </div>
+                  {/* تقييم المهام - للإدارة فقط */}
+                  {isOps && cardSummary.task_evaluation && (
+                    <div className={`text-center p-2 rounded-lg ${
+                      cardSummary.task_evaluation.score >= 4 ? 'bg-green-100' : 
+                      cardSummary.task_evaluation.score >= 3 ? 'bg-blue-100' : 
+                      cardSummary.task_evaluation.score >= 2 ? 'bg-yellow-100' : 
+                      cardSummary.task_evaluation.score > 0 ? 'bg-red-100' : 'bg-muted/50'
+                    }`}>
+                      <Award size={16} className={`mx-auto mb-1 ${
+                        cardSummary.task_evaluation.score >= 4 ? 'text-green-600' : 
+                        cardSummary.task_evaluation.score >= 3 ? 'text-blue-600' : 
+                        cardSummary.task_evaluation.score >= 2 ? 'text-yellow-600' : 
+                        cardSummary.task_evaluation.score > 0 ? 'text-red-600' : 'text-muted-foreground'
+                      }`} />
+                      <p className={`text-base font-bold ${
+                        cardSummary.task_evaluation.score >= 4 ? 'text-green-700' : 
+                        cardSummary.task_evaluation.score >= 3 ? 'text-blue-700' : 
+                        cardSummary.task_evaluation.score >= 2 ? 'text-yellow-700' : 
+                        cardSummary.task_evaluation.score > 0 ? 'text-red-700' : 'text-muted-foreground'
+                      }`}>
+                        {cardSummary.task_evaluation.score > 0 ? `${cardSummary.task_evaluation.score}/5` : '—'}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground">{lang === 'ar' ? 'تقييم' : 'Rating'}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
