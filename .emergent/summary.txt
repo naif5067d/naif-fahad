@@ -1,158 +1,162 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user's initial request was for a comprehensive HR system. Development has since focused on enhancing system monitoring, improving the attendance module, implementing a detailed financial custody system, and most recently, building a settlement (المخالصة) module. The current work is a direct response to user feedback to fix critical bugs in the settlement PDF generation and add required features like manual overrides.
+The user is developing a comprehensive HR system and is currently focused on refining the Settlement (المخالصة) module. The goal is to create a legally robust, single-page A4 PDF document that matches the features and layout of a reference document provided by the user. Key requirements include correcting Arabic text rendering, adding a company logo, enabling manual entry for deductions and loans with descriptive text, implementing a workflow for handling unreturned in-kind custodies (by deducting their value or waiving them), ensuring all employee data is accurate, and incorporating a specific final acknowledgment text.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-A full-stack HR application built with React, FastAPI, and MongoDB. The application features modules for attendance, system maintenance, financial custodies, and settlements.
--   The **Financial Custody** module is largely complete, with features for creating/editing expense codes, separating account names from descriptions, and generating monthly PDF reports.
--   The **Settlement (المخالصة)** module is the current focus. A UI and backend exist to calculate final settlements, but the PDF generation is critically flawed.
+A full-stack HR application using React, FastAPI, and MongoDB. The settlement module can generate a PDF, which has undergone numerous fixes for Arabic text rendering (squares issue), data population (job title, department, IBAN), and layout adjustments. A UI and backend for adding manual deductions have been partially implemented, but this introduced a critical bug. The system also includes a workflow for approving penalties, which can be deferred to the final settlement.
 
 **Last working item**:
--   **Last item agent was working:** Fixing the Settlement (المخالصة) PDF generation. The user reported two critical bugs: Arabic text rendering as squares (مربعات) and the company logo being absent from the header. The agent was debugging , having identified that the Arabic font was not being correctly applied and that the code was attempting to read  instead of the available  from the branding settings.
+-   **Last item agent was working:** Fixing a critical frontend crash on the Settlement page. The user reported a JavaScript error, , which prevents the page from loading. This was introduced while implementing the feature for adding manual deductions. Concurrently, the agent was tasked with updating the legal acknowledgment text in the PDF and enabling the modification of settlements that have already been marked as executed.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** backend testing agent. The agent should use  to call the  endpoint and verify the generated PDF file to confirm the logo appears and Arabic text is rendered correctly.
--   **User Testing Done:** N
+-   **Which testing method agent to use?** both. First, the frontend agent should be used to verify that the  loads without the  and that manual deductions can be added/removed from an *executed* settlement. Second, the backend agent should use  to call the  endpoint to verify that the generated PDF contains the newly added deductions and the updated acknowledgment text.
+-   **User Testing Done:** N (User reported the crash).
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Settlement (المخالصة) Module Final Fixes (P0)**
--   **Issue 2: Financial Custody Module Final Polish (P1)**
--   **Issue 3: Implement Early Leave Balance Deduction Logic (P2)**
--   **Issue 4: Implement Full Workflow for Outside Work Hours Compensation (P2)**
--   **Issue 5: Backfill  for Old Attendance Records (P3)**
--   **Issue 6: Incorrect Holiday/Leave Day Count in Production (P3)**
--   **Issue 7: Hardcoded Security Key (P3)**
--   **Issue 8: Severe Mobile Responsiveness Problems (P3)**
+-   **Issue 1: Settlement Page Crash (P0)**
+-   **Issue 2: Allow Editing of Executed Settlements (P0)**
+-   **Issue 3: Update Acknowledgment Text in PDF (P0)**
+-   **Issue 4: Implement In-Kind Custody Workflow (P1)**
+-   **Issue 5: Company Logo Not Appearing in PDF (P2)**
 
 **Issues Detail:**
--   **Issue 1: Settlement (المخالصة) Module Final Fixes**
-    -   **Attempted fixes:** The agent identified that the PDF was incorrectly using the default 'Helvetica' font instead of 'Amiri', causing the squares. An attempt to re-register the font was made. The agent also discovered the logo issue was due to reading the wrong key ( instead of ). Work was started on a UI for manual overrides in .
+-   **Issue 1: Settlement Page Crash**
+    -   **Attempted fixes:** The agent correctly identified that the  state variable was used without being defined in . The fix involves adding .
     -   **Next debug checklist:**
-        1.  **Backend ():**
-            -   Correct the code to read the base64 logo from  and draw it on the canvas.
-            -   Robustly fix the font registration to ensure 'Amiri' is used for all Arabic text, eliminating the squares.
-            -   Adjust the layout (font size, spacing) to guarantee the report fits on a single A4 page.
-            -   Implement the final signature block: manual signatures for Sultan, Mohammed, and the Employee, plus a QR code for STAS with the text تمت المخالصة من النظام.
-            -   Change the acknowledgment text to start with أقر باستلام من شركة دار الكود....
-        2.  **Frontend ():**
-            -   Complete the UI for manual editing of settlement amounts (entitlements and deductions).
-            -   Ensure the final net pay calculation updates based on the manually entered values.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. Fixing it will deliver a legally compliant and professional settlement document, fulfilling a core business need and resolving major user frustration.
+        1.  Apply the fix in .
+        2.  Restart the frontend service (frontend: ERROR (not running)
+frontend: started).
+        3.  Verify the Settlement page loads correctly without any console errors.
+    -   **Why fix this issue and what will be achieved with the fix?** The page is currently unusable. Fixing this is a critical blocker for any further work or testing on the settlement module.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Frontend
+
+-   **Issue 2: Allow Editing of Executed Settlements**
+    -   **Attempted fixes:** The agent started modifying the backend API endpoints in  to remove the status checks () that prevented modifications on settlements with a status of .
+    -   **Next debug checklist:**
+        1.  Complete the removal of status checks from  and  endpoints in .
+        2.  Restart the backend service.
+        3.  Test via the UI by adding and removing a manual deduction from a previously executed settlement.
+    -   **Why fix this issue and what will be achieved with the fix?** The user requires the flexibility to amend settlements even after they have been processed.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both
+
+-   **Issue 3: Update Acknowledgment Text in PDF**
+    -   **Attempted fixes:** The agent has updated this text multiple times. The latest user request requires a very specific legal phrase.
+    -   **Next debug checklist:**
+        1.  In , update the acknowledgment string to: .
+        2.  Ensure the  is correctly formatted into the string.
+        3.  Test PDF generation to confirm the new text appears correctly and fits within the layout.
+    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's explicit legal requirements for the settlement document.
     -   **Status:** IN PROGRESS
     -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Backend
+
+-   **Issue 4: Implement In-Kind Custody Workflow**
+    -   **Attempted fixes:** None. The agent has discussed the plan with the user.
+    -   **Next debug checklist:**
+        1.  Modify the UI in  to display unreturned in-kind custodies ().
+        2.  For each item, provide options for an admin (Sultan) to either Waive (إعفاء) or Assess Damages (تقدير التلفيات), the latter opening a modal to input an amount and description.
+        3.  Create a new backend endpoint to save these decisions as special manual deductions in the settlement object.
+        4.  Update the PDF generation logic in  to display these new deductions with their descriptions.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a key missing feature required for handling employees who have not returned company property, a critical business process.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
     -   **Should Test frontend/backend/both after fix?** Both
 
--   **Issue 2: Financial Custody Module Final Polish**
-    -   **Attempted fixes:** The agent previously improved the monthly PDF but the user added new quality-of-life requirements.
-    -   **Next debug checklist:**
-        1.  **Backend ():** Implement a professional border and page numbering (e.g., Page 1 of 3) on all PDF reports.
-        2.  **Frontend ():** Add a button/modal (visible to STAS role) to allow editing the names and titles for the PDF signature block directly from this page, as requested by the user.
-    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's high standards for financial reporting and improve administrative flexibility.
-    -   **Status:** NOT STARTED
+-   **Issue 5: Company Logo Not Appearing in PDF**
+    -   **Attempted fixes:** The agent corrected the backend code to look for the logo in the correct database collection.
+    -   **Next debug checklist:** The agent needs to inform the user that the functionality is ready but requires them to upload a logo through the company settings page. No code changes are needed.
+    -   **Why fix this issue and what will be achieved with the fix?** To complete the professional appearance of the PDF document as per the user's reference.
+    -   **Status:** BLOCKED (on user action)
     -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** Backend (once logo is uploaded)
 
 **In progress Task List**:
--   **Task 1: Finalize Settlement (المخالصة) Module (P0)**
-    -   **Where to resume:** In , apply the fixes for the logo and font rendering. Then, move to  to complete the manual edit functionality.
-    -   **What will be achieved with this?** A fully functional settlement module that generates professional, accurate, single-page PDFs with manual override capabilities.
+-   **Task 1: Stabilize and Enhance the Settlement Page (P0)**
+    -   **Where to resume:**
+        1.  : Add the missing  for  to fix the crash.
+        2.  : Remove status checks to allow editing of executed settlements.
+        3.  : Update the acknowledgment text to the user's latest requirement.
+    -   **What will be achieved with this?** A functional and stable Settlement page that meets the user's immediate demands for editing executed settlements and displaying the correct legal text.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Both
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **(P1) Financial Custody PDF Polish:** Add a professional frame, page numbering, and company letterhead to all financial reports.
-    *   **(P1) Add UI on Financial Custody page for STAS to edit PDF signature names.**
-    *   **(P1) Implement Canva-like Smart Editor:** For the Policies module.
-    *   **(P1) Allow STAS to manage App Branding:** Create a UI for the STAS role to change the application name and icon.
+    *   **(P1) Implement In-Kind Custody Workflow:** Allow admins to assess damages for unreturned items and add them as deductions to the settlement.
+    *   **(P2) Financial Custody PDF Polish:** Add a professional frame and page numbering to financial reports.
+    *   **(P2) UI for Editing Signatures:** Add a UI on the Financial Custody page for STAS to edit PDF signature names.
 *   **Future Tasks:**
-    *   **(P2) Implement Early Leave Balance Deduction Logic.**
-    *   **(P2) Implement Full Outside Work Hours Compensation Workflow.**
-    *   **(P2) Add Images to In-Kind Custody:** Allow attaching images to custody items.
-    *   Merge MyFinances & Attendance/Penalties pages.
-    *   Implement the Frontend UI for the Annual Performance Review module.
-    *   Implement the Loans Module.
-    *   **(P3) Backfill  for Old Attendance Records (Blocked on user).**
-    *   **(P3) Address old UI issues:**  crash and the broken Branding tab.
-    *   **(P3) Refactor permissions to a centralized Role-Based Access Control (RBAC) system.**
-    *   **(P3) Fix Severe Mobile Responsiveness Problems.**
+    *   Implement Canva-like Smart Editor for the Policies module.
+    *   Allow STAS to manage App Branding (application name and icon).
+    *   Fix severe mobile responsiveness problems across the application.
+    *   Refactor permissions to a centralized Role-Based Access Control (RBAC) system.
+    *   Address older UI issues, including the  crash.
 
 **Completed work in this session**
--   **Financial Custody Data Integrity (DONE):** Successfully separated بيان (Account Name) from الوصف (Expense Description) for new expense entries.
--   **Financial Custody Code Management (DONE):** Implemented a full CRUD (Create, Read, Update, Delete) UI and API for managing custom expense codes.
--   **Financial Custody Reporting Filter (FIXED):** Resolved a recurring bug where changing the month in the report view did not filter the data correctly. The system now provides a clear message if no data exists for the selected month.
--   **Dynamic Date for New Custodies (DONE):** Modified the New Custody feature to create the record in the month selected in the UI, rather than always using the current date.
--   **Signature Management Backend (DONE):** Created API endpoints to get and update the names/titles for PDF signatures.
--   **Attendance System Explanation (DONE):** Provided the user with a detailed, clear explanation of how the system calculates late, absent, and present statuses.
-
-**Earlier issues found/mentioned but not fixed**
--   **Issue 1: Hardcoded Security Key**
-    -   **Debug checklist:** The hardcoded key  in  should be moved to an environment variable.
-    -   **Why to solve this issue and what will be achieved with this?** It is a security risk to have credentials in source code.
-    -   **Should Test frontend/backend/both after fix:** Backend
-    -   **Is recurring issue?** Y
-
-**Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** PDF Generation Logic (Arabic text rendering).
--   **Recurrence count:** High
--   **Status:** IN PROGRESS. This issue has resurfaced in the settlement module, where Arabic text is rendering as squares. It is the current top-priority bug.
+-   **PDF Arabic Rendering (FIXED):** Resolved the recurring squares issue by correctly registering the 'Amiri' font and preventing Arabic strings from being rendered with the 'Helvetica' font.
+-   **Dynamic Data in PDF (DONE):** The settlement PDF now correctly populates with the employee's Job Title, Department, IBAN, Bank Name, and National ID, fetched live from the contract.
+-   **Service Year Calculation (FIXED):** The contract list now dynamically calculates and displays the correct years of service.
+-   **Partial Month Salary (DONE):** Implemented and corrected the راتب خارج المسيرات calculation, ensuring the corresponding date range (From-To) is displayed in the PDF.
+-   **Amount in Words (DONE):** Integrated the  library to display the final settlement amount in Arabic text.
+-   **Manual Deductions API/UI (PARTIALLY DONE):** Created the backend endpoints and frontend UI for adding and removing manual deductions. This work is the source of the current P0 bug.
+-   **PDF Layout and Content (DONE):** Added الرياض to the header and footer, included a signature line for the Accountant, and iteratively updated the legal acknowledgment text.
 
 **Code Architecture**
-
+useState
 
 **Key Technical Concepts**
--   **Dynamic PDF Generation ():** The primary challenge remains the correct registration and application of custom fonts (Amiri) for right-to-left languages (Arabic) and the embedding of dynamic images (like a company logo from a base64 string).
--   **Complex State Management (React):** Heavy use of  and  to handle multi-step modals, conditional UI rendering, and data synchronization between parent and child components, especially in .
--   **REST API Extension:** Modifying existing FastAPI endpoints to accept new parameters (e.g., optional ) and enriching response models to provide more data to the frontend, reducing client-side logic.
+-   **ReportLab PDF Generation:** The core of the feature relies on  for creating complex table-based layouts. The main difficulty has been managing bi-directional text and fonts (Arabic 'Amiri' vs. English 'Helvetica').
+-   **React State Management:** The  component manages complex state. The current crash highlights the fragility of this complexity and the need for careful state definition.
+-   **FastAPI Endpoint Modification:** The task requires not just creating new endpoints but also modifying the logic of existing ones (e.g., removing status checks) to alter business rules based on user feedback.
 
 **key DB schema**
--   **settings:** Contains a  object with  (base64 string) and a  object with names and titles for PDF reports.
--   **custody_ledgers:** Now correctly stores a separate  for an expense and links to a  entry for the  (account name).
+-   **settlements:** This collection now contains a  array . The business logic is being changed to allow modifications to this array even when the settlement's  is .
+-   **contracts:** Contains employee details like  and , which are now being fetched dynamically to populate the settlement PDF, bypassing potentially stale data in the settlement .
 
 **All files of reference**
--    (Currently broken)
--    (Currently being modified)
--   
--   
--   
+-    (Currently crashed, needs urgent fix)
+-    (Needs acknowledgment text update)
+-    (Needs logic update to allow editing executed settlements)
+-   The user-provided PDF  remains the primary reference for features and design.
 
 **Critical Info for New Agent**
--   **You MUST respond in Arabic.** All user communication must be in Arabic.
--   **DO NOT send screenshots.** The user has explicitly and repeatedly forbidden sending images. Describe UI changes textually and use other methods for verification.
--   The absolute top priority is to **fix the Settlement (المخالصة) PDF**. The user is very frustrated with the recurring PDF issues (squares for text, missing logo). This must be solved robustly from the ground up.
--   Pay close attention to the user's detailed requirements for PDF styling (single page, professional frames, specific signature blocks, QR codes) and text content.
-
-**documents and test reports created in this job**
--   /app/memory/PRD.md
--   /app/memory/CHANGELOG.md
+-   **أنت ملزم بالرد باللغة العربية.** (You MUST respond in Arabic.)
+-   The absolute top priority is to fix the  crash in . The page is unusable.
+-   The user explicitly wants to be able to **modify executed settlements**. Your next step is to remove the backend status checks in  that prevent this.
+-   The user has provided a new, very specific legal acknowledgment text. Implement it exactly as requested: 
+-   The next major feature to implement after the current fixes is the **In-Kind Custody (العهد العينية)** workflow, allowing admins to assess and deduct for damages.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Msg 284):** Demanded a QR code on the settlement PDF, that it be only one page, and specified the exact starting text for the acknowledgment clause. Asked for the agent's plan.
-2.  **User (Msg 288):** Clarified the signature requirements for the settlement PDF (Sultan, Mohammed, Employee are manual signatures; STAS is a QR code) and approved the agent's plan to start work.
-3.  **User (Msg 307):** After the agent provided a screenshot, the user pointed out that the text was still appearing as squares and the company logo was missing. Also asked where the manual edit feature was.
-4.  **User (Msg 348):** Still squares and the company logo is not appearing! (This was the last feedback on the broken feature, prompting the current debugging session).
+1.  **User (Msg 282):** Approved the agent's plan. Provided specs for the acknowledgment text, confirmed the in-kind custody workflow (deduct or waive), requested الرياض be added, and gave the command to Execute.
+2.  **User (Msg 328):** Provided a screenshot of a broken PDF, pointing out missing الرياض, blank spaces, incorrect employee name, and invisible manual deductions.
+3.  **User (Msg 378):** Corrected the agent's acknowledgment text again with a shorter version and reiterated that manual deductions are not being saved or reflected in the PDF.
+4.  **User (Msg 426):** Expressed frustration. Provided the final, very specific acknowledgment text. **Reported the critical frontend crash: .** Demanded that executed settlements must be editable.
+5.  **User (Msg 270-427):** The user has been deeply involved, providing detailed feedback, comparing the output to a reference PDF, specifying legal text, and reporting bugs. The core theme is achieving feature parity and correctness with the sample document.
 
 **Project Health Check:**
 -   **Broken:**
-    -   The settlement PDF generation in  is critically broken. It fails to render Arabic text and does not display the company logo.
-    -   The UI for manually overriding settlement calculation values is incomplete.
+    -    is non-functional due to a  crash. This is a P0 blocker.
 -   **Mocked:**
-    -   The logic to automatically deduct from an employee's Early Leave balance upon a manager's approval is not implemented.
+    -   The workflow for handling unreturned in-kind custodies (assessing damages and adding as a deduction) is designed but not implemented.
 
 **3rd Party Integrations**
 -   **reportlab:** For PDF generation.
 -   **qrcode:** For generating QR codes in PDFs.
--   **arabic_reshaper, python-bidi:** For processing Arabic text for display in .
--   **react-qr-scanner:** For QR code scanning on the frontend.
+-   **arabic_reshaper, python-bidi:** For processing and rendering Arabic text in .
+-   **num2words:** For converting the final settlement amount into Arabic words.
 
 **Testing status**
 -   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
--   **Known regressions:** The ability to render Arabic text in PDFs, which was previously fixed for the custody module, has regressed in the new settlement module.
+-   **Known regressions:** A critical JavaScript runtime error was introduced in .
 
 **Credentials to test flow:**
 -   **Admin/Manager:**  / 
@@ -161,4 +165,4 @@ A full-stack HR application built with React, FastAPI, and MongoDB. The applicat
 -   **Accountant:**  / 
 
 **What agent forgot to execute**
--   The agent has correctly prioritized the user's immediate and repeated feedback on the broken settlement module. Other less urgent tasks from the initial handoff summary (like Early Leave Balance logic) remain pending as a result of this prioritization.</analysis>
+The agent failed to test the frontend after adding the UI for manual deductions, which allowed a critical JavaScript crash to be discovered by the user. The agent is now aware and must prioritize fixing this before any other action.</analysis>
