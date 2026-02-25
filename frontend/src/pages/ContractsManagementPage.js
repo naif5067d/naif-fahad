@@ -104,6 +104,11 @@ export default function ContractsManagementPage() {
     email: '',
     phone: '',
     national_id: '',
+    // بيانات الإقامة (لغير السعوديين)
+    is_saudi: true,
+    iqama_number: '',
+    iqama_expiry_date: '',
+    nationality: '',
     contract_category: 'employment',
     employment_type: 'unlimited',
     job_title: '',
