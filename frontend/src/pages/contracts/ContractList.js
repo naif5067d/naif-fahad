@@ -185,6 +185,13 @@ export default function ContractList({
                     </Button>
                   )}
                   
+                  {canEdit && contract.status === 'active' && (
+                    <Button size="sm" variant="outline" onClick={() => onEdit(contract)}>
+                      <Edit size={14} className="me-1" />
+                      {isRTL ? 'تعديل' : 'Edit'}
+                    </Button>
+                  )}
+                  
                   {canExecute && contract.status === 'pending_stas' && (
                     <Button size="sm" variant="default" className="bg-success" onClick={() => onExecute(contract)}>
                       <Play size={14} className="me-1" />
