@@ -66,6 +66,15 @@ export default function SettlementPage() {
     additional_deductions: 0,
   });
   
+  // الخصومات والسلف اليدوية
+  const [manualDeductions, setManualDeductions] = useState([]);
+  const [manualLoans, setManualLoans] = useState([]);
+  const [inkindDamages, setInkindDamages] = useState([]);
+  const [addDeductionOpen, setAddDeductionOpen] = useState(false);
+  const [addLoanOpen, setAddLoanOpen] = useState(false);
+  const [newDeduction, setNewDeduction] = useState({ amount: '', note: '' });
+  const [newLoan, setNewLoan] = useState({ amount: '', note: '' });
+  
   // Validation warnings
   const [warnings, setWarnings] = useState([]);
   
