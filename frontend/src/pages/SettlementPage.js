@@ -230,43 +230,98 @@ export default function SettlementPage() {
     }
   };
 
-  // إضافة خصم يدوي
-  const addManualDeduction = () => {
+  // إضافة خصم يدوي - يُحفظ في الـ backend
+  const addManualDeduction = async () => {
     if (!newDeduction.amount || !newDeduction.note) {
       toast.error('المبلغ والسبب مطلوبان');
       return;
     }
-    setManualDeductions([...manualDeductions, {
-      id: Date.now(),
-      amount: parseFloat(newDeduction.amount),
-      note: newDeduction.note,
-      note_en: newDeduction.note
-    }]);
-    setNewDeduction({ amount: '', note: '' });
-    setAddDeductionOpen(false);
-    toast.success('تم إضافة الخصم');
+    if (!selectedSettlement?.id) {
+      toast.error('يرجى اختيار مخالصة أولاً');
+      return;
+    }
+    try {
+      const res = await api.post(`/api/settlement/${selectedSettlement.id}/manual-deduction`, {
+        deduction_type: 'deduction',
+        amount: parseFloat(newDeduction.amount),
+        note: newDeduction.note
+      });
+      toast.success('تم إضافة الخصم');
+      setNewDeduction({ amount: '', note: '' });
+      setAddDeductionOpen(false);
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إضافة الخصم');
+    }
   };
 
-  // إضافة سلفة يدوية
-  const addManualLoan = () => {
+  // إضافة سلفة يدوية - تُحفظ في الـ backend
+  const addManualLoan = async () => {
     if (!newLoan.amount || !newLoan.note) {
       toast.error('المبلغ والسبب مطلوبان');
       return;
     }
-    setManualLoans([...manualLoans, {
-      id: Date.now(),
-      amount: parseFloat(newLoan.amount),
-      note: newLoan.note,
-      note_en: newLoan.note
-    }]);
-    setNewLoan({ amount: '', note: '' });
-    setAddLoanOpen(false);
-    toast.success('تم إضافة السلفة');
+    if (!selectedSettlement?.id) {
+      toast.error('يرجى اختيار مخالصة أولاً');
+      return;
+    }
+    try {
+      const res = await api.post(`/api/settlement/${selectedSettlement.id}/manual-deduction`, {
+        deduction_type: 'loan',
+        amount: parseFloat(newLoan.amount),
+        note: newLoan.note
+      });
+      toast.success('تم إضافة السلفة');
+      setNewLoan({ amount: '', note: '' });
+      setAddLoanOpen(false);
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إضافة السلفة');
+    }
   };
 
-  // حذف خصم
-  const removeDeduction = (id) => {
-    setManualDeductions(manualDeductions.filter(d => d.id !== id));
+  // حذف خصم من الـ backend
+  const removeDeduction = async (id) => {
+    if (!selectedSettlement?.id) return;
+    try {
+      await api.delete(`/api/settlement/${selectedSettlement.id}/manual-deduction/${id}`);
+      toast.success('تم حذف الخصم');
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل حذف الخصم');
+    }
+  };
+
+  // حذف سلفة من الـ backend
+  const removeLoan = async (id) => {
+    if (!selectedSettlement?.id) return;
+    try {
+      await api.delete(`/api/settlement/${selectedSettlement.id}/manual-deduction/${id}`);
+      toast.success('تم حذف السلفة');
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل حذف السلفة');
+    }
   };
 
   // حذف سلفة
