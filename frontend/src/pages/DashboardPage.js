@@ -191,6 +191,8 @@ export default function DashboardPage() {
   
   const [employeeSummary, setEmployeeSummary] = useState(null);
   const [loadingEmployeeSummary, setLoadingEmployeeSummary] = useState(false);
+  const [activeSummons, setActiveSummons] = useState([]);
+  const [acknowledgingSummon, setAcknowledgingSummon] = useState(null);
 
   // Status configurations with glow colors
   const STATUS_CONFIG_GLOW = {
