@@ -486,6 +486,28 @@ export default function ExecutiveDashboard() {
                 آخر تحديث: {lastUpdate?.toLocaleTimeString('en-US', { hour12: true })}
               </p>
             </div>
+            
+            {/* Tabs */}
+            <div className="flex items-center gap-1 ms-6 bg-[#18181B] rounded-lg p-1">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-3 py-1.5 rounded-md text-xs transition-all ${
+                  activeTab === 'overview' ? 'bg-[#3B82F6] text-white' : 'text-[#A1A1AA] hover:text-white'
+                }`}
+              >
+                <Activity size={14} className="inline me-1" />
+                نظرة عامة
+              </button>
+              <button
+                onClick={() => setActiveTab('smart-monitor')}
+                className={`px-3 py-1.5 rounded-md text-xs transition-all ${
+                  activeTab === 'smart-monitor' ? 'bg-[#8B5CF6] text-white' : 'text-[#A1A1AA] hover:text-white'
+                }`}
+              >
+                <Brain size={14} className="inline me-1" />
+                المراقب الذكي
+              </button>
+            </div>
           </div>
 
           {/* Right - Controls */}
