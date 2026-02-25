@@ -683,6 +683,15 @@ async def get_settlement_pdf(
         totals["net_amount_words"] = number_to_arabic(totals["net_amount"])
         settlement["snapshot"]["totals"] = totals
     
+    # حساب راتب خارج المسيرات إذا لم يكن موجوداً (للمخالصات القديمة)
+    if not snapshot.get("partial_month_salary"):
+        last_working_day = snapshot.get("contract", {}).get("last_working_day")
+        wages = snapshot.get("wages", {})
+        daily_wage = wages.get("daily_wage", 0)
+        if last_working_day and daily_wage > 0:
+            partial = calculate_partial_month_salary(last_working_day, daily_wage)
+            settlement["snapshot"]["partial_month_salary"] = partial
+    
     # جلب بيانات الشركة - من عدة مصادر
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
     if not branding:
