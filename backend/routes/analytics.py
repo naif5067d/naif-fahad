@@ -123,7 +123,7 @@ async def calculate_financial_score(employee_id: str = None, month: str = None) 
     custodies = await db.admin_custodies.find(query, {"_id": 0, "audit_status": 1, "returned_count": 1, "spent": 1, "created_by": 1, "created_at": 1}).to_list(500)
     
     if not custodies:
-        return {"score": 100, "total_custodies": 0, "approved_first_time": 0, "returned": 0, "total_spent": 0}
+        return {"score": 0, "total_custodies": 0, "approved_first_time": 0, "returned": 0, "total_spent": 0, "no_data": True}
     
     # العهد المعتمدة من أول مرة (لم يتم إرجاعها)
     approved_first = len([c for c in custodies if c.get('audit_status') == 'approved' and not c.get('returned_count', 0)])
