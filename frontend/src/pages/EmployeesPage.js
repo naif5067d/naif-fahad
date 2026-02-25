@@ -128,7 +128,11 @@ export default function EmployeesPage() {
       department_ar: emp.department_ar,
       position: emp.position,
       position_ar: emp.position_ar,
-      is_active: emp.is_active 
+      is_active: emp.is_active,
+      // بيانات الإقامة
+      iqama_number: emp.iqama_number || '',
+      iqama_expiry_date: emp.iqama_expiry_date || '',
+      nationality: emp.nationality || ''
     });
     setEditDialog(emp);
   };
