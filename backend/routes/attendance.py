@@ -427,6 +427,100 @@ async def create_attendance_request(req: AttendanceRequestCreate, user=Depends(g
     if not emp:
         raise HTTPException(status_code=404, detail="الموظف غير موجود")
     
+    # ========== التحقق من الحدود الشهرية ==========
+    try:
+        date_obj = datetime.strptime(req.date, "%Y-%m-%d")
+        month_start = date_obj.replace(day=1).strftime("%Y-%m-%d")
+        if date_obj.month == 12:
+            month_end = date_obj.replace(year=date_obj.year + 1, month=1, day=1).strftime("%Y-%m-%d")
+        else:
+            month_end = date_obj.replace(month=date_obj.month + 1, day=1).strftime("%Y-%m-%d")
+    except:
+        month_start = None
+        month_end = None
+    
+    # نسيان البصمة - الحد: 3 مرات/شهر (الرابعة ترفض تلقائياً)
+    if req.request_type == 'forget_checkin' and month_start and month_end:
+        forget_count = await db.transactions.count_documents({
+            "employee_id": emp['id'],
+            "type": "forget_checkin",
+            "status": {"$nin": ["rejected", "cancelled"]},
+            "data.date": {"$gte": month_start, "$lt": month_end}
+        })
+        if forget_count >= 3:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"تجاوزت الحد الشهري لنسيان البصمة (3 مرات). عدد الطلبات هذا الشهر: {forget_count}"
+            )
+    
+    # تبرير التأخير - الحد: 5 مرات/شهر
+    if req.request_type == 'late_excuse' and month_start and month_end:
+        late_count = await db.transactions.count_documents({
+            "employee_id": emp['id'],
+            "type": "late_excuse",
+            "status": {"$nin": ["rejected", "cancelled"]},
+            "data.date": {"$gte": month_start, "$lt": month_end}
+        })
+        if late_count >= 5:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"تجاوزت الحد الشهري لتبرير التأخير (5 مرات). عدد الطلبات هذا الشهر: {late_count}"
+            )
+    
+    # الخروج المبكر - التحقق من رصيد الساعات
+    if req.request_type == 'early_leave_request' and req.from_time and req.to_time and month_start and month_end:
+        # حساب مدة الطلب
+        try:
+            from_parts = req.from_time.split(':')
+            to_parts = req.to_time.split(':')
+            from_mins = int(from_parts[0]) * 60 + int(from_parts[1])
+            to_mins = int(to_parts[0]) * 60 + int(to_parts[1])
+            requested_minutes = to_mins - from_mins
+        except:
+            requested_minutes = 0
+        
+        # جلب الرصيد من العقد
+        contract = await db.contracts_v2.find_one(
+            {"employee_id": emp['id'], "status": "active"},
+            {"_id": 0, "monthly_permission_hours": 1}
+        )
+        monthly_allowance = 3  # الافتراضي
+        if contract and contract.get('monthly_permission_hours'):
+            monthly_allowance = min(contract['monthly_permission_hours'], 3)
+        
+        # حساب المستخدم هذا الشهر
+        early_leaves = await db.transactions.find({
+            "employee_id": emp['id'],
+            "type": {"$in": ["early_leave_request", "early_leave", "permission"]},
+            "status": {"$nin": ["rejected", "cancelled"]},
+            "data.date": {"$gte": month_start, "$lt": month_end}
+        }, {"_id": 0, "data": 1}).to_list(50)
+        
+        used_minutes = 0
+        for el in early_leaves:
+            el_from = el.get('data', {}).get('from_time', '')
+            el_to = el.get('data', {}).get('to_time', '')
+            if el_from and el_to:
+                try:
+                    f_parts = el_from.split(':')
+                    t_parts = el_to.split(':')
+                    f_mins = int(f_parts[0]) * 60 + int(f_parts[1])
+                    t_mins = int(t_parts[0]) * 60 + int(t_parts[1])
+                    used_minutes += (t_mins - f_mins)
+                except:
+                    pass
+        
+        monthly_allowance_minutes = monthly_allowance * 60
+        remaining_minutes = monthly_allowance_minutes - used_minutes
+        
+        if requested_minutes > remaining_minutes:
+            hours_remaining = remaining_minutes // 60
+            mins_remaining = remaining_minutes % 60
+            raise HTTPException(
+                status_code=400, 
+                detail=f"رصيد الاستئذان غير كافٍ. المتبقي: {hours_remaining}:{mins_remaining:02d} | المطلوب: {requested_minutes // 60}:{requested_minutes % 60:02d}"
+            )
+    
     # جلب المعاملات للرقم المرجعي
     from routes.transactions import get_next_ref_no
     ref_no = await get_next_ref_no()
