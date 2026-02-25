@@ -5,6 +5,7 @@ Settlement PDF Generator - وثيقة المخالصة
 - Hybrid bilingual: يمين عربي، يسار إنجليزي
 - QR للتحقق من STAS فقط
 - توقيع يدوي: سلطان + محمد + الموظف
+============================================================
 """
 
 from reportlab.lib.pagesizes import A4
@@ -21,6 +22,7 @@ import io
 import qrcode
 from datetime import datetime, timezone
 import os
+import base64
 
 # ألوان الشركة
 NAVY = colors.HexColor('#1E3A5F')
@@ -34,62 +36,71 @@ PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 10 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 
-# تسجيل الخطوط - يتم في دالة منفصلة
+# تسجيل الخطوط
 FONT_DIR = "/app/backend/fonts"
+ARABIC_FONT = 'Helvetica'
+ARABIC_FONT_BOLD = 'Helvetica-Bold'
 
 def _register_fonts():
-    """تسجيل الخطوط العربية"""
+    """تسجيل الخطوط العربية - محاولة واحدة فقط"""
     global ARABIC_FONT, ARABIC_FONT_BOLD
     
-    ARABIC_FONT = 'Helvetica'
-    ARABIC_FONT_BOLD = 'Helvetica-Bold'
+    # تحقق إذا تم التسجيل مسبقاً
+    registered = pdfmetrics.getRegisteredFontNames()
+    if 'Amiri' in registered:
+        ARABIC_FONT = 'Amiri'
+        ARABIC_FONT_BOLD = 'Amiri'
+        return True
     
     # محاولة Amiri
     amiri_path = os.path.join(FONT_DIR, 'Amiri-Regular.ttf')
-    if os.path.exists(amiri_path) and os.path.getsize(amiri_path) > 10000:
+    if os.path.exists(amiri_path):
         try:
-            pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
-            pdfmetrics.registerFont(TTFont('AmiriBold', amiri_path))
-            ARABIC_FONT = 'Amiri'
-            ARABIC_FONT_BOLD = 'AmiriBold'
-            return True
+            file_size = os.path.getsize(amiri_path)
+            if file_size > 50000:  # ملف صالح
+                pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
+                ARABIC_FONT = 'Amiri'
+                ARABIC_FONT_BOLD = 'Amiri'
+                print(f"[PDF] Amiri font registered successfully ({file_size} bytes)")
+                return True
         except Exception as e:
-            print(f"Amiri error: {e}")
+            print(f"[PDF] Amiri registration failed: {e}")
     
     # محاولة NotoNaskh
     noto_path = os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
-    if os.path.exists(noto_path) and os.path.getsize(noto_path) > 10000:
+    if os.path.exists(noto_path):
         try:
-            pdfmetrics.registerFont(TTFont('NotoNaskh', noto_path))
-            ARABIC_FONT = 'NotoNaskh'
-            ARABIC_FONT_BOLD = 'NotoNaskh'
-            return True
+            file_size = os.path.getsize(noto_path)
+            if file_size > 50000:
+                pdfmetrics.registerFont(TTFont('NotoNaskh', noto_path))
+                ARABIC_FONT = 'NotoNaskh'
+                ARABIC_FONT_BOLD = 'NotoNaskh'
+                print(f"[PDF] NotoNaskh font registered successfully ({file_size} bytes)")
+                return True
         except Exception as e:
-            print(f"Noto error: {e}")
+            print(f"[PDF] NotoNaskh registration failed: {e}")
     
+    print("[PDF] WARNING: No Arabic font available, using Helvetica")
     return False
 
 # تسجيل الخطوط عند التحميل
 _register_fonts()
-ARABIC_FONT = 'Amiri' if 'Amiri' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
-ARABIC_FONT_BOLD = 'AmiriBold' if 'AmiriBold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
-PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 10 * mm
-CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 
 
 def reshape_arabic(text):
-    """تحويل النص العربي"""
+    """تحويل النص العربي للعرض الصحيح"""
     if not text:
         return ''
     try:
-        reshaped = arabic_reshaper.reshape(str(text))
+        text_str = str(text)
+        reshaped = arabic_reshaper.reshape(text_str)
         return get_display(reshaped)
-    except Exception:
+    except Exception as e:
+        print(f"[PDF] Arabic reshape error: {e}")
         return str(text)
 
 
-def create_qr_image(data, size=22):
+def create_qr_image(data, size=20):
     """إنشاء QR Code"""
     try:
         qr = qrcode.QRCode(version=1, box_size=2, border=1)
@@ -100,12 +111,54 @@ def create_qr_image(data, size=22):
         img.save(buffer, format='PNG')
         buffer.seek(0)
         return Image(buffer, width=size*mm, height=size*mm)
-    except Exception:
+    except Exception as e:
+        print(f"[PDF] QR creation error: {e}")
+        return None
+
+
+def load_logo_image(branding):
+    """تحميل شعار الشركة من البيانات"""
+    if not branding:
+        return None
+    
+    # محاولة جلب اللوقو من مصادر مختلفة
+    logo_data = None
+    
+    # أولاً: من branding مباشرة
+    if isinstance(branding, dict):
+        logo_data = branding.get('logo_data') or branding.get('logo_url')
+        
+        # ثانياً: من branding.branding (nested)
+        if not logo_data and 'branding' in branding:
+            nested = branding.get('branding', {})
+            if isinstance(nested, dict):
+                logo_data = nested.get('logo_data') or nested.get('logo_url')
+    
+    if not logo_data:
+        print("[PDF] No logo data found in branding")
+        return None
+    
+    try:
+        # إزالة prefix إذا موجود (data:image/png;base64,)
+        if isinstance(logo_data, str) and ',' in logo_data:
+            logo_data = logo_data.split(',')[1]
+        
+        logo_bytes = base64.b64decode(logo_data)
+        logo_buffer = io.BytesIO(logo_bytes)
+        logo_img = Image(logo_buffer, width=18*mm, height=10*mm)
+        print("[PDF] Logo loaded successfully")
+        return logo_img
+    except Exception as e:
+        print(f"[PDF] Logo loading error: {e}")
         return None
 
 
 def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     """توليد PDF المخالصة - صفحة واحدة"""
+    
+    # إعادة تسجيل الخطوط للتأكد
+    _register_fonts()
+    
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -147,49 +200,32 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     txn = settlement.get("transaction_number", "")
     issue_date = settlement.get("executed_at", "")[:10] if settlement.get("executed_at") else datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # جلب شعار الشركة
-    logo_img = None
-    logo_data = None
-    if branding:
-        logo_data = branding.get("logo_data") or branding.get("logo_url")
+    # تحميل شعار الشركة
+    logo_img = load_logo_image(branding)
     
-    if logo_data:
-        try:
-            import base64
-            # إزالة prefix إذا موجود
-            if ',' in logo_data:
-                logo_data = logo_data.split(',')[1]
-            logo_bytes = base64.b64decode(logo_data)
-            logo_buffer = io.BytesIO(logo_bytes)
-            logo_img = Image(logo_buffer, width=20*mm, height=12*mm)
-        except Exception as e:
-            print(f"Logo error: {e}")
-    
-    # ترويسة مع شعار
+    # ترويسة
     if logo_img:
         header_data = [
             [en("Kingdom of Saudi Arabia"), logo_img, ar("المملكة العربية السعودية")],
             [en_b("Dar Al Code Engineering Consultancy"), '', ar_b("شركة دار الكود للاستشارات الهندسية")],
             [en("CR: 1010463476 | License: 5110004935"), '', ar("سجل: 1010463476 | ترخيص: 5110004935")],
         ]
+        col_widths = [col_w - 10*mm, 20*mm, col_w - 10*mm]
     else:
         header_data = [
-            [en("Kingdom of Saudi Arabia"), '', ar("المملكة العربية السعودية")],
-            [en_b("Dar Al Code Engineering Consultancy"), '', ar_b("شركة دار الكود للاستشارات الهندسية")],
-            [en("CR: 1010463476 | License: 5110004935"), '', ar("سجل: 1010463476 | ترخيص: 5110004935")],
+            [en("Kingdom of Saudi Arabia"), ar("المملكة العربية السعودية")],
+            [en_b("Dar Al Code Engineering Consultancy"), ar_b("شركة دار الكود للاستشارات الهندسية")],
+            [en("CR: 1010463476 | License: 5110004935"), ar("سجل: 1010463476 | ترخيص: 5110004935")],
         ]
+        col_widths = [col_w, col_w]
     
-    header_data = [
-        [en("Kingdom of Saudi Arabia"), '', ar("المملكة العربية السعودية")],
-        [en_b("Dar Al Code Engineering Consultancy"), '', ar_b("شركة دار الكود للاستشارات الهندسية")],
-        [en("CR: 1010463476 | License: 5110004935"), '', ar("سجل: 1010463476 | ترخيص: 5110004935")],
-    ]
-    header_table = Table(header_data, colWidths=[col_w - 10*mm, 20*mm, col_w - 10*mm])
+    header_table = Table(header_data, colWidths=col_widths)
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('LINEBELOW', (0, -1), (-1, -1), 1.5, NAVY),
+        ('SPAN', (1, 0), (1, 2)) if logo_img else ('ALIGN', (0, 0), (0, 0), 'LEFT'),
     ]))
     elements.append(header_table)
     elements.append(Spacer(1, 2*mm))
@@ -295,8 +331,9 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     total_ent = totals.get("entitlements", {}).get("total", 0)
     
     # مكافأة نهاية الخدمة مع الفترة
-    eos_detail = f"({service_years} سنة × {eos.get('percentage', 100)}%)"
-    eos_detail_en = f"({service_years}y × {eos.get('percentage', 100)}%)"
+    eos_pct = eos.get('percentage', 100)
+    eos_detail = f"({service_years} سنة × {eos_pct}%)"
+    eos_detail_en = f"({service_years}y × {eos_pct}%)"
     
     # بدل الإجازات مع عدد الأيام
     leave_detail = f"{leave_balance:.1f} يوم × {daily_wage:,.0f}"
@@ -375,7 +412,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     decl_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY), ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
     elements.append(decl_header_t)
     
-    decl_ar = f"أقر أنا {emp_name} باستلام جميع مستحقاتي من شركة دار الكود للاستشارات الهندسية وفقاً للبيانات أعلاه، وهذا المبلغ يمثل كافة مستحقاتي حتى تاريخ {last_day}، وأُبرئ ذمة الشركة من أي مطالبات مستقبلية."
+    # نص الإقرار - يبدأ بـ "أقر باستلام من شركة دار الكود..."
+    decl_ar = f"أقر باستلام من شركة دار الكود للاستشارات الهندسية جميع مستحقاتي وفقاً للبيانات أعلاه. أنا {emp_name} أُقر بأن هذا المبلغ يمثل كافة مستحقاتي حتى تاريخ {last_day}، وأُبرئ ذمة الشركة من أي مطالبات مستقبلية."
     decl_en = f"I, {emp_name}, acknowledge receipt of all my entitlements from Dar Al Code Engineering Consultancy as detailed above. This amount represents all my dues until {last_day}, and I release the company from any future claims."
     
     decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=6, alignment=TA_RIGHT, leading=8)
@@ -402,7 +440,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     sig_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY), ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
     elements.append(sig_header_t)
     
-    # QR Code لـ STAS فقط
+    # QR Code لـ STAS فقط مع نص "تمت المخالصة من النظام"
     qr_data = f"DAR-SETTLEMENT|{txn}|NET:{net_amount:.0f}|DATE:{issue_date}|VERIFIED"
     qr_img = create_qr_image(qr_data, size=18)
     
@@ -411,12 +449,12 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     sig_title = ParagraphStyle('sig_title', fontName=ARABIC_FONT, fontSize=6, alignment=TA_CENTER, textColor=colors.gray)
     sig_line = ParagraphStyle('sig_line', fontName='Helvetica', fontSize=8, alignment=TA_CENTER)
     
-    # STAS - QR فقط
+    # STAS - QR فقط مع نص "تمت المخالصة من النظام"
     stas_content = Table([
         [Paragraph(reshape_arabic("تمت المخالصة من النظام"), ParagraphStyle('stas', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_CENTER, textColor=GREEN))],
         [Paragraph("System Verified", ParagraphStyle('stas_en', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=GREEN))],
-        [qr_img if qr_img else ''],
-        [Paragraph("STAS", sig_name)],
+        [qr_img if qr_img else Paragraph("QR", sig_line)],
+        [Paragraph("STAS", ParagraphStyle('stas_label', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=NAVY))],
     ], colWidths=[35*mm])
     stas_content.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -426,7 +464,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     
-    # أ.سلطان - توقيع يدوي
+    # أ.سلطان الزامل - توقيع يدوي
     sultan_content = Table([
         [Paragraph(reshape_arabic("أ.سلطان الزامل"), sig_name)],
         [Paragraph(reshape_arabic("المدير الإداري"), sig_title)],
@@ -440,7 +478,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     
-    # م.محمد - توقيع يدوي
+    # م.محمد الثنيان - توقيع يدوي
     mohammed_content = Table([
         [Paragraph(reshape_arabic("م.محمد الثنيان"), sig_name)],
         [Paragraph(reshape_arabic("المدير التنفيذي"), sig_title)],
