@@ -630,6 +630,44 @@ export default function EmployeesPage() {
               <Label>{lang === 'ar' ? 'نشط' : 'Active'}</Label>
               <Switch data-testid="edit-active-toggle" checked={editForm.is_active} onCheckedChange={v => setEditForm(f => ({ ...f, is_active: v }))} />
             </div>
+            
+            {/* قسم بيانات الإقامة */}
+            <div className="border-t pt-4 mt-4">
+              <h4 className="text-sm font-bold mb-3 text-muted-foreground">
+                {lang === 'ar' ? 'بيانات الإقامة' : 'Iqama Details'}
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <Label>{lang === 'ar' ? 'رقم الإقامة' : 'Iqama Number'}</Label>
+                  <Input 
+                    data-testid="edit-iqama-number"
+                    value={editForm.iqama_number || ''} 
+                    onChange={e => setEditForm(f => ({ ...f, iqama_number: e.target.value }))}
+                    placeholder="2000000000"
+                  />
+                </div>
+                <div>
+                  <Label>{lang === 'ar' ? 'تاريخ انتهاء الإقامة' : 'Iqama Expiry Date'}</Label>
+                  <Input 
+                    data-testid="edit-iqama-expiry"
+                    type="date"
+                    value={editForm.iqama_expiry_date || ''} 
+                    onChange={e => setEditForm(f => ({ ...f, iqama_expiry_date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>{lang === 'ar' ? 'الجنسية' : 'Nationality'}</Label>
+                  <Input 
+                    data-testid="edit-nationality"
+                    value={editForm.nationality || ''} 
+                    onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
+                    placeholder={lang === 'ar' ? 'مثال: مصري، سوداني' : 'e.g. Egyptian, Sudanese'}
+                    dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                  />
+                </div>
+              </div>
+            </div>
+            
             <Button data-testid="save-employee" onClick={handleSave} className="w-full bg-primary text-primary-foreground" disabled={saving}>
               {saving ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ' : 'Save')}
             </Button>
