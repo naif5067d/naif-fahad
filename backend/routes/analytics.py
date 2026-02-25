@@ -158,7 +158,7 @@ async def calculate_request_score(employee_id: str = None, month: str = None) ->
     transactions = await db.transactions.find(query, {"_id": 0, "status": 1, "employee_id": 1, "created_at": 1}).to_list(2000)
     
     if not transactions:
-        return {"score": 100, "total_requests": 0, "approved": 0, "rejected": 0, "pending": 0}
+        return {"score": 0, "total_requests": 0, "approved": 0, "rejected": 0, "pending": 0, "no_data": True}
     
     approved = len([t for t in transactions if t.get('status') in ['approved', 'stas', 'completed']])
     rejected = len([t for t in transactions if t.get('status') in ['rejected', 'cancelled']])
