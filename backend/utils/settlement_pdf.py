@@ -403,13 +403,13 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     decl_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY)]))
     elements.append(decl_header_t)
     
-    # نص الإقرار القانوني الكامل
-    decl_ar = f"""أقر أنا الموقع أدناه {emp_name} بأنني استلمت من شركة دار الكود للاستشارات الهندسية كافة مستحقاتي المالية الموضحة أعلاه، وأُقر بإبراء ذمة الشركة إبراءً تاماً من أي حقوق أو مطالبات مالية أو عمالية حالية أو مستقبلية، وأُقر بعلمي التام بجميع البنود والمبالغ الواردة في هذه المخالصة، وأن هذا الإقرار نهائي وقاطع ولا يحق لي المطالبة بأي مبالغ إضافية بعد توقيعي على هذه الوثيقة."""
+    # نص الإقرار القانوني الكامل - يتضمن اسم الموظف ورقم الهوية والمبلغ والتاريخ والمدينة
+    decl_ar = f"""أقر أنا الموقع أدناه/ {emp_name} صاحب الهوية/الإقامة رقم ({national_id}) بأنني استلمت من شركة دار الكود للاستشارات الهندسية بالرياض كافة مستحقاتي المالية الموضحة أعلاه والبالغة ({net_amount:,.2f}) ريال سعودي {net_words}، وأُقر بإبراء ذمة الشركة إبراءً تاماً شاملاً من أي حقوق أو مطالبات مالية أو عمالية سابقة أو حالية أو مستقبلية، وأُقر بعلمي التام بجميع البنود والمبالغ الواردة في هذه المخالصة، وأن هذا الإقرار نهائي وقاطع ولا يحق لي المطالبة بأي مبالغ إضافية بعد توقيعي على هذه الوثيقة. حُرر بمدينة الرياض بتاريخ {issue_date}."""
     
-    decl_en = """I, the undersigned, acknowledge receipt of all my financial entitlements from Dar Al Code Engineering Consultancy as detailed above. I hereby fully release and discharge the company from any current or future financial or labor claims. I confirm my complete knowledge of all items and amounts in this settlement. This declaration is final and binding, and I waive any right to claim additional amounts after signing this document."""
+    decl_en = f"""I, the undersigned, ID/Iqama ({national_id}), hereby acknowledge that I have received from Dar Al Code Engineering Consultancy in Riyadh all my financial entitlements as detailed above, totaling SAR {net_amount:,.2f}. I hereby fully and completely release and discharge the company from any previous, current, or future financial or labor claims. I confirm my complete knowledge and understanding of all items and amounts stated in this settlement. This declaration is final and conclusive. Executed in Riyadh on {issue_date}."""
     
-    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=5, alignment=TA_RIGHT, leading=6)
-    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=5, alignment=TA_LEFT, leading=6)
+    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=5, alignment=TA_RIGHT, leading=7)
+    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=5, alignment=TA_LEFT, leading=7)
     
     decl_data = [[Paragraph(decl_en, decl_style_en), Paragraph(reshape_arabic(decl_ar), decl_style_ar)]]
     decl_table = Table(decl_data, colWidths=[col_w, col_w])
