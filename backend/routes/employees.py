@@ -55,8 +55,9 @@ async def list_employees(user=Depends(get_current_user)):
         "is_active": 1, "status": 1, "email": 1, "phone": 1, "code": 1, 
         "supervisor_id": 1, "user_id": 1, "photo_url": 1, "hire_date": 1, 
         "start_date": 1, "created_at": 1,
-        # حقول الإقامة
-        "iqama_number": 1, "iqama_expiry_date": 1, "nationality": 1
+        # حقول الهوية/الإقامة
+        "is_saudi": 1, "national_id": 1, "iqama_number": 1, 
+        "iqama_expiry_date": 1, "id_expiry_date": 1, "nationality": 1
     }
     
     if role == 'employee':
