@@ -579,6 +579,17 @@ export default function SettlementPage() {
                   <td className="p-1">{lang === 'ar' ? `تعويض الإجازات (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} يوم)` : `Leave (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} days)`}</td>
                   <td className="p-1 text-right">{(manualMode ? manualValues.leave_compensation : snapshot.leave?.compensation)?.toLocaleString()}</td>
                 </tr>
+                {/* راتب خارج المسيرات */}
+                {snapshot.partial_month_salary?.amount > 0 && (
+                  <tr className="border-b bg-blue-50">
+                    <td className="p-1">
+                      {lang === 'ar' 
+                        ? `راتب خارج المسيرات (${snapshot.partial_month_salary?.days} يوم)` 
+                        : `Partial Month (${snapshot.partial_month_salary?.days} days)`}
+                    </td>
+                    <td className="p-1 text-right">{snapshot.partial_month_salary?.amount?.toLocaleString()}</td>
+                  </tr>
+                )}
                 {manualMode && manualValues.additional_entitlements > 0 && (
                   <tr className="border-b">
                     <td className="p-1">{lang === 'ar' ? 'إضافات أخرى' : 'Additional'}</td>
