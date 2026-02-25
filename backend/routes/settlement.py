@@ -744,3 +744,45 @@ async def get_unsettled_loans(employee_id: str) -> dict:
         "total": sum(i["amount"] for i in items),
         "count": len(items)
     }
+
+
+
+def calculate_partial_month_salary(last_working_day: str, daily_wage: float) -> dict:
+    """
+    حساب راتب آخر يوم عمل (خارج المسيرات)
+    ============================================================
+    يحسب مستحقات الموظف من الأيام بين بداية الشهر وآخر يوم عمل
+    هذا المبلغ يُصرف خارج المسيرات لأن الشهر لم يكتمل
+    
+    مثال: إذا آخر يوم عمل هو 15/02/2026
+    فالموظف يستحق راتب 15 يوم من شهر فبراير
+    """
+    from datetime import datetime
+    
+    try:
+        last_day = datetime.strptime(last_working_day, "%Y-%m-%d")
+        day_of_month = last_day.day
+        
+        # حساب المبلغ: عدد الأيام × الأجر اليومي
+        amount = round(day_of_month * daily_wage, 2)
+        
+        return {
+            "days": day_of_month,
+            "daily_wage": daily_wage,
+            "amount": amount,
+            "month": last_day.strftime("%Y-%m"),
+            "description_ar": f"راتب {day_of_month} يوم من شهر {last_day.month}/{last_day.year} (خارج المسيرات)",
+            "description_en": f"Salary for {day_of_month} days of {last_day.month}/{last_day.year} (Outside Payroll)",
+            "formula": f"{day_of_month} يوم × {daily_wage:,.2f} = {amount:,.2f}"
+        }
+    except Exception as e:
+        print(f"Error calculating partial month salary: {e}")
+        return {
+            "days": 0,
+            "daily_wage": daily_wage,
+            "amount": 0,
+            "month": "",
+            "description_ar": "خطأ في الحساب",
+            "description_en": "Calculation error",
+            "formula": ""
+        }
