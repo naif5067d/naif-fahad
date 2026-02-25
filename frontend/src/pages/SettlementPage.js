@@ -324,11 +324,6 @@ export default function SettlementPage() {
     }
   };
 
-  // حذف سلفة
-  const removeLoan = (id) => {
-    setManualLoans(manualLoans.filter(l => l.id !== id));
-  };
-
   // حساب إجمالي الخصومات اليدوية من الـ snapshot
   const getManualDeductions = () => selectedSettlement?.snapshot?.manual_deductions || [];
   const getManualLoans = () => selectedSettlement?.snapshot?.manual_loans || [];
