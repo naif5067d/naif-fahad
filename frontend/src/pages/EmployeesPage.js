@@ -19,6 +19,7 @@ export default function EmployeesPage() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [expiringContracts, setExpiringContracts] = useState([]);
+  const [expiringIqamas, setExpiringIqamas] = useState([]); // الإقامات المنتهية قريباً
   const [search, setSearch] = useState('');
   const [editDialog, setEditDialog] = useState(null);
   const [editForm, setEditForm] = useState({});
