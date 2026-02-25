@@ -164,6 +164,107 @@ async def create_leave_request(req: LeaveRequest, user=Depends(get_current_user)
     return tx
 
 
+# ==================== طلب إجازة من قبل الإدارة (سلطان / ستاس) ====================
+
+class AdminLeaveRequest(BaseModel):
+    employee_id: str  # رقم الموظف
+    leave_type: str
+    start_date: str
+    end_date: str
+    reason: str
+    medical_file_url: Optional[str] = None
+
+
+@router.post("/admin/request")
+async def create_admin_leave_request(req: AdminLeaveRequest, user=Depends(get_current_user)):
+    """
+    تسجيل إجازة نيابة عن موظف - متاح فقط لـ سلطان وستاس
+    """
+    # التحقق من الصلاحيات
+    if user.get('role') not in ['sultan', 'stas']:
+        raise HTTPException(status_code=403, detail="هذه الخدمة متاحة فقط لمدير العمليات ومسؤول النظام")
+    
+    # البحث عن الموظف
+    emp = await db.employees.find_one({"id": req.employee_id}, {"_id": 0})
+    if not emp:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    # التحقق من رفع ملف للإجازة المرضية
+    if req.leave_type == 'sick' and not req.medical_file_url:
+        raise HTTPException(status_code=400, detail="الإجازة المرضية تتطلب رفع ملف تقرير طبي")
+    
+    # التحقق من صحة الإجازة
+    validation = await validate_leave_request(
+        employee=emp,
+        leave_type=req.leave_type,
+        start_date=req.start_date,
+        end_date=req.end_date
+    )
+    
+    if not validation['valid']:
+        error = validation['errors'][0]
+        error_msg = error.get('message_ar', error.get('message', ''))
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    ref_no = await get_next_ref_no()
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # إنشاء المعاملة - تنفذ مباشرة لأنها من الإدارة
+    tx = {
+        "id": str(uuid.uuid4()),
+        "ref_no": ref_no,
+        "type": "leave_request",
+        "category": "leave",
+        "employee_id": emp['id'],
+        "employee_name": emp.get('full_name', ''),
+        "employee_name_ar": emp.get('full_name_ar', ''),
+        "employee_number": emp.get('employee_number', ''),
+        "created_by": user['user_id'],
+        "created_by_admin": True,  # علامة أنها من الإدارة
+        "data": {
+            "leave_type": req.leave_type,
+            "leave_type_ar": validation['leave_type_ar'],
+            "start_date": req.start_date,
+            "end_date": req.end_date,
+            "adjusted_end_date": validation.get('adjusted_end_date'),
+            "working_days": validation['working_days'],
+            "reason": req.reason,
+            "balance_before": validation.get('balance_before'),
+            "balance_after": validation.get('balance_after'),
+            "medical_file_url": req.medical_file_url,
+            "employee_name": emp.get('full_name', ''),
+            "employee_name_ar": emp.get('full_name_ar', '')
+        },
+        "status": "executed",  # تنفذ مباشرة
+        "current_stage": "executed",
+        "workflow": [],
+        "executed_by_admin": user.get('username', user['user_id']),
+        "timeline": [{
+            "event": "created_and_executed",
+            "actor": user['user_id'],
+            "actor_name": user.get('username', ''),
+            "timestamp": now,
+            "note": f"تسجيل إجازة من قبل الإدارة: {validation['leave_type_ar']}, {validation['working_days']} يوم",
+            "stage": "executed"
+        }],
+        "approval_chain": [],
+        "created_at": now,
+        "updated_at": now,
+        "executed_at": now
+    }
+    
+    await db.transactions.insert_one(tx)
+    tx.pop('_id', None)
+    
+    return {
+        "message": f"تم تسجيل الإجازة بنجاح",
+        "ref_no": ref_no,
+        "employee_name": emp.get('full_name_ar', emp.get('full_name', '')),
+        "working_days": validation['working_days'],
+        "transaction": tx
+    }
+
+
 @router.get("/balance")
 async def get_my_leave_balance(user=Depends(get_current_user)):
     """Get current user's leave balance breakdown - Pro-Rata"""
