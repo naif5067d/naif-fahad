@@ -355,8 +355,8 @@ export default function EmployeesPage() {
           : `${priorityText[summonForm.priority]} summon sent to "${summonDialog.full_name}"`
       );
       
-      // تحديث قائمة الاستدعاءات
-      api.get('/api/notifications/summons')
+      // تحديث قائمة الاستدعاءات (endpoint خاص للمرسل و stas)
+      api.get('/api/notifications/summons/active-for-list')
         .then(r => setActiveSummons(r.data.summons || []))
         .catch(() => {});
       
