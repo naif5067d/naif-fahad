@@ -298,8 +298,6 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     eos_amount = eos.get("final_amount", 0)
     leave_balance = leave.get("balance", 0)
-    leave_entitled = leave.get("entitled_days", 0)
-    leave_used = leave.get("used_days", 0)
     leave_comp = leave.get("compensation", 0)
     daily_wage = wages.get("daily_wage", 0)
     total_ent = totals.get("entitlements", {}).get("total", 0)
