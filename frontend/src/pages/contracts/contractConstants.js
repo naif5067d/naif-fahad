@@ -40,8 +40,12 @@ export const DEFAULT_CONTRACT_DATA = {
   employee_name_ar: '',
   email: '',
   phone: '',
-  national_id: '',
+  // بيانات الهوية/الإقامة
   is_saudi: null,
+  national_id: '',  // للسعودي
+  iqama_number: '',  // للأجنبي
+  iqama_expiry_date: '',  // للأجنبي
+  nationality: '',  // للأجنبي
   
   // الخطوة 2: الوظيفة والتواريخ
   contract_category: 'employment',
