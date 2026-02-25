@@ -647,10 +647,15 @@ async def get_settlement_pdf(
     if settlement["status"] != "executed":
         raise HTTPException(status_code=400, detail="لم يتم تنفيذ المخالصة بعد")
     
-    # جلب بيانات الشركة
+    # جلب بيانات الشركة - من عدة مصادر
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
     if not branding:
         branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
+    if not branding:
+        # محاولة من company_settings (مصدر آخر للشعار)
+        company_settings = await db.company_settings.find_one({"key": "login_page"}, {"_id": 0})
+        if company_settings and company_settings.get("logo_url"):
+            branding = {"logo_data": company_settings.get("logo_url")}
     
     # توليد PDF
     pdf_bytes = generate_settlement_pdf(settlement, branding)
