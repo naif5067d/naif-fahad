@@ -530,8 +530,9 @@ async def remove_manual_deduction(
     if not settlement:
         raise HTTPException(status_code=404, detail="المخالصة غير موجودة")
     
-    if settlement["status"] != "pending_stas":
-        raise HTTPException(status_code=400, detail="لا يمكن التعديل على مخالصة منفذة")
+    # السماح بالتعديل على المخالصات بحالة pending_stas أو executed
+    if settlement["status"] not in ["pending_stas", "executed"]:
+        raise HTTPException(status_code=400, detail="لا يمكن التعديل على هذه المخالصة")
     
     snapshot = settlement["snapshot"]
     
