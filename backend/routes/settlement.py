@@ -309,6 +309,7 @@ async def preview_settlement(
                 "total": round(total_deductions, 2)
             },
             "net_amount": round(net_amount, 2),
+            "net_amount_words": net_amount_words,
             "currency": "SAR"
         }
     }
