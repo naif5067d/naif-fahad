@@ -439,7 +439,7 @@ export default function EmployeesPage() {
                             activeSummon.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
                             'bg-green-100 text-green-700'
                           }`}
-                          title={activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}
+                          title={`${activeSummon.sender_name || (lang === 'ar' ? 'الإدارة' : 'Management')}: ${activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}`}
                         >
                           <Bell size={10} />
                           {lang === 'ar' 
