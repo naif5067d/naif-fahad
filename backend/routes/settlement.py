@@ -457,6 +457,117 @@ async def add_adjustment(
 
 
 # ============================================================
+# ADD MANUAL DEDUCTION/LOAN
+# ============================================================
+
+@router.post("/{settlement_id}/manual-deduction")
+async def add_manual_deduction(
+    settlement_id: str,
+    req: ManualDeduction,
+    user=Depends(require_roles('sultan', 'stas'))
+):
+    """
+    إضافة خصم أو سلفة يدوية للمخالصة
+    يظهر في PDF المخالصة مع السبب
+    """
+    settlement = await db.settlements.find_one({"id": settlement_id}, {"_id": 0})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="المخالصة غير موجودة")
+    
+    if settlement["status"] != "pending_stas":
+        raise HTTPException(status_code=400, detail="لا يمكن التعديل على مخالصة منفذة")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    deduction = {
+        "id": str(uuid.uuid4()),
+        "type": req.deduction_type,  # deduction | loan
+        "amount": req.amount,
+        "note": req.note,
+        "note_en": req.note,  # للعرض في PDF
+        "added_by": user["user_id"],
+        "added_by_name": user.get("full_name_ar") or user.get("full_name"),
+        "added_at": now
+    }
+    
+    # تحديد المفتاح في snapshot
+    if req.deduction_type == "loan":
+        key = "manual_loans"
+    else:
+        key = "manual_deductions"
+    
+    # تحديث الإجماليات
+    snapshot = settlement["snapshot"]
+    totals = snapshot["totals"]
+    totals["deductions"]["total"] += req.amount
+    totals["net_amount"] = totals["entitlements"]["total"] - totals["deductions"]["total"]
+    
+    await db.settlements.update_one(
+        {"id": settlement_id},
+        {
+            "$push": {f"snapshot.{key}": deduction},
+            "$set": {"snapshot.totals": totals}
+        }
+    )
+    
+    return {
+        "message": f"تم إضافة {'السلفة' if req.deduction_type == 'loan' else 'الخصم'}",
+        "deduction": deduction,
+        "new_total_deductions": totals["deductions"]["total"],
+        "new_net_amount": totals["net_amount"]
+    }
+
+
+@router.delete("/{settlement_id}/manual-deduction/{deduction_id}")
+async def remove_manual_deduction(
+    settlement_id: str,
+    deduction_id: str,
+    user=Depends(require_roles('sultan', 'stas'))
+):
+    """حذف خصم أو سلفة يدوية"""
+    settlement = await db.settlements.find_one({"id": settlement_id}, {"_id": 0})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="المخالصة غير موجودة")
+    
+    if settlement["status"] != "pending_stas":
+        raise HTTPException(status_code=400, detail="لا يمكن التعديل على مخالصة منفذة")
+    
+    snapshot = settlement["snapshot"]
+    
+    # البحث في كلا القائمتين
+    found = None
+    found_in = None
+    
+    for key in ["manual_deductions", "manual_loans"]:
+        items = snapshot.get(key, [])
+        for item in items:
+            if item.get("id") == deduction_id:
+                found = item
+                found_in = key
+                break
+        if found:
+            break
+    
+    if not found:
+        raise HTTPException(status_code=404, detail="الخصم غير موجود")
+    
+    # تحديث الإجماليات
+    totals = snapshot["totals"]
+    totals["deductions"]["total"] -= found["amount"]
+    totals["net_amount"] = totals["entitlements"]["total"] - totals["deductions"]["total"]
+    
+    await db.settlements.update_one(
+        {"id": settlement_id},
+        {
+            "$pull": {f"snapshot.{found_in}": {"id": deduction_id}},
+            "$set": {"snapshot.totals": totals}
+        }
+    )
+    
+    return {"message": "تم حذف الخصم", "new_net_amount": totals["net_amount"]}
+
+
+# ============================================================
 # EXECUTE SETTLEMENT (STAS ONLY)
 # ============================================================
 
