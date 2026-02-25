@@ -259,6 +259,17 @@ export default function TransactionDetailPage() {
       };
       return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
     }
+    // ترجمة نوع طلب الحضور
+    if (key === 'request_type') {
+      const types = {
+        forget_checkin: { ar: 'نسيان بصمة', en: 'Forgot Check-in' },
+        field_work: { ar: 'مهمة خارجية', en: 'Field Work' },
+        early_leave_request: { ar: 'طلب خروج مبكر', en: 'Early Leave Request' },
+        late_excuse: { ar: 'تبرير تأخير', en: 'Late Excuse' },
+        admin_edit: { ar: 'تعديل إداري', en: 'Admin Edit' },
+      };
+      return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
+    }
     if (key === 'employee_name' && lang === 'ar' && tx?.data?.employee_name_ar) {
       return tx.data.employee_name_ar;
     }
