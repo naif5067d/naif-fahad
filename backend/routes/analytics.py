@@ -541,6 +541,7 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
                 pass
     
     # حساب الدرجة
+    # إذا لا يوجد أي أعذار = الموظف ملتزم 100%
     # نسيان بصمة: كل مرة تخصم 10 نقاط (الحد 3)
     forget_penalty = min(forget_count * 10, 30)
     # تبرير تأخير: كل مرة تخصم 6 نقاط (الحد 5)
@@ -548,7 +549,16 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
     # خروج مبكر: كل 30 دقيقة تخصم 5 نقاط
     early_penalty = min((early_leave_minutes // 30) * 5, 40)
     
-    score = max(0, 100 - forget_penalty - late_penalty - early_penalty)
+    total_penalty = forget_penalty + late_penalty + early_penalty
+    
+    # إذا لا يوجد أي استخدام للأعذار، الدرجة 0 (لم يبدأ التقييم بعد)
+    # إذا استخدم أعذار، يبدأ من 100 وتُخصم
+    if forget_count == 0 and late_excuse_count == 0 and early_leave_minutes == 0:
+        score = 0  # لم يبدأ بعد
+        no_data = True
+    else:
+        score = max(0, 100 - total_penalty)
+        no_data = False
     
     return {
         "score": round(score, 1),
