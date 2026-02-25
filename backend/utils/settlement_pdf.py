@@ -188,10 +188,18 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     emp_name_en = employee.get("name_en", "") or "-"  # الاسم بالإنجليزي
     emp_code = employee.get("employee_number", "")
     national_id = employee.get("national_id", "") or employee.get("iqama_number", "")
-    job_title = contract.get("job_title") or contract.get("job_title_ar") or employee.get("job_title", "")
-    job_title_en = contract.get("job_title") or "-"  # المسمى بالإنجليزي
-    department = contract.get("department") or contract.get("department_ar") or employee.get("department", "")
-    department_en = contract.get("department") or "-"  # القسم بالإنجليزي
+    
+    # المسمى الوظيفي - التحقق من أن القيمة إنجليزية (لا تحتوي على عربي)
+    job_title_ar = contract.get("job_title_ar") or contract.get("job_title") or employee.get("job_title", "") or "-"
+    job_title_en_raw = contract.get("job_title") or ""
+    # إذا كان يحتوي على عربي، استخدم "-"
+    job_title_en = job_title_en_raw if job_title_en_raw and not any('\u0600' <= c <= '\u06FF' for c in job_title_en_raw) else "-"
+    
+    # القسم - التحقق من أن القيمة إنجليزية
+    department_ar = contract.get("department_ar") or contract.get("department") or employee.get("department", "") or "-"
+    department_en_raw = contract.get("department") or ""
+    department_en = department_en_raw if department_en_raw and not any('\u0600' <= c <= '\u06FF' for c in department_en_raw) else "-"
+    
     bank_name = contract.get("bank_name", "")
     bank_iban = contract.get("bank_iban", "")
     hire_date = contract.get("start_date", "")
@@ -209,8 +217,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         [en(emp_name_en), en("Name"), ar("الاسم"), ar(emp_name)],
         [en(emp_code), en("Employee ID"), ar("الرقم الوظيفي"), ar(emp_code)],
         [en(national_id), en("ID/Iqama"), ar("الهوية/الإقامة"), ar(national_id)],
-        [en(job_title_en), en("Job Title"), ar("المسمى الوظيفي"), ar(job_title or "-")],
-        [en(department_en), en("Department"), ar("القسم"), ar(department or "-")],
+        [en(job_title_en), en("Job Title"), ar("المسمى الوظيفي"), ar(job_title_ar)],
+        [en(department_en), en("Department"), ar("القسم"), ar(department_ar)],
         [en(bank_name), en("Bank"), ar("البنك"), ar(bank_name)],
         [en(bank_iban), en("IBAN"), ar("الآيبان"), ar(bank_iban)],
         [en(hire_date), en("Hire Date"), ar("تاريخ التعيين"), ar(hire_date)],
