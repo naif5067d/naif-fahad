@@ -635,40 +635,101 @@ export default function EmployeesPage() {
               <Switch data-testid="edit-active-toggle" checked={editForm.is_active} onCheckedChange={v => setEditForm(f => ({ ...f, is_active: v }))} />
             </div>
             
-            {/* قسم بيانات الإقامة */}
+            {/* قسم بيانات الهوية/الإقامة */}
             <div className="border-t pt-4 mt-4">
               <h4 className="text-sm font-bold mb-3 text-muted-foreground">
-                {lang === 'ar' ? 'بيانات الإقامة' : 'Iqama Details'}
+                {lang === 'ar' ? 'بيانات الهوية / الإقامة' : 'ID / Iqama Details'}
               </h4>
+              
+              {/* اختيار سعودي أو أجنبي */}
+              <div className="flex items-center gap-4 mb-4 p-3 bg-muted/50 rounded-lg">
+                <Label>{lang === 'ar' ? 'الجنسية:' : 'Nationality:'}</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      checked={editForm.is_saudi === true}
+                      onChange={() => setEditForm(f => ({ ...f, is_saudi: true, nationality: 'سعودي' }))}
+                      className="w-4 h-4"
+                    />
+                    <span className={editForm.is_saudi === true ? 'font-bold text-green-600' : ''}>
+                      {lang === 'ar' ? 'سعودي' : 'Saudi'}
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      checked={editForm.is_saudi === false}
+                      onChange={() => setEditForm(f => ({ ...f, is_saudi: false }))}
+                      className="w-4 h-4"
+                    />
+                    <span className={editForm.is_saudi === false ? 'font-bold text-blue-600' : ''}>
+                      {lang === 'ar' ? 'أجنبي' : 'Non-Saudi'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              
               <div className="space-y-3">
-                <div>
-                  <Label>{lang === 'ar' ? 'رقم الإقامة' : 'Iqama Number'}</Label>
-                  <Input 
-                    data-testid="edit-iqama-number"
-                    value={editForm.iqama_number || ''} 
-                    onChange={e => setEditForm(f => ({ ...f, iqama_number: e.target.value }))}
-                    placeholder="2000000000"
-                  />
-                </div>
-                <div>
-                  <Label>{lang === 'ar' ? 'تاريخ انتهاء الإقامة' : 'Iqama Expiry Date'}</Label>
-                  <Input 
-                    data-testid="edit-iqama-expiry"
-                    type="date"
-                    value={editForm.iqama_expiry_date || ''} 
-                    onChange={e => setEditForm(f => ({ ...f, iqama_expiry_date: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label>{lang === 'ar' ? 'الجنسية' : 'Nationality'}</Label>
-                  <Input 
-                    data-testid="edit-nationality"
-                    value={editForm.nationality || ''} 
-                    onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
-                    placeholder={lang === 'ar' ? 'مثال: مصري، سوداني' : 'e.g. Egyptian, Sudanese'}
-                    dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                  />
-                </div>
+                {/* للسعوديين */}
+                {editForm.is_saudi === true && (
+                  <>
+                    <div>
+                      <Label>{lang === 'ar' ? 'رقم الهوية الوطنية' : 'National ID'}</Label>
+                      <Input 
+                        data-testid="edit-national-id"
+                        value={editForm.national_id || ''} 
+                        onChange={e => setEditForm(f => ({ ...f, national_id: e.target.value }))}
+                        placeholder="10xxxxxxxx"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'تاريخ انتهاء الهوية' : 'ID Expiry Date'}</Label>
+                      <Input 
+                        data-testid="edit-id-expiry"
+                        type="date"
+                        value={editForm.id_expiry_date || ''} 
+                        onChange={e => setEditForm(f => ({ ...f, id_expiry_date: e.target.value }))}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {/* للأجانب */}
+                {editForm.is_saudi === false && (
+                  <>
+                    <div>
+                      <Label>{lang === 'ar' ? 'الجنسية' : 'Nationality'}</Label>
+                      <Input 
+                        data-testid="edit-nationality"
+                        value={editForm.nationality || ''} 
+                        onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
+                        placeholder={lang === 'ar' ? 'مثال: مصري، سوداني، هندي' : 'e.g. Egyptian, Sudanese'}
+                        dir={lang === 'ar' ? 'rtl' : 'ltr'}
+                      />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'رقم الإقامة' : 'Iqama Number'}</Label>
+                      <Input 
+                        data-testid="edit-iqama-number"
+                        value={editForm.iqama_number || ''} 
+                        onChange={e => setEditForm(f => ({ ...f, iqama_number: e.target.value }))}
+                        placeholder="2xxxxxxxxx"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <Label>{lang === 'ar' ? 'تاريخ انتهاء الإقامة' : 'Iqama Expiry Date'}</Label>
+                      <Input 
+                        data-testid="edit-iqama-expiry"
+                        type="date"
+                        value={editForm.iqama_expiry_date || ''} 
+                        onChange={e => setEditForm(f => ({ ...f, iqama_expiry_date: e.target.value }))}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
