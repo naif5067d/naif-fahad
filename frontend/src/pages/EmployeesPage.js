@@ -602,11 +602,14 @@ export default function EmployeesPage() {
         </div>
       </div>
 
-      {/* Edit Dialog (STAS only) */}
+      {/* Edit Dialog - مبسط (البيانات الضخمة في العقد) */}
       <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{lang === 'ar' ? 'تعديل الموظف' : 'Edit Employee'}: {editDialog?.employee_number}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {lang === 'ar' ? 'لتعديل المسمى الوظيفي والراتب والإقامة، عدّل العقد' : 'To edit job title, salary, iqama - edit the contract'}
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -617,123 +620,9 @@ export default function EmployeesPage() {
               <Label>{lang === 'ar' ? 'الاسم (عربي)' : 'Full Name (AR)'}</Label>
               <Input data-testid="edit-name-ar" value={editForm.full_name_ar || ''} onChange={e => setEditForm(f => ({ ...f, full_name_ar: e.target.value }))} dir="rtl" />
             </div>
-            <div>
-              <Label>{lang === 'ar' ? 'الدور (إنجليزي)' : 'Role/Department (EN)'}</Label>
-              <Input data-testid="edit-department-en" value={editForm.department || ''} onChange={e => setEditForm(f => ({ ...f, department: e.target.value }))} placeholder={lang === 'ar' ? 'مثال: Operations, HR, STAS' : 'e.g. Operations, HR, STAS'} />
-            </div>
-            <div>
-              <Label>{lang === 'ar' ? 'الدور (عربي)' : 'Role/Department (AR)'}</Label>
-              <Input data-testid="edit-department-ar" value={editForm.department_ar || ''} onChange={e => setEditForm(f => ({ ...f, department_ar: e.target.value }))} dir="rtl" placeholder={lang === 'ar' ? 'مثال: العمليات، الموارد البشرية، ستاس' : 'e.g. العمليات'} />
-            </div>
-            <div>
-              <Label>{lang === 'ar' ? 'المسمى الوظيفي (إنجليزي)' : 'Job Title (EN)'}</Label>
-              <Input data-testid="edit-job-title-en" value={editForm.job_title || ''} onChange={e => setEditForm(f => ({ ...f, job_title: e.target.value }))} />
-            </div>
-            <div>
-              <Label>{lang === 'ar' ? 'المسمى الوظيفي (عربي)' : 'Job Title (AR)'}</Label>
-              <Input data-testid="edit-job-title-ar" value={editForm.job_title_ar || ''} onChange={e => setEditForm(f => ({ ...f, job_title_ar: e.target.value }))} dir="rtl" />
-            </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <Label>{lang === 'ar' ? 'نشط' : 'Active'}</Label>
               <Switch data-testid="edit-active-toggle" checked={editForm.is_active} onCheckedChange={v => setEditForm(f => ({ ...f, is_active: v }))} />
-            </div>
-            
-            {/* قسم بيانات الهوية/الإقامة */}
-            <div className="border-t pt-4 mt-4">
-              <h4 className="text-sm font-bold mb-3 text-muted-foreground">
-                {lang === 'ar' ? 'بيانات الهوية / الإقامة' : 'ID / Iqama Details'}
-              </h4>
-              
-              {/* اختيار سعودي أو أجنبي */}
-              <div className="flex items-center gap-4 mb-4 p-3 bg-muted/50 rounded-lg">
-                <Label>{lang === 'ar' ? 'الجنسية:' : 'Nationality:'}</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      checked={editForm.is_saudi === true}
-                      onChange={() => setEditForm(f => ({ ...f, is_saudi: true, nationality: 'سعودي' }))}
-                      className="w-4 h-4"
-                    />
-                    <span className={editForm.is_saudi === true ? 'font-bold text-green-600' : ''}>
-                      {lang === 'ar' ? 'سعودي' : 'Saudi'}
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      checked={editForm.is_saudi === false}
-                      onChange={() => setEditForm(f => ({ ...f, is_saudi: false }))}
-                      className="w-4 h-4"
-                    />
-                    <span className={editForm.is_saudi === false ? 'font-bold text-blue-600' : ''}>
-                      {lang === 'ar' ? 'أجنبي' : 'Non-Saudi'}
-                    </span>
-                  </label>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                {/* للسعوديين */}
-                {editForm.is_saudi === true && (
-                  <>
-                    <div>
-                      <Label>{lang === 'ar' ? 'رقم الهوية الوطنية' : 'National ID'}</Label>
-                      <Input 
-                        data-testid="edit-national-id"
-                        value={editForm.national_id || ''} 
-                        onChange={e => setEditForm(f => ({ ...f, national_id: e.target.value }))}
-                        placeholder="10xxxxxxxx"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div>
-                      <Label>{lang === 'ar' ? 'تاريخ انتهاء الهوية' : 'ID Expiry Date'}</Label>
-                      <Input 
-                        data-testid="edit-id-expiry"
-                        type="date"
-                        value={editForm.id_expiry_date || ''} 
-                        onChange={e => setEditForm(f => ({ ...f, id_expiry_date: e.target.value }))}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                {/* للأجانب */}
-                {editForm.is_saudi === false && (
-                  <>
-                    <div>
-                      <Label>{lang === 'ar' ? 'الجنسية' : 'Nationality'}</Label>
-                      <Input 
-                        data-testid="edit-nationality"
-                        value={editForm.nationality || ''} 
-                        onChange={e => setEditForm(f => ({ ...f, nationality: e.target.value }))}
-                        placeholder={lang === 'ar' ? 'مثال: مصري، سوداني، هندي' : 'e.g. Egyptian, Sudanese'}
-                        dir={lang === 'ar' ? 'rtl' : 'ltr'}
-                      />
-                    </div>
-                    <div>
-                      <Label>{lang === 'ar' ? 'رقم الإقامة' : 'Iqama Number'}</Label>
-                      <Input 
-                        data-testid="edit-iqama-number"
-                        value={editForm.iqama_number || ''} 
-                        onChange={e => setEditForm(f => ({ ...f, iqama_number: e.target.value }))}
-                        placeholder="2xxxxxxxxx"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div>
-                      <Label>{lang === 'ar' ? 'تاريخ انتهاء الإقامة' : 'Iqama Expiry Date'}</Label>
-                      <Input 
-                        data-testid="edit-iqama-expiry"
-                        type="date"
-                        value={editForm.iqama_expiry_date || ''} 
-                        onChange={e => setEditForm(f => ({ ...f, iqama_expiry_date: e.target.value }))}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
             </div>
             
             <Button data-testid="save-employee" onClick={handleSave} className="w-full bg-primary text-primary-foreground" disabled={saving}>
