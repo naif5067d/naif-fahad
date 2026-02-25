@@ -4,7 +4,7 @@ Settlement PDF Generator - وثيقة المخالصة
 - صفحة واحدة A4 فقط
 - Hybrid bilingual: يمين عربي، يسار إنجليزي
 - QR للتحقق من STAS فقط
-- توقيع يدوي: سلطان + محمد + الموظف
+- توقيع يدوي: سلطان + محمد + الموظف + محاسب الصندوق
 ============================================================
 """
 
@@ -33,7 +33,7 @@ GREEN = colors.HexColor('#16A34A')
 
 # أبعاد
 PAGE_WIDTH, PAGE_HEIGHT = A4
-MARGIN = 10 * mm
+MARGIN = 8 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
 
 # تسجيل الخطوط
@@ -42,48 +42,29 @@ ARABIC_FONT = 'Helvetica'
 ARABIC_FONT_BOLD = 'Helvetica-Bold'
 
 def _register_fonts():
-    """تسجيل الخطوط العربية - محاولة واحدة فقط"""
+    """تسجيل الخطوط العربية"""
     global ARABIC_FONT, ARABIC_FONT_BOLD
     
-    # تحقق إذا تم التسجيل مسبقاً
     registered = pdfmetrics.getRegisteredFontNames()
     if 'Amiri' in registered:
         ARABIC_FONT = 'Amiri'
         ARABIC_FONT_BOLD = 'Amiri'
         return True
     
-    # محاولة Amiri
     amiri_path = os.path.join(FONT_DIR, 'Amiri-Regular.ttf')
     if os.path.exists(amiri_path):
         try:
             file_size = os.path.getsize(amiri_path)
-            if file_size > 50000:  # ملف صالح
+            if file_size > 50000:
                 pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
                 ARABIC_FONT = 'Amiri'
                 ARABIC_FONT_BOLD = 'Amiri'
-                print(f"[PDF] Amiri font registered successfully ({file_size} bytes)")
                 return True
         except Exception as e:
-            print(f"[PDF] Amiri registration failed: {e}")
+            print(f"[PDF] Amiri error: {e}")
     
-    # محاولة NotoNaskh
-    noto_path = os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
-    if os.path.exists(noto_path):
-        try:
-            file_size = os.path.getsize(noto_path)
-            if file_size > 50000:
-                pdfmetrics.registerFont(TTFont('NotoNaskh', noto_path))
-                ARABIC_FONT = 'NotoNaskh'
-                ARABIC_FONT_BOLD = 'NotoNaskh'
-                print(f"[PDF] NotoNaskh font registered successfully ({file_size} bytes)")
-                return True
-        except Exception as e:
-            print(f"[PDF] NotoNaskh registration failed: {e}")
-    
-    print("[PDF] WARNING: No Arabic font available, using Helvetica")
     return False
 
-# تسجيل الخطوط عند التحميل
 _register_fonts()
 
 
@@ -95,12 +76,11 @@ def reshape_arabic(text):
         text_str = str(text)
         reshaped = arabic_reshaper.reshape(text_str)
         return get_display(reshaped)
-    except Exception as e:
-        print(f"[PDF] Arabic reshape error: {e}")
+    except Exception:
         return str(text)
 
 
-def create_qr_image(data, size=20):
+def create_qr_image(data, size=18):
     """إنشاء QR Code"""
     try:
         qr = qrcode.QRCode(version=1, box_size=2, border=1)
@@ -111,52 +91,39 @@ def create_qr_image(data, size=20):
         img.save(buffer, format='PNG')
         buffer.seek(0)
         return Image(buffer, width=size*mm, height=size*mm)
-    except Exception as e:
-        print(f"[PDF] QR creation error: {e}")
+    except Exception:
         return None
 
 
 def load_logo_image(branding):
-    """تحميل شعار الشركة من البيانات"""
+    """تحميل شعار الشركة"""
     if not branding:
         return None
     
-    # محاولة جلب اللوقو من مصادر مختلفة
     logo_data = None
-    
-    # أولاً: من branding مباشرة
     if isinstance(branding, dict):
         logo_data = branding.get('logo_data') or branding.get('logo_url')
-        
-        # ثانياً: من branding.branding (nested)
         if not logo_data and 'branding' in branding:
             nested = branding.get('branding', {})
             if isinstance(nested, dict):
                 logo_data = nested.get('logo_data') or nested.get('logo_url')
     
     if not logo_data:
-        print("[PDF] No logo data found in branding")
         return None
     
     try:
-        # إزالة prefix إذا موجود (data:image/png;base64,)
         if isinstance(logo_data, str) and ',' in logo_data:
             logo_data = logo_data.split(',')[1]
-        
         logo_bytes = base64.b64decode(logo_data)
         logo_buffer = io.BytesIO(logo_bytes)
-        logo_img = Image(logo_buffer, width=18*mm, height=10*mm)
-        print("[PDF] Logo loaded successfully")
-        return logo_img
-    except Exception as e:
-        print(f"[PDF] Logo loading error: {e}")
+        return Image(logo_buffer, width=15*mm, height=10*mm)
+    except Exception:
         return None
 
 
 def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
-    """توليد PDF المخالصة - صفحة واحدة"""
+    """توليد PDF المخالصة - صفحة واحدة A4"""
     
-    # إعادة تسجيل الخطوط للتأكد
     _register_fonts()
     
     buffer = io.BytesIO()
@@ -165,8 +132,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         pagesize=A4,
         leftMargin=MARGIN,
         rightMargin=MARGIN,
-        topMargin=8*mm,
-        bottomMargin=8*mm
+        topMargin=6*mm,
+        bottomMargin=6*mm
     )
     
     elements = []
@@ -178,14 +145,16 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     eos = snapshot.get("eos", {})
     leave = snapshot.get("leave", {})
     totals = snapshot.get("totals", {})
+    partial_month = snapshot.get("partial_month_salary", {})
+    custody = snapshot.get("custody_balance", {})
     
-    # === STYLES (خطوط صغيرة لضمان صفحة واحدة) ===
-    style_ar = ParagraphStyle('ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, leading=9)
-    style_ar_bold = ParagraphStyle('ar_bold', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_RIGHT, leading=9)
-    style_en = ParagraphStyle('en', fontName='Helvetica', fontSize=7, alignment=TA_LEFT, leading=9)
-    style_en_bold = ParagraphStyle('en_bold', fontName='Helvetica-Bold', fontSize=7, alignment=TA_LEFT, leading=9)
-    style_header_ar = ParagraphStyle('header_ar', fontName=ARABIC_FONT_BOLD, fontSize=8, alignment=TA_RIGHT, textColor=colors.white)
-    style_header_en = ParagraphStyle('header_en', fontName='Helvetica-Bold', fontSize=8, alignment=TA_LEFT, textColor=colors.white)
+    # === STYLES (خطوط صغيرة جداً لضمان صفحة واحدة) ===
+    style_ar = ParagraphStyle('ar', fontName=ARABIC_FONT, fontSize=6, alignment=TA_RIGHT, leading=7)
+    style_ar_bold = ParagraphStyle('ar_bold', fontName=ARABIC_FONT_BOLD, fontSize=6, alignment=TA_RIGHT, leading=7)
+    style_en = ParagraphStyle('en', fontName='Helvetica', fontSize=6, alignment=TA_LEFT, leading=7)
+    style_en_bold = ParagraphStyle('en_bold', fontName='Helvetica-Bold', fontSize=6, alignment=TA_LEFT, leading=7)
+    style_header_ar = ParagraphStyle('header_ar', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_RIGHT, textColor=colors.white)
+    style_header_en = ParagraphStyle('header_en', fontName='Helvetica-Bold', fontSize=7, alignment=TA_LEFT, textColor=colors.white)
     
     def ar(text): return Paragraph(reshape_arabic(str(text)), style_ar)
     def ar_b(text): return Paragraph(reshape_arabic(str(text)), style_ar_bold)
@@ -196,14 +165,12 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     col_w = CONTENT_WIDTH / 2
     
-    # === 1. HEADER WITH LOGO / الترويسة مع الشعار ===
+    # === 1. HEADER / الترويسة ===
     txn = settlement.get("transaction_number", "")
     issue_date = settlement.get("executed_at", "")[:10] if settlement.get("executed_at") else datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # تحميل شعار الشركة
     logo_img = load_logo_image(branding)
     
-    # ترويسة
     if logo_img:
         header_data = [
             [en("Kingdom of Saudi Arabia"), logo_img, ar("المملكة العربية السعودية")],
@@ -224,11 +191,10 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LINEBELOW', (0, -1), (-1, -1), 1.5, NAVY),
-        ('SPAN', (1, 0), (1, 2)) if logo_img else ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('LINEBELOW', (0, -1), (-1, -1), 1, NAVY),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # رقم المعاملة
     ref_data = [[en(f"Ref: {txn} | Date: {issue_date}"), ar(f"مرجع: {txn} | التاريخ: {issue_date}")]]
@@ -240,39 +206,45 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
     ]))
     elements.append(ref_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # === 2. EMPLOYEE INFO / بيانات الموظف ===
     emp_header = [[h_en("Employee Information"), h_ar("بيانات الموظف")]]
     emp_header_t = Table(emp_header, colWidths=[col_w, col_w])
-    emp_header_t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), NAVY),
-        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-    ]))
+    emp_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY), ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
     elements.append(emp_header_t)
     
     emp_name = employee.get("name_ar", "")
     emp_code = employee.get("employee_number", "")
+    national_id = employee.get("national_id", "") or employee.get("iqama_number", "")
+    job_title = employee.get("job_title", "")
+    department = employee.get("department", "")
+    bank_name = contract.get("bank_name", "")
+    bank_iban = contract.get("bank_iban", "")
     hire_date = contract.get("start_date", "")
     last_day = contract.get("last_working_day", "")
     clearance_type = contract.get("termination_type_label", "")
     
-    # فترة الخدمة
     service_years = service.get("years", 0)
     service_months = service.get("months", 0)
     service_days_count = service.get("days", 0)
     service_duration = f"{service_years} سنة و {service_months} شهر و {service_days_count} يوم"
     
+    # جدول بيانات الموظف - 4 أعمدة
     emp_data = [
         [en(emp_name), en("Name"), ar("الاسم"), ar(emp_name)],
         [en(emp_code), en("Employee ID"), ar("الرقم الوظيفي"), ar(emp_code)],
+        [en(national_id), en("ID/Iqama"), ar("الهوية/الإقامة"), ar(national_id)],
+        [en(job_title), en("Job Title"), ar("المسمى الوظيفي"), ar(job_title)],
+        [en(department), en("Department"), ar("القسم"), ar(department)],
+        [en(bank_name), en("Bank"), ar("البنك"), ar(bank_name)],
+        [en(bank_iban), en("IBAN"), ar("الآيبان"), ar(bank_iban)],
         [en(hire_date), en("Hire Date"), ar("تاريخ التعيين"), ar(hire_date)],
         [en(last_day), en("Last Working Day"), ar("آخر يوم عمل"), ar(last_day)],
         [en(f"{service_years}y {service_months}m {service_days_count}d"), en("Service Period"), ar("مدة الخدمة"), ar(service_duration)],
         [en(clearance_type), en("Clearance Type"), ar("نوع المخالصة"), ar(clearance_type)],
     ]
-    emp_table = Table(emp_data, colWidths=[col_w*0.4, col_w*0.6, col_w*0.6, col_w*0.4])
+    emp_table = Table(emp_data, colWidths=[col_w*0.35, col_w*0.65, col_w*0.65, col_w*0.35])
     emp_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (1, -1), 'LEFT'),
         ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
@@ -280,11 +252,11 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
         ('BACKGROUND', (1, 0), (1, -1), LIGHT_BG),
         ('BACKGROUND', (2, 0), (2, -1), LIGHT_BG),
-        ('TOPPADDING', (0, 0), (-1, -1), 1),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.5),
     ]))
     elements.append(emp_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # === 3. SALARY / الراتب ===
     sal_header = [[h_en("Salary Details"), h_ar("تفاصيل الراتب")]]
@@ -305,18 +277,18 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         [en(f"{nature:,.0f}"), en("Nature of Work"), ar("بدل طبيعة العمل"), ar(f"{nature:,.0f}")],
         [en_b(f"{last_wage:,.0f}"), en_b("Total Salary"), ar_b("إجمالي الراتب"), ar_b(f"{last_wage:,.0f}")],
     ]
-    sal_table = Table(sal_data, colWidths=[col_w*0.35, col_w*0.65, col_w*0.65, col_w*0.35])
+    sal_table = Table(sal_data, colWidths=[col_w*0.3, col_w*0.7, col_w*0.7, col_w*0.3])
     sal_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (1, -1), 'LEFT'),
         ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
         ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E8F5E9')),
-        ('TOPPADDING', (0, 0), (-1, -1), 1),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.5),
     ]))
     elements.append(sal_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # === 4. ENTITLEMENTS / الاستحقاقات ===
     ent_header = [[h_en("Entitlements"), h_ar("الاستحقاقات")]]
@@ -326,56 +298,52 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     eos_amount = eos.get("final_amount", 0)
     leave_balance = leave.get("balance", 0)
+    leave_entitled = leave.get("entitled_days", 0)
+    leave_used = leave.get("used_days", 0)
     leave_comp = leave.get("compensation", 0)
     daily_wage = wages.get("daily_wage", 0)
     total_ent = totals.get("entitlements", {}).get("total", 0)
-    
-    # راتب آخر يوم عمل (خارج المسيرات)
-    partial_month = snapshot.get("partial_month_salary", {})
     partial_amount = partial_month.get("amount", 0)
     partial_days = partial_month.get("days", 0)
     
-    # مكافأة نهاية الخدمة مع الفترة
     eos_pct = eos.get('percentage', 100)
-    eos_detail = f"({service_years} سنة × {eos_pct}%)"
-    eos_detail_en = f"({service_years}y × {eos_pct}%)"
     
-    # بدل الإجازات مع عدد الأيام
-    leave_detail = f"{leave_balance:.1f} يوم × {daily_wage:,.0f}"
-    leave_detail_en = f"{leave_balance:.1f} days × {daily_wage:,.0f}"
+    ent_data = []
     
-    # بناء جدول الاستحقاقات
-    ent_data = [
-        [en(f"{eos_amount:,.0f}"), en(f"End of Service {eos_detail_en}"), ar(f"مكافأة نهاية الخدمة {eos_detail}"), ar(f"{eos_amount:,.0f}")],
-        [en(f"{leave_comp:,.0f}"), en(f"Leave Compensation ({leave_detail_en})"), ar(f"بدل الإجازات ({leave_detail})"), ar(f"{leave_comp:,.0f}")],
-    ]
-    
-    # إضافة راتب آخر يوم عمل إذا كان أكبر من صفر
+    # راتب خارج المسيرات
     if partial_amount > 0:
-        partial_detail = f"{partial_days} يوم × {daily_wage:,.0f}"
-        partial_detail_en = f"{partial_days} days × {daily_wage:,.0f}"
         ent_data.append([
             en(f"{partial_amount:,.0f}"), 
-            en(f"Partial Month Salary ({partial_detail_en})"), 
-            ar(f"راتب خارج المسيرات ({partial_detail})"), 
+            en(f"Partial Month ({partial_days} days)"), 
+            ar(f"راتب خارج المسيرات ({partial_days} يوم)"), 
             ar(f"{partial_amount:,.0f}")
         ])
     
-    # إضافة الإجمالي
+    # بدل الإجازات
+    leave_detail = f"({leave_balance:.1f} يوم × {daily_wage:,.0f})"
+    leave_detail_en = f"({leave_balance:.1f} days × {daily_wage:,.0f})"
+    ent_data.append([en(f"{leave_comp:,.0f}"), en(f"Leave {leave_detail_en}"), ar(f"بدل الإجازات {leave_detail}"), ar(f"{leave_comp:,.0f}")])
+    
+    # مكافأة نهاية الخدمة
+    eos_detail = f"({service_years} سنة × {eos_pct}%)"
+    eos_detail_en = f"({service_years}y × {eos_pct}%)"
+    ent_data.append([en(f"{eos_amount:,.0f}"), en(f"End of Service {eos_detail_en}"), ar(f"مكافأة نهاية الخدمة {eos_detail}"), ar(f"{eos_amount:,.0f}")])
+    
+    # الإجمالي
     ent_data.append([en_b(f"{total_ent:,.0f}"), en_b("Total Entitlements"), ar_b("إجمالي الاستحقاقات"), ar_b(f"{total_ent:,.0f}")])
     
-    ent_table = Table(ent_data, colWidths=[col_w*0.25, col_w*0.75, col_w*0.75, col_w*0.25])
+    ent_table = Table(ent_data, colWidths=[col_w*0.2, col_w*0.8, col_w*0.8, col_w*0.2])
     ent_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (1, -1), 'LEFT'),
         ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
         ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E8F5E9')),
-        ('TOPPADDING', (0, 0), (-1, -1), 1),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.5),
     ]))
     elements.append(ent_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # === 5. DEDUCTIONS / الاستقطاعات ===
     ded_header = [[h_en("Deductions"), h_ar("الاستقطاعات")]]
@@ -386,30 +354,39 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     deductions = totals.get("deductions", {})
     loans = deductions.get("loans", 0)
     other_ded = deductions.get("deductions", 0)
+    custody_total = deductions.get("custody", 0) or custody.get("total", 0)
     total_ded = deductions.get("total", 0)
     
     ded_data = [
-        [en(f"{loans:,.0f}"), en("Loans"), ar("السلف"), ar(f"{loans:,.0f}")],
+        [en(f"{loans:,.0f}"), en("Loans / Advances"), ar("السلف"), ar(f"{loans:,.0f}")],
+        [en(f"{custody_total:,.0f}"), en("Petty Cash / Trust"), ar("رصيد العهد"), ar(f"{custody_total:,.0f}")],
         [en(f"{other_ded:,.0f}"), en("Other Deductions"), ar("خصومات أخرى"), ar(f"{other_ded:,.0f}")],
         [en_b(f"{total_ded:,.0f}"), en_b("Total Deductions"), ar_b("إجمالي الاستقطاعات"), ar_b(f"{total_ded:,.0f}")],
     ]
-    ded_table = Table(ded_data, colWidths=[col_w*0.35, col_w*0.65, col_w*0.65, col_w*0.35])
+    ded_table = Table(ded_data, colWidths=[col_w*0.3, col_w*0.7, col_w*0.7, col_w*0.3])
     ded_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (1, -1), 'LEFT'),
         ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
         ('INNERGRID', (0, 0), (-1, -1), 0.3, BORDER),
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#FFEBEE')),
-        ('TOPPADDING', (0, 0), (-1, -1), 1),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ('TOPPADDING', (0, 0), (-1, -1), 0.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0.5),
     ]))
     elements.append(ded_table)
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1.5*mm))
     
     # === 6. NET AMOUNT / الصافي ===
     net_amount = totals.get("net_amount", 0)
-    net_style = ParagraphStyle('net', fontName='Helvetica-Bold', fontSize=11, alignment=TA_CENTER, textColor=NAVY)
-    net_style_ar = ParagraphStyle('net_ar', fontName=ARABIC_FONT_BOLD, fontSize=11, alignment=TA_CENTER, textColor=NAVY)
+    net_words = totals.get("net_amount_words", "")
+    
+    # إذا لم يكن المبلغ كتابة موجوداً، نحسبه
+    if not net_words:
+        from utils.arabic_numbers import number_to_arabic
+        net_words = number_to_arabic(net_amount)
+    
+    net_style = ParagraphStyle('net', fontName='Helvetica-Bold', fontSize=10, alignment=TA_CENTER, textColor=NAVY)
+    net_style_ar = ParagraphStyle('net_ar', fontName=ARABIC_FONT_BOLD, fontSize=10, alignment=TA_CENTER, textColor=NAVY)
     
     net_data = [[
         Paragraph(f"SAR {net_amount:,.2f}", net_style),
@@ -420,11 +397,21 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('BOX', (0, 0), (-1, -1), 2, NAVY),
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E3F2FD')),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
     ]))
     elements.append(net_table)
-    elements.append(Spacer(1, 3*mm))
+    
+    # المبلغ كتابةً
+    words_style = ParagraphStyle('words', fontName=ARABIC_FONT, fontSize=6, alignment=TA_CENTER, textColor=NAVY)
+    words_table = Table([[Paragraph(reshape_arabic(net_words), words_style)]], colWidths=[CONTENT_WIDTH])
+    words_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
+    ]))
+    elements.append(words_table)
+    elements.append(Spacer(1, 2*mm))
     
     # === 7. DECLARATION / الإقرار ===
     decl_header = [[h_en("Declaration"), h_ar("الإقرار")]]
@@ -432,12 +419,11 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     decl_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY), ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
     elements.append(decl_header_t)
     
-    # نص الإقرار - يبدأ بـ "أقر باستلام من شركة دار الكود..."
     decl_ar = f"أقر باستلام من شركة دار الكود للاستشارات الهندسية جميع مستحقاتي وفقاً للبيانات أعلاه. أنا {emp_name} أُقر بأن هذا المبلغ يمثل كافة مستحقاتي حتى تاريخ {last_day}، وأُبرئ ذمة الشركة من أي مطالبات مستقبلية."
-    decl_en = f"I, {emp_name}, acknowledge receipt of all my entitlements from Dar Al Code Engineering Consultancy as detailed above. This amount represents all my dues until {last_day}, and I release the company from any future claims."
+    decl_en = f"I, {emp_name}, acknowledge receipt of all my entitlements from Dar Al Code Engineering Consultancy. This amount represents all my dues until {last_day}, and I release the company from any future claims."
     
-    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=6, alignment=TA_RIGHT, leading=8)
-    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=6, alignment=TA_LEFT, leading=8)
+    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=5, alignment=TA_RIGHT, leading=6)
+    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=5, alignment=TA_LEFT, leading=6)
     
     decl_data = [[Paragraph(decl_en, decl_style_en), Paragraph(reshape_arabic(decl_ar), decl_style_ar)]]
     decl_table = Table(decl_data, colWidths=[col_w, col_w])
@@ -446,90 +432,77 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
         ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
         ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-        ('LEFTPADDING', (0, 0), (-1, -1), 3),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     elements.append(decl_table)
-    elements.append(Spacer(1, 3*mm))
+    elements.append(Spacer(1, 2*mm))
     
-    # === 8. SIGNATURES / التوقيعات ===
+    # === 8. SIGNATURES / التوقيعات (5 أعمدة) ===
     sig_header = [[h_en("Signatures"), h_ar("التوقيعات")]]
     sig_header_t = Table(sig_header, colWidths=[col_w, col_w])
     sig_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY), ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT')]))
     elements.append(sig_header_t)
     
-    # QR Code لـ STAS فقط مع نص "تمت المخالصة من النظام"
     qr_data = f"DAR-SETTLEMENT|{txn}|NET:{net_amount:.0f}|DATE:{issue_date}|VERIFIED"
-    qr_img = create_qr_image(qr_data, size=18)
+    qr_img = create_qr_image(qr_data, size=15)
     
-    # أنماط التوقيع
-    sig_name = ParagraphStyle('sig_name', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_CENTER, textColor=NAVY)
-    sig_title = ParagraphStyle('sig_title', fontName=ARABIC_FONT, fontSize=6, alignment=TA_CENTER, textColor=colors.gray)
-    sig_line = ParagraphStyle('sig_line', fontName='Helvetica', fontSize=8, alignment=TA_CENTER)
+    sig_name = ParagraphStyle('sig_name', fontName=ARABIC_FONT_BOLD, fontSize=6, alignment=TA_CENTER, textColor=NAVY)
+    sig_title = ParagraphStyle('sig_title', fontName=ARABIC_FONT, fontSize=5, alignment=TA_CENTER, textColor=colors.gray)
+    sig_line = ParagraphStyle('sig_line', fontName='Helvetica', fontSize=7, alignment=TA_CENTER)
     
-    # STAS - QR فقط مع نص "تمت المخالصة من النظام"
+    # STAS - QR
     stas_content = Table([
-        [Paragraph(reshape_arabic("تمت المخالصة من النظام"), ParagraphStyle('stas', fontName=ARABIC_FONT_BOLD, fontSize=7, alignment=TA_CENTER, textColor=GREEN))],
-        [Paragraph("System Verified", ParagraphStyle('stas_en', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=GREEN))],
+        [Paragraph(reshape_arabic("تمت المخالصة"), ParagraphStyle('s', fontName=ARABIC_FONT_BOLD, fontSize=5, alignment=TA_CENTER, textColor=GREEN))],
         [qr_img if qr_img else Paragraph("QR", sig_line)],
-        [Paragraph("STAS", ParagraphStyle('stas_label', fontName='Helvetica-Bold', fontSize=7, alignment=TA_CENTER, textColor=NAVY))],
-    ], colWidths=[35*mm])
+        [Paragraph("STAS", ParagraphStyle('sl', fontName='Helvetica-Bold', fontSize=6, alignment=TA_CENTER, textColor=NAVY))],
+    ], colWidths=[28*mm])
     stas_content.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOX', (0, 0), (-1, -1), 1, GREEN),
+        ('BOX', (0, 0), (-1, -1), 0.5, GREEN),
         ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E8F5E9')),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
     ]))
     
-    # أ.سلطان الزامل - توقيع يدوي
+    # سلطان
     sultan_content = Table([
         [Paragraph(reshape_arabic("أ.سلطان الزامل"), sig_name)],
         [Paragraph(reshape_arabic("المدير الإداري"), sig_title)],
-        [Spacer(1, 8*mm)],
-        [Paragraph("_____________", sig_line)],
-    ], colWidths=[35*mm])
-    sultan_content.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
+        [Spacer(1, 6*mm)],
+        [Paragraph("___________", sig_line)],
+    ], colWidths=[28*mm])
+    sultan_content.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('BOX', (0, 0), (-1, -1), 0.5, BORDER)]))
     
-    # م.محمد الثنيان - توقيع يدوي
+    # محمد
     mohammed_content = Table([
         [Paragraph(reshape_arabic("م.محمد الثنيان"), sig_name)],
         [Paragraph(reshape_arabic("المدير التنفيذي"), sig_title)],
-        [Spacer(1, 8*mm)],
-        [Paragraph("_____________", sig_line)],
-    ], colWidths=[35*mm])
-    mohammed_content.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
+        [Spacer(1, 6*mm)],
+        [Paragraph("___________", sig_line)],
+    ], colWidths=[28*mm])
+    mohammed_content.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('BOX', (0, 0), (-1, -1), 0.5, BORDER)]))
     
-    # الموظف - توقيع يدوي
+    # محاسب الصندوق
+    cashier_content = Table([
+        [Paragraph(reshape_arabic("محاسب الصندوق"), sig_name)],
+        [Paragraph(reshape_arabic("الشؤون المالية"), sig_title)],
+        [Spacer(1, 6*mm)],
+        [Paragraph("___________", sig_line)],
+    ], colWidths=[28*mm])
+    cashier_content.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('BOX', (0, 0), (-1, -1), 0.5, BORDER)]))
+    
+    # الموظف
     emp_content = Table([
-        [Paragraph(reshape_arabic(emp_name), sig_name)],
+        [Paragraph(reshape_arabic(emp_name[:20] if len(emp_name) > 20 else emp_name), sig_name)],
         [Paragraph(reshape_arabic("الموظف"), sig_title)],
-        [Spacer(1, 8*mm)],
-        [Paragraph("_____________", sig_line)],
-    ], colWidths=[35*mm])
-    emp_content.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
+        [Spacer(1, 6*mm)],
+        [Paragraph("___________", sig_line)],
+    ], colWidths=[28*mm])
+    emp_content.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('BOX', (0, 0), (-1, -1), 0.5, BORDER)]))
     
-    # جدول التوقيعات الرئيسي (4 أعمدة)
+    # جدول التوقيعات (5 أعمدة)
     sig_main = Table(
-        [[stas_content, sultan_content, mohammed_content, emp_content]],
-        colWidths=[CONTENT_WIDTH/4] * 4
+        [[stas_content, sultan_content, mohammed_content, cashier_content, emp_content]],
+        colWidths=[CONTENT_WIDTH/5] * 5
     )
     sig_main.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -538,10 +511,9 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     elements.append(sig_main)
     
     # === FOOTER ===
-    elements.append(Spacer(1, 2*mm))
+    elements.append(Spacer(1, 1*mm))
     footer_style = ParagraphStyle('footer', fontName='Helvetica', fontSize=5, alignment=TA_CENTER, textColor=colors.gray)
     elements.append(Paragraph(f"DAR AL CODE HR SYSTEM | {txn} | Generated: {issue_date}", footer_style))
     
-    # Build PDF
     doc.build(elements)
     return buffer.getvalue()
