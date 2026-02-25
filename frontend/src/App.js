@@ -36,6 +36,7 @@ import EmbedCareersPage from "@/pages/EmbedCareersPage";
 import EmbedApplyPage from "@/pages/EmbedApplyPage";
 import PoliciesPage from "@/pages/PoliciesPage";
 import SoundSettingsPage from "@/pages/SoundSettingsPage";
+import ControlPanelPage from "@/pages/ControlPanelPage";
 
 function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
