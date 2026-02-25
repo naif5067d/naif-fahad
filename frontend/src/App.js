@@ -87,7 +87,8 @@ function AppRoutes() {
       <Route path="/stas-mirror" element={<ProtectedRoute allowedRoles={['stas']}><STASMirrorPage /></ProtectedRoute>} />
       <Route path="/company-settings" element={<ProtectedRoute allowedRoles={['stas']}><CompanySettingsPage /></ProtectedRoute>} />
       <Route path="/system-maintenance" element={<ProtectedRoute allowedRoles={['stas']}><SystemMaintenancePage /></ProtectedRoute>} />
-      <Route path="/contracts-management" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><ContractsManagementPage /></ProtectedRoute>} />
+      <Route path="/contracts-management" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><ContractsManagementPageNew /></ProtectedRoute>} />
+      <Route path="/contracts-management-old" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><ContractsManagementPage /></ProtectedRoute>} />
       <Route path="/settlement" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><SettlementPage /></ProtectedRoute>} />
       <Route path="/team-attendance" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'supervisor']}><TeamAttendancePage /></ProtectedRoute>} />
       <Route path="/penalties" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><PenaltiesPage /></ProtectedRoute>} />
