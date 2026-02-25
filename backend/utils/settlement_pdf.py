@@ -312,12 +312,27 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     ent_data = []
     
-    # راتب خارج المسيرات
+    # راتب خارج المسيرات مع الفترة (من - إلى)
     if partial_amount > 0:
+        # حساب الفترة
+        partial_month_str = partial_month.get("month", "")  # e.g., "2026-02"
+        partial_from = ""
+        partial_to = ""
+        if partial_month_str:
+            partial_from = f"01/{partial_month_str.split('-')[1]}/{partial_month_str.split('-')[0]}"
+            partial_to = f"{partial_days:02d}/{partial_month_str.split('-')[1]}/{partial_month_str.split('-')[0]}"
+        else:
+            # استخدام آخر يوم عمل
+            partial_from = f"01/{last_day[5:7]}/{last_day[:4]}"
+            partial_to = f"{last_day[8:10]}/{last_day[5:7]}/{last_day[:4]}"
+        
+        partial_period = f"من {partial_from} إلى {partial_to}"
+        partial_period_en = f"From {partial_from} to {partial_to}"
+        
         ent_data.append([
             en(f"{partial_amount:,.0f}"), 
-            en(f"Partial Month ({partial_days} days)"), 
-            ar(f"راتب خارج المسيرات ({partial_days} يوم)"), 
+            en(f"Payroll Outside ({partial_period_en})"), 
+            ar(f"راتب خارج المسيرات ({partial_period})"), 
             ar(f"{partial_amount:,.0f}")
         ])
     
