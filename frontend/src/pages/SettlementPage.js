@@ -980,12 +980,27 @@ export default function SettlementPage() {
                         </Button>
                         
                         {settlement.status === 'executed' && (
-                          <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(settlement.id)}>
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(settlement.id)}>
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            {canExecute && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => {
+                                  setSelectedSettlement(settlement);
+                                  setViewSettlement(settlement);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 ml-1" />
+                                تعديل
+                              </Button>
+                            )}
+                          </>
                         )}
                         
-                        {settlement.status === 'pending_stas' && canExecute && (
+                        {(settlement.status === 'pending_stas' || settlement.status === 'executed') && canExecute && (
                           <Button 
                             variant="default" 
                             size="sm" 
@@ -993,7 +1008,7 @@ export default function SettlementPage() {
                             className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                           >
                             <Play className="w-4 h-4 ml-1" />
-                            تنفيذ
+                            {settlement.status === 'executed' ? 'إعادة تنفيذ' : 'تنفيذ'}
                           </Button>
                         )}
                         
