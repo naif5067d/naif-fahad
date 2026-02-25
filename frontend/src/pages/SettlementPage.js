@@ -329,9 +329,11 @@ export default function SettlementPage() {
     setManualLoans(manualLoans.filter(l => l.id !== id));
   };
 
-  // حساب إجمالي الخصومات اليدوية
-  const totalManualDeductions = manualDeductions.reduce((sum, d) => sum + d.amount, 0);
-  const totalManualLoans = manualLoans.reduce((sum, l) => sum + l.amount, 0);
+  // حساب إجمالي الخصومات اليدوية من الـ snapshot
+  const getManualDeductions = () => selectedSettlement?.snapshot?.manual_deductions || [];
+  const getManualLoans = () => selectedSettlement?.snapshot?.manual_loans || [];
+  const totalManualDeductions = getManualDeductions().reduce((sum, d) => sum + d.amount, 0);
+  const totalManualLoans = getManualLoans().reduce((sum, l) => sum + l.amount, 0);
   const totalInkindDamages = inkindDamages.reduce((sum, d) => sum + d.amount, 0);
 
   const resetForm = () => {
