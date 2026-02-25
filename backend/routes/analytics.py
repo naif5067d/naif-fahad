@@ -53,7 +53,7 @@ async def calculate_attendance_score(employee_id: str = None, month: str = None)
     total_late_minutes = sum(r.get('late_minutes', 0) for r in records)
     
     if work_days == 0:
-        return {"score": 100, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0}
+        return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0, "no_data": True}
     
     # الصيغة
     presence_rate = (present_days / work_days) * 100
