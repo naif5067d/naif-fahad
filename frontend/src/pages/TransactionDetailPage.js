@@ -237,6 +237,11 @@ export default function TransactionDetailPage() {
       serial_number: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
       estimatedvalue: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
       estimated_value: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
+      // Attendance request fields
+      from_time: { ar: 'من الساعة', en: 'From Time' },
+      to_time: { ar: 'إلى الساعة', en: 'To Time' },
+      date: { ar: 'التاريخ', en: 'Date' },
+      request_type: { ar: 'نوع الطلب', en: 'Request Type' },
     };
     return labels[key] ? (lang === 'ar' ? labels[key].ar : labels[key].en) : key.replace(/_/g, ' ');
   };
