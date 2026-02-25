@@ -593,14 +593,46 @@ async def calculate_ai_employee_score(employee_id: str, month: str = None) -> di
     requests = await calculate_request_score(employee_id=employee_id, month=month)
     excuses = await calculate_excuse_score(employee_id=employee_id, month=month)
     
-    # الأوزان المُحدّثة
+    # التحقق من وجود بيانات
+    has_attendance_data = not attendance.get('no_data', False) and attendance.get('work_days', 0) > 0
+    has_task_data = not tasks.get('no_data', False) and tasks.get('total_tasks', 0) > 0
+    has_financial_data = not financial.get('no_data', False) and financial.get('total_custodies', 0) > 0
+    has_request_data = not requests.get('no_data', False) and requests.get('total_requests', 0) > 0
+    has_excuse_data = not excuses.get('no_data', True)
+    
+    # إذا لا يوجد أي بيانات
+    has_any_data = has_attendance_data or has_task_data or has_financial_data or has_request_data or has_excuse_data
+    
+    if not has_any_data:
+        return {
+            "overall_score": 0,
+            "rating": {"label": "لم يبدأ التقييم", "label_en": "Not Started", "stars": 0, "color": "#6B7280"},
+            "breakdown": {
+                "attendance": {"score": 0, "weight": 0.25, "weighted_score": 0, "details": attendance, "has_data": False},
+                "tasks": {"score": 0, "weight": 0.30, "weighted_score": 0, "details": tasks, "has_data": False},
+                "excuses": {"score": 0, "weight": 0.20, "weighted_score": 0, "details": excuses, "has_data": False},
+                "financial": {"score": 0, "weight": 0.15, "weighted_score": 0, "details": financial, "has_data": False},
+                "requests": {"score": 0, "weight": 0.10, "weighted_score": 0, "details": requests, "has_data": False}
+            },
+            "strengths": [],
+            "weaknesses": ["لم يبدأ التقييم بعد - في انتظار البيانات من 2026-02-27"],
+            "recommendations": [{"type": "info", "text": "سيبدأ التقييم تلقائياً مع بدء تسجيل الحضور والمهام"}],
+            "no_data": True
+        }
+    
+    # الأوزان المُحدّثة (تُحسب فقط للمؤشرات التي بها بيانات)
     weights = {
-        "attendance": 0.25,    # الحضور والانصراف
-        "tasks": 0.30,         # إنجاز المهام
-        "excuses": 0.20,       # الأعذار والاستئذان
-        "financial": 0.15,     # الانضباط المالي
-        "requests": 0.10,      # انضباط الطلبات
+        "attendance": 0.25 if has_attendance_data else 0,
+        "tasks": 0.30 if has_task_data else 0,
+        "excuses": 0.20 if has_excuse_data else 0,
+        "financial": 0.15 if has_financial_data else 0,
+        "requests": 0.10 if has_request_data else 0,
     }
+    
+    # تطبيع الأوزان
+    total_weight = sum(weights.values())
+    if total_weight > 0:
+        weights = {k: v/total_weight for k, v in weights.items()}
     
     overall_score = (
         attendance['score'] * weights['attendance'] +
