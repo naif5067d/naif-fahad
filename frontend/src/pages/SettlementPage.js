@@ -294,6 +294,19 @@ export default function SettlementPage() {
       status: 'success'
     });
     
+    // Partial Month Salary - راتب خارج المسيرات
+    if (data.partial_month_salary?.amount > 0) {
+      auditItems.push({
+        icon: DollarSign,
+        title: 'راتب خارج المسيرات',
+        title_en: 'Partial Month Salary',
+        detail: data.partial_month_salary?.formula,
+        subdetail: data.partial_month_salary?.description_ar,
+        value: formatCurrency(data.partial_month_salary?.amount),
+        status: 'success'
+      });
+    }
+    
     // Deductions
     if (data.deductions?.total > 0) {
       auditItems.push({
