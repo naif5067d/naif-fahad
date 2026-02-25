@@ -581,7 +581,7 @@ async def execute_settlement_endpoint(
 ):
     """
     Execute a settlement - STAS exclusive.
-    This is a ONE-TIME operation.
+    Can be re-executed for already executed settlements.
     
     Actions:
     1. Mark settlement as executed
@@ -594,12 +594,7 @@ async def execute_settlement_endpoint(
     if not settlement:
         raise HTTPException(status_code=404, detail="المخالصة غير موجودة")
     
-    if settlement["status"] == "executed":
-        raise HTTPException(
-            status_code=400, 
-            detail="تم تنفيذ هذه المخالصة مسبقاً"
-        )
-    
+    # السماح بإعادة التنفيذ للمخالصات المنفذة
     if settlement["status"] == "cancelled":
         raise HTTPException(
             status_code=400,
