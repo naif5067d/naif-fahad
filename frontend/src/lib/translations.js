@@ -11,7 +11,7 @@ export const translations = {
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
       attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS",
-      policies: "Policies", soundSettings: "Sound Settings"
+      policies: "Policies", soundSettings: "Sound Settings", controlPanel: "Control Panel"
     },
     login: {
       title: "Sign In", subtitle: "DAR AL CODE HR OS",
