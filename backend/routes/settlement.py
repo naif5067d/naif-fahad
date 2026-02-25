@@ -176,6 +176,17 @@ async def preview_settlement(
     # حساب مدة الخدمة
     service = calculate_service_years(contract["start_date"], req.last_working_day)
     
+    # إضافة تفاصيل الفترة
+    service["start_date"] = contract["start_date"]
+    service["end_date"] = req.last_working_day
+    service["period_ar"] = f"من {contract['start_date']} إلى {req.last_working_day}"
+    service["period_en"] = f"From {contract['start_date']} to {req.last_working_day}"
+    
+    # إضافة تفاصيل للعرض
+    service["years"] = service.get("years_int", 0)
+    service["months"] = service.get("remaining_months", 0)
+    service["days"] = service.get("remaining_days", 0)
+    
     # حساب الأجر الشامل (Last Wage)
     wages = calculate_monthly_wage(contract)
     
