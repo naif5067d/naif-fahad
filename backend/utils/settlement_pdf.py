@@ -207,9 +207,20 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     clearance_type = contract.get("termination_type_label", "")
     clearance_type_en = contract.get("termination_type", "").replace("_", " ").title()
     
-    service_years = service.get("years", 0)
-    service_months = service.get("months", 0)
-    service_days_count = service.get("days", 0)
+    # تحويل مدة الخدمة إلى أرقام صحيحة
+    service_years_raw = service.get("years", 0)
+    service_years = int(service_years_raw) if isinstance(service_years_raw, (int, float)) else 0
+    service_months = int(service.get("months", 0) or service.get("remaining_months", 0) or 0)
+    service_days_count = int(service.get("days", 0) or service.get("remaining_days", 0) or 0)
+    
+    # إذا كانت السنوات عشرية، نحسب الشهور والأيام منها
+    if isinstance(service_years_raw, float) and service_years_raw != int(service_years_raw):
+        decimal_part = service_years_raw - int(service_years_raw)
+        total_extra_days = int(decimal_part * 365)
+        service_months = total_extra_days // 30
+        service_days_count = total_extra_days % 30
+        service_years = int(service_years_raw)
+    
     service_duration = f"{service_years} سنة و {service_months} شهر و {service_days_count} يوم"
     
     # جدول بيانات الموظف - 4 أعمدة (العمود الأول والثاني إنجليزي، الثالث والرابع عربي)
@@ -343,7 +354,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     # السلف اليدوية مع التفاصيل
     for loan in manual_loans:
-        ded_data.append([en(f"{loan.get('amount', 0):,.0f}"), en(f"Loan: {loan.get('note_en', '')}"), ar(f"سلفة: {loan.get('note', '')}"), ar(f"{loan.get('amount', 0):,.0f}")])
+        # استخدام "Manual Loan" كنص إنجليزي ثابت
+        ded_data.append([en(f"{loan.get('amount', 0):,.0f}"), en("Manual Loan"), ar(f"سلفة: {loan.get('note', '')}"), ar(f"{loan.get('amount', 0):,.0f}")])
     
     # العهد المالية
     if custody_total > 0:
@@ -355,7 +367,8 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     # الخصومات اليدوية مع التفاصيل
     for ded in manual_deductions:
-        ded_data.append([en(f"{ded.get('amount', 0):,.0f}"), en(f"Deduction: {ded.get('note_en', '')}"), ar(f"خصم: {ded.get('note', '')}"), ar(f"{ded.get('amount', 0):,.0f}")])
+        # استخدام "Manual Deduction" كنص إنجليزي ثابت بدلاً من النص العربي
+        ded_data.append([en(f"{ded.get('amount', 0):,.0f}"), en("Manual Deduction"), ar(f"خصم: {ded.get('note', '')}"), ar(f"{ded.get('amount', 0):,.0f}")])
     
     # خصومات أخرى (تلقائي)
     if other_ded > 0:
