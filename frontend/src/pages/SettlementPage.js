@@ -975,7 +975,7 @@ export default function SettlementPage() {
                       
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Button variant="ghost" size="sm" onClick={() => setViewSettlement(settlement)}>
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectedSettlement(settlement); setViewSettlement(settlement); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
                         
