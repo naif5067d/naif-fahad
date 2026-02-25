@@ -478,6 +478,93 @@ export default function SettlementPage() {
           </table>
         </div>
         
+        {/* Manual Override Toggle */}
+        <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calculator size={16} className="text-amber-600" />
+              <span className="text-sm font-medium">{lang === 'ar' ? 'وضع التعديل اليدوي' : 'Manual Override Mode'}</span>
+            </div>
+            <Button 
+              variant={manualMode ? "default" : "outline"} 
+              size="sm"
+              onClick={() => {
+                setManualMode(!manualMode);
+                if (!manualMode) {
+                  setManualValues({
+                    eos_amount: snapshot.eos?.final_amount || 0,
+                    leave_days: snapshot.leave?.balance || 0,
+                    leave_compensation: snapshot.leave?.compensation || 0,
+                    additional_entitlements: 0,
+                    additional_deductions: 0,
+                  });
+                }
+              }}
+            >
+              {manualMode ? (lang === 'ar' ? 'تفعيل' : 'Active') : (lang === 'ar' ? 'تفعيل التعديل' : 'Enable')}
+            </Button>
+          </div>
+          
+          {manualMode && (
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'End of Service'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.eos_amount} 
+                  onChange={e => setManualValues(v => ({ ...v, eos_amount: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'أيام الإجازة' : 'Leave Days'}</Label>
+                <Input 
+                  type="number" 
+                  step="0.5"
+                  value={manualValues.leave_days} 
+                  onChange={e => {
+                    const days = parseFloat(e.target.value) || 0;
+                    const dailyWage = snapshot.wages?.daily_wage || 0;
+                    setManualValues(v => ({ 
+                      ...v, 
+                      leave_days: days,
+                      leave_compensation: days * dailyWage 
+                    }));
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.leave_compensation} 
+                  onChange={e => setManualValues(v => ({ ...v, leave_compensation: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'إضافات أخرى' : 'Additional Entitlements'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.additional_entitlements} 
+                  onChange={e => setManualValues(v => ({ ...v, additional_entitlements: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'خصومات إضافية' : 'Additional Deductions'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.additional_deductions} 
+                  onChange={e => setManualValues(v => ({ ...v, additional_deductions: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
         {/* Entitlements & Deductions */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
@@ -486,15 +573,26 @@ export default function SettlementPage() {
               <tbody>
                 <tr className="border-b">
                   <td className="p-1">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'End of Service'}</td>
-                  <td className="p-1 text-right">{snapshot.eos?.final_amount?.toLocaleString()}</td>
+                  <td className="p-1 text-right">{(manualMode ? manualValues.eos_amount : snapshot.eos?.final_amount)?.toLocaleString()}</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</td>
-                  <td className="p-1 text-right">{snapshot.leave?.compensation?.toLocaleString()}</td>
+                  <td className="p-1">{lang === 'ar' ? `تعويض الإجازات (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} يوم)` : `Leave (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} days)`}</td>
+                  <td className="p-1 text-right">{(manualMode ? manualValues.leave_compensation : snapshot.leave?.compensation)?.toLocaleString()}</td>
                 </tr>
+                {manualMode && manualValues.additional_entitlements > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'إضافات أخرى' : 'Additional'}</td>
+                    <td className="p-1 text-right">{manualValues.additional_entitlements?.toLocaleString()}</td>
+                  </tr>
+                )}
                 <tr className="bg-[hsl(var(--success)/0.1)] font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.entitlements?.total?.toLocaleString()}</td>
+                  <td className="p-1 text-right">
+                    {(manualMode 
+                      ? (manualValues.eos_amount + manualValues.leave_compensation + manualValues.additional_entitlements)
+                      : snapshot.totals?.entitlements?.total
+                    )?.toLocaleString()}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -511,9 +609,20 @@ export default function SettlementPage() {
                   <td className="p-1">{lang === 'ar' ? 'أخرى' : 'Other'}</td>
                   <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
                 </tr>
+                {manualMode && manualValues.additional_deductions > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'خصومات إضافية' : 'Additional'}</td>
+                    <td className="p-1 text-right">{manualValues.additional_deductions?.toLocaleString()}</td>
+                  </tr>
+                )}
                 <tr className="bg-red-50 font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.total?.toLocaleString()}</td>
+                  <td className="p-1 text-right">
+                    {(manualMode 
+                      ? (snapshot.totals?.deductions?.total + manualValues.additional_deductions)
+                      : snapshot.totals?.deductions?.total
+                    )?.toLocaleString()}
+                  </td>
                 </tr>
               </tbody>
             </table>
