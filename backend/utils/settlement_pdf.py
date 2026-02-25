@@ -123,9 +123,37 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     col_w = CONTENT_WIDTH / 2
     
-    # === 1. HEADER / الترويسة ===
+    # === 1. HEADER WITH LOGO / الترويسة مع الشعار ===
     txn = settlement.get("transaction_number", "")
     issue_date = settlement.get("executed_at", "")[:10] if settlement.get("executed_at") else datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # جلب شعار الشركة
+    logo_img = None
+    if branding and branding.get("logo_data"):
+        try:
+            import base64
+            logo_data = branding["logo_data"]
+            if ',' in logo_data:
+                logo_data = logo_data.split(',')[1]
+            logo_bytes = base64.b64decode(logo_data)
+            logo_buffer = io.BytesIO(logo_bytes)
+            logo_img = Image(logo_buffer, width=20*mm, height=12*mm)
+        except Exception:
+            pass
+    
+    # ترويسة مع شعار
+    if logo_img:
+        header_data = [
+            [en("Kingdom of Saudi Arabia"), logo_img, ar("المملكة العربية السعودية")],
+            [en_b("Dar Al Code Engineering Consultancy"), '', ar_b("شركة دار الكود للاستشارات الهندسية")],
+            [en("CR: 1010463476 | License: 5110004935"), '', ar("سجل: 1010463476 | ترخيص: 5110004935")],
+        ]
+    else:
+        header_data = [
+            [en("Kingdom of Saudi Arabia"), '', ar("المملكة العربية السعودية")],
+            [en_b("Dar Al Code Engineering Consultancy"), '', ar_b("شركة دار الكود للاستشارات الهندسية")],
+            [en("CR: 1010463476 | License: 5110004935"), '', ar("سجل: 1010463476 | ترخيص: 5110004935")],
+        ]
     
     header_data = [
         [en("Kingdom of Saudi Arabia"), '', ar("المملكة العربية السعودية")],
