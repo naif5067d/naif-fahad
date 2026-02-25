@@ -754,11 +754,11 @@ export default function SettlementPage() {
                   </tr>
                 )}
                 {/* السلف اليدوية من الـ snapshot */}
-                {getManualLoans().map(loan => (
+                {getManualLoans(selectedSettlement).map(loan => (
                   <tr key={loan.id} className="border-b bg-yellow-50">
                     <td className="p-1 flex items-center justify-between">
                       <span>سلفة: {loan.note}</span>
-                      {selectedSettlement?.status === 'pending_stas' && (
+                      {selectedSettlement?.status !== 'cancelled' && (
                         <button onClick={() => removeLoan(loan.id)} className="text-red-500 hover:text-red-700">×</button>
                       )}
                     </td>
@@ -787,11 +787,11 @@ export default function SettlementPage() {
                   </tr>
                 )}
                 {/* الخصومات اليدوية من الـ snapshot */}
-                {getManualDeductions().map(ded => (
+                {getManualDeductions(selectedSettlement).map(ded => (
                   <tr key={ded.id} className="border-b bg-red-50">
                     <td className="p-1 flex items-center justify-between">
                       <span>خصم: {ded.note}</span>
-                      {selectedSettlement?.status === 'pending_stas' && (
+                      {selectedSettlement?.status !== 'cancelled' && (
                         <button onClick={() => removeDeduction(ded.id)} className="text-red-500 hover:text-red-700">×</button>
                       )}
                     </td>
