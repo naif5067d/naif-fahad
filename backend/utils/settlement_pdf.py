@@ -415,7 +415,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     elements.append(decl_header_t)
     
     # نص الإقرار القانوني - بالاسم
-    decl_ar = f"""أقر أنا/ {emp_name} أني قد استلمت كامل حقوقي من شركة دار الكود للاستشارات الهندسية وعليه فإني أقر إقرار ناف للجهالة باستلام كامل الحقوق المنصوص عليها بالمخالصة ولا يوجد مستحقات أخرى. وبالله التوفيق."""
+    decl_ar = f"""أقر أنا/ {emp_name} أني قد استلمت كامل حقوقي من شركة دار الكود للاستشارات الهندسية وعليه فإني أقر إقرار ناف للجهالة باستلام كامل الحقوق المنصوص عليها بالمخالصة لا يوجد مستحقات أخرى وبالله التوفيق."""
     
     decl_en = f"""I, the undersigned, acknowledge that I have received all my rights from Dar Al Code Engineering Consultancy. I hereby declare, with full knowledge, that I have received all entitlements stated in this settlement and there are no other dues."""
     

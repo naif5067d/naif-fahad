@@ -326,10 +326,8 @@ export default function SettlementPage() {
   };
 
   // حساب إجمالي الخصومات اليدوية من الـ snapshot
-  const getManualDeductions = () => selectedSettlement?.snapshot?.manual_deductions || [];
-  const getManualLoans = () => selectedSettlement?.snapshot?.manual_loans || [];
-  const totalManualDeductions = getManualDeductions().reduce((sum, d) => sum + d.amount, 0);
-  const totalManualLoans = getManualLoans().reduce((sum, l) => sum + l.amount, 0);
+  const getManualDeductions = (settlement) => settlement?.snapshot?.manual_deductions || [];
+  const getManualLoans = (settlement) => settlement?.snapshot?.manual_loans || [];
   const totalInkindDamages = inkindDamages.reduce((sum, d) => sum + d.amount, 0);
 
   const resetForm = () => {
