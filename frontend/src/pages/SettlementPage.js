@@ -57,6 +57,14 @@ export default function SettlementPage() {
   
   // Editable preview data
   const [editablePreview, setEditablePreview] = useState(null);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualValues, setManualValues] = useState({
+    eos_amount: null,
+    leave_days: null,
+    leave_compensation: null,
+    additional_entitlements: 0,
+    additional_deductions: 0,
+  });
   
   // Validation warnings
   const [warnings, setWarnings] = useState([]);
