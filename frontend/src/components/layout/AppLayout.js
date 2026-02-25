@@ -58,7 +58,7 @@ const NAV_ITEMS = {
     // 💰 المالية والعهد
     'financialCustody', 'custody',
     // 📊 التقارير
-    'executive', 'maintenanceTracking', 'ats', 'smartMonitor',
+    'executive', 'maintenanceTracking', 'ats',
     // 🔧 لوحة التحكم (STAS فقط)
     'controlPanel',
     // 🪞 مرآة ستاس (مستقلة)
