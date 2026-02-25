@@ -237,7 +237,7 @@ export default function ContractWizard({
                           checked={formData.is_saudi === true}
                           onChange={() => handleChange('is_saudi', true)}
                         />
-                        <span>{isRTL ? 'سعودي' : 'Saudi'}</span>
+                        <span className={formData.is_saudi === true ? 'font-bold text-green-600' : ''}>{isRTL ? 'سعودي' : 'Saudi'}</span>
                       </label>
                       <label className="flex items-center gap-2">
                         <input 
@@ -245,18 +245,54 @@ export default function ContractWizard({
                           checked={formData.is_saudi === false}
                           onChange={() => handleChange('is_saudi', false)}
                         />
-                        <span>{isRTL ? 'أجنبي' : 'Non-Saudi'}</span>
+                        <span className={formData.is_saudi === false ? 'font-bold text-blue-600' : ''}>{isRTL ? 'أجنبي' : 'Non-Saudi'}</span>
                       </label>
                     </div>
                   </div>
-                  <div>
-                    <Label>{formData.is_saudi ? (isRTL ? 'رقم الهوية' : 'National ID') : (isRTL ? 'رقم الإقامة' : 'Iqama')}</Label>
-                    <Input 
-                      value={formData.national_id}
-                      onChange={e => handleChange('national_id', e.target.value)}
-                      placeholder={formData.is_saudi ? "10xxxxxxxx" : "2xxxxxxxxx"}
-                    />
-                  </div>
+                  
+                  {/* بيانات الهوية للسعودي */}
+                  {formData.is_saudi === true && (
+                    <div>
+                      <Label>{isRTL ? 'رقم الهوية الوطنية' : 'National ID'}</Label>
+                      <Input 
+                        value={formData.national_id || ''}
+                        onChange={e => handleChange('national_id', e.target.value)}
+                        placeholder="10xxxxxxxx"
+                        dir="ltr"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* بيانات الإقامة للأجنبي */}
+                  {formData.is_saudi === false && (
+                    <>
+                      <div>
+                        <Label>{isRTL ? 'الجنسية' : 'Nationality'}</Label>
+                        <Input 
+                          value={formData.nationality || ''}
+                          onChange={e => handleChange('nationality', e.target.value)}
+                          placeholder={isRTL ? 'مثال: مصري، هندي' : 'e.g. Egyptian, Indian'}
+                        />
+                      </div>
+                      <div>
+                        <Label>{isRTL ? 'رقم الإقامة' : 'Iqama Number'}</Label>
+                        <Input 
+                          value={formData.iqama_number || ''}
+                          onChange={e => handleChange('iqama_number', e.target.value)}
+                          placeholder="2xxxxxxxxx"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <Label>{isRTL ? 'تاريخ انتهاء الإقامة *' : 'Iqama Expiry Date *'}</Label>
+                        <Input 
+                          type="date"
+                          value={formData.iqama_expiry_date || ''}
+                          onChange={e => handleChange('iqama_expiry_date', e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div>
