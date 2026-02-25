@@ -23,7 +23,7 @@ const NAV_ITEMS = {
     // 💰 المالية والعهد
     'financialCustody', 'custody',
     // 📊 التقارير
-    'executive', 'maintenanceTracking', 'ats',
+    'executive', 'maintenanceTracking', 'ats', 'smartMonitor',
     // 📚 المرجع
     'policies'
   ],
@@ -37,8 +37,8 @@ const NAV_ITEMS = {
     'policies'
   ],
   
-  // صلاح - المالية فقط
-  salah: ['dashboard', 'transactions', 'financialCustody', 'policies'],
+  // صلاح - المالية + المراقب الذكي
+  salah: ['dashboard', 'transactions', 'financialCustody', 'smartMonitor', 'policies'],
   
   // محمد - CEO
   mohammed: [
@@ -58,7 +58,7 @@ const NAV_ITEMS = {
     // 💰 المالية والعهد
     'financialCustody', 'custody',
     // 📊 التقارير
-    'executive', 'maintenanceTracking', 'ats',
+    'executive', 'maintenanceTracking', 'ats', 'smartMonitor',
     // 🔧 لوحة التحكم (STAS فقط)
     'controlPanel',
     // 🪞 مرآة ستاس (مستقلة)
