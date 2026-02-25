@@ -11,7 +11,7 @@ import requests
 import os
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://payroll-custody.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://hr-payments.preview.emergentagent.com')
 
 @pytest.fixture
 def session():
