@@ -227,8 +227,15 @@ async def preview_settlement(
     # جلب السلف غير المسددة
     loans_data = await get_unsettled_loans(req.employee_id)
     
+    # === حساب راتب آخر يوم عمل (خارج المسيرات) ===
+    # هذا المبلغ يمثل مستحقات الموظف من الأيام بين آخر راتب وآخر يوم عمل
+    partial_month_salary = calculate_partial_month_salary(
+        last_working_day=req.last_working_day,
+        daily_wage=wages["daily_wage"]
+    )
+    
     # حساب المجاميع
-    total_entitlements = eos["final_amount"] + leave_compensation + bonuses_data["total"]
+    total_entitlements = eos["final_amount"] + leave_compensation + bonuses_data["total"] + partial_month_salary["amount"]
     total_deductions = deductions_data["total"] + loans_data["total"]
     net_amount = total_entitlements - total_deductions
     
