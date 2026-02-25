@@ -280,11 +280,13 @@ async def preview_settlement(
         "bonuses": bonuses_data,
         "deductions": deductions_data,
         "loans": loans_data,
+        "partial_month_salary": partial_month_salary,
         "totals": {
             "entitlements": {
                 "eos": eos["final_amount"],
                 "leave_compensation": leave_compensation,
                 "bonuses": bonuses_data["total"],
+                "partial_month_salary": partial_month_salary["amount"],
                 "total": round(total_entitlements, 2)
             },
             "deductions": {
