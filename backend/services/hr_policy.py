@@ -188,8 +188,9 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
         "available_balance": max(0, available_balance),
         "is_migrated": is_migrated,
         "opening_balance": opening_balance if is_migrated else 0,
-        "formula": f"رصيد افتتاحي: {opening_balance} - مستخدم: {used_executed} = {available_balance}" if is_migrated else f"{policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
-        "message_ar": f"رصيد افتتاحي: {opening_balance:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم" if is_migrated else f"مكتسب: {earned_to_date:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم"
+        "migrated_consumed": migrated_consumed if is_migrated else 0,
+        "formula": f"رصيد افتتاحي: {opening_balance} - مستخدم في النظام الجديد: {used_executed} = {available_balance}" if is_migrated else f"{policy_days} / {days_in_year} × {days_worked} - {used_executed} = {available_balance}",
+        "message_ar": f"رصيد افتتاحي (متبقي): {opening_balance:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم" if is_migrated else f"مكتسب: {earned_to_date:.2f} يوم، مستخدم: {used_executed} يوم، متاح: {max(0, available_balance):.2f} يوم"
     }
 
 
