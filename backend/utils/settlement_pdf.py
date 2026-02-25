@@ -330,6 +330,11 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     daily_wage = wages.get("daily_wage", 0)
     total_ent = totals.get("entitlements", {}).get("total", 0)
     
+    # راتب آخر يوم عمل (خارج المسيرات)
+    partial_month = snapshot.get("partial_month_salary", {})
+    partial_amount = partial_month.get("amount", 0)
+    partial_days = partial_month.get("days", 0)
+    
     # مكافأة نهاية الخدمة مع الفترة
     eos_pct = eos.get('percentage', 100)
     eos_detail = f"({service_years} سنة × {eos_pct}%)"
@@ -339,11 +344,26 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     leave_detail = f"{leave_balance:.1f} يوم × {daily_wage:,.0f}"
     leave_detail_en = f"{leave_balance:.1f} days × {daily_wage:,.0f}"
     
+    # بناء جدول الاستحقاقات
     ent_data = [
         [en(f"{eos_amount:,.0f}"), en(f"End of Service {eos_detail_en}"), ar(f"مكافأة نهاية الخدمة {eos_detail}"), ar(f"{eos_amount:,.0f}")],
         [en(f"{leave_comp:,.0f}"), en(f"Leave Compensation ({leave_detail_en})"), ar(f"بدل الإجازات ({leave_detail})"), ar(f"{leave_comp:,.0f}")],
-        [en_b(f"{total_ent:,.0f}"), en_b("Total Entitlements"), ar_b("إجمالي الاستحقاقات"), ar_b(f"{total_ent:,.0f}")],
     ]
+    
+    # إضافة راتب آخر يوم عمل إذا كان أكبر من صفر
+    if partial_amount > 0:
+        partial_detail = f"{partial_days} يوم × {daily_wage:,.0f}"
+        partial_detail_en = f"{partial_days} days × {daily_wage:,.0f}"
+        ent_data.append([
+            en(f"{partial_amount:,.0f}"), 
+            en(f"Partial Month Salary ({partial_detail_en})"), 
+            ar(f"راتب خارج المسيرات ({partial_detail})"), 
+            ar(f"{partial_amount:,.0f}")
+        ])
+    
+    # إضافة الإجمالي
+    ent_data.append([en_b(f"{total_ent:,.0f}"), en_b("Total Entitlements"), ar_b("إجمالي الاستحقاقات"), ar_b(f"{total_ent:,.0f}")])
+    
     ent_table = Table(ent_data, colWidths=[col_w*0.25, col_w*0.75, col_w*0.75, col_w*0.25])
     ent_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (1, -1), 'LEFT'),
