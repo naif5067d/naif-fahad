@@ -368,10 +368,11 @@ async def build_custody_return_checks(tx: dict, emp_id: str, data: dict) -> List
 
 
 async def build_attendance_request_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
-    """فحوصات طلبات الحضور"""
+    """فحوصات طلبات الحضور - محدث مع حدود شهرية"""
     checks = []
     
     target_date = data.get('target_date') or data.get('date')
+    request_type = data.get('request_type') or tx.get('type')
     
     # فحص وجود سجل الحضور
     if target_date:
@@ -382,8 +383,164 @@ async def build_attendance_request_checks(tx: dict, emp_id: str, data: dict) -> 
         checks.append({
             "name": "Attendance Date Valid",
             "name_ar": "تاريخ الحضور صالح",
-            "status": "PASS" if existing or True else "WARN",  # تحذير فقط
+            "status": "PASS" if existing or True else "WARN",
             "detail": f"التاريخ: {target_date}",
+            "category": "attendance"
+        })
+    
+    # حساب الشهر الحالي
+    from datetime import datetime
+    if target_date:
+        try:
+            date_obj = datetime.strptime(target_date, "%Y-%m-%d")
+            month_start = date_obj.replace(day=1).strftime("%Y-%m-%d")
+            if date_obj.month == 12:
+                month_end = date_obj.replace(year=date_obj.year + 1, month=1, day=1).strftime("%Y-%m-%d")
+            else:
+                month_end = date_obj.replace(month=date_obj.month + 1, day=1).strftime("%Y-%m-%d")
+        except:
+            month_start = None
+            month_end = None
+    else:
+        month_start = None
+        month_end = None
+    
+    # ========== فحص نسيان البصمة (الحد: 3 مرات/شهر) ==========
+    if request_type == 'forget_checkin' and month_start and month_end:
+        forget_count = await db.transactions.count_documents({
+            "employee_id": emp_id,
+            "type": "forget_checkin",
+            "status": {"$in": ["executed", "stas", "pending_ops", "pending_supervisor"]},
+            "data.date": {"$gte": month_start, "$lt": month_end}
+        })
+        
+        is_over_limit = forget_count >= 3
+        checks.append({
+            "name": "Forget Check-in Limit",
+            "name_ar": "حد نسيان البصمة الشهري",
+            "status": "FAIL" if is_over_limit else ("WARN" if forget_count >= 2 else "PASS"),
+            "detail": f"عدد المرات هذا الشهر: {forget_count}/3" + (" ⚠️ تجاوز الحد!" if is_over_limit else ""),
+            "category": "attendance",
+            "monthly_usage": {
+                "used": forget_count,
+                "limit": 3,
+                "remaining": max(0, 3 - forget_count)
+            }
+        })
+    
+    # ========== فحص تبرير التأخير (الحد: 5 مرات/شهر) ==========
+    if request_type == 'late_excuse' and month_start and month_end:
+        late_count = await db.transactions.count_documents({
+            "employee_id": emp_id,
+            "type": "late_excuse",
+            "status": {"$in": ["executed", "stas", "pending_ops", "pending_supervisor"]},
+            "data.date": {"$gte": month_start, "$lt": month_end}
+        })
+        
+        is_over_limit = late_count >= 5
+        checks.append({
+            "name": "Late Excuse Limit",
+            "name_ar": "حد تبرير التأخير الشهري",
+            "status": "FAIL" if is_over_limit else ("WARN" if late_count >= 4 else "PASS"),
+            "detail": f"عدد المرات هذا الشهر: {late_count}/5" + (" ⚠️ تجاوز الحد!" if is_over_limit else ""),
+            "category": "attendance",
+            "monthly_usage": {
+                "used": late_count,
+                "limit": 5,
+                "remaining": max(0, 5 - late_count)
+            }
+        })
+    
+    # ========== فحص الخروج المبكر (رصيد الساعات) ==========
+    if request_type == 'early_leave_request':
+        from_time = data.get('from_time', '')
+        to_time = data.get('to_time', '')
+        
+        # حساب مدة الطلب
+        requested_minutes = 0
+        if from_time and to_time:
+            try:
+                from_parts = from_time.split(':')
+                to_parts = to_time.split(':')
+                from_mins = int(from_parts[0]) * 60 + int(from_parts[1])
+                to_mins = int(to_parts[0]) * 60 + int(to_parts[1])
+                requested_minutes = to_mins - from_mins
+            except:
+                pass
+        
+        # جلب الرصيد من العقد أو الإعدادات
+        contract = await db.contracts_v2.find_one(
+            {"employee_id": emp_id, "status": "active"},
+            {"_id": 0, "monthly_permission_hours": 1}
+        )
+        monthly_allowance = 3  # الافتراضي
+        if contract and contract.get('monthly_permission_hours'):
+            monthly_allowance = min(contract['monthly_permission_hours'], 3)
+        else:
+            settings = await db.settings.find_one({"type": "early_leave_balance"}, {"_id": 0})
+            if settings:
+                monthly_allowance = settings.get('monthly_hours', 3)
+        
+        # حساب المستخدم هذا الشهر
+        if month_start and month_end:
+            early_leaves = await db.transactions.find({
+                "employee_id": emp_id,
+                "type": {"$in": ["early_leave_request", "early_leave", "permission"]},
+                "status": {"$in": ["executed", "stas", "pending_ops", "pending_supervisor"]},
+                "data.date": {"$gte": month_start, "$lt": month_end}
+            }, {"_id": 0, "data": 1}).to_list(50)
+            
+            used_minutes = 0
+            for el in early_leaves:
+                el_from = el.get('data', {}).get('from_time', '')
+                el_to = el.get('data', {}).get('to_time', '')
+                if el_from and el_to:
+                    try:
+                        f_parts = el_from.split(':')
+                        t_parts = el_to.split(':')
+                        f_mins = int(f_parts[0]) * 60 + int(f_parts[1])
+                        t_mins = int(t_parts[0]) * 60 + int(t_parts[1])
+                        used_minutes += (t_mins - f_mins)
+                    except:
+                        pass
+        else:
+            used_minutes = 0
+        
+        monthly_allowance_minutes = monthly_allowance * 60
+        remaining_minutes = monthly_allowance_minutes - used_minutes
+        balance_after = remaining_minutes - requested_minutes
+        
+        is_over_limit = balance_after < 0
+        
+        # تنسيق الوقت
+        def format_mins(mins):
+            h = abs(mins) // 60
+            m = abs(mins) % 60
+            sign = "-" if mins < 0 else ""
+            return f"{sign}{h}:{m:02d}"
+        
+        checks.append({
+            "name": "Permission Hours Balance",
+            "name_ar": "رصيد ساعات الاستئذان",
+            "status": "FAIL" if is_over_limit else "PASS",
+            "detail": f"الرصيد: {format_mins(remaining_minutes)} | المطلوب: {format_mins(requested_minutes)} | المتبقي بعد: {format_mins(balance_after)}" + (" ⚠️ تجاوز الرصيد!" if is_over_limit else ""),
+            "category": "attendance",
+            "permission_balance": {
+                "monthly_allowance": f"{monthly_allowance} ساعة",
+                "used_this_month": format_mins(used_minutes),
+                "remaining_before": format_mins(remaining_minutes),
+                "requested": format_mins(requested_minutes),
+                "remaining_after": format_mins(balance_after)
+            }
+        })
+    
+    # ========== مهمة خارجية = حاضر (لا فحوصات إضافية) ==========
+    if request_type == 'field_work':
+        checks.append({
+            "name": "Field Work Status",
+            "name_ar": "حالة المهمة الخارجية",
+            "status": "PASS",
+            "detail": "سيتم تسجيل اليوم كـ 'حاضر'",
             "category": "attendance"
         })
     
