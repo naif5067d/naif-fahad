@@ -753,30 +753,17 @@ export default function SettlementPage() {
               </tbody>
             </table>
           </div>
-                  <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
-                  <td className="p-1 text-right">
-                    {(manualMode 
-                      ? (snapshot.totals?.deductions?.total + manualValues.additional_deductions)
-                      : snapshot.totals?.deductions?.total
-                    )?.toLocaleString()}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
         
         {/* Net Amount */}
         <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
           <div className="text-xs text-muted-foreground">{lang === 'ar' ? 'الصافي النهائي المستحق للموظف' : 'Net Amount Payable to Employee'}</div>
           <div className="text-2xl font-bold text-primary">
-            {(manualMode 
-              ? ((manualValues.eos_amount + manualValues.leave_compensation + manualValues.additional_entitlements) 
-                 - (snapshot.totals?.deductions?.total || 0) - manualValues.additional_deductions)
-              : snapshot.totals?.net_amount
-            )?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
+            {((snapshot.totals?.net_amount || 0) - totalManualDeductions - totalManualLoans - totalInkindDamages)?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
           </div>
-          {manualMode && <div className="text-xs text-amber-600 mt-1">{lang === 'ar' ? '(تم التعديل يدوياً)' : '(Manually adjusted)'}</div>}
+          {(totalManualDeductions > 0 || totalManualLoans > 0 || totalInkindDamages > 0) && (
+            <div className="text-xs text-amber-600 mt-1">{lang === 'ar' ? '(يشمل خصومات يدوية)' : '(Includes manual deductions)'}</div>
+          )}
         </div>
         
         {/* Signatures placeholder */}
