@@ -8,22 +8,64 @@ import api from '@/lib/api';
 import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = {
-  // الموظفون العاديون يرون الحضور والماليات والمهام
+  // الموظفون العاديون - الأساسيات فقط
   employee: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'policies'],
-  // المشرف يرى الحضور والعقوبات لمتابعة فريقه
+  
+  // المشرف - الأساسيات + متابعة الفريق
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties', 'policies'],
-  // سلطان موظف + إداري
-  // سلطان مدير إداري
-  sultan: ['executive', 'dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
-  // نايف إداري فقط
-  naif: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'attendancePenalties', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
-  // صلاح مالي فقط
+  
+  // سلطان - مدير العمليات
+  sultan: [
+    // 📌 الاستخدام اليومي
+    'dashboard', 'transactions', 'attendancePenalties', 'tasks',
+    // 👥 إدارة الموظفين
+    'employees', 'contractsManagement', 'settlement', 'workLocations',
+    // 💰 المالية والعهد
+    'financialCustody', 'custody',
+    // 📊 التقارير
+    'executive', 'maintenanceTracking', 'ats',
+    // 📚 المرجع
+    'policies'
+  ],
+  
+  // نايف - العمليات الاستراتيجية
+  naif: [
+    'dashboard', 'transactions', 'attendancePenalties', 'tasks',
+    'employees', 'contractsManagement', 'settlement', 'workLocations',
+    'financialCustody', 'custody',
+    'executive', 'maintenanceTracking', 'ats',
+    'policies'
+  ],
+  
+  // صلاح - المالية فقط
   salah: ['dashboard', 'transactions', 'financialCustody', 'policies'],
-  // محمد CEO
-  // محمد CEO - استعراض الموظفين + التقارير
-  mohammed: ['executive', 'dashboard', 'transactions', 'tasks', 'financialCustody', 'policies', 'employees'],
-  // ستاس إداري + صلاحيات كاملة (loginSessions خاصة به فقط)
-  stas: ['executive', 'dashboard', 'transactions', 'tasks', 'maintenanceTracking', 'stasMirror', 'systemMaintenance', 'soundSettings', 'attendancePenalties', 'loginSessions', 'financialCustody', 'custody', 'contractsManagement', 'settlement', 'employees', 'workLocations', 'ats', 'policies'],
+  
+  // محمد - CEO
+  mohammed: [
+    'dashboard', 'transactions', 'tasks',
+    'employees',
+    'financialCustody',
+    'executive',
+    'policies'
+  ],
+  
+  // ستاس - صلاحيات كاملة
+  stas: [
+    // 📌 الاستخدام اليومي
+    'dashboard', 'transactions', 'attendancePenalties', 'tasks',
+    // 👥 إدارة الموظفين
+    'employees', 'contractsManagement', 'settlement', 'workLocations',
+    // 💰 المالية والعهد
+    'financialCustody', 'custody',
+    // 📊 التقارير
+    'executive', 'maintenanceTracking', 'ats',
+    // 🔧 لوحة التحكم (STAS فقط)
+    'controlPanel',
+    // 🪞 مرآة ستاس (مستقلة)
+    'stasMirror',
+    // 📚 المرجع
+    'policies'
+  ],
 };
 
 // Mobile bottom nav - only show first 4-5 items
