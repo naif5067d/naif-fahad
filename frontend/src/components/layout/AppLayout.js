@@ -23,7 +23,7 @@ const NAV_ITEMS = {
     // 💰 المالية والعهد
     'financialCustody', 'custody',
     // 📊 التقارير
-    'executive', 'maintenanceTracking', 'ats', 'smartMonitor',
+    'executive', 'maintenanceTracking', 'ats',
     // 📚 المرجع
     'policies'
   ],
@@ -37,8 +37,8 @@ const NAV_ITEMS = {
     'policies'
   ],
   
-  // صلاح - المالية + المراقب الذكي
-  salah: ['dashboard', 'transactions', 'financialCustody', 'smartMonitor', 'policies'],
+  // صلاح - المالية + الوصول للتنفيذي
+  salah: ['dashboard', 'transactions', 'financialCustody', 'executive', 'policies'],
   
   // محمد - CEO
   mohammed: [
