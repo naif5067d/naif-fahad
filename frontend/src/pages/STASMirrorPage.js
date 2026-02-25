@@ -2667,6 +2667,173 @@ export default function STASMirrorPage() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* === System Map Tab - هيكل النظام === */}
+        <TabsContent value="system-map" className="mt-4">
+          <div className="space-y-6">
+            <Card className="border-2 border-primary/20">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="flex items-center gap-2">
+                  <Database size={20} />
+                  {lang === 'ar' ? 'هيكل اتصالات النظام' : 'System Connections Map'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {/* العقود */}
+                  <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+                    <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-3">
+                      <FileText size={18} />
+                      {lang === 'ar' ? 'العقود (contracts_v2)' : 'Contracts (contracts_v2)'}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'يرتبط بـ' : 'Links to'}</p>
+                        <ul className="space-y-1">
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500" />
+                            <span>{lang === 'ar' ? 'الموظفين (employee_id)' : 'Employees (employee_id)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-orange-500" />
+                            <span>{lang === 'ar' ? 'المخالصات (contract_id)' : 'Settlements (contract_id)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-purple-500" />
+                            <span>{lang === 'ar' ? 'الإجازات (leave_ledger)' : 'Leave (leave_ledger)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            <span>{lang === 'ar' ? 'الحضور (attendance)' : 'Attendance (attendance)'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'الحقول الرئيسية' : 'Key Fields'}</p>
+                        <ul className="space-y-1 text-xs font-mono">
+                          <li>employee_id, contract_serial</li>
+                          <li>basic_salary, housing, transport</li>
+                          <li>start_date, end_date</li>
+                          <li>leave_opening_balance (للمهاجر)</li>
+                          <li>leave_consumed (للمهاجر)</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* الموظفين */}
+                  <div className="p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                    <h3 className="font-bold text-green-800 flex items-center gap-2 mb-3">
+                      <User size={18} />
+                      {lang === 'ar' ? 'الموظفين (employees)' : 'Employees (employees)'}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'يرتبط بـ' : 'Links to'}</p>
+                        <ul className="space-y-1">
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span>{lang === 'ar' ? 'العقود' : 'Contracts'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                            <span>{lang === 'ar' ? 'العهد العينية (custody_ledger)' : 'Custody (custody_ledger)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-pink-500" />
+                            <span>{lang === 'ar' ? 'العهد المالية (financial_custody)' : 'Financial (financial_custody)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                            <span>{lang === 'ar' ? 'المهام (task_evaluations)' : 'Tasks (task_evaluations)'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'الحقول الرئيسية' : 'Key Fields'}</p>
+                        <ul className="space-y-1 text-xs font-mono">
+                          <li>id, employee_number</li>
+                          <li>full_name, full_name_ar</li>
+                          <li>is_saudi, national_id (سعودي)</li>
+                          <li>iqama_number, iqama_expiry_date (أجنبي)</li>
+                          <li>supervisor_id</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* المخالصات */}
+                  <div className="p-4 bg-orange-50 rounded-xl border-2 border-orange-200">
+                    <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3">
+                      <DollarSign size={18} />
+                      {lang === 'ar' ? 'المخالصات (settlements)' : 'Settlements (settlements)'}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'يسحب من' : 'Pulls from'}</p>
+                        <ul className="space-y-1">
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span>{lang === 'ar' ? 'العقد (الراتب، المسمى، البنك)' : 'Contract (salary, title, bank)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500" />
+                            <span>{lang === 'ar' ? 'الموظف (الاسم، الهوية)' : 'Employee (name, ID)'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-purple-500" />
+                            <span>{lang === 'ar' ? 'رصيد الإجازات المستحقة' : 'Leave balance due'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg">
+                        <p className="text-muted-foreground mb-1">{lang === 'ar' ? 'يُضاف يدوياً' : 'Manual additions'}</p>
+                        <ul className="space-y-1">
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            <span>{lang === 'ar' ? 'الخصومات اليدوية' : 'Manual deductions'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                            <span>{lang === 'ar' ? 'السلف اليدوية' : 'Manual loans'}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-gray-500" />
+                            <span>{lang === 'ar' ? 'راتب خارج المسيرات' : 'Out-of-payroll salary'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ملاحظة المُهاجر */}
+                  <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+                    <h3 className="font-bold text-purple-800 flex items-center gap-2 mb-3">
+                      <AlertTriangle size={18} />
+                      {lang === 'ar' ? 'ملاحظة: العقود المُهاجرة' : 'Note: Migrated Contracts'}
+                    </h3>
+                    <div className="text-sm space-y-2">
+                      <p>{lang === 'ar' 
+                        ? 'للموظفين القدامى المنقولين من نظام سابق:' 
+                        : 'For employees migrated from a previous system:'}</p>
+                      <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                        <li>{lang === 'ar' 
+                          ? 'leave_opening_balance = الرصيد المتبقي من النظام القديم' 
+                          : 'leave_opening_balance = remaining balance from old system'}</li>
+                        <li>{lang === 'ar' 
+                          ? 'leave_consumed = المستهلك سابقاً (للتوثيق فقط، لا يؤثر على الحساب)' 
+                          : 'leave_consumed = previously consumed (for documentation only)'}</li>
+                        <li>{lang === 'ar' 
+                          ? 'الرصيد المتاح = الرصيد الافتتاحي - المستخدم في النظام الجديد' 
+                          : 'Available = Opening balance - Used in new system'}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Mobile Decision Bar - Fixed at bottom - منع التنفيذ المكرر */}
