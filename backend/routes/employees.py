@@ -31,9 +31,12 @@ class EmployeeUpdate(BaseModel):
     department_ar: Optional[str] = None
     position: Optional[str] = None
     position_ar: Optional[str] = None
-    # بيانات الإقامة
-    iqama_number: Optional[str] = None  # رقم الإقامة
-    iqama_expiry_date: Optional[str] = None  # تاريخ انتهاء الإقامة YYYY-MM-DD
+    # بيانات الهوية/الإقامة
+    is_saudi: Optional[bool] = None  # True = سعودي (هوية وطنية)، False = أجنبي (إقامة)
+    national_id: Optional[str] = None  # رقم الهوية الوطنية للسعوديين
+    iqama_number: Optional[str] = None  # رقم الإقامة للأجانب
+    iqama_expiry_date: Optional[str] = None  # تاريخ انتهاء الإقامة YYYY-MM-DD (للأجانب)
+    id_expiry_date: Optional[str] = None  # تاريخ انتهاء الهوية (للسعوديين)
     nationality: Optional[str] = None  # الجنسية
 
 
