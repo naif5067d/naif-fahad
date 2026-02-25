@@ -632,7 +632,14 @@ export default function SettlementPage() {
         {/* Net Amount */}
         <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
           <div className="text-xs text-muted-foreground">{lang === 'ar' ? 'الصافي النهائي المستحق للموظف' : 'Net Amount Payable to Employee'}</div>
-          <div className="text-2xl font-bold text-primary">{snapshot.totals?.net_amount?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}</div>
+          <div className="text-2xl font-bold text-primary">
+            {(manualMode 
+              ? ((manualValues.eos_amount + manualValues.leave_compensation + manualValues.additional_entitlements) 
+                 - (snapshot.totals?.deductions?.total || 0) - manualValues.additional_deductions)
+              : snapshot.totals?.net_amount
+            )?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
+          </div>
+          {manualMode && <div className="text-xs text-amber-600 mt-1">{lang === 'ar' ? '(تم التعديل يدوياً)' : '(Manually adjusted)'}</div>}
         </div>
         
         {/* Signatures placeholder */}
