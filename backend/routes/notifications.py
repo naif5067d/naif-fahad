@@ -850,7 +850,7 @@ async def get_summons(
 ):
     """
     الحصول على الاستدعاءات
-    - الموظف يرى استدعاءاته
+    - الموظف يرى استدعاءاته غير المُطلع عليها
     - الإدارة ترى جميع الاستدعاءات
     """
     user_role = user.get('role', '')
@@ -865,9 +865,13 @@ async def get_summons(
             {"_id": 0}
         ).sort("created_at", -1).to_list(50)
     else:
-        # الموظف يرى استدعاءاته فقط
+        # الموظف يرى استدعاءاته غير المُطلع عليها فقط
         summons = await db.notifications.find(
-            {"notification_type": "summon", "employee_id": user_employee_id},
+            {
+                "notification_type": "summon", 
+                "employee_id": user_employee_id,
+                "acknowledged": {"$ne": True}  # غير مُطلع عليها
+            },
             {"_id": 0}
         ).sort("created_at", -1).to_list(20)
     
@@ -875,3 +879,48 @@ async def get_summons(
         "summons": summons,
         "count": len(summons)
     }
+
+
+@router.post("/summons/{summon_id}/acknowledge")
+async def acknowledge_summon(
+    summon_id: str,
+    user=Depends(get_current_user)
+):
+    """
+    تأكيد اطلاع الموظف على الاستدعاء
+    """
+    user_employee_id = user.get('employee_id')
+    
+    # البحث عن الاستدعاء
+    summon = await db.notifications.find_one(
+        {
+            "id": summon_id,
+            "notification_type": "summon",
+            "employee_id": user_employee_id
+        }
+    )
+    
+    if not summon:
+        raise HTTPException(status_code=404, detail="الاستدعاء غير موجود")
+    
+    if summon.get('acknowledged'):
+        return {"message": "تم الاطلاع على هذا الاستدعاء مسبقاً", "acknowledged": True}
+    
+    # تحديث حالة الاستدعاء
+    await db.notifications.update_one(
+        {"id": summon_id},
+        {
+            "$set": {
+                "acknowledged": True,
+                "acknowledged_at": datetime.now(timezone.utc).isoformat(),
+                "status": "acknowledged"
+            }
+        }
+    )
+    
+    return {
+        "message_ar": "تم تأكيد الاطلاع على الاستدعاء",
+        "message_en": "Summon acknowledged",
+        "acknowledged": True
+    }
+
