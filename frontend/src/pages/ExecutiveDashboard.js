@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Users, Clock, FileText, Wallet,
   AlertTriangle, Activity, BarChart3, Target, ArrowLeft,
   Maximize2, Minimize2, RefreshCw, Bell, Zap, Award,
-  ChevronUp, ChevronDown as ChevronDownIcon
+  ChevronUp, ChevronDown as ChevronDownIcon, Brain, Star, Eye
 } from 'lucide-react';
 import api from '@/lib/api';
 import {
