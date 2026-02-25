@@ -201,12 +201,13 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     service_days_count = service.get("days", 0)
     service_duration = f"{service_years} سنة و {service_months} شهر و {service_days_count} يوم"
     
+    # جدول بيانات الموظف - 4 أعمدة
     emp_data = [
-        [en(emp_code), en("Name"), ar("الاسم"), ar(emp_name)],
+        [en(emp_name), en("Name"), ar("الاسم"), ar(emp_name)],
         [en(emp_code), en("Employee ID"), ar("الرقم الوظيفي"), ar(emp_code)],
         [en(national_id), en("ID/Iqama"), ar("الهوية/الإقامة"), ar(national_id)],
-        [en(job_title), en("Job Title"), ar("المسمى الوظيفي"), ar(job_title)],
-        [en(department), en("Department"), ar("القسم"), ar(department)],
+        [en(job_title or "-"), en("Job Title"), ar("المسمى الوظيفي"), ar(job_title or "-")],
+        [en(department or "-"), en("Department"), ar("القسم"), ar(department or "-")],
         [en(bank_name), en("Bank"), ar("البنك"), ar(bank_name)],
         [en(bank_iban), en("IBAN"), ar("الآيبان"), ar(bank_iban)],
         [en(hire_date), en("Hire Date"), ar("تاريخ التعيين"), ar(hire_date)],
