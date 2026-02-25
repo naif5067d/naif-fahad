@@ -610,6 +610,8 @@ async def search_contracts(
     - Employee code
     - Employee name
     """
+    from datetime import date
+    
     filter_query = {}
     
     if status:
@@ -644,5 +646,17 @@ async def search_contracts(
         filter_query, 
         {"_id": 0}
     ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # حساب سنوات الخدمة ديناميكياً لكل عقد
+    today = date.today()
+    for contract in contracts:
+        start_date = contract.get("start_date") or contract.get("work_start_date")
+        if start_date:
+            try:
+                start = datetime.strptime(start_date, "%Y-%m-%d").date()
+                service_years = (today - start).days / 365.25
+                contract["service_years"] = round(service_years, 2)
+            except:
+                pass
     
     return contracts
