@@ -1036,8 +1036,33 @@ async def get_employee_summary(employee_id: str, user=Depends(get_current_user))
         # المعاملات النشطة
         active_transactions = await get_employee_active_transactions(employee_id)
         
+        # === تقييم المهام للإدارة ===
+        current_year = datetime.now(timezone.utc).year
+        task_evaluations = await db.task_evaluations.find({
+            "employee_id": employee_id,
+            "year": current_year
+        }, {"_id": 0}).to_list(100)
+        
+        # حساب المتوسط الموزون للتقييم
+        task_score = 0
+        total_weight = 0
+        completed_tasks = 0
+        if task_evaluations:
+            total_weight = sum(e.get('weight', 0) for e in task_evaluations)
+            weighted_sum = sum(e.get('final_score', 0) * e.get('weight', 0) for e in task_evaluations)
+            task_score = round(weighted_sum / total_weight, 2) if total_weight > 0 else 0
+            completed_tasks = len(task_evaluations)
+        
         employee_summary.update({
             "supervisor": supervisor,
+            "task_evaluation": {
+                "score": task_score,
+                "out_of": 5,
+                "completed_tasks": completed_tasks,
+                "total_weight": total_weight,
+                "year": current_year,
+                "rating_label": "ممتاز" if task_score >= 4.5 else "جيد جداً" if task_score >= 4 else "جيد" if task_score >= 3 else "مقبول" if task_score >= 2 else "ضعيف" if task_score > 0 else "لا يوجد"
+            },
             "attendance_details": {
                 "summary_30_days": attendance_summary,
                 "unsettled_absences": len(unsettled_absences),
