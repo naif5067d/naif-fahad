@@ -405,7 +405,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     # نص الإقرار القانوني الكامل
     decl_ar = f"""أقر أنا الموقع أدناه {emp_name} بأنني استلمت من شركة دار الكود للاستشارات الهندسية كافة مستحقاتي المالية الموضحة أعلاه، وأُقر بإبراء ذمة الشركة إبراءً تاماً من أي حقوق أو مطالبات مالية أو عمالية حالية أو مستقبلية، وأُقر بعلمي التام بجميع البنود والمبالغ الواردة في هذه المخالصة، وأن هذا الإقرار نهائي وقاطع ولا يحق لي المطالبة بأي مبالغ إضافية بعد توقيعي على هذه الوثيقة."""
     
-    decl_en = f"""I, the undersigned, acknowledge receipt of all my financial entitlements from Dar Al Code Engineering Consultancy as detailed above. I hereby fully release and discharge the company from any current or future financial or labor claims. I confirm my complete knowledge of all items and amounts in this settlement. This declaration is final and binding, and I waive any right to claim additional amounts after signing this document."""
+    decl_en = """I, the undersigned, acknowledge receipt of all my financial entitlements from Dar Al Code Engineering Consultancy as detailed above. I hereby fully release and discharge the company from any current or future financial or labor claims. I confirm my complete knowledge of all items and amounts in this settlement. This declaration is final and binding, and I waive any right to claim additional amounts after signing this document."""
     
     decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=5, alignment=TA_RIGHT, leading=6)
     decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=5, alignment=TA_LEFT, leading=6)
