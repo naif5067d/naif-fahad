@@ -99,6 +99,21 @@ export default function EmployeesPage() {
     return expiring;
   };
 
+  // التحقق إذا كان الموظف لديه إقامة تنتهي قريباً
+  const getIqamaExpiryStatus = (employeeId) => {
+    const expiring = expiringIqamas.find(e => e.employee_id === employeeId);
+    return expiring;
+  };
+
+  // حساب أيام انتهاء الإقامة من بيانات الموظف مباشرة
+  const calcIqamaDaysRemaining = (iqamaExpiryDate) => {
+    if (!iqamaExpiryDate) return null;
+    const expiry = new Date(iqamaExpiryDate);
+    const today = new Date();
+    const diff = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
   const filtered = employees.filter(e => {
     if (!search) return true;
     const s = search.toLowerCase();
