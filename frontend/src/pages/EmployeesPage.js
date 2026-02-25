@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, Search, Edit2, UserCheck, Trash2, Key, Eye, EyeOff, User, AlertTriangle, Calendar, Briefcase, RefreshCw, Bell } from 'lucide-react';
+import { Users, Search, Edit2, UserCheck, Trash2, Key, Eye, EyeOff, User, AlertTriangle, Calendar, Briefcase, RefreshCw, Bell, Award } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
