@@ -255,8 +255,8 @@ async def preview_settlement(
             "employee_number": employee.get("employee_number"),
             "national_id": employee.get("national_id") or employee.get("iqama_number", ""),
             "iqama_number": employee.get("iqama_number", ""),
-            "job_title": employee.get("job_title") or contract.get("job_title", ""),
-            "department": employee.get("department", "")
+            "job_title": contract.get("job_title") or contract.get("job_title_ar") or employee.get("job_title", ""),
+            "department": contract.get("department") or contract.get("department_ar") or employee.get("department", "")
         },
         "contract": {
             "id": contract["id"],
@@ -266,7 +266,11 @@ async def preview_settlement(
             "termination_type_label": TERMINATION_TYPES[req.termination_type]["label_ar"],
             "last_working_day": req.last_working_day,
             "bank_name": contract.get("bank_name", ""),
-            "bank_iban": contract.get("bank_iban", "")
+            "bank_iban": contract.get("bank_iban", ""),
+            "job_title": contract.get("job_title") or contract.get("job_title_ar", ""),
+            "job_title_ar": contract.get("job_title_ar") or contract.get("job_title", ""),
+            "department": contract.get("department") or contract.get("department_ar", ""),
+            "department_ar": contract.get("department_ar") or contract.get("department", "")
         },
         "service": service,
         "wages": {
