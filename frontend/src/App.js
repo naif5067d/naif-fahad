@@ -21,6 +21,8 @@ import FinancialCustodyPage from "@/pages/FinancialCustodyPage";
 import CompanySettingsPage from "@/pages/CompanySettingsPage";
 import SystemMaintenancePage from "@/pages/SystemMaintenancePage";
 import ContractsManagementPage from "@/pages/ContractsManagementPage";
+// صفحة العقود الجديدة (منظمة)
+import ContractsManagementPageNew from "@/pages/contracts";
 import SettlementPage from "@/pages/SettlementPage";
 import MyFinancesPage from "@/pages/MyFinancesPage";
 import TeamAttendancePage from "@/pages/TeamAttendancePage";
