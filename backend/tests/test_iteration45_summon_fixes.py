@@ -15,6 +15,21 @@ import os
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
+
+def get_token_and_user(username, password):
+    """Helper to login and get token + user data"""
+    response = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "username": username,
+        "password": password
+    })
+    if response.status_code != 200:
+        return None, None
+    data = response.json()
+    token = data.get("token")  # API returns 'token' not 'access_token'
+    user = data.get("user", data)  # User data might be in 'user' key
+    return token, user
+
+
 class TestAuthentication:
     """Test authentication for all required users"""
     
@@ -26,9 +41,11 @@ class TestAuthentication:
         })
         assert response.status_code == 200, f"Sultan login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
-        assert data.get("role") == "sultan"
-        print(f"✓ Sultan login successful - user_id: {data.get('user_id')}")
+        assert "token" in data, "Response should have 'token'"
+        user = data.get('user', {})
+        assert user.get("role") == "sultan", f"Expected sultan role, got {user.get('role')}"
+        print(f"✓ Sultan login successful - user_id: {user.get('id')}")
+        print(f"  - full_name: {user.get('full_name')}, full_name_ar: {user.get('full_name_ar')}")
         return data
     
     def test_stas_login(self):
@@ -39,9 +56,10 @@ class TestAuthentication:
         })
         assert response.status_code == 200, f"STAS login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
-        assert data.get("role") == "stas"
-        print(f"✓ STAS login successful - user_id: {data.get('user_id')}")
+        assert "token" in data
+        user = data.get('user', {})
+        assert user.get("role") == "stas", f"Expected stas role, got {user.get('role')}"
+        print(f"✓ STAS login successful - user_id: {user.get('id')}")
         return data
     
     def test_naif_login(self):
@@ -52,8 +70,8 @@ class TestAuthentication:
         })
         assert response.status_code == 200, f"Naif login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
-        print(f"✓ Naif login successful - role: {data.get('role')}")
+        assert "token" in data
+        print(f"✓ Naif login successful - role: {data.get('user', {}).get('role')}")
         return data
     
     def test_salah_login(self):
@@ -64,36 +82,51 @@ class TestAuthentication:
         })
         assert response.status_code == 200, f"Salah login failed: {response.text}"
         data = response.json()
-        assert "access_token" in data
-        print(f"✓ Salah login successful - role: {data.get('role')}")
+        assert "token" in data
+        print(f"✓ Salah login successful - role: {data.get('user', {}).get('role')}")
         return data
 
 
 class TestContractEditVisibility:
     """Test contract edit button visibility for admins"""
     
-    def test_get_contracts_list(self):
-        """Get list of contracts and verify active ones exist"""
-        # Login as sultan
-        login_res = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "sultan",
-            "password": "123456"
-        })
-        token = login_res.json().get("access_token")
+    def test_get_contracts_list_as_sultan(self):
+        """Get list of contracts as sultan and verify active ones exist"""
+        token, user = get_token_and_user("sultan", "123456")
+        assert token, "Failed to get token"
         
         response = requests.get(
             f"{BASE_URL}/api/contracts-v2",
             headers={"Authorization": f"Bearer {token}"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Failed to get contracts: {response.text}"
         contracts = response.json()
         
         # Check for active contracts
         active_contracts = [c for c in contracts if c.get('status') == 'active']
-        print(f"✓ Found {len(active_contracts)} active contracts out of {len(contracts)} total")
+        print(f"✓ Sultan sees {len(active_contracts)} active contracts out of {len(contracts)} total")
         
         if active_contracts:
             print(f"  - Sample active contract: {active_contracts[0].get('contract_serial')}")
+            # Admin should be able to edit active contracts - this is frontend logic
+            # The API allows updates, frontend shows/hides button based on role
+        
+        return contracts
+    
+    def test_get_contracts_list_as_stas(self):
+        """Get list of contracts as stas"""
+        token, user = get_token_and_user("stas506", "654321")
+        assert token, "Failed to get token"
+        
+        response = requests.get(
+            f"{BASE_URL}/api/contracts-v2",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200, f"Failed to get contracts: {response.text}"
+        contracts = response.json()
+        
+        active_contracts = [c for c in contracts if c.get('status') == 'active']
+        print(f"✓ STAS sees {len(active_contracts)} active contracts out of {len(contracts)} total")
         
         return contracts
 
@@ -101,52 +134,28 @@ class TestContractEditVisibility:
 class TestSummonFeature:
     """Test summon functionality"""
     
-    @pytest.fixture
-    def sultan_token(self):
-        """Get Sultan's auth token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "sultan",
-            "password": "123456"
-        })
-        return response.json().get("access_token"), response.json()
-    
-    @pytest.fixture
-    def stas_token(self):
-        """Get STAS auth token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "stas506",
-            "password": "654321"
-        })
-        return response.json().get("access_token"), response.json()
-    
-    @pytest.fixture
-    def salah_token(self):
-        """Get Salah's auth token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "salah",
-            "password": "123456"
-        })
-        return response.json().get("access_token"), response.json()
-    
-    def test_get_employees_for_summon(self, sultan_token):
+    def test_get_employees_for_summon(self):
         """Get employees list to find someone to summon"""
-        token, _ = sultan_token
+        token, user = get_token_and_user("sultan", "123456")
+        assert token, "Failed to get token"
+        
         response = requests.get(
             f"{BASE_URL}/api/employees",
             headers={"Authorization": f"Bearer {token}"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, f"Failed to get employees: {response.text}"
         employees = response.json()
         
         # Filter active employees
-        active_employees = [e for e in employees if e.get('is_active')]
+        active_employees = [e for e in employees if isinstance(e, dict) and e.get('is_active')]
         print(f"✓ Found {len(active_employees)} active employees for summon testing")
         
         return active_employees
     
-    def test_send_summon_with_sender_name(self, sultan_token):
+    def test_send_summon_with_sender_name(self):
         """Test sending a summon and verify sender_name is set"""
-        token, user_data = sultan_token
+        token, user = get_token_and_user("sultan", "123456")
+        assert token, "Failed to get token"
         
         # Get an employee to summon
         emp_response = requests.get(
@@ -157,8 +166,9 @@ class TestSummonFeature:
         
         # Find an active employee to summon (not sultan himself)
         target_employee = None
+        user_employee_id = user.get('employee_id', '')
         for emp in employees:
-            if emp.get('is_active') and emp.get('id') != user_data.get('employee_id'):
+            if isinstance(emp, dict) and emp.get('is_active') and emp.get('id') != user_employee_id:
                 target_employee = emp
                 break
         
@@ -184,22 +194,24 @@ class TestSummonFeature:
         
         return result.get('summon_id'), target_employee
     
-    def test_summon_active_for_list_stas_sees_all(self, sultan_token, stas_token):
+    def test_summon_active_for_list_stas_sees_all(self):
         """Test that STAS sees all summons in active-for-list endpoint"""
         # First send a summon as sultan
-        sultan_tok, sultan_data = sultan_token
-        stas_tok, stas_data = stas_token
+        sultan_token, sultan_user = get_token_and_user("sultan", "123456")
+        stas_token, stas_user = get_token_and_user("stas506", "654321")
+        
+        assert sultan_token and stas_token, "Failed to get tokens"
         
         # Get employees
         emp_response = requests.get(
             f"{BASE_URL}/api/employees",
-            headers={"Authorization": f"Bearer {sultan_tok}"}
+            headers={"Authorization": f"Bearer {sultan_token}"}
         )
         employees = emp_response.json()
         
         target_employee = None
         for emp in employees:
-            if emp.get('is_active') and emp.get('id') != sultan_data.get('employee_id'):
+            if isinstance(emp, dict) and emp.get('is_active') and emp.get('id') != sultan_user.get('employee_id'):
                 target_employee = emp
                 break
         
@@ -209,7 +221,7 @@ class TestSummonFeature:
         # Send summon as sultan
         requests.post(
             f"{BASE_URL}/api/notifications/summon",
-            headers={"Authorization": f"Bearer {sultan_tok}"},
+            headers={"Authorization": f"Bearer {sultan_token}"},
             json={
                 "employee_id": target_employee['id'],
                 "employee_name": target_employee.get('full_name_ar') or target_employee.get('full_name'),
@@ -221,7 +233,7 @@ class TestSummonFeature:
         # STAS should see all summons
         stas_summons = requests.get(
             f"{BASE_URL}/api/notifications/summons/active-for-list",
-            headers={"Authorization": f"Bearer {stas_tok}"}
+            headers={"Authorization": f"Bearer {stas_token}"}
         )
         assert stas_summons.status_code == 200
         stas_data = stas_summons.json()
@@ -236,21 +248,23 @@ class TestSummonFeature:
         
         return stas_data
     
-    def test_summon_active_for_list_sultan_sees_own(self, sultan_token, salah_token):
+    def test_summon_active_for_list_sultan_sees_own(self):
         """Test that sultan sees only summons he sent (not ones sent by salah)"""
-        sultan_tok, sultan_data = sultan_token
-        salah_tok, salah_data = salah_token
+        sultan_token, sultan_user = get_token_and_user("sultan", "123456")
+        salah_token, salah_user = get_token_and_user("salah", "123456")
+        
+        assert sultan_token and salah_token, "Failed to get tokens"
         
         # Get employees
         emp_response = requests.get(
             f"{BASE_URL}/api/employees",
-            headers={"Authorization": f"Bearer {sultan_tok}"}
+            headers={"Authorization": f"Bearer {sultan_token}"}
         )
         employees = emp_response.json()
         
         target_employee = None
         for emp in employees:
-            if emp.get('is_active'):
+            if isinstance(emp, dict) and emp.get('is_active'):
                 target_employee = emp
                 break
         
@@ -260,7 +274,7 @@ class TestSummonFeature:
         # Send summon as salah
         salah_summon = requests.post(
             f"{BASE_URL}/api/notifications/summon",
-            headers={"Authorization": f"Bearer {salah_tok}"},
+            headers={"Authorization": f"Bearer {salah_token}"},
             json={
                 "employee_id": target_employee['id'],
                 "employee_name": target_employee.get('full_name_ar') or target_employee.get('full_name'),
@@ -275,7 +289,7 @@ class TestSummonFeature:
         # Check sultan's active-for-list - should NOT contain salah's summon (unless sultan is stas)
         sultan_summons = requests.get(
             f"{BASE_URL}/api/notifications/summons/active-for-list",
-            headers={"Authorization": f"Bearer {sultan_tok}"}
+            headers={"Authorization": f"Bearer {sultan_token}"}
         )
         assert sultan_summons.status_code == 200
         sultan_summons_data = sultan_summons.json()
@@ -286,23 +300,19 @@ class TestSummonFeature:
         # Salah's summon should NOT be in sultan's list (sultan != stas)
         if salah_summon_id in sultan_summon_ids:
             print(f"⚠ Warning: Sultan sees Salah's summon - expected only own summons")
+            # This is actually incorrect behavior based on requirements
+            assert False, "Sultan should not see summons sent by other admins"
         else:
-            print(f"✓ Sultan only sees his own summons (not Salah's)")
+            print(f"✓ Sultan only sees his own summons (not Salah's) - {len(sultan_summon_ids)} summons")
         
         return sultan_summons_data
-
-
-class TestSummonAcknowledge:
-    """Test summon acknowledge functionality"""
     
-    def test_acknowledge_summon_deletes_from_db(self):
-        """Test that acknowledging a summon removes it from the database"""
-        # Login as admin to send summon
-        sultan_login = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "sultan",
-            "password": "123456"
-        })
-        sultan_token = sultan_login.json().get("access_token")
+    def test_salah_doesnt_see_sultan_summons(self):
+        """Test that salah doesn't see summons sent by sultan"""
+        sultan_token, sultan_user = get_token_and_user("sultan", "123456")
+        salah_token, salah_user = get_token_and_user("salah", "123456")
+        
+        assert sultan_token and salah_token, "Failed to get tokens"
         
         # Get employees
         emp_response = requests.get(
@@ -311,44 +321,67 @@ class TestSummonAcknowledge:
         )
         employees = emp_response.json()
         
-        # Find an employee with login credentials to test acknowledge
-        # We'll check if any employee has a matching user
-        users_response = requests.get(
-            f"{BASE_URL}/api/users",
-            headers={"Authorization": f"Bearer {sultan_token}"}
-        )
-        
-        # For now, we'll test the endpoint structure
-        # Find target employee
         target_employee = None
         for emp in employees:
-            if emp.get('is_active') and emp.get('id') != sultan_login.json().get('employee_id'):
+            if isinstance(emp, dict) and emp.get('is_active'):
                 target_employee = emp
                 break
         
         if not target_employee:
-            pytest.skip("No employee available for acknowledge test")
+            pytest.skip("No active employee found")
         
-        # Send summon
-        summon_res = requests.post(
+        # Send summon as sultan
+        sultan_summon = requests.post(
             f"{BASE_URL}/api/notifications/summon",
             headers={"Authorization": f"Bearer {sultan_token}"},
             json={
                 "employee_id": target_employee['id'],
                 "employee_name": target_employee.get('full_name_ar') or target_employee.get('full_name'),
                 "priority": "normal",
-                "comment": "Test summon for acknowledge"
+                "comment": "Sultan test summon - should NOT appear for salah"
             }
         )
+        assert sultan_summon.status_code == 200
+        sultan_summon_id = sultan_summon.json().get('summon_id')
+        print(f"✓ Sultan sent summon ID: {sultan_summon_id}")
         
-        assert summon_res.status_code == 200
-        summon_id = summon_res.json().get('summon_id')
-        print(f"✓ Created summon for acknowledge test: {summon_id}")
+        # Check salah's active-for-list - should NOT contain sultan's summon
+        salah_summons = requests.get(
+            f"{BASE_URL}/api/notifications/summons/active-for-list",
+            headers={"Authorization": f"Bearer {salah_token}"}
+        )
+        assert salah_summons.status_code == 200
+        salah_summons_data = salah_summons.json()
         
-        # Now we need to find a user that matches this employee to acknowledge
-        # This test validates the endpoint exists and works
+        salah_summon_ids = [s.get('id') for s in salah_summons_data.get('summons', [])]
         
-        return summon_id
+        # Sultan's summon should NOT be in salah's list (salah != stas)
+        if sultan_summon_id in salah_summon_ids:
+            print(f"⚠ Warning: Salah sees Sultan's summon - expected only own summons")
+            assert False, "Salah should not see summons sent by other admins"
+        else:
+            print(f"✓ Salah only sees his own summons (not Sultan's) - {len(salah_summon_ids)} summons")
+        
+        return salah_summons_data
+
+
+class TestSummonAcknowledge:
+    """Test summon acknowledge functionality"""
+    
+    def test_acknowledge_endpoint_exists(self):
+        """Test that the acknowledge endpoint exists and requires proper auth"""
+        token, user = get_token_and_user("sultan", "123456")
+        
+        # Test with a fake summon ID - should return 404 not 401
+        response = requests.post(
+            f"{BASE_URL}/api/notifications/summons/fake-id-12345/acknowledge",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        # Should return 404 (not found) not 401 (unauthorized)
+        # This confirms the endpoint exists
+        print(f"✓ Acknowledge endpoint exists - returned {response.status_code} for invalid ID")
+        assert response.status_code in [404, 400], f"Unexpected status: {response.status_code}"
 
 
 class TestSummonSenderNameInNotifications:
@@ -356,14 +389,8 @@ class TestSummonSenderNameInNotifications:
     
     def test_summon_notification_has_sender_name(self):
         """Verify summon notification stores sender_name from current user"""
-        # Login as sultan
-        login_res = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "sultan",
-            "password": "123456"
-        })
-        assert login_res.status_code == 200
-        token = login_res.json().get("access_token")
-        user_data = login_res.json()
+        token, user = get_token_and_user("sultan", "123456")
+        assert token, "Failed to get token"
         
         # Get employees
         emp_response = requests.get(
@@ -374,7 +401,7 @@ class TestSummonSenderNameInNotifications:
         
         target = None
         for emp in employees:
-            if emp.get('is_active') and emp.get('id') != user_data.get('employee_id'):
+            if isinstance(emp, dict) and emp.get('is_active') and emp.get('id') != user.get('employee_id'):
                 target = emp
                 break
         
@@ -393,19 +420,14 @@ class TestSummonSenderNameInNotifications:
             }
         )
         
-        assert summon_res.status_code == 200
+        assert summon_res.status_code == 200, f"Failed: {summon_res.text}"
         result = summon_res.json()
-        print(f"✓ Summon sent - checking sender_name in response")
-        
-        # Verify the response
-        assert 'summon_id' in result
+        summon_id = result.get('summon_id')
+        print(f"✓ Summon sent - ID: {summon_id}")
         
         # Check the summon in active-for-list (as stas to see all)
-        stas_login = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "username": "stas506",
-            "password": "654321"
-        })
-        stas_token = stas_login.json().get("access_token")
+        stas_token, _ = get_token_and_user("stas506", "654321")
+        assert stas_token, "Failed to get stas token"
         
         summons_res = requests.get(
             f"{BASE_URL}/api/notifications/summons/active-for-list",
@@ -418,16 +440,18 @@ class TestSummonSenderNameInNotifications:
         # Find our summon
         our_summon = None
         for s in summons_data.get('summons', []):
-            if s.get('id') == result.get('summon_id'):
+            if s.get('id') == summon_id:
                 our_summon = s
                 break
         
         if our_summon:
             sender_name = our_summon.get('sender_name') or our_summon.get('sent_by_name')
-            print(f"✓ Summon found with sender_name: {sender_name}")
+            print(f"✓ Summon found with sender_name: '{sender_name}'")
             assert sender_name, "sender_name should not be empty"
+            # Verify it matches sultan's name
+            print(f"  - Sultan's full_name: {user.get('full_name')}, full_name_ar: {user.get('full_name_ar')}")
         else:
-            print("⚠ Could not find summon in active-for-list (may have been acknowledged)")
+            print(f"⚠ Could not find summon {summon_id} in active-for-list")
 
 
 if __name__ == "__main__":
