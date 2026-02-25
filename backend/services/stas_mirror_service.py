@@ -115,10 +115,16 @@ async def build_pre_checks(tx: dict) -> List[dict]:
 
 
 async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
-    """فحوصات طلب الإجازة - محدث Pro-Rata"""
+    """فحوصات طلب الإجازة - محدث Pro-Rata + إجازات ثابتة"""
     checks = []
     leave_type = data.get('leave_type', 'annual')
     working_days = data.get('working_days', 0)
+    
+    # الإجازات الثابتة (زواج: 5، وفاة: 5)
+    FIXED_LEAVE_LIMITS = {
+        'marriage': {'days': 5, 'name_ar': 'إجازة الزواج', 'once_only': True},
+        'bereavement': {'days': 5, 'name_ar': 'إجازة الوفاة', 'once_only': False},
+    }
     
     # فحص الرصيد باستخدام Pro-Rata
     if leave_type == 'annual':
@@ -154,13 +160,55 @@ async def build_leave_checks(tx: dict, emp_id: str, data: dict) -> List[dict]:
                 "change": -working_days
             }
         })
+    elif leave_type in FIXED_LEAVE_LIMITS:
+        # إجازات ثابتة (زواج، وفاة)
+        limit_info = FIXED_LEAVE_LIMITS[leave_type]
+        allowed_days = limit_info['days']
+        excess = working_days - allowed_days
+        
+        status = "PASS" if excess <= 0 else "FAIL"
+        detail = f"المسموح: {allowed_days} يوم | المطلوب: {working_days} يوم"
+        if excess > 0:
+            detail += f" | ⚠️ تجاوز بـ {excess} يوم ({-excess} من {allowed_days})"
+        
+        checks.append({
+            "name": f"{limit_info['name_ar']} Limit",
+            "name_ar": f"حد {limit_info['name_ar']}",
+            "status": status,
+            "detail": detail,
+            "category": "leave",
+            "fixed_leave_info": {
+                "type": leave_type,
+                "allowed": allowed_days,
+                "requested": working_days,
+                "excess": excess if excess > 0 else 0
+            }
+        })
+        
+        # فحص إذا كانت مرة واحدة فقط (الزواج)
+        if limit_info.get('once_only'):
+            previous_marriage = await db.transactions.find_one({
+                "employee_id": emp_id,
+                "type": "leave_request",
+                "data.leave_type": "marriage",
+                "status": "executed",
+                "id": {"$ne": tx.get('id')}
+            })
+            if previous_marriage:
+                checks.append({
+                    "name": "Marriage Leave Once Only",
+                    "name_ar": "إجازة الزواج مرة واحدة",
+                    "status": "FAIL",
+                    "detail": f"⚠️ الموظف استخدم إجازة الزواج مسبقاً في {previous_marriage.get('created_at', '')[:10]}",
+                    "category": "leave"
+                })
     else:
         # الإجازات الإدارية - لا رصيد، مسار إداري فقط
         checks.append({
             "name": "Administrative Leave",
             "name_ar": "إجازة إدارية",
             "status": "PASS",
-            "detail": f"نوع الإجازة: {data.get('leave_type_ar', leave_type)} - مسار إداري",
+            "detail": f"نوع الإجازة: {data.get('leave_type_ar', leave_type)} - مسار إداري (حسب قرار الإدارة)",
             "category": "leave"
         })
     
