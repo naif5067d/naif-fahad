@@ -149,17 +149,21 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     
     # جلب شعار الشركة
     logo_img = None
-    if branding and branding.get("logo_data"):
+    logo_data = None
+    if branding:
+        logo_data = branding.get("logo_data") or branding.get("logo_url")
+    
+    if logo_data:
         try:
             import base64
-            logo_data = branding["logo_data"]
+            # إزالة prefix إذا موجود
             if ',' in logo_data:
                 logo_data = logo_data.split(',')[1]
             logo_bytes = base64.b64decode(logo_data)
             logo_buffer = io.BytesIO(logo_bytes)
             logo_img = Image(logo_buffer, width=20*mm, height=12*mm)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Logo error: {e}")
     
     # ترويسة مع شعار
     if logo_img:
