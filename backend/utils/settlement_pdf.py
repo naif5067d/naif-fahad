@@ -24,19 +24,26 @@ import os
 
 # تسجيل الخطوط
 FONT_DIR = "/app/backend/fonts"
+ARABIC_FONT = 'Helvetica'
+ARABIC_FONT_BOLD = 'Helvetica-Bold'
+
 try:
-    pdfmetrics.registerFont(TTFont('Amiri', os.path.join(FONT_DIR, 'Amiri-Regular.ttf')))
-    pdfmetrics.registerFont(TTFont('AmiriBold', os.path.join(FONT_DIR, 'Amiri-Bold.ttf')))
-    ARABIC_FONT = 'Amiri'
-    ARABIC_FONT_BOLD = 'AmiriBold'
-except Exception:
+    amiri_path = os.path.join(FONT_DIR, 'Amiri-Regular.ttf')
+    if os.path.exists(amiri_path):
+        pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
+        pdfmetrics.registerFont(TTFont('AmiriBold', amiri_path))  # استخدام نفس الخط للـ Bold
+        ARABIC_FONT = 'Amiri'
+        ARABIC_FONT_BOLD = 'AmiriBold'
+except Exception as e:
+    print(f"Font registration error: {e}")
     try:
-        pdfmetrics.registerFont(TTFont('NotoArabic', os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')))
-        ARABIC_FONT = 'NotoArabic'
-        ARABIC_FONT_BOLD = 'NotoArabic'
+        noto_path = os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
+        if os.path.exists(noto_path):
+            pdfmetrics.registerFont(TTFont('NotoArabic', noto_path))
+            ARABIC_FONT = 'NotoArabic'
+            ARABIC_FONT_BOLD = 'NotoArabic'
     except Exception:
-        ARABIC_FONT = 'Helvetica'
-        ARABIC_FONT_BOLD = 'Helvetica-Bold'
+        pass
 
 # ألوان الشركة
 NAVY = colors.HexColor('#1E3A5F')
