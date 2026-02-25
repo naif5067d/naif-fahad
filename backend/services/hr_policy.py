@@ -156,15 +156,22 @@ async def calculate_pro_rata_entitlement(employee_id: str, start_date: str = Non
     
     # 7.1 للعقود المهاجرة: إضافة الرصيد الافتتاحي
     opening_balance = 0
+    migrated_consumed = 0  # المستهلك من النظام القديم
     is_migrated = contract.get('is_migrated', False)
     
     if is_migrated and contract.get('leave_opening_balance'):
         opening_balance = contract['leave_opening_balance'].get('annual', 0)
-        # للعقود المهاجرة، الرصيد المتاح = الرصيد الافتتاحي - المستخدم
-        # بدلاً من حساب Pro-Rata من بداية السنة
-        earned_to_date = opening_balance
+        # المستهلك قبل الهجرة (من النظام القديم)
+        if contract.get('leave_consumed'):
+            migrated_consumed = contract['leave_consumed'].get('annual', 0)
+        # للعقود المهاجرة، الرصيد الافتتاحي = الرصيد الكامل - المستهلك قبل الهجرة
+        # أي أن opening_balance هو الرصيد المتبقي بعد خصم المستهلك
+        # ثم يُخصم منه أي إجازات أُخذت في النظام الجديد (used_executed)
+        earned_to_date = opening_balance  # هذا هو المتبقي من النظام القديم
     
     # 8. حساب الرصيد المتاح
+    # للمهاجر: الرصيد الافتتاحي (المتبقي) - المستخدم في النظام الجديد
+    # لغير المهاجر: المكتسب - المستخدم
     available_balance = round(earned_to_date - used_executed, 2)
     
     return {
