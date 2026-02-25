@@ -123,6 +123,84 @@ async def get_expiring_contracts(
     }
 
 
+@router.get("/expiring-iqamas")
+async def get_expiring_iqamas(
+    days_ahead: int = 90,
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'mohammed'))
+):
+    """
+    الحصول على الإقامات التي ستنتهي خلال فترة محددة (افتراضياً 90 يوم = 3 أشهر)
+    متاح لـ: sultan, naif, stas, mohammed
+    
+    Returns:
+    - employees: قائمة الموظفين مع تفاصيل الإقامة
+    - summary: إحصائيات
+    """
+    today = datetime.now(timezone.utc).date()
+    cutoff_date = today + timedelta(days=days_ahead)
+    today_str = today.strftime('%Y-%m-%d')
+    cutoff_str = cutoff_date.strftime('%Y-%m-%d')
+    
+    # البحث عن الموظفين النشطين الذين لديهم تاريخ انتهاء إقامة
+    query = {
+        "is_active": True,
+        "iqama_expiry_date": {
+            "$nin": [None, ""],
+            "$lte": cutoff_str,
+            "$gte": today_str
+        }
+    }
+    
+    expiring_iqamas = await db.employees.find(
+        query, {"_id": 0}
+    ).sort("iqama_expiry_date", 1).to_list(100)
+    
+    result = []
+    for emp in expiring_iqamas:
+        # حساب الأيام المتبقية حتى انتهاء الإقامة
+        expiry_date = datetime.strptime(emp['iqama_expiry_date'], '%Y-%m-%d').date()
+        days_remaining = (expiry_date - today).days
+        
+        # تحديد مستوى الإلحاح
+        if days_remaining <= 30:
+            urgency = 'critical'
+            urgency_ar = 'حرج'
+        elif days_remaining <= 60:
+            urgency = 'high'
+            urgency_ar = 'مرتفع'
+        else:
+            urgency = 'medium'
+            urgency_ar = 'متوسط'
+        
+        result.append({
+            "employee_id": emp.get('id'),
+            "employee_number": emp.get('employee_number'),
+            "employee_name": emp.get('full_name'),
+            "employee_name_ar": emp.get('full_name_ar'),
+            "iqama_number": emp.get('iqama_number'),
+            "iqama_expiry_date": emp['iqama_expiry_date'],
+            "days_remaining": days_remaining,
+            "urgency": urgency,
+            "urgency_ar": urgency_ar,
+            "department": emp.get('department'),
+            "department_ar": emp.get('department_ar'),
+            "nationality": emp.get('nationality')
+        })
+    
+    # إحصائيات
+    summary = {
+        "total": len(result),
+        "critical": len([r for r in result if r['urgency'] == 'critical']),
+        "high": len([r for r in result if r['urgency'] == 'high']),
+        "medium": len([r for r in result if r['urgency'] == 'medium'])
+    }
+    
+    return {
+        "employees": result,
+        "summary": summary
+    }
+
+
 @router.get("/header-alerts")
 async def get_header_alerts(user=Depends(get_current_user)):
     """
