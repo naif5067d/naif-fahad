@@ -315,7 +315,7 @@ async def generate_executive_summary(health_data: dict, top_performers: list, bo
 @router.get("/executive/dashboard")
 async def get_executive_dashboard(
     month: Optional[str] = None,
-    user=Depends(require_roles('stas', 'sultan', 'naif', 'mohammed'))
+    user=Depends(require_roles('stas', 'sultan', 'naif', 'mohammed', 'salah'))
 ):
     """
     لوحة المدير التنفيذي
