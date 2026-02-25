@@ -663,6 +663,7 @@ async def get_settlement_pdf(
 ):
     """Generate and return settlement PDF"""
     from utils.settlement_pdf import generate_settlement_pdf
+    from utils.arabic_numbers import number_to_arabic
     
     settlement = await db.settlements.find_one({"id": settlement_id}, {"_id": 0})
     if not settlement:
@@ -670,6 +671,13 @@ async def get_settlement_pdf(
     
     if settlement["status"] != "executed":
         raise HTTPException(status_code=400, detail="لم يتم تنفيذ المخالصة بعد")
+    
+    # إضافة المبلغ كتابةً إذا لم يكن موجوداً
+    snapshot = settlement.get("snapshot", {})
+    totals = snapshot.get("totals", {})
+    if "net_amount_words" not in totals and "net_amount" in totals:
+        totals["net_amount_words"] = number_to_arabic(totals["net_amount"])
+        settlement["snapshot"]["totals"] = totals
     
     # جلب بيانات الشركة - من عدة مصادر
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
