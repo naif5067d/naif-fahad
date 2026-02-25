@@ -693,6 +693,50 @@ export default function ContractsManagementPage() {
                         placeholder="1234567890"
                       />
                     </div>
+                    
+                    {/* قسم الجنسية والإقامة */}
+                    <div className="col-span-2 grid grid-cols-4 gap-4 p-3 bg-muted/30 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={formData.is_saudi}
+                          onCheckedChange={(checked) => setFormData(p => ({ ...p, is_saudi: checked, iqama_number: '', iqama_expiry_date: '' }))}
+                        />
+                        <Label className="text-sm">سعودي</Label>
+                      </div>
+                      
+                      {!formData.is_saudi && (
+                        <>
+                          <div>
+                            <Label className="text-xs">الجنسية</Label>
+                            <Input 
+                              value={formData.nationality}
+                              onChange={e => setFormData(p => ({ ...p, nationality: e.target.value }))}
+                              placeholder="مصري / هندي / ..."
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">رقم الإقامة</Label>
+                            <Input 
+                              value={formData.iqama_number}
+                              onChange={e => setFormData(p => ({ ...p, iqama_number: e.target.value }))}
+                              placeholder="2xxxxxxxxx"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">تاريخ انتهاء الإقامة</Label>
+                            <Input 
+                              type="date"
+                              value={formData.iqama_expiry_date}
+                              onChange={e => setFormData(p => ({ ...p, iqama_expiry_date: e.target.value }))}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
                     <div>
                       <Label>البريد الإلكتروني</Label>
                       <Input 
