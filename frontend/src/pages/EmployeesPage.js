@@ -403,6 +403,12 @@ export default function EmployeesPage() {
                 const isExpiring = expiryStatus && expiryStatus.days_remaining <= 90;
                 const isCritical = expiryStatus && expiryStatus.days_remaining <= 30;
                 
+                // تحقق من انتهاء الإقامة
+                const iqamaExpiryStatus = getIqamaExpiryStatus(e.id);
+                const iqamaDaysRemaining = e.iqama_expiry_date ? calcIqamaDaysRemaining(e.iqama_expiry_date) : null;
+                const isIqamaExpiring = iqamaDaysRemaining !== null && iqamaDaysRemaining <= 90 && iqamaDaysRemaining >= 0;
+                const isIqamaCritical = iqamaDaysRemaining !== null && iqamaDaysRemaining <= 30;
+                
                 // حساب سنوات الخدمة
                 const calcServiceYears = () => {
                   const startDate = e.hire_date || e.start_date || e.created_at;
@@ -421,12 +427,12 @@ export default function EmployeesPage() {
                 <tr 
                   key={e.id} 
                   data-testid={`emp-row-${e.employee_number}`}
-                  className={`${isExpiring ? (isCritical ? 'bg-red-50 animate-pulse' : 'bg-[hsl(var(--warning)/0.1)]') : ''} ${activeSummon ? 'border-l-4 border-l-orange-400' : ''}`}
+                  className={`${isExpiring || isIqamaExpiring ? (isCritical || isIqamaCritical ? 'bg-red-50 animate-pulse' : 'bg-[hsl(var(--warning)/0.1)]') : ''} ${activeSummon ? 'border-l-4 border-l-orange-400' : ''}`}
                 >
                   <td className="font-mono text-xs">{e.employee_number}</td>
                   <td className="text-sm font-medium">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={isCritical ? 'text-red-600 font-bold' : ''}>
+                      <span className={isCritical || isIqamaCritical ? 'text-red-600 font-bold' : ''}>
                         {lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}
                       </span>
                       {/* عرض الاستدعاء النشط */}
@@ -446,6 +452,7 @@ export default function EmployeesPage() {
                           }
                         </span>
                       )}
+                      {/* تنبيه انتهاء العقد */}
                       {isExpiring && (
                         <span 
                           className={`text-[10px] px-1.5 py-0.5 rounded ${
@@ -454,7 +461,19 @@ export default function EmployeesPage() {
                           title={lang === 'ar' ? `ينتهي العقد خلال ${expiryStatus.days_remaining} يوم` : `Contract expires in ${expiryStatus.days_remaining} days`}
                         >
                           <AlertTriangle size={10} className="inline me-0.5" />
-                          {expiryStatus.days_remaining} {lang === 'ar' ? 'يوم' : 'd'}
+                          {lang === 'ar' ? 'عقد' : 'C'}: {expiryStatus.days_remaining} {lang === 'ar' ? 'يوم' : 'd'}
+                        </span>
+                      )}
+                      {/* تنبيه انتهاء الإقامة */}
+                      {isIqamaExpiring && isOps && (
+                        <span 
+                          className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            isIqamaCritical ? 'bg-purple-200 text-purple-800' : 'bg-purple-100 text-purple-700'
+                          }`}
+                          title={lang === 'ar' ? `تنتهي الإقامة خلال ${iqamaDaysRemaining} يوم` : `Iqama expires in ${iqamaDaysRemaining} days`}
+                        >
+                          <Calendar size={10} className="inline me-0.5" />
+                          {lang === 'ar' ? 'إقامة' : 'I'}: {iqamaDaysRemaining} {lang === 'ar' ? 'يوم' : 'd'}
                         </span>
                       )}
                     </div>
