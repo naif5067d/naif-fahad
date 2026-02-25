@@ -1173,6 +1173,84 @@ export default function SettlementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog إضافة سلفة */}
+      <Dialog open={addLoanOpen} onOpenChange={setAddLoanOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              إضافة سلفة يدوية
+            </DialogTitle>
+            <DialogDescription>
+              أضف سلفة لم يسجلها النظام تلقائياً
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>المبلغ (ريال)</Label>
+              <Input 
+                type="number" 
+                value={newLoan.amount} 
+                onChange={e => setNewLoan({ ...newLoan, amount: e.target.value })}
+                placeholder="مثال: 5000"
+              />
+            </div>
+            <div>
+              <Label>السبب / الوصف</Label>
+              <Textarea 
+                value={newLoan.note} 
+                onChange={e => setNewLoan({ ...newLoan, note: e.target.value })}
+                placeholder="مثال: سلفة شهر يناير 2026"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddLoanOpen(false)}>إلغاء</Button>
+            <Button onClick={addManualLoan}>إضافة السلفة</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog إضافة خصم */}
+      <Dialog open={addDeductionOpen} onOpenChange={setAddDeductionOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingDown className="w-5 h-5" />
+              إضافة خصم يدوي
+            </DialogTitle>
+            <DialogDescription>
+              أضف خصم لم يسجله النظام تلقائياً (مثل: تلف عهدة، ذمم سابقة)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>المبلغ (ريال)</Label>
+              <Input 
+                type="number" 
+                value={newDeduction.amount} 
+                onChange={e => setNewDeduction({ ...newDeduction, amount: e.target.value })}
+                placeholder="مثال: 2000"
+              />
+            </div>
+            <div>
+              <Label>السبب / الوصف (يظهر في المخالصة)</Label>
+              <Textarea 
+                value={newDeduction.note} 
+                onChange={e => setNewDeduction({ ...newDeduction, note: e.target.value })}
+                placeholder="مثال: تلف زجاج المركبة"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDeductionOpen(false)}>إلغاء</Button>
+            <Button onClick={addManualDeduction} className="bg-red-600 hover:bg-red-700">إضافة الخصم</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
