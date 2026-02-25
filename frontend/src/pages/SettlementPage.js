@@ -74,6 +74,7 @@ export default function SettlementPage() {
   const [addLoanOpen, setAddLoanOpen] = useState(false);
   const [newDeduction, setNewDeduction] = useState({ amount: '', note: '' });
   const [newLoan, setNewLoan] = useState({ amount: '', note: '' });
+  const [selectedSettlement, setSelectedSettlement] = useState(null);
   
   // Validation warnings
   const [warnings, setWarnings] = useState([]);
