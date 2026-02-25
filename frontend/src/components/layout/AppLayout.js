@@ -17,7 +17,7 @@ const NAV_ITEMS = {
   // سلطان - مدير العمليات
   sultan: [
     // 📌 الاستخدام اليومي
-    'dashboard', 'transactions', 'attendancePenalties', 'tasks',
+    'dashboard', 'transactions', 'attendance', 'attendancePenalties', 'tasks',
     // 👥 إدارة الموظفين
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     // 💰 المالية والعهد
