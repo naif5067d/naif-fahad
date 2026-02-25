@@ -463,6 +463,51 @@ export default function EmployeeProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Task Evaluation Card - Admin Only */}
+        {isAdmin && summary?.task_evaluation && (
+          <div className={`card-premium p-5 space-y-4 ${
+            summary.task_evaluation.score >= 4 ? 'border-2 border-green-200 bg-green-50/30' : 
+            summary.task_evaluation.score >= 3 ? 'border-2 border-blue-200 bg-blue-50/30' : 
+            summary.task_evaluation.score >= 2 ? 'border-2 border-yellow-200 bg-yellow-50/30' : 
+            summary.task_evaluation.score > 0 ? 'border-2 border-red-200 bg-red-50/30' : ''
+          }`}>
+            <div className="flex items-center gap-2 text-primary font-semibold">
+              <Award size={18} />
+              <span>{lang === 'ar' ? 'تقييم الأداء' : 'Performance Rating'}</span>
+              <span className="text-xs text-muted-foreground ms-auto">{summary.task_evaluation.year}</span>
+            </div>
+            <div className="text-center py-4">
+              <div className={`text-5xl font-bold ${
+                summary.task_evaluation.score >= 4 ? 'text-green-600' : 
+                summary.task_evaluation.score >= 3 ? 'text-blue-600' : 
+                summary.task_evaluation.score >= 2 ? 'text-yellow-600' : 
+                summary.task_evaluation.score > 0 ? 'text-red-600' : 'text-muted-foreground'
+              }`}>
+                {summary.task_evaluation.score > 0 ? summary.task_evaluation.score : '—'}
+                <span className="text-lg text-muted-foreground">/5</span>
+              </div>
+              <p className={`text-sm font-medium mt-2 ${
+                summary.task_evaluation.score >= 4 ? 'text-green-700' : 
+                summary.task_evaluation.score >= 3 ? 'text-blue-700' : 
+                summary.task_evaluation.score >= 2 ? 'text-yellow-700' : 
+                summary.task_evaluation.score > 0 ? 'text-red-700' : 'text-muted-foreground'
+              }`}>
+                {summary.task_evaluation.rating_label}
+              </p>
+            </div>
+            <div className="space-y-2 text-sm border-t pt-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{lang === 'ar' ? 'المهام المكتملة' : 'Completed Tasks'}</span>
+                <span className="font-medium">{summary.task_evaluation.completed_tasks}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{lang === 'ar' ? 'إجمالي الوزن' : 'Total Weight'}</span>
+                <span className="font-medium">{summary.task_evaluation.total_weight}%</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Carryover Dialog */}
