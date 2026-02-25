@@ -437,6 +437,13 @@ async def create_contract(
         "employee_name": req.employee_name or req.employee_name_ar,
         "employee_name_ar": req.employee_name_ar or req.employee_name,
         
+        # بيانات الهوية/الإقامة
+        "is_saudi": req.is_saudi,
+        "national_id": req.national_id if req.is_saudi else "",
+        "iqama_number": req.iqama_number if not req.is_saudi else "",
+        "iqama_expiry_date": req.iqama_expiry_date if not req.is_saudi else None,
+        "nationality": "سعودي" if req.is_saudi else req.nationality,
+        
         "contract_category": req.contract_category,
         "employment_type": req.employment_type,
         
