@@ -52,7 +52,13 @@ class ContractCreate(BaseModel):
     employee_name_ar: str = ""
     email: str = ""
     phone: str = ""
-    national_id: str = ""
+    
+    # بيانات الهوية/الإقامة
+    is_saudi: Optional[bool] = None  # True = سعودي، False = أجنبي
+    national_id: str = ""  # رقم الهوية للسعودي
+    iqama_number: str = ""  # رقم الإقامة للأجنبي
+    iqama_expiry_date: Optional[str] = None  # تاريخ انتهاء الإقامة للأجنبي
+    nationality: str = ""  # الجنسية للأجنبي
     
     # أنواع العقود المدعومة:
     # employment = توظيف عادي
