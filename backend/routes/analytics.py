@@ -213,23 +213,31 @@ async def calculate_company_health_score(month: str = None) -> dict:
 
 
 async def get_top_performers(limit: int = 5, month: str = None) -> list:
-    """أفضل الموظفين أداءً"""
-    employees = await db.employees.find({"status": "active"}, {"_id": 0, "id": 1, "full_name": 1, "department": 1}).to_list(100)
+    """أفضل الموظفين أداءً - باستثناء الإداريين"""
+    employees = await db.employees.find(
+        {"status": "active", "exclude_from_evaluation": {"$ne": True}}, 
+        {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "department": 1}
+    ).to_list(100)
     
     results = []
     for emp in employees:
         attendance = await calculate_attendance_score(employee_id=emp['id'], month=month)
         tasks = await calculate_task_score(employee_id=emp['id'], month=month)
+        excuses = await calculate_excuse_score(employee_id=emp['id'], month=month)
         
-        overall = (attendance['score'] * 0.5) + (tasks['score'] * 0.5)
+        # حساب شامل مع الأعذار
+        overall = (attendance['score'] * 0.35) + (tasks['score'] * 0.40) + (excuses['score'] * 0.25)
         
         results.append({
             "employee_id": emp['id'],
-            "name": emp.get('full_name', 'N/A'),
+            "name": emp.get('full_name_ar', emp.get('full_name', 'N/A')),
             "department": emp.get('department', 'N/A'),
             "score": round(overall, 1),
             "attendance_score": attendance['score'],
-            "task_score": tasks['score']
+            "task_score": tasks['score'],
+            "excuse_score": excuses['score'],
+            "forget_checkin": excuses.get('forget_checkin', {}).get('count', 0),
+            "late_excuse": excuses.get('late_excuse', {}).get('count', 0)
         })
     
     return sorted(results, key=lambda x: x['score'], reverse=True)[:limit]
