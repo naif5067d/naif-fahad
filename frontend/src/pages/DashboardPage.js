@@ -311,8 +311,25 @@ export default function DashboardPage() {
         .then(r => setEmployeeSummary(r.data))
         .catch(() => {})
         .finally(() => setLoadingEmployeeSummary(false));
+      
+      // جلب الاستدعاءات النشطة للموظف
+      api.get('/api/notifications/summons')
+        .then(r => setActiveSummons(r.data.summons || []))
+        .catch(() => {});
     }
   }, [isAdmin, user?.employee_id]);
+
+  // تأكيد الاطلاع على الاستدعاء
+  const acknowledgeSummon = async (summonId) => {
+    setAcknowledgingSummon(summonId);
+    try {
+      await api.post(`/api/notifications/summons/${summonId}/acknowledge`);
+      setActiveSummons(prev => prev.filter(s => s.id !== summonId));
+    } catch (err) {
+      console.error('Failed to acknowledge summon', err);
+    }
+    setAcknowledgingSummon(null);
+  };
 
   const dismissAnnouncement = async (id) => {
     try {
