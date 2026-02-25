@@ -846,6 +846,10 @@ export default function STASMirrorPage() {
             <Settings size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'صيانة' : 'Maintenance'}</span>
           </TabsTrigger>
+          <TabsTrigger value="system-map" data-testid="tab-system-map" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
+            <Database size={16} />
+            <span className="hidden sm:inline">{lang === 'ar' ? 'الهيكل' : 'Map'}</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* === Devices Tab === */}
