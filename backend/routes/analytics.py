@@ -474,3 +474,450 @@ async def get_executive_alerts(
         })
     
     return {"alerts": alerts, "count": len(alerts)}
+
+
+
+# ==================== AI SMART EVALUATION ====================
+
+async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
+    """
+    حساب مؤشر الأعذار والاستئذان
+    - نسيان بصمة: الحد 3 مرات/شهر
+    - تبرير تأخير: الحد 5 مرات/شهر
+    - خروج مبكر: رصيد الساعات
+    """
+    now = datetime.now(timezone.utc)
+    if month:
+        year, mon = int(month.split('-')[0]), int(month.split('-')[1])
+    else:
+        year, mon = now.year, now.month
+    
+    start_date, end_date = get_month_range(year, mon)
+    
+    # نسيان البصمة
+    forget_count = await db.transactions.count_documents({
+        "employee_id": employee_id,
+        "type": "forget_checkin",
+        "status": {"$nin": ["rejected", "cancelled"]},
+        "data.date": {"$gte": start_date, "$lte": end_date}
+    })
+    
+    # تبرير التأخير
+    late_excuse_count = await db.transactions.count_documents({
+        "employee_id": employee_id,
+        "type": "late_excuse",
+        "status": {"$nin": ["rejected", "cancelled"]},
+        "data.date": {"$gte": start_date, "$lte": end_date}
+    })
+    
+    # الخروج المبكر (بالدقائق)
+    early_leaves = await db.transactions.find({
+        "employee_id": employee_id,
+        "type": {"$in": ["early_leave_request", "early_leave", "permission"]},
+        "status": {"$nin": ["rejected", "cancelled"]},
+        "data.date": {"$gte": start_date, "$lte": end_date}
+    }, {"_id": 0, "data": 1}).to_list(50)
+    
+    early_leave_minutes = 0
+    for el in early_leaves:
+        from_time = el.get('data', {}).get('from_time', '')
+        to_time = el.get('data', {}).get('to_time', '')
+        if from_time and to_time:
+            try:
+                f_parts = from_time.split(':')
+                t_parts = to_time.split(':')
+                f_mins = int(f_parts[0]) * 60 + int(f_parts[1])
+                t_mins = int(t_parts[0]) * 60 + int(t_parts[1])
+                early_leave_minutes += (t_mins - f_mins)
+            except:
+                pass
+    
+    # حساب الدرجة
+    # نسيان بصمة: كل مرة تخصم 10 نقاط (الحد 3)
+    forget_penalty = min(forget_count * 10, 30)
+    # تبرير تأخير: كل مرة تخصم 6 نقاط (الحد 5)
+    late_penalty = min(late_excuse_count * 6, 30)
+    # خروج مبكر: كل 30 دقيقة تخصم 5 نقاط
+    early_penalty = min((early_leave_minutes // 30) * 5, 40)
+    
+    score = max(0, 100 - forget_penalty - late_penalty - early_penalty)
+    
+    return {
+        "score": round(score, 1),
+        "forget_checkin": {
+            "count": forget_count,
+            "limit": 3,
+            "penalty": forget_penalty
+        },
+        "late_excuse": {
+            "count": late_excuse_count,
+            "limit": 5,
+            "penalty": late_penalty
+        },
+        "early_leave": {
+            "minutes": early_leave_minutes,
+            "hours": round(early_leave_minutes / 60, 1),
+            "penalty": early_penalty
+        }
+    }
+
+
+async def calculate_ai_employee_score(employee_id: str, month: str = None) -> dict:
+    """
+    التقييم الذكي الشامل للموظف
+    يجمع كل المؤشرات مع تحليل AI
+    """
+    # جمع كل المؤشرات
+    attendance = await calculate_attendance_score(employee_id=employee_id, month=month)
+    tasks = await calculate_task_score(employee_id=employee_id, month=month)
+    financial = await calculate_financial_score(employee_id=employee_id, month=month)
+    requests = await calculate_request_score(employee_id=employee_id, month=month)
+    excuses = await calculate_excuse_score(employee_id=employee_id, month=month)
+    
+    # الأوزان المُحدّثة
+    weights = {
+        "attendance": 0.25,    # الحضور والانصراف
+        "tasks": 0.30,         # إنجاز المهام
+        "excuses": 0.20,       # الأعذار والاستئذان
+        "financial": 0.15,     # الانضباط المالي
+        "requests": 0.10,      # انضباط الطلبات
+    }
+    
+    overall_score = (
+        attendance['score'] * weights['attendance'] +
+        tasks['score'] * weights['tasks'] +
+        excuses['score'] * weights['excuses'] +
+        financial['score'] * weights['financial'] +
+        requests['score'] * weights['requests']
+    )
+    
+    # تحديد التصنيف
+    if overall_score >= 90:
+        rating = {"label": "ممتاز", "label_en": "Excellent", "stars": 5, "color": "#10B981"}
+    elif overall_score >= 80:
+        rating = {"label": "جيد جداً", "label_en": "Very Good", "stars": 4, "color": "#3B82F6"}
+    elif overall_score >= 70:
+        rating = {"label": "جيد", "label_en": "Good", "stars": 3, "color": "#F59E0B"}
+    elif overall_score >= 50:
+        rating = {"label": "مقبول", "label_en": "Acceptable", "stars": 2, "color": "#F97316"}
+    else:
+        rating = {"label": "يحتاج تحسين", "label_en": "Needs Improvement", "stars": 1, "color": "#EF4444"}
+    
+    # نقاط القوة والضعف
+    strengths = []
+    weaknesses = []
+    
+    if attendance['score'] >= 85:
+        strengths.append("ملتزم بالحضور والانصراف")
+    elif attendance['score'] < 60:
+        weaknesses.append("يحتاج تحسين في الحضور")
+    
+    if tasks['score'] >= 85:
+        strengths.append("متميز في إنجاز المهام")
+    elif tasks['score'] < 60:
+        weaknesses.append("أداء المهام يحتاج متابعة")
+    
+    if excuses['score'] >= 85:
+        strengths.append("قليل الأعذار والاستئذان")
+    elif excuses['score'] < 60:
+        weaknesses.append("كثير الأعذار والاستئذان")
+    
+    if excuses['forget_checkin']['count'] == 0:
+        strengths.append("لم ينسَ البصمة هذا الشهر")
+    elif excuses['forget_checkin']['count'] >= 3:
+        weaknesses.append(f"نسيان بصمة متكرر ({excuses['forget_checkin']['count']} مرات)")
+    
+    if excuses['late_excuse']['count'] == 0:
+        strengths.append("لم يبرر تأخير هذا الشهر")
+    elif excuses['late_excuse']['count'] >= 4:
+        weaknesses.append(f"تبرير تأخير متكرر ({excuses['late_excuse']['count']} مرات)")
+    
+    # التوصيات الذكية
+    recommendations = []
+    if attendance['late_minutes'] > 60:
+        recommendations.append({
+            "type": "warning",
+            "text": f"تأخر إجمالي {attendance['late_minutes']} دقيقة - يُنصح بتحسين الالتزام بالمواعيد"
+        })
+    
+    if excuses['early_leave']['minutes'] > 120:
+        recommendations.append({
+            "type": "info",
+            "text": f"استخدم {excuses['early_leave']['hours']} ساعة استئذان - قريب من الحد الشهري"
+        })
+    
+    if overall_score >= 85:
+        recommendations.append({
+            "type": "success",
+            "text": "موظف عالي الأداء - يستحق التقدير والمكافأة"
+        })
+    
+    if tasks.get('delayed', 0) > 2:
+        recommendations.append({
+            "type": "warning",
+            "text": f"{tasks['delayed']} مهام متأخرة - يحتاج متابعة"
+        })
+    
+    return {
+        "overall_score": round(overall_score, 1),
+        "rating": rating,
+        "breakdown": {
+            "attendance": {
+                "score": attendance['score'],
+                "weight": weights['attendance'],
+                "weighted_score": round(attendance['score'] * weights['attendance'], 1),
+                "details": attendance
+            },
+            "tasks": {
+                "score": tasks['score'],
+                "weight": weights['tasks'],
+                "weighted_score": round(tasks['score'] * weights['tasks'], 1),
+                "details": tasks
+            },
+            "excuses": {
+                "score": excuses['score'],
+                "weight": weights['excuses'],
+                "weighted_score": round(excuses['score'] * weights['excuses'], 1),
+                "details": excuses
+            },
+            "financial": {
+                "score": financial['score'],
+                "weight": weights['financial'],
+                "weighted_score": round(financial['score'] * weights['financial'], 1),
+                "details": financial
+            },
+            "requests": {
+                "score": requests['score'],
+                "weight": weights['requests'],
+                "weighted_score": round(requests['score'] * weights['requests'], 1),
+                "details": requests
+            }
+        },
+        "strengths": strengths,
+        "weaknesses": weaknesses,
+        "recommendations": recommendations
+    }
+
+
+@router.get("/ai/employee/{employee_id}")
+async def get_ai_employee_evaluation(
+    employee_id: str,
+    month: Optional[str] = None,
+    user=Depends(require_roles('stas', 'sultan', 'naif', 'mohammed', 'salah'))
+):
+    """
+    التقييم الذكي للموظف بالذكاء الاصطناعي
+    متاح لـ: سلطان، نايف، صلاح، محمد، ستاس
+    """
+    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    if not month:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    
+    evaluation = await calculate_ai_employee_score(employee_id, month)
+    
+    return {
+        "employee_id": employee_id,
+        "employee_name": employee.get('full_name_ar', employee.get('full_name', '')),
+        "employee_number": employee.get('employee_number', ''),
+        "department": employee.get('department', ''),
+        "job_title": employee.get('job_title_ar', employee.get('job_title', '')),
+        "month": month,
+        "evaluation": evaluation,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@router.get("/ai/smart-monitor")
+async def get_smart_monitor(
+    month: Optional[str] = None,
+    user=Depends(require_roles('stas', 'sultan', 'salah'))
+):
+    """
+    المراقب الذكي - تقييم شامل لجميع الموظفين
+    متاح لـ: سلطان، صلاح، ستاس
+    """
+    if not month:
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    
+    # جلب جميع الموظفين النشطين
+    employees = await db.employees.find(
+        {"status": "active"},
+        {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1, "employee_number": 1, "department": 1, "job_title_ar": 1}
+    ).to_list(200)
+    
+    evaluations = []
+    for emp in employees:
+        try:
+            eval_data = await calculate_ai_employee_score(emp['id'], month)
+            evaluations.append({
+                "employee_id": emp['id'],
+                "employee_name": emp.get('full_name_ar', emp.get('full_name', '')),
+                "employee_number": emp.get('employee_number', ''),
+                "department": emp.get('department', ''),
+                "overall_score": eval_data['overall_score'],
+                "rating": eval_data['rating'],
+                "attendance_score": eval_data['breakdown']['attendance']['score'],
+                "tasks_score": eval_data['breakdown']['tasks']['score'],
+                "excuses_score": eval_data['breakdown']['excuses']['score'],
+                "forget_checkin_count": eval_data['breakdown']['excuses']['details']['forget_checkin']['count'],
+                "late_excuse_count": eval_data['breakdown']['excuses']['details']['late_excuse']['count'],
+                "early_leave_hours": eval_data['breakdown']['excuses']['details']['early_leave']['hours'],
+                "strengths_count": len(eval_data['strengths']),
+                "weaknesses_count": len(eval_data['weaknesses'])
+            })
+        except Exception as e:
+            print(f"Error evaluating {emp['id']}: {e}")
+            continue
+    
+    # ترتيب حسب الدرجة
+    evaluations.sort(key=lambda x: x['overall_score'], reverse=True)
+    
+    # أفضل 5 موظفين
+    top_performers = evaluations[:5] if len(evaluations) >= 5 else evaluations
+    
+    # أسوأ 5 موظفين
+    bottom_performers = evaluations[-5:][::-1] if len(evaluations) >= 5 else evaluations[::-1]
+    
+    # إحصائيات عامة
+    if evaluations:
+        avg_score = sum(e['overall_score'] for e in evaluations) / len(evaluations)
+        excellent_count = len([e for e in evaluations if e['overall_score'] >= 90])
+        good_count = len([e for e in evaluations if 70 <= e['overall_score'] < 90])
+        needs_improvement = len([e for e in evaluations if e['overall_score'] < 50])
+    else:
+        avg_score = 0
+        excellent_count = good_count = needs_improvement = 0
+    
+    # تنبيهات المراقب الذكي
+    alerts = []
+    
+    # موظفين بنسيان بصمة عالي
+    high_forget = [e for e in evaluations if e['forget_checkin_count'] >= 2]
+    if high_forget:
+        alerts.append({
+            "type": "warning",
+            "title": "نسيان بصمة متكرر",
+            "message": f"{len(high_forget)} موظف لديهم نسيان بصمة متكرر هذا الشهر",
+            "employees": [e['employee_name'] for e in high_forget[:3]]
+        })
+    
+    # موظفين بتأخير متكرر
+    high_late = [e for e in evaluations if e['late_excuse_count'] >= 3]
+    if high_late:
+        alerts.append({
+            "type": "warning",
+            "title": "تبرير تأخير متكرر",
+            "message": f"{len(high_late)} موظف لديهم تبرير تأخير متكرر",
+            "employees": [e['employee_name'] for e in high_late[:3]]
+        })
+    
+    # موظفين ممتازين
+    if excellent_count > 0:
+        alerts.append({
+            "type": "success",
+            "title": "موظفين ممتازين",
+            "message": f"{excellent_count} موظف حققوا درجة ممتازة (90+)",
+            "employees": [e['employee_name'] for e in top_performers[:3]]
+        })
+    
+    return {
+        "month": month,
+        "total_employees": len(evaluations),
+        "company_average": round(avg_score, 1),
+        "distribution": {
+            "excellent": excellent_count,
+            "good": good_count,
+            "needs_improvement": needs_improvement
+        },
+        "top_performers": top_performers,
+        "bottom_performers": bottom_performers,
+        "all_evaluations": evaluations,
+        "alerts": alerts,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
+@router.get("/ai/annual-evaluation/{employee_id}")
+async def get_annual_evaluation(
+    employee_id: str,
+    year: Optional[int] = None,
+    user=Depends(require_roles('stas', 'sultan', 'naif', 'mohammed', 'salah'))
+):
+    """
+    التقييم السنوي للموظف
+    يجمع بيانات كل الشهور للسنة
+    """
+    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    if not employee:
+        raise HTTPException(status_code=404, detail="الموظف غير موجود")
+    
+    if not year:
+        year = datetime.now(timezone.utc).year
+    
+    monthly_evaluations = []
+    for mon in range(1, 13):
+        month_str = f"{year}-{mon:02d}"
+        try:
+            eval_data = await calculate_ai_employee_score(employee_id, month_str)
+            monthly_evaluations.append({
+                "month": month_str,
+                "month_name": calendar.month_name[mon],
+                "overall_score": eval_data['overall_score'],
+                "attendance_score": eval_data['breakdown']['attendance']['score'],
+                "tasks_score": eval_data['breakdown']['tasks']['score'],
+                "excuses_score": eval_data['breakdown']['excuses']['score'],
+                "forget_checkin_count": eval_data['breakdown']['excuses']['details']['forget_checkin']['count'],
+                "late_excuse_count": eval_data['breakdown']['excuses']['details']['late_excuse']['count'],
+            })
+        except:
+            continue
+    
+    # حساب المتوسط السنوي
+    if monthly_evaluations:
+        avg_score = sum(e['overall_score'] for e in monthly_evaluations) / len(monthly_evaluations)
+        total_forget = sum(e['forget_checkin_count'] for e in monthly_evaluations)
+        total_late_excuse = sum(e['late_excuse_count'] for e in monthly_evaluations)
+    else:
+        avg_score = 0
+        total_forget = total_late_excuse = 0
+    
+    # تحديد التصنيف السنوي
+    if avg_score >= 90:
+        annual_rating = {"label": "ممتاز", "stars": 5, "color": "#10B981", "recommendation": "ترقية أو زيادة راتب"}
+    elif avg_score >= 80:
+        annual_rating = {"label": "جيد جداً", "stars": 4, "color": "#3B82F6", "recommendation": "مكافأة"}
+    elif avg_score >= 70:
+        annual_rating = {"label": "جيد", "stars": 3, "color": "#F59E0B", "recommendation": "تشجيع"}
+    elif avg_score >= 50:
+        annual_rating = {"label": "مقبول", "stars": 2, "color": "#F97316", "recommendation": "متابعة"}
+    else:
+        annual_rating = {"label": "يحتاج تحسين", "stars": 1, "color": "#EF4444", "recommendation": "إنذار"}
+    
+    # ملاحظات سنوية
+    annual_notes = []
+    if total_forget > 10:
+        annual_notes.append(f"⚠️ نسيان البصمة متكرر: {total_forget} مرة خلال السنة")
+    if total_late_excuse > 20:
+        annual_notes.append(f"⚠️ تبرير التأخير متكرر: {total_late_excuse} مرة خلال السنة")
+    if avg_score >= 85:
+        annual_notes.append("✅ موظف متميز يستحق التقدير")
+    
+    return {
+        "employee_id": employee_id,
+        "employee_name": employee.get('full_name_ar', employee.get('full_name', '')),
+        "employee_number": employee.get('employee_number', ''),
+        "year": year,
+        "annual_score": round(avg_score, 1),
+        "annual_rating": annual_rating,
+        "monthly_evaluations": monthly_evaluations,
+        "totals": {
+            "forget_checkin": total_forget,
+            "late_excuse": total_late_excuse,
+            "months_evaluated": len(monthly_evaluations)
+        },
+        "annual_notes": annual_notes,
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
