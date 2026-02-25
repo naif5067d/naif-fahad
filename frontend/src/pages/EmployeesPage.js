@@ -76,9 +76,9 @@ export default function EmployeesPage() {
         .then(r => setExpiringIqamas(r.data.employees || []))
         .catch(() => {});
     }
-    // جلب الاستدعاءات النشطة
+    // جلب الاستدعاءات النشطة (للمرسل و stas فقط)
     if (user?.role && ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user.role)) {
-      api.get('/api/notifications/summons')
+      api.get('/api/notifications/summons/active-for-list')
         .then(r => setActiveSummons(r.data.summons || []))
         .catch(() => {});
     }
