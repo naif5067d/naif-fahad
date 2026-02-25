@@ -381,7 +381,10 @@ export default function DashboardPage() {
                     {summon.comment || (lang === 'ar' ? 'مطلوب حضورك' : 'Your presence is required')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {lang === 'ar' ? 'من' : 'From'}: {summon.sent_by_name || (lang === 'ar' ? 'الإدارة' : 'Management')}
+                    {lang === 'ar' ? 'من' : 'From'}: {summon.sender_name || summon.sent_by_name || (lang === 'ar' ? 'الإدارة' : 'Management')}
+                    {summon.created_at && (
+                      <span className="ms-2 opacity-75">• {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-ca-islamic' : 'en-US')} / {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}</span>
+                    )}
                   </p>
                 </div>
               </div>
