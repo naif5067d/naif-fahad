@@ -427,20 +427,28 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     decl_header_t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, -1), NAVY)]))
     elements.append(decl_header_t)
     
-    # نص الإقرار القانوني - بالاسم
-    decl_ar = f"""أقر أنا/ {emp_name} أني قد استلمت كامل حقوقي من شركة دار الكود للاستشارات الهندسية وعليه فإني أقر إقرار ناف للجهالة باستلام كامل الحقوق المنصوص عليها بالمخالصة لا يوجد مستحقات أخرى وبالله التوفيق."""
+    # نص الإقرار القانوني - بالاسم - كل نص في صف منفصل
+    decl_ar = f"أقر أنا/ {emp_name} أني قد استلمت كامل حقوقي من شركة دار الكود للاستشارات الهندسية وعليه فإني أقر إقرار ناف للجهالة باستلام كامل الحقوق المنصوص عليها بالمخالصة لا يوجد مستحقات أخرى وبالله التوفيق."
     
-    decl_en = f"""I, the undersigned, acknowledge that I have received all my rights from Dar Al Code Engineering Consultancy. I hereby declare, with full knowledge, that I have received all entitlements stated in this settlement and there are no other dues."""
+    decl_en = "I, the undersigned, acknowledge that I have received all my rights from Dar Al Code Engineering Consultancy. I hereby declare, with full knowledge, that I have received all entitlements stated in this settlement and there are no other dues."
     
-    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=6, alignment=TA_RIGHT, leading=8)
-    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=6, alignment=TA_LEFT, leading=8)
+    decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=7, alignment=TA_RIGHT, leading=10, rightIndent=2*mm)
+    decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=6, alignment=TA_LEFT, leading=9, leftIndent=2*mm)
     
-    decl_data = [[Paragraph(decl_en, decl_style_en), Paragraph(reshape_arabic(decl_ar), decl_style_ar)]]
-    decl_table = Table(decl_data, colWidths=[col_w, col_w])
+    # صفين منفصلين - العربي أولاً ثم الإنجليزي
+    decl_data = [
+        [Paragraph(reshape_arabic(decl_ar), decl_style_ar)],
+        [Paragraph(decl_en, decl_style_en)]
+    ]
+    decl_table = Table(decl_data, colWidths=[CONTENT_WIDTH])
     decl_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (0, 0), 'LEFT'), ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-        ('BOX', (0, 0), (-1, -1), 0.5, BORDER), ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
-        ('TOPPADDING', (0, 0), (-1, -1), 2), ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('ALIGN', (0, 0), (-1, 0), 'RIGHT'),
+        ('ALIGN', (0, 1), (-1, 1), 'LEFT'),
+        ('BOX', (0, 0), (-1, -1), 0.5, BORDER), 
+        ('BACKGROUND', (0, 0), (-1, -1), LIGHT_BG),
+        ('TOPPADDING', (0, 0), (-1, -1), 3), 
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.3, BORDER),
     ]))
     elements.append(decl_table)
     elements.append(Spacer(1, 2*mm))
