@@ -71,6 +71,10 @@ export default function EmployeesPage() {
       api.get('/api/notifications/expiring-contracts?days_ahead=90')
         .then(r => setExpiringContracts(r.data.employees || []))
         .catch(() => {});
+      // جلب الإقامات المنتهية قريباً
+      api.get('/api/notifications/expiring-iqamas?days_ahead=90')
+        .then(r => setExpiringIqamas(r.data.employees || []))
+        .catch(() => {});
     }
     // جلب الاستدعاءات النشطة
     if (user?.role && ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user.role)) {
