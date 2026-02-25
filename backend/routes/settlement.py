@@ -63,6 +63,13 @@ class SettlementAdjustment(BaseModel):
     reason: str
 
 
+class ManualDeduction(BaseModel):
+    """خصم أو سلفة يدوية"""
+    deduction_type: str  # deduction | loan
+    amount: float
+    note: str  # السبب/الوصف - يظهر في المخالصة
+
+
 # ============================================================
 # TERMINATION TYPES
 # ============================================================
