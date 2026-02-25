@@ -680,24 +680,79 @@ export default function SettlementPage() {
             </table>
           </div>
           <div>
-            <div className="bg-red-600 text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستقطاعات' : 'Deductions'}</div>
+            <div className="bg-red-600 text-white text-xs p-1 text-center flex justify-between items-center">
+              <span>{lang === 'ar' ? 'الاستقطاعات' : 'Deductions'}</span>
+              {canCreate && (
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" className="h-5 px-1 text-white hover:bg-red-700" onClick={() => setAddLoanOpen(true)}>
+                    <Plus className="w-3 h-3" /> {lang === 'ar' ? 'سلفة' : 'Loan'}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-5 px-1 text-white hover:bg-red-700" onClick={() => setAddDeductionOpen(true)}>
+                    <Plus className="w-3 h-3" /> {lang === 'ar' ? 'خصم' : 'Deduction'}
+                  </Button>
+                </div>
+              )}
+            </div>
             <table className="w-full text-xs border">
               <tbody>
-                <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'القروض' : 'Loans'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'أخرى' : 'Other'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
-                </tr>
-                {manualMode && manualValues.additional_deductions > 0 && (
+                {/* السلف التلقائية */}
+                {snapshot.totals?.deductions?.loans > 0 && (
                   <tr className="border-b">
-                    <td className="p-1">{lang === 'ar' ? 'خصومات إضافية' : 'Additional'}</td>
-                    <td className="p-1 text-right">{manualValues.additional_deductions?.toLocaleString()}</td>
+                    <td className="p-1">{lang === 'ar' ? 'السلف (تلقائي)' : 'Loans (Auto)'}</td>
+                    <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
                   </tr>
                 )}
-                <tr className="bg-red-50 font-bold">
+                {/* السلف اليدوية */}
+                {manualLoans.map(loan => (
+                  <tr key={loan.id} className="border-b bg-yellow-50">
+                    <td className="p-1 flex items-center justify-between">
+                      <span>سلفة: {loan.note}</span>
+                      <button onClick={() => removeLoan(loan.id)} className="text-red-500 hover:text-red-700">×</button>
+                    </td>
+                    <td className="p-1 text-right">{loan.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* العهد المالية */}
+                {snapshot.custody_balance?.total > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'العهد المالية' : 'Financial Custody'}</td>
+                    <td className="p-1 text-right">{snapshot.custody_balance?.total?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {/* تلفيات العهد العينية */}
+                {inkindDamages.map(damage => (
+                  <tr key={damage.id} className="border-b bg-orange-50">
+                    <td className="p-1">تلف: {damage.item_name_ar}</td>
+                    <td className="p-1 text-right">{damage.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* الخصومات التلقائية */}
+                {snapshot.totals?.deductions?.deductions > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'خصومات (تلقائي)' : 'Deductions (Auto)'}</td>
+                    <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {/* الخصومات اليدوية */}
+                {manualDeductions.map(ded => (
+                  <tr key={ded.id} className="border-b bg-red-50">
+                    <td className="p-1 flex items-center justify-between">
+                      <span>خصم: {ded.note}</span>
+                      <button onClick={() => removeDeduction(ded.id)} className="text-red-500 hover:text-red-700">×</button>
+                    </td>
+                    <td className="p-1 text-right">{ded.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* الإجمالي */}
+                <tr className="bg-red-100 font-bold">
+                  <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
+                  <td className="p-1 text-right">
+                    {((snapshot.totals?.deductions?.total || 0) + totalManualDeductions + totalManualLoans + totalInkindDamages)?.toLocaleString()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
                   <td className="p-1 text-right">
                     {(manualMode 
