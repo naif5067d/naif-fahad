@@ -130,20 +130,18 @@ async def get_expiring_iqamas(
 ):
     """
     الحصول على الإقامات التي ستنتهي خلال فترة محددة (افتراضياً 90 يوم = 3 أشهر)
+    يسحب من العقود النشطة (is_saudi = False)
     متاح لـ: sultan, naif, stas, mohammed
-    
-    Returns:
-    - employees: قائمة الموظفين مع تفاصيل الإقامة
-    - summary: إحصائيات
     """
     today = datetime.now(timezone.utc).date()
     cutoff_date = today + timedelta(days=days_ahead)
     today_str = today.strftime('%Y-%m-%d')
     cutoff_str = cutoff_date.strftime('%Y-%m-%d')
     
-    # البحث عن الموظفين النشطين الذين لديهم تاريخ انتهاء إقامة
+    # البحث في العقود النشطة للأجانب فقط
     query = {
-        "is_active": True,
+        "status": "active",
+        "is_saudi": False,
         "iqama_expiry_date": {
             "$nin": [None, ""],
             "$lte": cutoff_str,
@@ -151,14 +149,14 @@ async def get_expiring_iqamas(
         }
     }
     
-    expiring_iqamas = await db.employees.find(
+    expiring_contracts = await db.contracts_v2.find(
         query, {"_id": 0}
     ).sort("iqama_expiry_date", 1).to_list(100)
     
     result = []
-    for emp in expiring_iqamas:
+    for contract in expiring_contracts:
         # حساب الأيام المتبقية حتى انتهاء الإقامة
-        expiry_date = datetime.strptime(emp['iqama_expiry_date'], '%Y-%m-%d').date()
+        expiry_date = datetime.strptime(contract['iqama_expiry_date'], '%Y-%m-%d').date()
         days_remaining = (expiry_date - today).days
         
         # تحديد مستوى الإلحاح
@@ -173,18 +171,20 @@ async def get_expiring_iqamas(
             urgency_ar = 'متوسط'
         
         result.append({
-            "employee_id": emp.get('id'),
-            "employee_number": emp.get('employee_number'),
-            "employee_name": emp.get('full_name'),
-            "employee_name_ar": emp.get('full_name_ar'),
-            "iqama_number": emp.get('iqama_number'),
-            "iqama_expiry_date": emp['iqama_expiry_date'],
+            "employee_id": contract.get('employee_id'),
+            "employee_number": contract.get('employee_code'),
+            "employee_name": contract.get('employee_name'),
+            "employee_name_ar": contract.get('employee_name_ar'),
+            "iqama_number": contract.get('iqama_number'),
+            "iqama_expiry_date": contract['iqama_expiry_date'],
             "days_remaining": days_remaining,
             "urgency": urgency,
             "urgency_ar": urgency_ar,
-            "department": emp.get('department'),
-            "department_ar": emp.get('department_ar'),
-            "nationality": emp.get('nationality')
+            "department": contract.get('department'),
+            "department_ar": contract.get('department_ar'),
+            "nationality": contract.get('nationality'),
+            "contract_id": contract.get('id'),
+            "contract_serial": contract.get('contract_serial')
         })
     
     # إحصائيات
