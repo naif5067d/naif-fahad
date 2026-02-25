@@ -320,6 +320,9 @@ export default function ExecutiveDashboard() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'smart-monitor'
+  const [smartMonitorData, setSmartMonitorData] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -337,6 +340,24 @@ export default function ExecutiveDashboard() {
     }
   }, []);
 
+  const fetchSmartMonitor = useCallback(async () => {
+    try {
+      const res = await api.get('/api/analytics/ai/smart-monitor');
+      setSmartMonitorData(res.data);
+    } catch (e) {
+      console.error('Smart monitor fetch error:', e);
+    }
+  }, []);
+
+  const fetchEmployeeDetails = async (employeeId) => {
+    try {
+      const res = await api.get(`/api/analytics/ai/employee/${employeeId}`);
+      setSelectedEmployee(res.data);
+    } catch (e) {
+      console.error('Employee details error:', e);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(() => {
@@ -344,6 +365,12 @@ export default function ExecutiveDashboard() {
     }, 60000);
     return () => clearInterval(interval);
   }, [fetchData, autoRefresh]);
+
+  useEffect(() => {
+    if (activeTab === 'smart-monitor' && !smartMonitorData) {
+      fetchSmartMonitor();
+    }
+  }, [activeTab, smartMonitorData, fetchSmartMonitor]);
 
   // Fullscreen handlers
   const toggleFullscreen = async () => {
