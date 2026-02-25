@@ -801,3 +801,26 @@ def calculate_partial_month_salary(last_working_day: str, daily_wage: float) -> 
             "description_en": "Calculation error",
             "formula": ""
         }
+
+
+
+async def get_custody_balance(employee_id: str) -> dict:
+    """
+    جلب رصيد العهد المالية غير المسواة
+    Get unsettled financial custody balance (petty cash / trust)
+    """
+    # جلب العهد النقدية غير المرجعة
+    items = await db.custody_ledgers.find({
+        "employee_id": employee_id,
+        "status": {"$nin": ["returned", "settled"]}
+    }, {"_id": 0}).to_list(100)
+    
+    total = sum(item.get("amount", 0) for item in items)
+    
+    return {
+        "items": items,
+        "total": round(total, 2),
+        "count": len(items),
+        "description_ar": "رصيد العهد",
+        "description_en": "Petty Cash / Trust Balance"
+    }
