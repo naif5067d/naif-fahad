@@ -562,6 +562,7 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
     
     return {
         "score": round(score, 1),
+        "no_data": no_data if 'no_data' in dir() else False,
         "forget_checkin": {
             "count": forget_count,
             "limit": 3,
