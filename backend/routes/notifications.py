@@ -850,30 +850,23 @@ async def get_summons(
 ):
     """
     الحصول على الاستدعاءات
-    - الموظف يرى استدعاءاته غير المُطلع عليها
-    - الإدارة ترى جميع الاستدعاءات
+    - الموظف يرى استدعاءاته غير المُطلع عليها فقط
+    - (لا تظهر للإدارة - الاستدعاء شخصي للموظف)
     """
-    user_role = user.get('role', '')
     user_employee_id = user.get('employee_id')
     
-    is_admin = user_role in ['sultan', 'naif', 'stas', 'mohammed', 'salah']
+    if not user_employee_id:
+        return {"summons": [], "count": 0}
     
-    if is_admin:
-        # الإدارة ترى جميع الاستدعاءات
-        summons = await db.notifications.find(
-            {"notification_type": {"$in": ["summon", "summon_sent"]}},
-            {"_id": 0}
-        ).sort("created_at", -1).to_list(50)
-    else:
-        # الموظف يرى استدعاءاته غير المُطلع عليها فقط
-        summons = await db.notifications.find(
-            {
-                "notification_type": "summon", 
-                "employee_id": user_employee_id,
-                "acknowledged": {"$ne": True}  # غير مُطلع عليها
-            },
-            {"_id": 0}
-        ).sort("created_at", -1).to_list(20)
+    # الموظف يرى استدعاءاته غير المُطلع عليها فقط
+    summons = await db.notifications.find(
+        {
+            "notification_type": "summon", 
+            "employee_id": user_employee_id,
+            "acknowledged": {"$ne": True}
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
     
     return {
         "summons": summons,
@@ -887,7 +880,7 @@ async def acknowledge_summon(
     user=Depends(get_current_user)
 ):
     """
-    تأكيد اطلاع الموظف على الاستدعاء
+    تأكيد اطلاع الموظف على الاستدعاء - يُحذف نهائياً
     """
     user_employee_id = user.get('employee_id')
     
@@ -903,24 +896,12 @@ async def acknowledge_summon(
     if not summon:
         raise HTTPException(status_code=404, detail="الاستدعاء غير موجود")
     
-    if summon.get('acknowledged'):
-        return {"message": "تم الاطلاع على هذا الاستدعاء مسبقاً", "acknowledged": True}
-    
-    # تحديث حالة الاستدعاء
-    await db.notifications.update_one(
-        {"id": summon_id},
-        {
-            "$set": {
-                "acknowledged": True,
-                "acknowledged_at": datetime.now(timezone.utc).isoformat(),
-                "status": "acknowledged"
-            }
-        }
-    )
+    # حذف الاستدعاء نهائياً بعد الاطلاع
+    await db.notifications.delete_one({"id": summon_id})
     
     return {
-        "message_ar": "تم تأكيد الاطلاع على الاستدعاء",
-        "message_en": "Summon acknowledged",
+        "message_ar": "تم تأكيد الاطلاع وإزالة الاستدعاء",
+        "message_en": "Acknowledged and removed",
         "acknowledged": True
     }
 
