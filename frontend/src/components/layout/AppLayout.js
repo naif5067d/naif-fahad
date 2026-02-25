@@ -77,7 +77,7 @@ const ICONS = {
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
   attendancePenalties: UsersRound, loginSessions: History, tasks: ClipboardList, maintenanceTracking: Hammer, ats: ClipboardCheck,
-  policies: Book, soundSettings: Volume2,
+  policies: Book, soundSettings: Volume2, controlPanel: Settings,
 };
 
 const PATHS = {
@@ -87,7 +87,7 @@ const PATHS = {
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance', myFinances: '/my-finances', teamAttendance: '/team-attendance', penalties: '/penalties',
   attendancePenalties: '/team-attendance', loginSessions: '/login-sessions', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
-  executive: '/executive', ats: '/ats', policies: '/policies', soundSettings: '/sound-settings',
+  executive: '/executive', ats: '/ats', policies: '/policies', soundSettings: '/sound-settings', controlPanel: '/control-panel',
 };
 
 const ROLE_COLORS = {
