@@ -123,19 +123,8 @@ export default function EmployeesPage() {
   const openEdit = (emp) => {
     setEditForm({ 
       full_name: emp.full_name, 
-      full_name_ar: emp.full_name_ar, 
-      department: emp.department,
-      department_ar: emp.department_ar,
-      position: emp.position,
-      position_ar: emp.position_ar,
-      is_active: emp.is_active,
-      // بيانات الهوية/الإقامة
-      is_saudi: emp.is_saudi ?? (emp.nationality === 'سعودي' || emp.nationality === 'Saudi'),
-      national_id: emp.national_id || '',
-      iqama_number: emp.iqama_number || '',
-      iqama_expiry_date: emp.iqama_expiry_date || '',
-      id_expiry_date: emp.id_expiry_date || '',
-      nationality: emp.nationality || ''
+      full_name_ar: emp.full_name_ar,
+      is_active: emp.is_active
     });
     setEditDialog(emp);
   };
