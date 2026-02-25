@@ -422,7 +422,7 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     elements.append(decl_header_t)
     
     decl_ar = f"أقر باستلام من شركة دار الكود للاستشارات الهندسية جميع مستحقاتي وفقاً للبيانات أعلاه. أنا {emp_name} أُقر بأن هذا المبلغ يمثل كافة مستحقاتي حتى تاريخ {last_day}، وأُبرئ ذمة الشركة من أي مطالبات مستقبلية."
-    decl_en = f"I, {emp_name}, acknowledge receipt of all my entitlements from Dar Al Code Engineering Consultancy. This amount represents all my dues until {last_day}, and I release the company from any future claims."
+    decl_en = f"I acknowledge receipt of all my entitlements from Dar Al Code Engineering Consultancy. This amount represents all my dues until {last_day}, and I release the company from any future claims."
     
     decl_style_ar = ParagraphStyle('decl_ar', fontName=ARABIC_FONT, fontSize=5, alignment=TA_RIGHT, leading=6)
     decl_style_en = ParagraphStyle('decl_en', fontName='Helvetica', fontSize=5, alignment=TA_LEFT, leading=6)
