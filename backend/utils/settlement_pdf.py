@@ -22,29 +22,6 @@ import qrcode
 from datetime import datetime, timezone
 import os
 
-# تسجيل الخطوط
-FONT_DIR = "/app/backend/fonts"
-ARABIC_FONT = 'Helvetica'
-ARABIC_FONT_BOLD = 'Helvetica-Bold'
-
-try:
-    amiri_path = os.path.join(FONT_DIR, 'Amiri-Regular.ttf')
-    if os.path.exists(amiri_path):
-        pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
-        pdfmetrics.registerFont(TTFont('AmiriBold', amiri_path))  # استخدام نفس الخط للـ Bold
-        ARABIC_FONT = 'Amiri'
-        ARABIC_FONT_BOLD = 'AmiriBold'
-except Exception as e:
-    print(f"Font registration error: {e}")
-    try:
-        noto_path = os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
-        if os.path.exists(noto_path):
-            pdfmetrics.registerFont(TTFont('NotoArabic', noto_path))
-            ARABIC_FONT = 'NotoArabic'
-            ARABIC_FONT_BOLD = 'NotoArabic'
-    except Exception:
-        pass
-
 # ألوان الشركة
 NAVY = colors.HexColor('#1E3A5F')
 GOLD = colors.HexColor('#BF9E59')
@@ -53,6 +30,49 @@ BORDER = colors.HexColor('#E2E8F0')
 GREEN = colors.HexColor('#16A34A')
 
 # أبعاد
+PAGE_WIDTH, PAGE_HEIGHT = A4
+MARGIN = 10 * mm
+CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+
+# تسجيل الخطوط - يتم في دالة منفصلة
+FONT_DIR = "/app/backend/fonts"
+
+def _register_fonts():
+    """تسجيل الخطوط العربية"""
+    global ARABIC_FONT, ARABIC_FONT_BOLD
+    
+    ARABIC_FONT = 'Helvetica'
+    ARABIC_FONT_BOLD = 'Helvetica-Bold'
+    
+    # محاولة Amiri
+    amiri_path = os.path.join(FONT_DIR, 'Amiri-Regular.ttf')
+    if os.path.exists(amiri_path) and os.path.getsize(amiri_path) > 10000:
+        try:
+            pdfmetrics.registerFont(TTFont('Amiri', amiri_path))
+            pdfmetrics.registerFont(TTFont('AmiriBold', amiri_path))
+            ARABIC_FONT = 'Amiri'
+            ARABIC_FONT_BOLD = 'AmiriBold'
+            return True
+        except Exception as e:
+            print(f"Amiri error: {e}")
+    
+    # محاولة NotoNaskh
+    noto_path = os.path.join(FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
+    if os.path.exists(noto_path) and os.path.getsize(noto_path) > 10000:
+        try:
+            pdfmetrics.registerFont(TTFont('NotoNaskh', noto_path))
+            ARABIC_FONT = 'NotoNaskh'
+            ARABIC_FONT_BOLD = 'NotoNaskh'
+            return True
+        except Exception as e:
+            print(f"Noto error: {e}")
+    
+    return False
+
+# تسجيل الخطوط عند التحميل
+_register_fonts()
+ARABIC_FONT = 'Amiri' if 'Amiri' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
+ARABIC_FONT_BOLD = 'AmiriBold' if 'AmiriBold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN = 10 * mm
 CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
