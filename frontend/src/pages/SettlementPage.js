@@ -792,12 +792,14 @@ export default function SettlementPage() {
                     <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
                   </tr>
                 )}
-                {/* الخصومات اليدوية */}
-                {manualDeductions.map(ded => (
+                {/* الخصومات اليدوية من الـ snapshot */}
+                {getManualDeductions().map(ded => (
                   <tr key={ded.id} className="border-b bg-red-50">
                     <td className="p-1 flex items-center justify-between">
                       <span>خصم: {ded.note}</span>
-                      <button onClick={() => removeDeduction(ded.id)} className="text-red-500 hover:text-red-700">×</button>
+                      {selectedSettlement?.status === 'pending_stas' && (
+                        <button onClick={() => removeDeduction(ded.id)} className="text-red-500 hover:text-red-700">×</button>
+                      )}
                     </td>
                     <td className="p-1 text-right">{ded.amount?.toLocaleString()}</td>
                   </tr>
@@ -806,7 +808,7 @@ export default function SettlementPage() {
                 <tr className="bg-red-100 font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
                   <td className="p-1 text-right">
-                    {((snapshot.totals?.deductions?.total || 0) + totalManualDeductions + totalManualLoans + totalInkindDamages)?.toLocaleString()}
+                    {(snapshot.totals?.deductions?.total || 0)?.toLocaleString()}
                   </td>
                 </tr>
               </tbody>
@@ -818,11 +820,8 @@ export default function SettlementPage() {
         <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
           <div className="text-xs text-muted-foreground">{lang === 'ar' ? 'الصافي النهائي المستحق للموظف' : 'Net Amount Payable to Employee'}</div>
           <div className="text-2xl font-bold text-primary">
-            {((snapshot.totals?.net_amount || 0) - totalManualDeductions - totalManualLoans - totalInkindDamages)?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
+            {(snapshot.totals?.net_amount || 0)?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
           </div>
-          {(totalManualDeductions > 0 || totalManualLoans > 0 || totalInkindDamages > 0) && (
-            <div className="text-xs text-amber-600 mt-1">{lang === 'ar' ? '(يشمل خصومات يدوية)' : '(Includes manual deductions)'}</div>
-          )}
         </div>
         
         {/* Signatures placeholder */}
