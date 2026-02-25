@@ -695,18 +695,18 @@ async def get_settlement_pdf(
     # جلب المسمى الوظيفي والقسم من العقد الفعلي إذا لم يكونا موجودين
     contract_in_snapshot = snapshot.get("contract", {})
     if not contract_in_snapshot.get("job_title") or not contract_in_snapshot.get("department"):
-        # جلب العقد الفعلي من قاعدة البيانات
+        # جلب العقد الفعلي من قاعدة البيانات (أي حالة)
         employee_id = snapshot.get("employee", {}).get("id")
         if employee_id:
             actual_contract = await db.contracts_v2.find_one(
-                {"employee_id": employee_id, "status": {"$in": ["active", "terminated"]}},
+                {"employee_id": employee_id},
                 {"_id": 0, "job_title": 1, "job_title_ar": 1, "department": 1, "department_ar": 1}
             )
             if actual_contract:
-                contract_in_snapshot["job_title"] = actual_contract.get("job_title") or actual_contract.get("job_title_ar", "")
-                contract_in_snapshot["job_title_ar"] = actual_contract.get("job_title_ar") or actual_contract.get("job_title", "")
-                contract_in_snapshot["department"] = actual_contract.get("department") or actual_contract.get("department_ar", "")
-                contract_in_snapshot["department_ar"] = actual_contract.get("department_ar") or actual_contract.get("department", "")
+                contract_in_snapshot["job_title"] = actual_contract.get("job_title_ar") or actual_contract.get("job_title", "-")
+                contract_in_snapshot["job_title_ar"] = actual_contract.get("job_title_ar") or actual_contract.get("job_title", "-")
+                contract_in_snapshot["department"] = actual_contract.get("department_ar") or actual_contract.get("department", "-")
+                contract_in_snapshot["department_ar"] = actual_contract.get("department_ar") or actual_contract.get("department", "-")
                 settlement["snapshot"]["contract"] = contract_in_snapshot
     
     # جلب بيانات الشركة - من عدة مصادر
