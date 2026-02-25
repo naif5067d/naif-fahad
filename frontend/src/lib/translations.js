@@ -166,6 +166,7 @@ export const translations = {
     app: { name: "دار الكود - نظام الموارد البشرية", company: "شركة دار الكود للاستشارات الهندسية" },
     nav: {
       executive: "لوحة التحكم التنفيذية",
+      smartMonitor: "المراقب الذكي",
       dashboard: "لوحتي", transactions: "المعاملات", leave: "الإجازات",
       attendance: "الحضور", finance: "المالية", contracts: "العقود",
       contractsManagement: "إدارة العقود", settlement: "المخالصات", employees: "الموظفين", settings: "الإعدادات", stasMirror: "مرآة ستاس",
