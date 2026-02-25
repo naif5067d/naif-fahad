@@ -357,62 +357,43 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6" data-testid="dashboard-page">
       
-      {/* ==================== تنبيه الاستدعاء ==================== */}
+      {/* ==================== تنبيه الاستدعاء - بسيط ومرتب ==================== */}
       {activeSummons.filter(s => s.notification_type === 'summon').length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {activeSummons.filter(s => s.notification_type === 'summon').map(summon => (
             <div 
               key={summon.id}
-              className={`rounded-xl p-4 border-2 animate-pulse ${
-                summon.priority === 'urgent' ? 'bg-red-50 border-red-500' : 
-                summon.priority === 'medium' ? 'bg-yellow-50 border-yellow-500' : 
-                'bg-green-50 border-green-500'
+              className={`rounded-lg p-3 border flex items-center justify-between gap-3 ${
+                summon.priority === 'urgent' ? 'bg-red-50 border-red-300' : 
+                summon.priority === 'medium' ? 'bg-amber-50 border-amber-300' : 
+                'bg-blue-50 border-blue-300'
               }`}
               data-testid="summon-alert"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    summon.priority === 'urgent' ? 'bg-red-500' : 
-                    summon.priority === 'medium' ? 'bg-yellow-500' : 
-                    'bg-green-500'
-                  }`}>
-                    <Bell className="text-white" size={24} />
-                  </div>
-                  <div>
-                    <h3 className={`font-bold text-lg ${
-                      summon.priority === 'urgent' ? 'text-red-700' : 
-                      summon.priority === 'medium' ? 'text-yellow-700' : 
-                      'text-green-700'
-                    }`}>
-                      {lang === 'ar' 
-                        ? (summon.priority === 'urgent' ? 'استدعاء طارئ!' : summon.priority === 'medium' ? 'استدعاء' : 'استدعاء')
-                        : (summon.priority === 'urgent' ? 'Urgent Summon!' : summon.priority === 'medium' ? 'Summon' : 'Summon')
-                      }
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {summon.comment || (lang === 'ar' ? 'مطلوب حضورك' : 'Your presence is required')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {lang === 'ar' ? 'من:' : 'From:'} {summon.sent_by_name || 'الإدارة'}
-                      {' • '}
-                      {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <Bell className={`flex-shrink-0 ${
+                  summon.priority === 'urgent' ? 'text-red-500' : 
+                  summon.priority === 'medium' ? 'text-amber-500' : 
+                  'text-blue-500'
+                }`} size={20} />
+                <div>
+                  <p className="font-medium text-sm">
+                    {summon.comment || (lang === 'ar' ? 'مطلوب حضورك' : 'Your presence is required')}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {lang === 'ar' ? 'من' : 'From'}: {summon.sent_by_name || (lang === 'ar' ? 'الإدارة' : 'Management')}
+                  </p>
                 </div>
-                <Button 
-                  onClick={() => acknowledgeSummon(summon.id)}
-                  disabled={acknowledgingSummon === summon.id}
-                  className={`whitespace-nowrap ${
-                    summon.priority === 'urgent' ? 'bg-red-600 hover:bg-red-700' : 
-                    summon.priority === 'medium' ? 'bg-yellow-600 hover:bg-yellow-700' : 
-                    'bg-green-600 hover:bg-green-700'
-                  }`}
-                  data-testid="acknowledge-summon-btn"
-                >
-                  {acknowledgingSummon === summon.id ? '...' : (lang === 'ar' ? 'اطلعت' : 'Acknowledged')}
-                </Button>
               </div>
+              <Button 
+                size="sm"
+                variant="outline"
+                onClick={() => acknowledgeSummon(summon.id)}
+                disabled={acknowledgingSummon === summon.id}
+                data-testid="acknowledge-summon-btn"
+              >
+                {acknowledgingSummon === summon.id ? '...' : (lang === 'ar' ? 'اطلعت' : 'OK')}
+              </Button>
             </div>
           ))}
         </div>
