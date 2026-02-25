@@ -982,6 +982,245 @@ export default function ExecutiveDashboard() {
             color={THEME.accent.green}
           />
         </div>
+        </>
+        ) : (
+        /* ==================== SMART MONITOR TAB ==================== */
+        <div className="space-y-6" data-testid="smart-monitor-tab">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.border.subtle}` }}>
+              <p className="text-xs mb-1" style={{ color: THEME.text.tertiary }}>المتوسط العام</p>
+              <p className="text-2xl font-light" style={{ color: THEME.text.primary }}>{smartMonitorData?.company_average || 0}%</p>
+            </div>
+            <div className="p-4 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.accent.green}30` }}>
+              <p className="text-xs mb-1" style={{ color: THEME.text.tertiary }}>ممتاز</p>
+              <p className="text-2xl font-light" style={{ color: THEME.accent.green }}>{smartMonitorData?.distribution?.excellent || 0}</p>
+            </div>
+            <div className="p-4 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.accent.blue}30` }}>
+              <p className="text-xs mb-1" style={{ color: THEME.text.tertiary }}>جيد</p>
+              <p className="text-2xl font-light" style={{ color: THEME.accent.blue }}>{smartMonitorData?.distribution?.good || 0}</p>
+            </div>
+            <div className="p-4 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.accent.red}30` }}>
+              <p className="text-xs mb-1" style={{ color: THEME.text.tertiary }}>يحتاج تحسين</p>
+              <p className="text-2xl font-light" style={{ color: THEME.accent.red }}>{smartMonitorData?.distribution?.needs_improvement || 0}</p>
+            </div>
+          </div>
+
+          {/* Alerts */}
+          {smartMonitorData?.alerts?.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium flex items-center gap-2" style={{ color: THEME.text.primary }}>
+                <Zap size={16} style={{ color: THEME.accent.amber }} />
+                تنبيهات ذكية
+              </h3>
+              <div className="grid md:grid-cols-3 gap-3">
+                {smartMonitorData.alerts.map((alert, i) => (
+                  <div 
+                    key={i} 
+                    className="p-3 rounded-lg"
+                    style={{ 
+                      background: alert.type === 'success' ? `${THEME.accent.green}10` : 
+                                  alert.type === 'warning' ? `${THEME.accent.amber}10` : `${THEME.accent.blue}10`,
+                      border: `1px solid ${alert.type === 'success' ? THEME.accent.green : 
+                              alert.type === 'warning' ? THEME.accent.amber : THEME.accent.blue}30`
+                    }}
+                  >
+                    <p className="text-xs font-medium" style={{ color: alert.type === 'success' ? THEME.accent.green : 
+                        alert.type === 'warning' ? THEME.accent.amber : THEME.accent.blue }}>{alert.title}</p>
+                    <p className="text-[10px] mt-1" style={{ color: THEME.text.tertiary }}>{alert.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Main Grid */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Top Performers */}
+            <div className="p-5 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.accent.green}30` }}>
+              <h3 className="text-sm font-medium flex items-center gap-2 mb-4" style={{ color: THEME.accent.green }}>
+                <Award size={16} />
+                الموظفين المتميزين
+              </h3>
+              <div className="space-y-2">
+                {smartMonitorData?.top_performers?.map((emp, i) => (
+                  <div 
+                    key={emp.employee_id}
+                    className="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-white/5"
+                    onClick={() => fetchEmployeeDetails(emp.employee_id)}
+                  >
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ background: `${THEME.accent.green}20`, color: THEME.accent.green }}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" style={{ color: THEME.text.primary }}>{emp.employee_name}</p>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} size={10} className={s <= (emp.rating?.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'} />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: THEME.accent.green }}>{emp.overall_score}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Needs Attention */}
+            <div className="p-5 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.accent.red}30` }}>
+              <h3 className="text-sm font-medium flex items-center gap-2 mb-4" style={{ color: THEME.accent.red }}>
+                <AlertTriangle size={16} />
+                يحتاجون متابعة
+              </h3>
+              <div className="space-y-2">
+                {smartMonitorData?.bottom_performers?.map((emp, i) => (
+                  <div 
+                    key={emp.employee_id}
+                    className="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors hover:bg-white/5"
+                    onClick={() => fetchEmployeeDetails(emp.employee_id)}
+                  >
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ background: `${THEME.accent.red}20`, color: THEME.accent.red }}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate" style={{ color: THEME.text.primary }}>{emp.employee_name}</p>
+                      <div className="flex gap-2 text-[10px]" style={{ color: THEME.text.tertiary }}>
+                        {emp.forget_checkin_count > 0 && <span>نسيان: {emp.forget_checkin_count}</span>}
+                        {emp.late_excuse_count > 0 && <span>تأخير: {emp.late_excuse_count}</span>}
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: THEME.accent.red }}>{emp.overall_score}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Employee Details */}
+            <div className="p-5 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.border.subtle}` }}>
+              <h3 className="text-sm font-medium flex items-center gap-2 mb-4" style={{ color: THEME.text.primary }}>
+                <Eye size={16} />
+                تفاصيل الموظف
+              </h3>
+              {selectedEmployee ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <p className="font-medium" style={{ color: THEME.text.primary }}>{selectedEmployee.employee_name}</p>
+                    <p className="text-xs" style={{ color: THEME.text.tertiary }}>{selectedEmployee.job_title}</p>
+                    <div className="flex justify-center mt-3">
+                      <div className="relative w-20 h-20">
+                        <svg width="80" height="80" className="transform -rotate-90">
+                          <circle cx="40" cy="40" r="32" fill="none" stroke={THEME.border.subtle} strokeWidth="4" />
+                          <circle cx="40" cy="40" r="32" fill="none" 
+                            stroke={getScoreColor(selectedEmployee.evaluation?.overall_score || 0)} 
+                            strokeWidth="4"
+                            strokeDasharray={200}
+                            strokeDashoffset={200 - (selectedEmployee.evaluation?.overall_score || 0) / 100 * 200}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-lg font-bold" style={{ color: THEME.text.primary }}>
+                            {Math.round(selectedEmployee.evaluation?.overall_score || 0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-center gap-0.5 mt-2">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={14} className={s <= (selectedEmployee.evaluation?.rating?.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'} />
+                      ))}
+                    </div>
+                    <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs"
+                      style={{ background: `${selectedEmployee.evaluation?.rating?.color}20`, color: selectedEmployee.evaluation?.rating?.color }}>
+                      {selectedEmployee.evaluation?.rating?.label}
+                    </span>
+                  </div>
+                  
+                  {/* Breakdown */}
+                  <div className="space-y-2">
+                    {selectedEmployee.evaluation?.breakdown && Object.entries(selectedEmployee.evaluation.breakdown).map(([key, val]) => (
+                      <div key={key}>
+                        <div className="flex justify-between text-[10px] mb-1">
+                          <span style={{ color: THEME.text.tertiary }}>
+                            {key === 'attendance' ? 'الحضور' : key === 'tasks' ? 'المهام' : key === 'excuses' ? 'الأعذار' : key === 'financial' ? 'المالية' : 'الطلبات'}
+                          </span>
+                          <span style={{ color: THEME.text.secondary }}>{val.score}%</span>
+                        </div>
+                        <div className="h-1 rounded-full" style={{ background: THEME.border.subtle }}>
+                          <div className="h-1 rounded-full transition-all" style={{ width: `${val.score}%`, background: getScoreColor(val.score) }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Strengths & Weaknesses */}
+                  {selectedEmployee.evaluation?.strengths?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium mb-1" style={{ color: THEME.accent.green }}>نقاط القوة:</p>
+                      {selectedEmployee.evaluation.strengths.slice(0, 3).map((s, i) => (
+                        <p key={i} className="text-[10px]" style={{ color: THEME.text.tertiary }}>✓ {s}</p>
+                      ))}
+                    </div>
+                  )}
+                  {selectedEmployee.evaluation?.weaknesses?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium mb-1" style={{ color: THEME.accent.red }}>يحتاج تحسين:</p>
+                      {selectedEmployee.evaluation.weaknesses.slice(0, 3).map((w, i) => (
+                        <p key={i} className="text-[10px]" style={{ color: THEME.text.tertiary }}>• {w}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <Eye size={32} className="mx-auto mb-2 opacity-20" style={{ color: THEME.text.tertiary }} />
+                  <p className="text-xs" style={{ color: THEME.text.tertiary }}>اختر موظف لعرض التفاصيل</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* All Employees Table */}
+          <div className="p-5 rounded-xl" style={{ background: THEME.bg.secondary, border: `1px solid ${THEME.border.subtle}` }}>
+            <h3 className="text-sm font-medium flex items-center gap-2 mb-4" style={{ color: THEME.text.primary }}>
+              <Users size={16} />
+              جميع الموظفين ({smartMonitorData?.total_employees || 0})
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {smartMonitorData?.all_evaluations?.map(emp => (
+                <div 
+                  key={emp.employee_id}
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-white/5"
+                  style={{ border: `1px solid ${THEME.border.subtle}` }}
+                  onClick={() => fetchEmployeeDetails(emp.employee_id)}
+                >
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <svg width="40" height="40" className="transform -rotate-90">
+                      <circle cx="20" cy="20" r="16" fill="none" stroke={THEME.border.subtle} strokeWidth="3" />
+                      <circle cx="20" cy="20" r="16" fill="none" 
+                        stroke={getScoreColor(emp.overall_score)} 
+                        strokeWidth="3"
+                        strokeDasharray={100}
+                        strokeDashoffset={100 - emp.overall_score}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-[10px] font-bold" style={{ color: getScoreColor(emp.overall_score) }}>{Math.round(emp.overall_score)}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate" style={{ color: THEME.text.primary }}>{emp.employee_name}</p>
+                    <div className="flex gap-0.5 mt-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={8} className={s <= (emp.rating?.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-zinc-700'} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        )}
 
       </main>
 
