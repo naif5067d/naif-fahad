@@ -430,6 +430,8 @@ export default function TransactionDetailPage() {
               if (key === 'medical_file_url') return false;
               // Skip calculation_details - shown in separate section for STAS
               if (key === 'calculation_details') return false;
+              // Skip redundant request type fields - show only one
+              if (key === 'request_type_ar' || key === 'request_type_en') return false;
               // Skip objects (complex nested data)
               if (typeof value === 'object' && value !== null) return false;
               return true;
