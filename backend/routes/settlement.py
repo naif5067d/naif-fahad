@@ -649,6 +649,8 @@ async def get_settlement_pdf(
     
     # جلب بيانات الشركة
     branding = await db.settings.find_one({"type": "company_branding"}, {"_id": 0})
+    if not branding:
+        branding = await db.settings.find_one({"type": "branding"}, {"_id": 0})
     
     # توليد PDF
     pdf_bytes = generate_settlement_pdf(settlement, branding)
