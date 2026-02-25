@@ -167,7 +167,6 @@ def generate_settlement_pdf(settlement: dict, branding: dict = None) -> bytes:
     service_years = service.get("years", 0)
     service_months = service.get("months", 0)
     service_days_count = service.get("days", 0)
-    service_period = f"من {hire_date} إلى {last_day}"
     service_duration = f"{service_years} سنة و {service_months} شهر و {service_days_count} يوم"
     
     emp_data = [
