@@ -759,12 +759,14 @@ export default function SettlementPage() {
                     <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
                   </tr>
                 )}
-                {/* السلف اليدوية */}
-                {manualLoans.map(loan => (
+                {/* السلف اليدوية من الـ snapshot */}
+                {getManualLoans().map(loan => (
                   <tr key={loan.id} className="border-b bg-yellow-50">
                     <td className="p-1 flex items-center justify-between">
                       <span>سلفة: {loan.note}</span>
-                      <button onClick={() => removeLoan(loan.id)} className="text-red-500 hover:text-red-700">×</button>
+                      {selectedSettlement?.status === 'pending_stas' && (
+                        <button onClick={() => removeLoan(loan.id)} className="text-red-500 hover:text-red-700">×</button>
+                      )}
                     </td>
                     <td className="p-1 text-right">{loan.amount?.toLocaleString()}</td>
                   </tr>
