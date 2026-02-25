@@ -59,7 +59,7 @@ export default function EmployeesPage() {
   const canSummon = ['sultan', 'naif', 'stas', 'mohammed', 'salah'].includes(user?.role);
   const canAssignSupervisor = ['sultan', 'naif', 'stas'].includes(user?.role); // محمد لا يحتاج تعيين مشرف
   
-  // حالة الاستدعاءات النشطة
+  // حالة الاستدعاءات النشطة (للمرسل و stas فقط)
   const [activeSummons, setActiveSummons] = useState([]);
 
   useEffect(() => {
