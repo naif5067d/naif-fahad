@@ -94,8 +94,7 @@ function AppRoutes() {
       <Route path="/login-sessions" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><LoginSessionsPage /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
       <Route path="/maintenance-tracking" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><MaintenanceTrackingPage /></ProtectedRoute>} />
-      <Route path="/executive" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']} noLayout={true}><ExecutiveDashboard /></ProtectedRoute>} />
-      <Route path="/smart-monitor" element={<ProtectedRoute allowedRoles={['sultan', 'salah', 'stas']}><SmartMonitorPage /></ProtectedRoute>} />
+      <Route path="/executive" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed', 'salah']} noLayout={true}><ExecutiveDashboard /></ProtectedRoute>} />
       <Route path="/employees" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeesPage /></ProtectedRoute>} />
       <Route path="/employees/:employeeId" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><EmployeeProfilePage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
