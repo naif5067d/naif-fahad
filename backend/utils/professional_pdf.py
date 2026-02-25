@@ -283,6 +283,43 @@ def generate_professional_transaction_pdf(tx: dict, emp: dict = None, brand: dic
         ]))
         els.append(detail_tbl)
     
+    # طلبات الحضور (نسيان بصمة، مهمة خارجية، خروج مبكر، تبرير تأخير)
+    elif typ in ['forget_checkin', 'field_work', 'early_leave_request', 'late_excuse']:
+        req_types = {
+            'forget_checkin': ('نسيان بصمة', 'Forgot Check-in'),
+            'field_work': ('مهمة خارجية', 'Field Work'),
+            'early_leave_request': ('طلب خروج مبكر', 'Early Leave Request'),
+            'late_excuse': ('تبرير تأخير', 'Late Excuse'),
+        }
+        rt_ar, rt_en = req_types.get(typ, (typ, typ))
+        
+        req_date = data.get('date', '-')
+        from_time = data.get('from_time', '-')
+        to_time = data.get('to_time', '-')
+        reason = data.get('reason', '-')
+        
+        # عرض الوقت فقط لطلبات الخروج المبكر والمهمة الخارجية
+        if typ in ['early_leave_request', 'field_work'] and from_time != '-':
+            h2 = [Paragraph(ar("نوع الطلب"), s_hdr), Paragraph(ar("التاريخ"), s_hdr), Paragraph(ar("من الساعة"), s_hdr), Paragraph(ar("إلى الساعة"), s_hdr)]
+            v2_ar = [Paragraph(ar(rt_ar), s_val), Paragraph(req_date, s_val), Paragraph(from_time, s_val), Paragraph(to_time, s_val)]
+            v2_en = [Paragraph(rt_en, s_val_en), Paragraph("Date", s_val_en), Paragraph("From", s_val_en), Paragraph("To", s_val_en)]
+        else:
+            h2 = [Paragraph(ar("نوع الطلب"), s_hdr), Paragraph(ar("التاريخ"), s_hdr), Paragraph(ar("السبب"), s_hdr), Paragraph("", s_hdr)]
+            v2_ar = [Paragraph(ar(rt_ar), s_val), Paragraph(req_date, s_val), Paragraph(ar(reason[:40] if reason else '-'), s_val), Paragraph("", s_val)]
+            v2_en = [Paragraph(rt_en, s_val_en), Paragraph("Date", s_val_en), Paragraph("Reason", s_val_en), Paragraph("", s_val_en)]
+        
+        detail_tbl = Table([h2, v2_ar, v2_en], colWidths=[col4]*4)
+        detail_tbl.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BACKGROUND', (0,0), (-1,0), DARK_GRAY),
+            ('BOX', (0,0), (-1,-1), 0.5, DARK_GRAY),
+            ('INNERGRID', (0,0), (-1,-1), 0.25, LIGHT_GRAY),
+            ('TOPPADDING', (0,0), (-1,-1), 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ]))
+        els.append(detail_tbl)
+    
     els.append(Spacer(1, 2*mm))
     
     # ═══════════════════════════════════════════════════════════════════
