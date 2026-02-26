@@ -372,46 +372,101 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6" data-testid="dashboard-page">
       
-      {/* ==================== تنبيه الاستدعاء - بسيط ومرتب ==================== */}
+      {/* ==================== تنبيه الاستدعاء - مع خاصية الرد ==================== */}
       {activeSummons.filter(s => s.notification_type === 'summon').length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {activeSummons.filter(s => s.notification_type === 'summon').map(summon => (
             <div 
               key={summon.id}
-              className={`rounded-lg p-3 border flex items-center justify-between gap-3 ${
-                summon.priority === 'urgent' ? 'bg-red-50 border-red-300' : 
-                summon.priority === 'medium' ? 'bg-amber-50 border-amber-300' : 
-                'bg-blue-50 border-blue-300'
+              className={`rounded-xl p-4 border-2 ${
+                summon.priority === 'urgent' ? 'bg-red-50 border-red-400 dark:bg-red-900/20' : 
+                summon.priority === 'medium' ? 'bg-amber-50 border-amber-400 dark:bg-amber-900/20' : 
+                'bg-blue-50 border-blue-400 dark:bg-blue-900/20'
               }`}
               data-testid="summon-alert"
             >
-              <div className="flex items-center gap-3">
-                <Bell className={`flex-shrink-0 ${
-                  summon.priority === 'urgent' ? 'text-red-500' : 
-                  summon.priority === 'medium' ? 'text-amber-500' : 
-                  'text-blue-500'
-                }`} size={20} />
-                <div>
-                  <p className="font-medium text-sm">
-                    {summon.comment || (lang === 'ar' ? 'مطلوب حضورك' : 'Your presence is required')}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {lang === 'ar' ? 'من' : 'From'}: {summon.sender_name || summon.sent_by_name || (lang === 'ar' ? 'الإدارة' : 'Management')}
-                    {summon.created_at && (
-                      <span className="ms-2 opacity-75">• {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-ca-islamic' : 'en-US')} / {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}</span>
-                    )}
-                  </p>
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <Bell className={`flex-shrink-0 mt-1 ${
+                    summon.priority === 'urgent' ? 'text-red-500' : 
+                    summon.priority === 'medium' ? 'text-amber-500' : 
+                    'text-blue-500'
+                  }`} size={22} />
+                  <div>
+                    <p className="font-semibold">
+                      {summon.comment || (lang === 'ar' ? 'مطلوب حضورك' : 'Your presence is required')}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {lang === 'ar' ? 'من' : 'From'}: <span className="font-medium">{summon.sender_name || summon.sent_by_name || (lang === 'ar' ? 'الإدارة' : 'Management')}</span>
+                      {summon.created_at && (
+                        <span className="ms-2 opacity-75">• {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA-u-ca-islamic' : 'en-US')} / {new Date(summon.created_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-GB')}</span>
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={() => acknowledgeSummon(summon.id)}
-                disabled={acknowledgingSummon === summon.id}
-                data-testid="acknowledge-summon-btn"
-              >
-                {acknowledgingSummon === summon.id ? '...' : (lang === 'ar' ? 'اطلعت' : 'OK')}
-              </Button>
+
+              {/* حقل الرد */}
+              {showReplyInput[summon.id] && (
+                <div className="mt-3 pt-3 border-t border-current/10">
+                  <textarea
+                    value={summonReply[summon.id] || ''}
+                    onChange={(e) => setSummonReply(prev => ({ ...prev, [summon.id]: e.target.value }))}
+                    placeholder={lang === 'ar' ? 'اكتب ردك هنا...' : 'Write your reply here...'}
+                    className="w-full p-3 text-sm rounded-lg border border-border bg-background resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    rows={2}
+                    data-testid="summon-reply-input"
+                  />
+                </div>
+              )}
+
+              {/* الأزرار */}
+              <div className="flex items-center gap-2 mt-3 justify-end">
+                {!showReplyInput[summon.id] ? (
+                  <>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => setShowReplyInput(prev => ({ ...prev, [summon.id]: true }))}
+                      data-testid="show-reply-btn"
+                    >
+                      {lang === 'ar' ? 'رد' : 'Reply'}
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => acknowledgeSummon(summon.id, false)}
+                      disabled={acknowledgingSummon === summon.id}
+                      data-testid="acknowledge-summon-btn"
+                    >
+                      {acknowledgingSummon === summon.id ? '...' : (lang === 'ar' ? 'اطلعت' : 'OK')}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => {
+                        setShowReplyInput(prev => ({ ...prev, [summon.id]: false }));
+                        setSummonReply(prev => ({ ...prev, [summon.id]: '' }));
+                      }}
+                    >
+                      {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => acknowledgeSummon(summon.id, true)}
+                      disabled={acknowledgingSummon === summon.id || !summonReply[summon.id]?.trim()}
+                      data-testid="send-reply-btn"
+                    >
+                      {acknowledgingSummon === summon.id ? '...' : (lang === 'ar' ? 'إرسال الرد' : 'Send Reply')}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
