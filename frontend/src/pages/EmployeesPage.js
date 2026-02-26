@@ -430,21 +430,39 @@ export default function EmployeesPage() {
                       <span className={isCritical || isIqamaCritical ? 'text-red-600 font-bold' : ''}>
                         {lang === 'ar' ? (e.full_name_ar || e.full_name) : e.full_name}
                       </span>
-                      {/* عرض الاستدعاء النشط */}
+                      {/* عرض الاستدعاء - مع حالة الرد */}
                       {activeSummon && (
                         <span 
-                          className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                            activeSummon.priority === 'urgent' ? 'bg-red-100 text-red-700' : 
-                            activeSummon.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
-                            'bg-green-100 text-green-700'
+                          className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1 cursor-pointer ${
+                            activeSummon.acknowledged 
+                              ? (activeSummon.reply ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700')
+                              : (activeSummon.priority === 'urgent' ? 'bg-red-100 text-red-700 animate-pulse' : 
+                                 activeSummon.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
+                                 'bg-orange-100 text-orange-700')
                           }`}
-                          title={`${activeSummon.sender_name || (lang === 'ar' ? 'الإدارة' : 'Management')}: ${activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}`}
-                        >
-                          <Bell size={10} />
-                          {lang === 'ar' 
-                            ? (activeSummon.priority === 'urgent' ? 'مستدعى - طارئ' : activeSummon.priority === 'medium' ? 'مستدعى' : 'مستدعى')
-                            : 'Summoned'
+                          title={
+                            activeSummon.acknowledged 
+                              ? `✓ ${lang === 'ar' ? 'اطلع' : 'Seen'}${activeSummon.reply ? ` - ${lang === 'ar' ? 'الرد' : 'Reply'}: ${activeSummon.reply}` : ''}`
+                              : `${activeSummon.sender_name || (lang === 'ar' ? 'الإدارة' : 'Management')}: ${activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}`
                           }
+                        >
+                          {activeSummon.acknowledged ? (
+                            <>
+                              <Check size={10} />
+                              {activeSummon.reply 
+                                ? (lang === 'ar' ? 'رد' : 'Replied')
+                                : (lang === 'ar' ? 'اطلع' : 'Seen')
+                              }
+                            </>
+                          ) : (
+                            <>
+                              <Bell size={10} />
+                              {lang === 'ar' 
+                                ? (activeSummon.priority === 'urgent' ? 'طارئ!' : 'مستدعى')
+                                : 'Summoned'
+                              }
+                            </>
+                          )}
                         </span>
                       )}
                       {/* تنبيه انتهاء العقد */}
