@@ -126,6 +126,22 @@ export default function AppLayout({ children }) {
   const logoutRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [companyName, setCompanyName] = useState({ ar: 'دار الكود', en: 'DAR ALCODE' });
+  const [appVersion, setAppVersion] = useState('0.0.0');
+
+  // Load app version
+  useEffect(() => {
+    const loadVersion = async () => {
+      try {
+        const res = await api.get('/api/admin/app-version');
+        if (res.data?.version) {
+          setAppVersion(res.data.version);
+        }
+      } catch (err) {
+        // Use default
+      }
+    };
+    loadVersion();
+  }, []);
 
   // Load company name from settings
   useEffect(() => {
