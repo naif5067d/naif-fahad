@@ -396,26 +396,74 @@ export default function TeamAttendancePage() {
 
   // Fetch data based on view mode and tab
   useEffect(() => {
-    if (viewMode === 'all') {
+    // Use selectedEmployees if any, otherwise fetch all
+    if (selectedEmployees.length > 0) {
+      fetchSelectedEmployeesData();
+    } else if (viewMode === 'all') {
       fetchAllData();
     } else if (viewMode === 'single' && selectedEmployee) {
       fetchEmployeeData();
     }
-  }, [viewMode, selectedEmployee, tab, date, month, year]);
+  }, [viewMode, selectedEmployee, selectedEmployees, tab, date, month, year, startDate, endDate]);
+
+  // Fetch data for selected employees (multi-select)
+  const fetchSelectedEmployeesData = async () => {
+    setLoading(true);
+    try {
+      // Fetch data for each selected employee
+      const allData = [];
+      for (const empId of selectedEmployees) {
+        const res = await api.get(`/api/team-attendance/employee/${empId}`, {
+          params: { 
+            period: tab,
+            date: date,
+            month: month,
+            year: year,
+            start_date: startDate,
+            end_date: endDate
+          }
+        });
+        if (res.data) {
+          const emp = employees.find(e => e.id === empId);
+          if (Array.isArray(res.data)) {
+            res.data.forEach(r => {
+              r.employee_name_ar = emp?.full_name_ar || r.employee_name_ar;
+              r.employee_number = emp?.employee_number || r.employee_number;
+              allData.push(r);
+            });
+          } else if (res.data.daily) {
+            res.data.daily.forEach(d => {
+              d.employee_name_ar = emp?.full_name_ar;
+              d.employee_id = empId;
+              d.employee_number = emp?.employee_number;
+              allData.push(d);
+            });
+          }
+        }
+      }
+      // Sort by date descending
+      allData.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setDailyData(allData);
+    } catch (err) {
+      console.error('Error fetching selected employees data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const summaryRes = await api.get('/api/team-attendance/summary', { params: { date } });
+      const summaryRes = await api.get('/api/team-attendance/summary', { params: { date: startDate } });
       setSummary(summaryRes.data);
       
-      if (tab === 'daily') {
-        const res = await api.get('/api/team-attendance/daily', { params: { date } });
+      if (tab === 'daily' || dateRangeMode === 'daily') {
+        const res = await api.get('/api/team-attendance/daily', { params: { date: startDate } });
         setDailyData(res.data);
-      } else if (tab === 'weekly') {
-        const res = await api.get('/api/team-attendance/weekly', { params: { date } });
+      } else if (tab === 'weekly' || dateRangeMode === 'weekly') {
+        const res = await api.get('/api/team-attendance/weekly', { params: { date: startDate } });
         setWeeklyData(res.data);
-      } else if (tab === 'monthly') {
+      } else if (tab === 'monthly' || dateRangeMode === 'monthly') {
         const res = await api.get('/api/team-attendance/monthly', { params: { month } });
         setMonthlyData(res.data);
       }
