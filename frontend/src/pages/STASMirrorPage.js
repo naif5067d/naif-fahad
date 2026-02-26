@@ -2186,7 +2186,7 @@ export default function STASMirrorPage() {
 
         {/* Maintenance Tab */}
         <TabsContent value="maintenance" className="mt-4 space-y-4">
-          {/* Version Management */}
+          {/* Version Management - تم تحديثه */}
           <Card className="border-2 border-accent/30 shadow-sm">
             <CardHeader className="bg-gradient-to-r from-accent/10 to-accent/5">
               <CardTitle className="text-base flex items-center justify-between">
@@ -2195,131 +2195,183 @@ export default function STASMirrorPage() {
                   {lang === 'ar' ? 'إدارة إصدار التطبيق' : 'App Version Management'}
                 </span>
                 <span className="px-3 py-1.5 bg-accent text-white rounded-full text-sm font-bold">
-                  v{versionInfo?.version || '1.0.0'}
+                  v{versionInfo?.version || '0.0.0'}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-4">
-              {/* Current Version Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl border">
+              {/* Current Version Info - Grid محسن */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-4 bg-slate-50 rounded-xl border text-center">
                   <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'الإصدار الحالي' : 'Current Version'}</p>
-                  <p className="text-2xl font-bold text-accent">{versionInfo?.version || '1.0.0'}</p>
-                  {versionInfo?.updated_at && (
-                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                      <Clock size={12} />
-                      {new Date(versionInfo.updated_at).toLocaleString('ar-EG')}
-                    </p>
-                  )}
+                  <p className="text-2xl font-bold text-accent">{versionInfo?.version || '0.0.0'}</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl border">
-                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'ملاحظات الإصدار' : 'Release Notes'}</p>
-                  <p className="text-sm">{lang === 'ar' ? versionInfo?.release_notes_ar : versionInfo?.release_notes_en || '-'}</p>
+                <div className="p-4 bg-slate-50 rounded-xl border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'رقم البناء' : 'Build'}</p>
+                  <p className="text-2xl font-bold">#{versionInfo?.build || 0}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'آخر تحديث' : 'Last Update'}</p>
+                  <p className="text-sm font-medium">
+                    {versionInfo?.updated_at 
+                      ? new Date(versionInfo.updated_at).toLocaleDateString('ar-EG')
+                      : '-'}
+                  </p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl border text-center">
+                  <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'بواسطة' : 'By'}</p>
+                  <p className="text-sm font-medium">{versionInfo?.updated_by || '-'}</p>
                 </div>
               </div>
               
-              {/* Version History */}
-              {versionInfo?.version_history && versionInfo.version_history.length > 0 && (
+              {/* Release Notes */}
+              {versionInfo?.release_notes && (
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <p className="text-xs text-blue-600 mb-1 font-semibold">{lang === 'ar' ? 'ملاحظات الإصدار' : 'Release Notes'}</p>
+                  <p className="text-sm text-blue-800">{versionInfo.release_notes}</p>
+                </div>
+              )}
+              
+              {/* Version History - سجل محسن */}
+              {versionHistory && versionHistory.length > 0 && (
                 <div className="p-4 bg-slate-50 rounded-xl border">
-                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <History size={14} />
                     {lang === 'ar' ? 'سجل الإصدارات' : 'Version History'}
                   </p>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {versionInfo.version_history.slice().reverse().map((v, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm px-3 py-2 bg-white rounded border">
-                        <span className="font-mono text-xs">v{v.version}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {v.updated_at ? new Date(v.updated_at).toLocaleDateString('ar-EG') : '-'}
-                        </span>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {versionHistory.map((v, i) => (
+                      <div key={v.id || i} className="flex items-center justify-between text-sm px-3 py-2 bg-white rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <span className="px-2 py-0.5 bg-accent/10 text-accent rounded font-mono text-xs">
+                            v{v.new_version}
+                          </span>
+                          <span className="text-muted-foreground text-xs">← v{v.old_version}</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs text-muted-foreground">
+                            {v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG') : '-'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{v.updated_by}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Update Version Dialog */}
-              <Dialog open={versionDialogOpen} onOpenChange={setVersionDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="w-full h-12 bg-accent hover:bg-accent text-white font-bold"
-                    data-testid="open-version-dialog-btn"
-                  >
-                    <RefreshCw size={18} className="ml-2" />
-                    {lang === 'ar' ? 'تحديث الإصدار' : 'Update Version'}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Tag size={20} className="text-accent" />
-                      {lang === 'ar' ? 'تحديث إصدار التطبيق' : 'Update App Version'}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {lang === 'ar' 
-                        ? 'أدخل رقم الإصدار الجديد وملاحظات التحديث'
-                        : 'Enter the new version number and release notes'}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div>
-                      <Label className="text-base font-semibold">{lang === 'ar' ? 'رقم الإصدار' : 'Version Number'}</Label>
-                      <Input
-                        value={newVersion}
-                        onChange={(e) => setNewVersion(e.target.value)}
-                        placeholder="1.2.0"
-                        className="mt-2 text-lg font-mono"
-                        data-testid="version-number-input"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-base font-semibold">{lang === 'ar' ? 'ملاحظات التحديث (عربي)' : 'Release Notes (Arabic)'}</Label>
-                      <Input
-                        value={releaseNotesAr}
-                        onChange={(e) => setReleaseNotesAr(e.target.value)}
-                        placeholder={lang === 'ar' ? 'ما الجديد في هذا الإصدار؟' : 'What\'s new in Arabic?'}
-                        className="mt-2"
-                        data-testid="release-notes-ar-input"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-base font-semibold">{lang === 'ar' ? 'ملاحظات التحديث (إنجليزي)' : 'Release Notes (English)'}</Label>
-                      <Input
-                        value={releaseNotesEn}
-                        onChange={(e) => setReleaseNotesEn(e.target.value)}
-                        placeholder={lang === 'ar' ? 'What\'s new?' : 'What\'s new in this version?'}
-                        className="mt-2"
-                        dir="ltr"
-                        data-testid="release-notes-en-input"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button
+              {/* أزرار التحكم */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* زر التحديث الفوري - الأساسي */}
+                <Button 
+                  onClick={handleQuickVersionUpdate}
+                  disabled={updatingVersion}
+                  className="h-14 bg-green-600 hover:bg-green-700 text-white font-bold text-base"
+                  data-testid="quick-update-btn"
+                >
+                  {updatingVersion ? (
+                    <Loader2 size={20} className="animate-spin ml-2" />
+                  ) : (
+                    <RefreshCw size={20} className="ml-2" />
+                  )}
+                  {lang === 'ar' ? 'نشر تحديث فوري' : 'Deploy Update Now'}
+                </Button>
+
+                {/* Update Version Dialog - تعديل يدوي */}
+                <Dialog open={versionDialogOpen} onOpenChange={setVersionDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
                       variant="outline"
-                      onClick={() => setVersionDialogOpen(false)}
-                      className="flex-1"
+                      className="h-14 border-2 border-accent text-accent hover:bg-accent/10 font-bold text-base"
+                      data-testid="open-version-dialog-btn"
                     >
-                      {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                      <Tag size={20} className="ml-2" />
+                      {lang === 'ar' ? 'تعديل يدوي' : 'Manual Edit'}
                     </Button>
-                    <Button
-                      onClick={handleUpdateVersion}
-                      disabled={updatingVersion || !newVersion.trim()}
-                      className="flex-1 bg-accent hover:bg-accent"
-                      data-testid="save-version-btn"
-                    >
-                      {updatingVersion ? (
-                        <Loader2 size={16} className="animate-spin ml-2" />
-                      ) : (
-                        <CheckCircle size={16} className="ml-2" />
-                      )}
-                      {lang === 'ar' ? 'حفظ' : 'Save'}
-                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Tag size={20} className="text-accent" />
+                        {lang === 'ar' ? 'تحديث إصدار التطبيق' : 'Update App Version'}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {lang === 'ar' 
+                          ? 'أدخل رقم الإصدار الجديد وملاحظات التحديث. سيتم إخطار جميع المستخدمين بالتحديث.'
+                          : 'Enter the new version number. All users will be notified to update.'}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <Label className="text-base font-semibold">{lang === 'ar' ? 'رقم الإصدار' : 'Version Number'}</Label>
+                        <Input
+                          value={newVersion}
+                          onChange={(e) => setNewVersion(e.target.value)}
+                          placeholder="1.2.0"
+                          className="mt-2 text-lg font-mono"
+                          data-testid="version-number-input"
+                          dir="ltr"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {lang === 'ar' ? 'مثال: 1.0.0 أو 2.5.1' : 'Example: 1.0.0 or 2.5.1'}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-base font-semibold">{lang === 'ar' ? 'ملاحظات التحديث' : 'Release Notes'}</Label>
+                        <textarea
+                          value={releaseNotesAr}
+                          onChange={(e) => setReleaseNotesAr(e.target.value)}
+                          placeholder={lang === 'ar' ? 'ما الجديد في هذا الإصدار؟' : 'What\'s new in this version?'}
+                          className="mt-2 w-full p-3 border rounded-lg resize-none"
+                          rows={3}
+                          data-testid="release-notes-input"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={() => setVersionDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                      </Button>
+                      <Button
+                        onClick={handleUpdateVersion}
+                        disabled={updatingVersion || !newVersion.trim()}
+                        className="flex-1 bg-accent hover:bg-accent/90"
+                        data-testid="save-version-btn"
+                      >
+                        {updatingVersion ? (
+                          <Loader2 size={16} className="animate-spin ml-2" />
+                        ) : (
+                          <CheckCircle size={16} className="ml-2" />
+                        )}
+                        {lang === 'ar' ? 'حفظ ونشر' : 'Save & Deploy'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              
+              {/* ملاحظة كيف يعمل */}
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">
+                      {lang === 'ar' ? 'كيف يعمل؟' : 'How does it work?'}
+                    </p>
+                    <p className="text-xs text-amber-700 mt-1">
+                      {lang === 'ar' 
+                        ? 'عند الضغط على "نشر تحديث فوري"، سيتم إشعار جميع المستخدمين المتصلين بوجود تحديث جديد وسيُطلب منهم تحديث الصفحة.'
+                        : 'When you click "Deploy Update Now", all connected users will be notified and prompted to refresh the page.'}
+                    </p>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </div>
+              </div>
             </CardContent>
+          </Card>
           </Card>
 
           {/* Archived Users */}
