@@ -324,49 +324,192 @@ export default function PenaltiesPage() {
         </CardContent>
       </Card>
 
-      {/* Details Dialog */}
+      {/* Details Dialog - مُحسّن مع تفاصيل كاملة */}
       <Dialog open={!!detailsDialog} onOpenChange={() => setDetailsDialog(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {lang === 'ar' ? 'التفاصيل اليومية' : 'Daily Details'} - {detailsDialog?.employee_name_ar}
+            <DialogTitle className="text-lg">
+              {lang === 'ar' ? 'تفاصيل العقوبات الكاملة' : 'Full Penalty Details'} - {detailsDialog?.employee_name_ar}
             </DialogTitle>
           </DialogHeader>
           
-          {detailsDialog?.daily_details && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-start p-2">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                    <th className="text-center p-2">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                    <th className="text-center p-2">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
-                    <th className="text-center p-2">{lang === 'ar' ? 'خروج مبكر' : 'Early'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detailsDialog.daily_details.map((day, idx) => (
-                    <tr key={idx} className="border-b">
-                      <td className="p-2 font-mono text-xs">{day.date}</td>
-                      <td className="p-2 text-center">
-                        <Badge variant={day.status === 'ABSENT' ? 'destructive' : 'secondary'}>
-                          {day.status_ar || day.status}
-                        </Badge>
-                      </td>
-                      <td className="p-2 text-center">
-                        {day.late_minutes > 0 && (
-                          <span className="text-[hsl(var(--warning))]">{day.late_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
+          {detailsDialog && (
+            <div className="space-y-6">
+              {/* ملخص الحساب */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'أيام الغياب' : 'Absent Days'}</p>
+                  <p className="text-xl font-bold text-blue-600">{detailsDialog.absence?.total_days || 0}</p>
+                </div>
+                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'دقائق التأخير' : 'Late Minutes'}</p>
+                  <p className="text-xl font-bold text-amber-600">{detailsDialog.deficit?.total_late_minutes || 0}</p>
+                </div>
+                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'خروج مبكر (د)' : 'Early Leave (min)'}</p>
+                  <p className="text-xl font-bold text-orange-600">{detailsDialog.deficit?.total_early_leave_minutes || 0}</p>
+                </div>
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم' : 'Total Deduction'}</p>
+                  <p className="text-xl font-bold text-red-600">{detailsDialog.total_deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}</p>
+                </div>
+              </div>
+
+              {/* شرح طريقة الحساب */}
+              <div className="p-4 bg-muted/50 rounded-lg border">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-primary" />
+                  {lang === 'ar' ? 'طريقة حساب الخصم' : 'Deduction Calculation'}
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  {/* حساب الغياب */}
+                  <div className="p-3 bg-background rounded border">
+                    <p className="font-medium text-red-600 mb-2">{lang === 'ar' ? '1. خصم الغياب:' : '1. Absence Deduction:'}</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• {lang === 'ar' ? 'أيام الغياب:' : 'Absent days:'} {detailsDialog.absence?.total_days || 0}</li>
+                      <li>• {lang === 'ar' ? 'كل يوم غياب = خصم يوم' : '1 absent day = 1 day deduction'}</li>
+                      <li className="font-semibold text-foreground">
+                        → {lang === 'ar' ? 'خصم الغياب:' : 'Absence deduction:'} {detailsDialog.absence?.deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  {/* حساب نقص الساعات */}
+                  <div className="p-3 bg-background rounded border">
+                    <p className="font-medium text-amber-600 mb-2">{lang === 'ar' ? '2. خصم نقص الساعات:' : '2. Hours Deficit Deduction:'}</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• {lang === 'ar' ? 'دقائق التأخير:' : 'Late minutes:'} {detailsDialog.deficit?.total_late_minutes || 0} {lang === 'ar' ? 'دقيقة' : 'min'}</li>
+                      <li>• {lang === 'ar' ? 'دقائق الخروج المبكر:' : 'Early leave:'} {detailsDialog.deficit?.total_early_leave_minutes || 0} {lang === 'ar' ? 'دقيقة' : 'min'}</li>
+                      <li>• {lang === 'ar' ? 'إجمالي النقص:' : 'Total deficit:'} {detailsDialog.deficit?.total_deficit_hours || 0} {lang === 'ar' ? 'ساعة' : 'hours'}</li>
+                      <li>• {lang === 'ar' ? 'كل 8 ساعات = خصم يوم' : '8 hours = 1 day deduction'}</li>
+                      <li className="font-semibold text-foreground">
+                        → {lang === 'ar' ? 'خصم النقص:' : 'Deficit deduction:'} {detailsDialog.deficit?.deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* المجموع النهائي */}
+                <div className="mt-4 p-3 bg-accent/10 rounded-lg border border-accent/30">
+                  <p className="text-center">
+                    <span className="text-muted-foreground">{lang === 'ar' ? 'إجمالي الخصم = خصم الغياب + خصم النقص' : 'Total = Absence + Deficit'}</span>
+                    <br />
+                    <span className="text-2xl font-bold text-accent">
+                      {detailsDialog.absence?.deduction_days || 0} + {detailsDialog.deficit?.deduction_days || 0} = {detailsDialog.total_deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* جدول التفاصيل اليومية */}
+              {detailsDialog.daily_details && detailsDialog.daily_details.length > 0 ? (
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Clock size={16} />
+                    {lang === 'ar' ? 'التفاصيل اليومية' : 'Daily Details'}
+                  </h4>
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="text-start p-3 font-medium">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'اليوم' : 'Day'}</th>
+                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'تأخير (د)' : 'Late (min)'}</th>
+                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'خروج مبكر (د)' : 'Early (min)'}</th>
+                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'ملاحظات' : 'Notes'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailsDialog.daily_details.map((day, idx) => {
+                          const date = new Date(day.date);
+                          const dayName = date.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short' });
+                          const isAbsent = day.status === 'ABSENT';
+                          const isLate = day.status === 'LATE' || day.late_minutes > 0;
+                          const isEarly = day.early_leave_minutes > 0;
+                          
+                          return (
+                            <tr 
+                              key={idx} 
+                              className={`border-t ${isAbsent ? 'bg-red-50 dark:bg-red-900/10' : isLate || isEarly ? 'bg-amber-50 dark:bg-amber-900/10' : ''}`}
+                            >
+                              <td className="p-3 font-mono text-xs">{day.date}</td>
+                              <td className="p-3 text-center text-xs">{dayName}</td>
+                              <td className="p-3 text-center">
+                                <Badge 
+                                  variant={isAbsent ? 'destructive' : day.status === 'PRESENT' ? 'default' : 'secondary'}
+                                  className="text-xs"
+                                >
+                                  {day.status_ar || day.status}
+                                </Badge>
+                              </td>
+                              <td className="p-3 text-center">
+                                {day.late_minutes > 0 ? (
+                                  <span className="text-amber-600 font-medium">{day.late_minutes}</span>
+                                ) : '-'}
+                              </td>
+                              <td className="p-3 text-center">
+                                {day.early_leave_minutes > 0 ? (
+                                  <span className="text-orange-600 font-medium">{day.early_leave_minutes}</span>
+                                ) : '-'}
+                              </td>
+                              <td className="p-3 text-center text-xs text-muted-foreground">
+                                {isAbsent && (lang === 'ar' ? '⚠️ خصم يوم' : '⚠️ 1 day deduction')}
+                                {isLate && day.late_minutes > 0 && (lang === 'ar' ? `تأخير ${day.late_minutes} د` : `${day.late_minutes}min late`)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {lang === 'ar' ? 'لا توجد تفاصيل يومية متاحة' : 'No daily details available'}
+                </div>
+              )}
+
+              {/* فترات الغياب المتصلة */}
+              {detailsDialog.absence?.consecutive_streaks?.length > 0 && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200">
+                  <h4 className="font-semibold mb-3 text-red-700 flex items-center gap-2">
+                    <UserX size={16} />
+                    {lang === 'ar' ? 'فترات الغياب المتصلة' : 'Consecutive Absence Periods'}
+                  </h4>
+                  <div className="space-y-2">
+                    {detailsDialog.absence.consecutive_streaks.map((streak, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-white dark:bg-background rounded border">
+                        <span className="font-mono text-sm">{streak.start} → {streak.end}</span>
+                        <Badge variant="destructive">{streak.days} {lang === 'ar' ? 'أيام متصلة' : 'consecutive days'}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* الإنذارات */}
+              {detailsDialog.absence?.warnings?.length > 0 && (
+                <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/30">
+                  <h4 className="font-semibold mb-3 text-destructive flex items-center gap-2">
+                    <AlertTriangle size={16} />
+                    {lang === 'ar' ? 'الإنذارات' : 'Warnings'}
+                  </h4>
+                  <div className="space-y-2">
+                    {detailsDialog.absence.warnings.map((warning, idx) => (
+                      <div key={idx} className="p-3 bg-white dark:bg-background rounded border border-destructive/20">
+                        <p className="font-medium text-destructive">{warning.name_ar}</p>
+                        <p className="text-sm text-muted-foreground">{warning.reason}</p>
+                        {warning.start_date && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {lang === 'ar' ? 'الفترة:' : 'Period:'} {warning.start_date} - {warning.end_date}
+                          </p>
                         )}
-                      </td>
-                      <td className="p-2 text-center">
-                        {day.early_leave_minutes > 0 && (
-                          <span className="text-[hsl(var(--warning))]">{day.early_leave_minutes} {lang === 'ar' ? 'د' : 'min'}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
