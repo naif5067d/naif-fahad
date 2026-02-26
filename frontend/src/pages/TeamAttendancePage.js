@@ -318,22 +318,33 @@ export default function TeamAttendancePage() {
         responseType: 'blob'
       });
       
+      // التحقق من أن الرد ليس فارغاً أو خطأ
+      if (!response.data || response.data.size === 0) {
+        throw new Error('Empty PDF response');
+      }
+      
       // إنشاء رابط للتحميل
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح في نافذة جديدة للطباعة
-      const printWindow = window.open(url, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-      }
+      // طريقة موثوقة: تحميل مباشر بدلاً من فتح نافذة
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // تنظيف الـ URL بعد التحميل
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
       
       toast.success(lang === 'ar' ? 'تم تحميل التقرير بنجاح' : 'Report downloaded successfully');
     } catch (err) {
       console.error('Print error:', err);
-      toast.error(lang === 'ar' ? 'خطأ في طباعة التقرير' : 'Error printing report');
+      const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
+      toast.error(lang === 'ar' ? `خطأ في طباعة التقرير: ${errorMsg}` : `Error printing report: ${errorMsg}`);
     } finally {
       setIsPrinting(false);
     }
