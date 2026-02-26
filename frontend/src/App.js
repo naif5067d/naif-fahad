@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Toaster } from "sonner";
+import VersionChecker from "@/components/VersionChecker";
 import AppLayout from "@/components/layout/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -125,6 +126,7 @@ function App() {
             <AppRoutes />
           </BrowserRouter>
           <Toaster position="top-right" richColors closeButton />
+          <VersionChecker />
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
