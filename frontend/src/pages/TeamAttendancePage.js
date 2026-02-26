@@ -1833,29 +1833,30 @@ export default function TeamAttendancePage() {
                 </div>
               )}
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">
-                    {lang === 'ar' ? 'وقت الدخول' : 'Check In'}
-                  </label>
-                  <Input
-                    type="time"
-                    value={editForm.check_in_time}
-                    onChange={(e) => setEditForm({...editForm, check_in_time: e.target.value})}
-                    className="mt-1"
-                  />
+              {/* البصمة الأصلية - للعرض فقط لا تتغير */}
+              <div className="p-4 bg-muted/50 rounded-lg border">
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Clock size={16} className="text-primary" />
+                  {lang === 'ar' ? 'البصمة الأصلية (لا تتغير)' : 'Original Punch (Read Only)'}
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                  <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'وقت الدخول' : 'Check In'}</p>
+                    <p className="font-bold text-lg font-mono">{editForm.check_in_time || '--:--'}</p>
+                  </div>
+                  <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'وقت الخروج' : 'Check Out'}</p>
+                    <p className="font-bold text-lg font-mono">{editForm.check_out_time || '--:--'}</p>
+                  </div>
+                  <div className="p-3 bg-background rounded-lg border col-span-2 md:col-span-1">
+                    <p className="text-xs text-muted-foreground mb-1">{lang === 'ar' ? 'موقع البصمة' : 'Punch Location'}</p>
+                    <p className="font-medium">{editForm.work_location || (lang === 'ar' ? 'المقر الرئيسي' : 'HQ')}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">
-                    {lang === 'ar' ? 'وقت الخروج' : 'Check Out'}
-                  </label>
-                  <Input
-                    type="time"
-                    value={editForm.check_out_time}
-                    onChange={(e) => setEditForm({...editForm, check_out_time: e.target.value})}
-                    className="mt-1"
-                  />
-                </div>
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <AlertTriangle size={12} />
+                  {lang === 'ar' ? 'البصمة تُرصد كما هي ولا يمكن تعديلها. فقط الحالة يمكن تغييرها.' : 'Punch time is recorded as-is and cannot be modified. Only status can be changed.'}
+                </p>
               </div>
               
               <div>
