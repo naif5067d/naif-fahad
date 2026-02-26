@@ -1295,6 +1295,7 @@ export default function TeamAttendancePage() {
               )}
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         {/* Weekly Tab */}
