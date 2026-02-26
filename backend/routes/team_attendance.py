@@ -1749,105 +1749,180 @@ async def print_attendance_report(
         'PERMISSION': arabic_text('استئذان')
     }
     
-    # بناء جدول البيانات حسب الفترة
-    if period == "daily":
-        # جدول يومي
-        table_header = ['#', arabic_text('الموظف'), arabic_text('الرقم'), arabic_text('الحالة'), 
-                       arabic_text('الدخول'), arabic_text('الخروج'), arabic_text('التأخير'), arabic_text('ملاحظات')]
+    # === تنسيق جديد: جدول منفصل لكل موظف ===
+    
+    # ترتيب الموظفين
+    sorted_employees = sorted(employees, key=lambda x: x.get('full_name_ar', ''))
+    
+    # إنشاء قائمة جميع التواريخ في الفترة
+    all_dates = []
+    current_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    while current_date <= end_dt:
+        all_dates.append(current_date.strftime("%Y-%m-%d"))
+        current_date += timedelta(days=1)
+    
+    # أسماء الأيام بالعربي
+    day_names_ar = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+    
+    # أنماط جدول كل موظف
+    emp_title_style = ParagraphStyle(
+        'EmpTitle',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=14,
+        alignment=TA_RIGHT,
+        textColor=colors.white,
+        spaceAfter=5
+    )
+    
+    # لكل موظف: إنشاء جدول منفصل
+    for emp_index, emp in enumerate(sorted_employees, 1):
+        emp_id = emp['id']
+        emp_name = emp.get('full_name_ar', emp.get('full_name', ''))
+        emp_number = emp.get('employee_number', '')
+        
+        # عنوان الموظف
+        emp_header = Table(
+            [[Paragraph(arabic_text(f"{emp_index}. {emp_name} - {emp_number}"), emp_title_style)]],
+            colWidths=[700]
+        )
+        emp_header.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#1e3a5f')),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+        ]))
+        elements.append(emp_header)
+        
+        # جدول بيانات الموظف
+        table_header = [
+            arabic_text('#'),
+            arabic_text('التاريخ'),
+            arabic_text('اليوم'),
+            arabic_text('الدخول'),
+            arabic_text('الخروج'),
+            arabic_text('موقع البصمة'),
+            arabic_text('الحالة'),
+            arabic_text('التأخير'),
+            arabic_text('ملاحظات / سبب التعديل')
+        ]
         table_data = [table_header]
         
-        for idx, emp_id in enumerate(emp_ids, 1):
-            emp = emp_map.get(emp_id, {})
-            key = f"{emp_id}_{start_date}"
+        total_late = 0
+        present_count = 0
+        absent_count = 0
+        
+        for day_idx, date_str in enumerate(all_dates, 1):
+            key = f"{emp_id}_{date_str}"
             status_data = status_map.get(key, {})
             attend_data = attendance_map.get(key, {})
             
             final_status = status_data.get('final_status', 'NOT_REGISTERED')
             
-            # تنسيق الوقت
-            check_in = attend_data.get('check_in', '')
-            check_out = attend_data.get('check_out', '')
-            if check_in and 'T' in check_in:
-                check_in = check_in.split('T')[1][:5]
-            if check_out and 'T' in check_out:
-                check_out = check_out.split('T')[1][:5]
+            # حساب الإحصائيات
+            if final_status in ['PRESENT', 'LATE', 'ON_MISSION', 'EARLY_LEAVE', 'PERMISSION']:
+                present_count += 1
+            elif final_status == 'ABSENT':
+                absent_count += 1
             
-            late_min = status_data.get('late_minutes', 0)
-            # التعليق كامل - يشمل سبب التعديل ومصدر القرار
+            # تنسيق الوقت
+            check_in = status_data.get('check_in_time', attend_data.get('check_in', ''))
+            check_out = status_data.get('check_out_time', attend_data.get('check_out', ''))
+            if check_in and 'T' in str(check_in):
+                check_in = str(check_in).split('T')[1][:5]
+            elif check_in:
+                check_in = str(check_in)[:5]
+            if check_out and 'T' in str(check_out):
+                check_out = str(check_out).split('T')[1][:5]
+            elif check_out:
+                check_out = str(check_out)[:5]
+            
+            # التأخير
+            late_min = status_data.get('late_minutes', 0) or 0
+            if final_status not in ['ON_MISSION', 'ON_LEAVE', 'ON_ADMIN_LEAVE', 'HOLIDAY', 'WEEKEND', 'PERMISSION']:
+                total_late += late_min
+            
+            # موقع البصمة
+            work_location = status_data.get('work_location_name_ar', status_data.get('work_location', '')) or ''
+            
+            # الملاحظات (سبب التعديل)
             note = status_data.get('decision_reason_ar', '') or ''
             source = status_data.get('decision_source', '')
-            if source == 'manual_correction':
-                note = note or arabic_text('تعديل يدوي')
+            modified_by = status_data.get('modified_by', '')
+            if modified_by or source == 'manual_correction':
+                note = f"تعديل: {note}" if note else "تعديل إداري"
+            
+            # اسم اليوم
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            day_name = day_names_ar[dt.weekday()]
             
             table_data.append([
-                str(idx),
-                arabic_text(emp.get('full_name_ar', emp.get('full_name', ''))),
-                emp.get('employee_number', ''),
-                status_ar_map.get(final_status, final_status),
+                str(day_idx),
+                date_str,
+                arabic_text(day_name),
                 check_in or '-',
                 check_out or '-',
+                arabic_text(work_location[:15]) if work_location else '-',
+                status_ar_map.get(final_status, final_status),
                 arabic_text(f"{late_min} د") if late_min > 0 else '-',
-                arabic_text(note[:60]) if note else ''
+                arabic_text(note[:40]) if note else '-'
             ])
+        
+        # صف الملخص
+        table_data.append([
+            '',
+            arabic_text('الملخص'),
+            '',
+            '',
+            '',
+            '',
+            arabic_text(f"حضور: {present_count} | غياب: {absent_count}"),
+            arabic_text(f"{total_late} د") if total_late > 0 else '-',
+            arabic_text(f"خصم: {total_late/480:.2f} يوم") if total_late > 480 else ''
+        ])
+        
+        # إنشاء الجدول
+        col_widths = [25, 70, 55, 45, 45, 80, 60, 50, 150]
+        emp_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+        
+        emp_table.setStyle(TableStyle([
+            # ترويسة
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4a90d9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            # صف الملخص
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8f4f8')),
+            ('FONTSIZE', (0, -1), (-1, -1), 9),
+            # تلوين حسب الحالة
+        ]))
+        
+        # تلوين صفوف الغياب باللون الأحمر الفاتح
+        for row_idx, row in enumerate(table_data[1:-1], 1):
+            status_text = row[6] if len(row) > 6 else ''
+            if status_text == arabic_text('غائب'):
+                emp_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#ffebee'))
+                ]))
+            elif status_text == arabic_text('متأخر'):
+                emp_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.HexColor('#fff8e1'))
+                ]))
+        
+        elements.append(emp_table)
+        elements.append(Spacer(1, 20))
+        
+        # فاصل صفحة بعد كل موظف (إذا كان هناك موظفين آخرين)
+        if emp_index < len(sorted_employees):
+            elements.append(PageBreak())
     
-    elif period == "weekly":
-        # جدول أسبوعي
-        days_ar = [arabic_text('الأحد'), arabic_text('الاثنين'), arabic_text('الثلاثاء'), 
-                   arabic_text('الأربعاء'), arabic_text('الخميس'), arabic_text('الجمعة'), arabic_text('السبت')]
-        
-        # إنشاء قائمة الأيام
-        week_dates = []
-        current = datetime.strptime(start_date, "%Y-%m-%d")
-        for i in range(7):
-            week_dates.append((current + timedelta(days=i)).strftime("%Y-%m-%d"))
-        
-        table_header = ['#', arabic_text('الموظف')] + days_ar + [arabic_text('الحضور'), arabic_text('الغياب')]
-        table_data = [table_header]
-        
-        for idx, emp_id in enumerate(emp_ids, 1):
-            emp = emp_map.get(emp_id, {})
-            row = [str(idx), arabic_text(emp.get('full_name_ar', emp.get('full_name', ''))[:20])]
-            
-            present_count = 0
-            absent_count = 0
-            
-            for d in week_dates:
-                key = f"{emp_id}_{d}"
-                status_data = status_map.get(key, {})
-                final_status = status_data.get('final_status', 'NOT_REGISTERED')
-                
-                # رمز مختصر
-                if final_status in ['PRESENT', 'LATE', 'EARLY_LEAVE']:
-                    row.append('P')
-                    present_count += 1
-                elif final_status == 'ABSENT':
-                    row.append('A')
-                    absent_count += 1
-                elif final_status in ['ON_LEAVE', 'ON_ADMIN_LEAVE']:
-                    row.append('L')
-                elif final_status in ['WEEKEND', 'HOLIDAY']:
-                    row.append('W')
-                elif final_status == 'ON_MISSION':
-                    row.append('M')
-                else:
-                    row.append('-')
-            
-            row.extend([str(present_count), str(absent_count)])
-            table_data.append(row)
-    
-    elif period in ["monthly", "yearly"]:
-        # ملخص شهري/سنوي
-        table_header = ['#', arabic_text('الموظف'), arabic_text('الرقم'), arabic_text('الحضور'), 
-                       arabic_text('الغياب'), arabic_text('التأخير'), arabic_text('الإجازات'), 
-                       arabic_text('المهام'), arabic_text('إجمالي التأخير')]
-        table_data = [table_header]
-        
-        # تجميع البيانات لكل موظف
-        for idx, emp_id in enumerate(emp_ids, 1):
-            emp = emp_map.get(emp_id, {})
-            
-            present = 0
-            absent = 0
+    # تذييل
             late_count = 0
             leave_count = 0
             mission_count = 0
