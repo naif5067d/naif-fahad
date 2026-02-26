@@ -1537,7 +1537,10 @@ async def print_attendance_report(
     date: str = None,
     month: str = None,
     year: str = None,
-    employee_id: str = None,  # None = all employees
+    employee_id: str = None,  # موظف واحد (legacy)
+    employee_ids: str = None,  # قائمة موظفين مفصولة بفاصلة (جديد)
+    start_date: str = None,  # من تاريخ (جديد)
+    end_date: str = None,  # إلى تاريخ (جديد)
     user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
@@ -1547,12 +1550,17 @@ async def print_attendance_report(
     - date: للتقرير اليومي (YYYY-MM-DD)
     - month: للتقرير الشهري (YYYY-MM)
     - year: للتقرير السنوي (YYYY)
-    - employee_id: لموظف محدد (اختياري)
+    - employee_id: لموظف واحد (اختياري)
+    - employee_ids: قائمة موظفين مفصولة بفاصلة "EMP-001,EMP-002"
+    - start_date/end_date: الفترة المخصصة
     """
     # تحديد التواريخ
     now = datetime.now(timezone.utc)
     
-    if period == "daily":
+    # إذا تم تحديد start_date و end_date مخصصة، استخدمها
+    if start_date and end_date:
+        period_title_ar = f"تقرير الحضور - من {start_date} إلى {end_date}"
+    elif period == "daily":
         target_date = date or now.strftime("%Y-%m-%d")
         start_date = target_date
         end_date = target_date
@@ -1603,7 +1611,13 @@ async def print_attendance_report(
         "id": {"$nin": EXEMPT_EMPLOYEE_IDS}
     }
     
-    if employee_id:
+    # تحديد الموظفين المطلوبين
+    if employee_ids:
+        # قائمة موظفين متعددين
+        selected_ids = [eid.strip() for eid in employee_ids.split(',') if eid.strip()]
+        emp_filter["id"] = {"$in": selected_ids}
+    elif employee_id:
+        # موظف واحد (legacy)
         emp_filter["id"] = employee_id
     elif user.get('role') == 'supervisor':
         emp_filter["supervisor_id"] = user.get('employee_id')
