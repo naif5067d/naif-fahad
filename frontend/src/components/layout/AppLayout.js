@@ -385,7 +385,11 @@ export default function AppLayout({ children }) {
             </button>
             
             {/* Page title (desktop) */}
-            <div className="hidden md:block" />
+            <div className="hidden md:flex items-center gap-2">
+              <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded-lg border border-border" data-testid="app-version-badge">
+                v{appVersion}
+              </span>
+            </div>
 
             {/* Right side controls - FIXED: overflow and spacing */}
             <div className="flex items-center gap-2 md:gap-3 flex-shrink-0" style={{ overflow: 'visible' }}>
