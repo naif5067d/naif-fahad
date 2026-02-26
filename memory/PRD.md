@@ -112,6 +112,9 @@
 
 ## Key Files
 - `backend/routes/admin.py` - APIs إدارة الإصدارات
+- `backend/routes/team_attendance.py` - APIs الحضور والطباعة (Line 36: PageBreak import)
+- `frontend/src/pages/LeavePage.js` - صفحة العطل الرسمية (Lines 452-463: حساب الأيام)
+- `frontend/src/pages/TeamAttendancePage.js` - صفحة الحضور (Lines 286-340: handlePrintReport)
 - `frontend/src/pages/VersionManagementPage.js` - صفحة إدارة الإصدارات
 - `frontend/src/components/VersionChecker.js` - مكون التحقق من التحديثات
 - `backend/routes/analytics.py` - APIs التقييم الذكي
