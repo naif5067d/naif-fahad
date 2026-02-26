@@ -319,12 +319,27 @@ export default function DashboardPage() {
     }
   }, [isAdmin, user?.employee_id]);
 
-  // تأكيد الاطلاع على الاستدعاء
-  const acknowledgeSummon = async (summonId) => {
+  // تأكيد الاطلاع على الاستدعاء مع الرد
+  const [summonReply, setSummonReply] = useState({});
+  const [showReplyInput, setShowReplyInput] = useState({});
+  
+  const acknowledgeSummon = async (summonId, withReply = false) => {
+    const reply = summonReply[summonId] || '';
+    
+    if (withReply && !reply.trim()) {
+      // إذا أراد الرد ولكن لم يكتب شيء، فقط أظهر حقل الرد
+      setShowReplyInput(prev => ({ ...prev, [summonId]: true }));
+      return;
+    }
+    
     setAcknowledgingSummon(summonId);
     try {
-      await api.post(`/api/notifications/summons/${summonId}/acknowledge`);
+      await api.post(`/api/notifications/summons/${summonId}/acknowledge`, null, {
+        params: { reply: reply || undefined }
+      });
       setActiveSummons(prev => prev.filter(s => s.id !== summonId));
+      setSummonReply(prev => ({ ...prev, [summonId]: '' }));
+      setShowReplyInput(prev => ({ ...prev, [summonId]: false }));
     } catch (err) {
       console.error('Failed to acknowledge summon', err);
     }
