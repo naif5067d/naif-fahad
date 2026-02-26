@@ -450,8 +450,9 @@ export default function TeamAttendancePage() {
     setEditForm({
       new_status: employee.final_status === 'ABSENT' ? 'PRESENT' : employee.final_status,
       reason: '',
-      check_in_time: employee.check_in_time?.slice(11, 16) || '08:00',
-      check_out_time: employee.check_out_time?.slice(11, 16) || '17:00',
+      check_in_time: employee.check_in_time?.slice(11, 16) || '--:--',
+      check_out_time: employee.check_out_time?.slice(11, 16) || '--:--',
+      work_location: employee.work_location_name_ar || employee.work_location_name || employee.work_location || '',
       supervisor_acknowledgment: false
     });
   };
