@@ -479,8 +479,6 @@ export default function TeamAttendancePage() {
         await api.post(`/api/team-attendance/${editDialog.employee_id}/request-correction/${editDialog.date}`, {
           new_status: editForm.new_status,
           reason: editForm.reason,
-          check_in_time: editForm.check_in_time,
-          check_out_time: editForm.check_out_time,
           supervisor_acknowledgment: true
         });
         toast.success(lang === 'ar' 
@@ -488,8 +486,11 @@ export default function TeamAttendancePage() {
           : 'Correction request sent to Sultan for approval'
         );
       } else {
-        // سلطان/نايف/STAS - تعديل مباشر
-        await api.post(`/api/team-attendance/${editDialog.employee_id}/update-status?date=${editDialog.date}`, editForm);
+        // سلطان/نايف/STAS - تعديل مباشر للحالة فقط
+        await api.post(`/api/team-attendance/${editDialog.employee_id}/update-status?date=${editDialog.date}`, {
+          new_status: editForm.new_status,
+          reason: editForm.reason
+        });
         toast.success(lang === 'ar' ? 'تم تحديث الحالة بنجاح' : 'Status updated successfully');
       }
       
