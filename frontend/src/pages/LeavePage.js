@@ -451,7 +451,15 @@ export default function LeavePage() {
                           <td className="px-3 py-2 font-mono text-xs">{formatGregorianHijri(endDate).combined}</td>
                           <td className="px-3 py-2 text-sm text-center">
                             <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] text-xs font-medium">
-                              {days.length}
+                              {/* حساب الفرق بين التواريخ بشكل صحيح (inclusive) */}
+                              {(() => {
+                                if (!startDate || !endDate) return days.length;
+                                const start = new Date(startDate);
+                                const end = new Date(endDate);
+                                const diffTime = Math.abs(end - start);
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 لجعلها inclusive
+                                return diffDays;
+                              })()}
                             </span>
                           </td>
                           {canEditHolidays && (
