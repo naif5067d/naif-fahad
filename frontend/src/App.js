@@ -40,7 +40,6 @@ import EmbedApplyPage from "@/pages/EmbedApplyPage";
 import PoliciesPage from "@/pages/PoliciesPage";
 import SoundSettingsPage from "@/pages/SoundSettingsPage";
 import ControlPanelPage from "@/pages/ControlPanelPage";
-import VersionManagementPage from "@/pages/VersionManagementPage";
 
 function ProtectedRoute({ children, allowedRoles, noLayout = false }) {
   const { user, loading } = useAuth();
@@ -102,7 +101,6 @@ function AppRoutes() {
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="/sound-settings" element={<ProtectedRoute allowedRoles={['stas']}><SoundSettingsPage /></ProtectedRoute>} />
       <Route path="/control-panel" element={<ProtectedRoute allowedRoles={['stas']}><ControlPanelPage /></ProtectedRoute>} />
-      <Route path="/version-management" element={<ProtectedRoute allowedRoles={['stas']}><VersionManagementPage /></ProtectedRoute>} />
       <Route path="/policies" element={<ProtectedRoute><PoliciesPage /></ProtectedRoute>} />
       <Route path="/ats" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed']}><ATSPage /></ProtectedRoute>} />
       <Route path="/careers" element={<PublicCareersPage />} />
