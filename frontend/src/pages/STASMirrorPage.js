@@ -2372,7 +2372,6 @@ export default function STASMirrorPage() {
               </div>
             </CardContent>
           </Card>
-          </Card>
 
           {/* Archived Users */}
           <Card className="border border-border shadow-none">
