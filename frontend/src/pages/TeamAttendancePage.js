@@ -1092,6 +1092,7 @@ export default function TeamAttendancePage() {
                                 <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
                                 <th className="text-center p-3">{lang === 'ar' ? 'التأخير' : 'Late'}</th>
                                 <th className="text-start p-3">{lang === 'ar' ? 'ملاحظات' : 'Notes'}</th>
+                                {isAdmin && <th className="text-center p-3">{lang === 'ar' ? 'إجراء' : 'Action'}</th>}
                               </tr>
                             </thead>
                             <tbody>
@@ -1142,6 +1143,21 @@ export default function TeamAttendancePage() {
                                     <td className="p-2 text-xs text-muted-foreground max-w-[150px] truncate">
                                       {record.decision_reason_ar || record.notes || '-'}
                                     </td>
+                                    {/* زر التعديل للإدارة */}
+                                    {isAdmin && (
+                                      <td className="p-2 text-center">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => openEditDialog({...record, employee_id: empId})}
+                                          title={lang === 'ar' ? 'تعديل الحالة' : 'Edit Status'}
+                                          data-testid={`edit-status-${empId}-${record.date}`}
+                                        >
+                                          <Edit2 size={14} />
+                                        </Button>
+                                      </td>
+                                    )}
                                   </tr>
                                 );
                               })}
