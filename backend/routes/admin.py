@@ -664,6 +664,12 @@ async def import_all_data(body: dict):
 
 # ==================== إدارة إصدار التطبيق ====================
 
+class UpdateVersionRequest(BaseModel):
+    version: Optional[str] = None
+    release_notes: Optional[str] = None
+    force_refresh: bool = True
+
+
 @router.get("/app-version")
 async def get_app_version():
     """الحصول على إصدار التطبيق الحالي - متاح للجميع"""
@@ -681,18 +687,13 @@ async def get_app_version():
 
 @router.post("/app-version/update")
 async def update_app_version(
-    version: str = None,
-    release_notes: str = None,
-    force_refresh: bool = True,
-    user=Depends(get_current_user)
+    req: UpdateVersionRequest,
+    user=Depends(require_roles('stas'))
 ):
     """
     تحديث إصدار التطبيق - متاح فقط لـ STAS
     عند التحديث، جميع المستخدمين سيُطلب منهم تحديث الصفحة
     """
-    if user.get('role') != 'stas':
-        raise HTTPException(status_code=403, detail="هذه الخدمة متاحة فقط لمسؤول النظام")
-    
     # جلب الإصدار الحالي
     current = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
     current_value = current.get("value", {}) if current else {}
@@ -702,6 +703,7 @@ async def update_app_version(
     new_build = current_build + 1
     
     # تحديد الإصدار
+    version = req.version
     if not version:
         # زيادة تلقائية
         cv = current_value.get("version", "1.0.0")
@@ -716,8 +718,8 @@ async def update_app_version(
         "build": new_build,
         "updated_at": now,
         "updated_by": user.get('username', user['user_id']),
-        "release_notes": release_notes or f"تحديث الإصدار {version}",
-        "force_refresh": force_refresh,
+        "release_notes": req.release_notes or f"تحديث الإصدار {version}",
+        "force_refresh": req.force_refresh,
         "refresh_token": str(uuid.uuid4())[:8]  # رمز فريد لإجبار التحديث
     }
     
@@ -726,6 +728,17 @@ async def update_app_version(
         {"$set": {"type": "app_version", "value": new_value}},
         upsert=True
     )
+    
+    # تسجيل في سجل التدقيق
+    await db.audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "app_version_update",
+        "old_version": current_value.get("version", "1.0.0"),
+        "new_version": version,
+        "build": new_build,
+        "updated_by": user.get('username', user['user_id']),
+        "created_at": now
+    })
     
     return {
         "message": f"تم تحديث التطبيق إلى الإصدار {version}",
@@ -740,7 +753,7 @@ async def check_version_update(current_build: int = 0):
     """
     version = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
     if not version:
-        return {"needs_update": False}
+        return {"needs_update": False, "server_build": 1, "server_version": "1.0.0"}
     
     server_build = version.get("value", {}).get("build", 0)
     force_refresh = version.get("value", {}).get("force_refresh", False)
@@ -752,3 +765,16 @@ async def check_version_update(current_build: int = 0):
         "release_notes": version.get("value", {}).get("release_notes"),
         "refresh_token": version.get("value", {}).get("refresh_token")
     }
+
+
+@router.get("/app-version/history")
+async def get_version_history(user=Depends(require_roles('stas'))):
+    """
+    الحصول على تاريخ الإصدارات - متاح فقط لـ STAS
+    """
+    history = await db.audit_log.find(
+        {"action": "app_version_update"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return {"history": history}
