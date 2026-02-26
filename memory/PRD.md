@@ -18,6 +18,15 @@
 
 ## ما تم إنجازه (Completed)
 
+### 2026-02-26 - نظام إدارة إصدار التطبيق
+- ✅ **صفحة إدارة الإصدارات** `/version-management` - متاحة لـ stas فقط
+- ✅ **API تحديث الإصدار** `POST /api/admin/app-version/update`
+- ✅ **API التحقق من التحديث** `GET /api/admin/app-version/check`
+- ✅ **API سجل الإصدارات** `GET /api/admin/app-version/history`
+- ✅ **مكون VersionChecker** - يتحقق كل 30 ثانية ويعرض إشعار للمستخدمين
+- ✅ **زيادة تلقائية** للإصدار أو تعديل يدوي
+- ✅ **إجبار التحديث** لجميع المستخدمين عند النشر
+
 ### 2026-02-25 - المراقب الذكي بالذكاء الاصطناعي
 - ✅ **API جديد `/api/analytics/ai/smart-monitor`** - تقييم شامل لجميع الموظفين
 - ✅ **API جديد `/api/analytics/ai/employee/{id}`** - تقييم موظف محدد
@@ -73,26 +82,31 @@
 
 | الصفحة | المستخدمين |
 |---|---|
-| الشاشة التنفيذية `/executive` | sultan, naif, stas, mohammed |
-| المراقب الذكي `/smart-monitor` | sultan, salah, stas |
+| الشاشة التنفيذية `/executive` | sultan, naif, stas, mohammed, salah |
+| إدارة الإصدارات `/version-management` | stas |
 | مرآة ستاس `/stas-mirror` | stas |
+| لوحة التحكم `/control-panel` | stas |
 
 ---
 
 ## المهام المعلقة (Backlog)
 
 ### P1 - أولوية عالية
-- [ ] إكمال إعادة هيكلة صفحة العقود
+- [ ] إكمال إعادة هيكلة صفحة العقود (2200+ سطر)
 - [ ] سير عمل العهد العينية
+- [ ] توضيح حساب أيام الإجازة (أيام عمل أم تقويمية)
 
 ### P2 - أولوية متوسطة
 - [ ] تحسين التجاوب على الجوال
-- [ ] ربط نسيان البصمة وتبرير التأخير بالشاشة التنفيذية
+- [ ] إصلاح صفحة تتبع الصيانة
+- [ ] إكمال عرض هيكل النظام في مرآة stas
 
 ---
 
 ## Key Files
+- `backend/routes/admin.py` - APIs إدارة الإصدارات
+- `frontend/src/pages/VersionManagementPage.js` - صفحة إدارة الإصدارات
+- `frontend/src/components/VersionChecker.js` - مكون التحقق من التحديثات
 - `backend/routes/analytics.py` - APIs التقييم الذكي
-- `frontend/src/pages/SmartMonitorPage.js` - صفحة المراقب الذكي
 - `backend/routes/attendance.py` - طلبات الحضور مع التحقق
 - `backend/services/stas_mirror_service.py` - فحوصات STAS
