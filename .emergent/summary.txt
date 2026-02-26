@@ -1,168 +1,188 @@
 <analysis>An excellent and detailed analysis has been conducted. Based on this, here is the generated summary:
 
 **original_problem_statement:**
-The user is developing a comprehensive HR system and is currently focused on refining the Settlement (المخالصة) module. The goal is to create a legally robust, single-page A4 PDF document that matches the features and layout of a reference document provided by the user. Key requirements include correcting Arabic text rendering, adding a company logo, enabling manual entry for deductions and loans with descriptive text, implementing a workflow for handling unreturned in-kind custodies (by deducting their value or waiving them), ensuring all employee data is accurate, and incorporating a specific final acknowledgment text.
+The user's initial focus was on a major overhaul of their HR system, including making **Contracts the single source of truth**, refactoring a large contract creation page into a multi-step wizard, fixing a broken Summon (الاستدعاء) feature, and adding alerts.
+
+In this session, the scope expanded to include:
+1.  **AI-Powered Employee Evaluation:** Creation of a Smart Monitor (المراقب الذكي) to evaluate employees based on attendance, tasks, excuses, and financial discipline.
+2.  **Leave & Attendance Policy Enforcement:** Implementing strict rules and limits for leave requests, forgetting check-ins, and justifying delays, with automated rejections.
+3.  **Role & Permission Refinement:** Specifying exactly which users should be included in evaluations and who can access the new dashboards.
+4.  **Database Reset:** A feature to clean all transactional data for a fresh start for the application.
+5.  **Application Versioning:** A new request for an admin () feature to force-update the application to the latest version for all users.
+6.  **UI/UX Fixes:** Correcting issues with leave day calculations and adding missing fields to the contract creation page.
 
 **User's preferred language**: Arabic
 
 **what currently exists?**
-A full-stack HR application using React, FastAPI, and MongoDB. The settlement module can generate a PDF, which has undergone numerous fixes for Arabic text rendering (squares issue), data population (job title, department, IBAN), and layout adjustments. A UI and backend for adding manual deductions have been partially implemented, but this introduced a critical bug. The system also includes a workflow for approving penalties, which can be deferred to the final settlement.
+A full-stack HR application (React/FastAPI/MongoDB). The critical Summon and Contract Edit Button bugs have been resolved. A new AI-powered Smart Monitor has been implemented and integrated as a tab within the Executive Dashboard, accessible to , , , , and . The backend now enforces strict business rules for attendance and leave requests (e.g., auto-rejecting  after 3 attempts). A script to reset all transactional data has been created and used. The database is clean, and the AI evaluation scores are all at 0%, ready to begin tracking from a specific date. Missing fields for ID/Residency have been added to the (old) contracts page.
 
 **Last working item**:
--   **Last item agent was working:** Fixing a critical frontend crash on the Settlement page. The user reported a JavaScript error, , which prevents the page from loading. This was introduced while implementing the feature for adding manual deductions. Concurrently, the agent was tasked with updating the legal acknowledgment text in the PDF and enabling the modification of settlements that have already been marked as executed.
--   **Status:** IN PROGRESS
+-   **Last item agent was working:** The user requested a new feature to allow  to manage and deploy application updates from a central admin panel, ensuring all users are on the latest version. The agent acknowledged the request and began planning but did not start implementation.
+-   **Status:** NOT STARTED
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both. First, the frontend agent should be used to verify that the  loads without the  and that manual deductions can be added/removed from an *executed* settlement. Second, the backend agent should use  to call the  endpoint to verify that the generated PDF contains the newly added deductions and the updated acknowledgment text.
--   **User Testing Done:** N (User reported the crash).
+-   **Which testing method agent to use?** both.
+    -   **Backend:** Create an endpoint for  to trigger an update. Test with  to verify it works and is protected.
+    -   **Frontend:** Create a new UI component within an admin page for  to see the current version and a button to Deploy Latest Version. Test by logging in as  and using the screenshot tool.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: Settlement Page Crash (P0)**
--   **Issue 2: Allow Editing of Executed Settlements (P0)**
--   **Issue 3: Update Acknowledgment Text in PDF (P0)**
--   **Issue 4: Implement In-Kind Custody Workflow (P1)**
--   **Issue 5: Company Logo Not Appearing in PDF (P2)**
+-   **Issue 1: Leave day calculation logic is confusing for the user (P1)**
+-   **Issue 2: The monolithic  still has not been refactored (P1)**
+-   **Issue 3:  page crashes (P2)**
 
 **Issues Detail:**
--   **Issue 1: Settlement Page Crash**
-    -   **Attempted fixes:** The agent correctly identified that the  state variable was used without being defined in . The fix involves adding .
+-   **Issue 1: Leave day calculation logic is confusing for the user**
+    -   **Attempted fixes:** The agent confirmed via  that the backend correctly calculates **working days** (e.g., a 5-day span including a weekend results in 4 days).
     -   **Next debug checklist:**
-        1.  Apply the fix in .
-        2.  Restart the frontend service (frontend: ERROR (not running)
-frontend: started).
-        3.  Verify the Settlement page loads correctly without any console errors.
-    -   **Why fix this issue and what will be achieved with the fix?** The page is currently unusable. Fixing this is a critical blocker for any further work or testing on the settlement module.
-    -   **Status:** IN PROGRESS
+        1.  Confirm with the user if they want calculations based on **working days** (excluding weekends) or **calendar days** (inclusive count).
+        2.  If calendar days are required, modify the calculation logic in  in the  and  endpoints to simply count the total days between start and end dates.
+        3.  Ensure the frontend displays the same number of days that the backend calculates.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure the leave balance system aligns with the user's business rules and avoids confusion.
+    -   **Status:** BLOCKED (user clarification needed)
     -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** Both
+
+-   **Issue 2: The monolithic  still has not been refactored**
+    -   **Attempted fixes:** The previous agent started a refactor into . This session's agent, however, added the new Iqama/ID fields directly into the old  file to quickly unblock the user, leaving the technical debt in place.
+    -   **Next debug checklist:**
+        1.  Revisit the plan to refactor  (2200+ lines).
+        2.  Migrate all functionality, including the newly added ID/Iqama fields and logic, into the new component structure (, , etc.) in .
+        3.  Once the new components have full feature parity, update  to use the new contract page.
+        4.  Delete the old  file.
+    -   **Why fix this issue and what will be achieved with the fix?** The current file is a major source of technical debt, is extremely difficult to maintain, and was the source of previous regressions. Refactoring is essential for stability.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Frontend
 
--   **Issue 2: Allow Editing of Executed Settlements**
-    -   **Attempted fixes:** The agent started modifying the backend API endpoints in  to remove the status checks () that prevented modifications on settlements with a status of .
+-   **Issue 3:  page crashes**
+    -   **Attempted fixes:** None. This is a known but unaddressed issue from a previous session.
     -   **Next debug checklist:**
-        1.  Complete the removal of status checks from  and  endpoints in .
-        2.  Restart the backend service.
-        3.  Test via the UI by adding and removing a manual deduction from a previously executed settlement.
-    -   **Why fix this issue and what will be achieved with the fix?** The user requires the flexibility to amend settlements even after they have been processed.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-
--   **Issue 3: Update Acknowledgment Text in PDF**
-    -   **Attempted fixes:** The agent has updated this text multiple times. The latest user request requires a very specific legal phrase.
-    -   **Next debug checklist:**
-        1.  In , update the acknowledgment string to: .
-        2.  Ensure the  is correctly formatted into the string.
-        3.  Test PDF generation to confirm the new text appears correctly and fits within the layout.
-    -   **Why fix this issue and what will be achieved with the fix?** To meet the user's explicit legal requirements for the settlement document.
-    -   **Status:** IN PROGRESS
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Backend
-
--   **Issue 4: Implement In-Kind Custody Workflow**
-    -   **Attempted fixes:** None. The agent has discussed the plan with the user.
-    -   **Next debug checklist:**
-        1.  Modify the UI in  to display unreturned in-kind custodies ().
-        2.  For each item, provide options for an admin (Sultan) to either Waive (إعفاء) or Assess Damages (تقدير التلفيات), the latter opening a modal to input an amount and description.
-        3.  Create a new backend endpoint to save these decisions as special manual deductions in the settlement object.
-        4.  Update the PDF generation logic in  to display these new deductions with their descriptions.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a key missing feature required for handling employees who have not returned company property, a critical business process.
+        1.  Log in and navigate to the  route.
+        2.  Reproduce the crash and inspect the browser's developer console for errors.
+        3.  Check the backend logs (ats HTTP/1.1" 200 OK
+INFO:     10.64.135.147:60942 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     10.64.135.147:60932 - "GET /api/notifications/expiring-contracts?days_ahead=90 HTTP/1.1" 200 OK
+INFO:     10.64.135.147:35398 - "GET /api/announcements HTTP/1.1" 200 OK
+INFO:     10.64.130.148:41304 - "GET /api/transactions HTTP/1.1" 200 OK
+INFO:     10.64.130.148:51102 - "GET /api/employees/EMP-001/summary HTTP/1.1" 200 OK
+INFO:     10.64.135.147:60920 - "GET /api/employees/EMP-001/photo-file HTTP/1.1" 200 OK
+INFO:     10.64.130.148:51102 - "GET /api/transactions/a02e4789-bca4-4122-9d66-eba08028c1a5 HTTP/1.1" 200 OK
+INFO:     10.64.130.148:51102 - "GET /api/transactions/a02e4789-bca4-4122-9d66-eba08028c1a5 HTTP/1.1" 200 OK
+INFO:     10.64.130.148:51102 - "GET /api/transactions/a02e4789-bca4-4122-9d66-eba08028c1a5/pdf?lang=ar HTTP/1.1" 200 OK
+INFO:     10.64.135.147:43746 - "GET /api/notifications/bell HTTP/1.1" 200 OK
+[Push] VAPID keys loaded successfully
+[AUTO-SYNC] No changes needed - database is in sync
+INFO:     10.79.167.145:48828 - "GET /api/company-settings/manifest.json?v=1772098985771 HTTP/1.1" 200 OK
+INFO:     10.79.167.145:48828 - "GET /api/company-settings/public HTTP/1.1" 200 OK
+INFO:     10.79.167.146:39994 - "GET /api/company-settings/public HTTP/1.1" 200 OK
+INFO:     10.79.167.146:39994 - "GET /api/company-settings/pwa-icon/32?v=1772098985771 HTTP/1.1" 200 OK
+INFO:     10.79.167.146:45244 - "GET /api/company-settings/pwa-icon/192?v=498f2b86 HTTP/1.1" 200 OK
+INFO:     10.79.167.145:56528 - "GET /api/company-settings/manifest.json?v=1772098985771 HTTP/1.1" 200 OK) for any related API failures.
+        4.  Analyze the code in  to find the root cause.
+    -   **Why fix this issue and what will be achieved with the fix?** To restore a broken part of the application.
     -   **Status:** NOT STARTED
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both
-
--   **Issue 5: Company Logo Not Appearing in PDF**
-    -   **Attempted fixes:** The agent corrected the backend code to look for the logo in the correct database collection.
-    -   **Next debug checklist:** The agent needs to inform the user that the functionality is ready but requires them to upload a logo through the company settings page. No code changes are needed.
-    -   **Why fix this issue and what will be achieved with the fix?** To complete the professional appearance of the PDF document as per the user's reference.
-    -   **Status:** BLOCKED (on user action)
     -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Backend (once logo is uploaded)
-
-**In progress Task List**:
--   **Task 1: Stabilize and Enhance the Settlement Page (P0)**
-    -   **Where to resume:**
-        1.  : Add the missing  for  to fix the crash.
-        2.  : Remove status checks to allow editing of executed settlements.
-        3.  : Update the acknowledgment text to the user's latest requirement.
-    -   **What will be achieved with this?** A functional and stable Settlement page that meets the user's immediate demands for editing executed settlements and displaying the correct legal text.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both
+    -   **Should Test frontend/backend/both after fix?** Frontend
 
 **Upcoming and Future Tasks**
 *   **Upcoming Tasks:**
-    *   **(P1) Implement In-Kind Custody Workflow:** Allow admins to assess damages for unreturned items and add them as deductions to the settlement.
-    *   **(P2) Financial Custody PDF Polish:** Add a professional frame and page numbering to financial reports.
-    *   **(P2) UI for Editing Signatures:** Add a UI on the Financial Custody page for STAS to edit PDF signature names.
+    *   **(P0) Implement Application Versioning System for STAS:** Create a UI and backend for  to force-update the app for all users.
+    *   **(P1) Implement In-Kind Custody Workflow:** Allow admins to assess damages for unreturned items and add deductions to settlements.
+    *   **(P2) Complete System Architecture View:** Build the backend and frontend for the placeholder tab in the Stas Mirror.
 *   **Future Tasks:**
-    *   Implement Canva-like Smart Editor for the Policies module.
-    *   Allow STAS to manage App Branding (application name and icon).
+    *   Implement a Canva-like Smart Editor for the Policies module.
     *   Fix severe mobile responsiveness problems across the application.
     *   Refactor permissions to a centralized Role-Based Access Control (RBAC) system.
-    *   Address older UI issues, including the  crash.
 
 **Completed work in this session**
--   **PDF Arabic Rendering (FIXED):** Resolved the recurring squares issue by correctly registering the 'Amiri' font and preventing Arabic strings from being rendered with the 'Helvetica' font.
--   **Dynamic Data in PDF (DONE):** The settlement PDF now correctly populates with the employee's Job Title, Department, IBAN, Bank Name, and National ID, fetched live from the contract.
--   **Service Year Calculation (FIXED):** The contract list now dynamically calculates and displays the correct years of service.
--   **Partial Month Salary (DONE):** Implemented and corrected the راتب خارج المسيرات calculation, ensuring the corresponding date range (From-To) is displayed in the PDF.
--   **Amount in Words (DONE):** Integrated the  library to display the final settlement amount in Arabic text.
--   **Manual Deductions API/UI (PARTIALLY DONE):** Created the backend endpoints and frontend UI for adding and removing manual deductions. This work is the source of the current P0 bug.
--   **PDF Layout and Content (DONE):** Added الرياض to the header and footer, included a signature line for the Accountant, and iteratively updated the legal acknowledgment text.
+-   **Summon Feature (FIXED):** Correctly implemented visibility rules (sender and  only), deletion on acknowledgment, and display of sender name.
+-   **Contract Edit Button (FIXED):** The missing Edit button for active contracts for admins is now visible and functional.
+-   **AI Smart Monitor (DONE):** Created a comprehensive employee evaluation system () based on weighted scores from attendance, tasks, excuses, and finances.
+-   **Executive Dashboard Integration (DONE):** Merged the Smart Monitor into the Executive Dashboard as a new tab, accessible to relevant managers, and removed the redundant page.
+-   **Role-Based Evaluation (DONE):** Implemented logic ( flag) to include/exclude specific employees from the AI evaluation system as per user requirements.
+-   **Attendance/Leave Validation (DONE):** Added backend logic to enforce limits on requests like Forget Check-in (max 3/month) and Early Leave (based on balance).
+-   **Database Cleanup (DONE):** Created and executed a script () to purge all transactional data for a fresh start while preserving contracts and users.
+-   **Contract Form Update (DONE):** Added Is Saudi, Nationality, Iqama Number, and Iqama Expiry Date fields to the contract creation form.
+-   **Dashboard Reset to Zero (DONE):** Modified dashboard APIs to show 0% scores when no transactional data exists, providing a clean slate.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1:  Crash**
+    -   **Debug checklist:** Navigate to the page, reproduce the error, and investigate .
+    -   **Why to solve this issue and what will be achieved with this?** To restore a broken section of the application.
+    -   **Should Test frontend/backend/both after fix:** Frontend
+    -   **Is recurring issue?** Y
 
 **Code Architecture**
-useState
 
-**Key Technical Concepts**
--   **ReportLab PDF Generation:** The core of the feature relies on  for creating complex table-based layouts. The main difficulty has been managing bi-directional text and fonts (Arabic 'Amiri' vs. English 'Helvetica').
--   **React State Management:** The  component manages complex state. The current crash highlights the fragility of this complexity and the need for careful state definition.
--   **FastAPI Endpoint Modification:** The task requires not just creating new endpoints but also modifying the logic of existing ones (e.g., removing status checks) to alter business rules based on user feedback.
 
 **key DB schema**
--   **settlements:** This collection now contains a  array . The business logic is being changed to allow modifications to this array even when the settlement's  is .
--   **contracts:** Contains employee details like  and , which are now being fetched dynamically to populate the settlement PDF, bypassing potentially stale data in the settlement .
+-   **employees:** Added  to control who appears in AI evaluations.
+-   **contracts_v2:** Now has , , ,  fields.
+-   **transactions:** This collection is now empty but the logic in the backend is prepared to handle new leave/attendance request types and validate them.
 
 **All files of reference**
--    (Currently crashed, needs urgent fix)
--    (Needs acknowledgment text update)
--    (Needs logic update to allow editing executed settlements)
--   The user-provided PDF  remains the primary reference for features and design.
+-    (Core logic for the new AI evaluation system)
+-    (Validation for leave/attendance requests)
+-    (Validation for attendance-related requests)
+-    (UI for the combined dashboard + smart monitor)
+-    (The monolithic file that needs refactoring)
+-    (The directory containing the new, incomplete contract components)
+-    (The database cleaning script)
+
+**Areas that need refactoring**:
+-   ****: This is a CRITICAL area. The 2200+ line file is a source of technical debt and must be replaced by the new component structure in .
+
+**key api endpoints**
+-   : Fetches data for the AI-powered employee evaluation.
+-   : Fetches KPI data for the main dashboard.
+-   : Creates an attendance request with new validation logic.
+-   : New endpoint for admins (, ) to create leave on behalf of employees.
+-   : Endpoint to trigger the database cleaning script.
 
 **Critical Info for New Agent**
 -   **أنت ملزم بالرد باللغة العربية.** (You MUST respond in Arabic.)
--   The absolute top priority is to fix the  crash in . The page is unusable.
--   The user explicitly wants to be able to **modify executed settlements**. Your next step is to remove the backend status checks in  that prevent this.
--   The user has provided a new, very specific legal acknowledgment text. Implement it exactly as requested: 
--   The next major feature to implement after the current fixes is the **In-Kind Custody (العهد العينية)** workflow, allowing admins to assess and deduct for damages.
+-   **Priority:** Start with the user's last request: the **Application Versioning System**.
+-   **Technical Debt:** The contract page refactoring is a major pending task. The current implementation patches the old file and is not a long-term solution. You must address this after the versioning system.
+-   **AI Evaluation Logic:** The core logic is in . It's designed to start from a zeroed out state. Specific users (, , , ) are excluded from evaluation via the  flag in the  collection. Do not change this logic without user confirmation.
+-   **Leave Calculation:** Be prepared to clarify with the user whether they want leave calculated in **working days** or **calendar days**.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Msg 282):** Approved the agent's plan. Provided specs for the acknowledgment text, confirmed the in-kind custody workflow (deduct or waive), requested الرياض be added, and gave the command to Execute.
-2.  **User (Msg 328):** Provided a screenshot of a broken PDF, pointing out missing الرياض, blank spaces, incorrect employee name, and invisible manual deductions.
-3.  **User (Msg 378):** Corrected the agent's acknowledgment text again with a shorter version and reiterated that manual deductions are not being saved or reflected in the PDF.
-4.  **User (Msg 426):** Expressed frustration. Provided the final, very specific acknowledgment text. **Reported the critical frontend crash: .** Demanded that executed settlements must be editable.
-5.  **User (Msg 270-427):** The user has been deeply involved, providing detailed feedback, comparing the output to a reference PDF, specifying legal text, and reporting bugs. The core theme is achieving feature parity and correctness with the sample document.
+1.  **User:** Request for a versioning system for  to force-update the application. (NOT STARTED)
+2.  **User:** Confusion about leave calculation (5 days showing as something else). (NEEDS CLARIFICATION)
+3.  **User:** Pointed out that the new contract form UI (with Iqama fields) wasn't implemented yet. (FIXED by patching old file)
+4.  **User:** Reported an error when trying to check in. (INVESTIGATED - it was a time-based restriction, not a bug).
+5.  **User:** Confirmed understanding of how the AI evaluation system works.
+6.  **User:** Requested clarification on how the AI evaluation works.
+7.  **User:** Asked to zero out all dashboard data to start fresh. (DONE)
+8.  **User:** Clarified that the supervisor  should be *included* in the evaluation. (DONE)
+9.  **User:** Clarified which specific admin roles should be *excluded* from evaluation. (DONE)
+10. **User:** Stated that Salah, the finance user, should not have access to the Executive *evaluation* but should see the new Smart *financial* monitor. (This was resolved by merging the monitor into the main dashboard and giving him access).
 
 **Project Health Check:**
 -   **Broken:**
-    -    is non-functional due to a  crash. This is a P0 blocker.
+    -    still crashes.
 -   **Mocked:**
-    -   The workflow for handling unreturned in-kind custodies (assessing damages and adding as a deduction) is designed but not implemented.
+    -   The System Architecture tab in the Stas Mirror remains a UI placeholder.
 
 **3rd Party Integrations**
--   **reportlab:** For PDF generation.
--   **qrcode:** For generating QR codes in PDFs.
--   **arabic_reshaper, python-bidi:** For processing and rendering Arabic text in .
--   **num2words:** For converting the final settlement amount into Arabic words.
+-   reportlab
+-   qrcode
+-   arabic_reshaper, python-bidi
+-   num2words
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** YES (For Summon/Contract Edit fixes)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
--   **Known regressions:** A critical JavaScript runtime error was introduced in .
+-   **Known regressions:** None from this session. Previous regressions were fixed.
 
 **Credentials to test flow:**
 -   **Admin/Manager:**  / 
 -   **CEO:**  / 
 -   **SysAdmin:**  / 
 -   **Accountant:**  / 
+-   **Supervisor:**  (User ID),  (role) / Password not set
 
 **What agent forgot to execute**
-The agent failed to test the frontend after adding the UI for manual deductions, which allowed a critical JavaScript crash to be discovered by the user. The agent is now aware and must prioritize fixing this before any other action.</analysis>
+-   The agent did not complete the critical refactoring of . Instead of migrating logic to the new components, they added features to the old, monolithic file, increasing the technical debt.
+-   The agent did not begin implementation of the user's final request for an application versioning system.</analysis>
