@@ -1461,14 +1461,40 @@ export default function ContractsManagementPage() {
                         
                         {/* Submit to STAS - only draft */}
                         {contract.status === 'draft' && isAdmin && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleSubmitToSTAS(contract.id)}
+                              className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
+                            >
+                              <Send className="w-4 h-4 ml-1" />
+                              إرسال لـ STAS
+                            </Button>
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              onClick={() => handleExecuteContract(contract.id)}
+                              className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
+                              data-testid={`execute-draft-${contract.id}`}
+                            >
+                              <Play className="w-4 h-4 ml-1" />
+                              تنفيذ مباشر
+                            </Button>
+                          </>
+                        )}
+                        
+                        {/* draft_correction - إعادة التفعيل */}
+                        {contract.status === 'draft_correction' && isAdmin && (
                           <Button 
-                            variant="outline" 
+                            variant="default" 
                             size="sm" 
-                            onClick={() => handleSubmitToSTAS(contract.id)}
-                            className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
+                            onClick={() => handleReactivateContract(contract.id)}
+                            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
+                            data-testid={`reactivate-contract-${contract.id}`}
                           >
-                            <Send className="w-4 h-4 ml-1" />
-                            إرسال لـ STAS
+                            <CheckCircle className="w-4 h-4 ml-1" />
+                            إعادة التفعيل
                           </Button>
                         )}
                         
