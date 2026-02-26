@@ -913,10 +913,14 @@ async def get_active_summons_for_list(
 @router.post("/summons/{summon_id}/acknowledge")
 async def acknowledge_summon(
     summon_id: str,
+    reply: str = None,
     user=Depends(get_current_user)
 ):
     """
-    تأكيد اطلاع الموظف على الاستدعاء - يُحذف نهائياً
+    تأكيد اطلاع الموظف على الاستدعاء مع إمكانية الرد
+    - يُحفظ الرد في قاعدة البيانات
+    - يُحذف من قائمة الاستدعاءات النشطة للموظف
+    - يبقى مرئياً للمرسل مع الرد
     """
     user_employee_id = user.get('employee_id')
     
@@ -932,12 +936,74 @@ async def acknowledge_summon(
     if not summon:
         raise HTTPException(status_code=404, detail="الاستدعاء غير موجود")
     
-    # حذف الاستدعاء نهائياً بعد الاطلاع
-    await db.notifications.delete_one({"id": summon_id})
+    # تحديث الاستدعاء بدلاً من حذفه
+    await db.notifications.update_one(
+        {"id": summon_id},
+        {
+            "$set": {
+                "acknowledged": True,
+                "acknowledged_at": datetime.now(timezone.utc).isoformat(),
+                "reply": reply,
+                "reply_at": datetime.now(timezone.utc).isoformat() if reply else None
+            }
+        }
+    )
+    
+    # إرسال إشعار للمرسل بأن الموظف اطلع ورد
+    sender_id = summon.get('sender_id')
+    if sender_id:
+        employee = await db.employees.find_one({"id": user_employee_id}, {"_id": 0, "full_name_ar": 1})
+        employee_name = employee.get('full_name_ar', 'موظف') if employee else 'موظف'
+        
+        await db.notifications.insert_one({
+            "id": str(uuid.uuid4()),
+            "notification_type": "summon_reply",
+            "target_user_id": sender_id,
+            "title_ar": f"رد على الاستدعاء من {employee_name}",
+            "title_en": f"Summon reply from {employee_name}",
+            "message_ar": reply if reply else "تم الاطلاع على الاستدعاء",
+            "message_en": reply if reply else "Summon acknowledged",
+            "reference_type": "summon",
+            "reference_id": summon_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "read": False
+        })
     
     return {
-        "message_ar": "تم تأكيد الاطلاع وإزالة الاستدعاء",
-        "message_en": "Acknowledged and removed",
+        "message_ar": "تم تأكيد الاطلاع" + (" وإرسال الرد" if reply else ""),
+        "message_en": "Acknowledged" + (" and reply sent" if reply else ""),
         "acknowledged": True
+    }
+
+
+@router.get("/summons/sent")
+async def get_sent_summons(
+    user=Depends(get_current_user)
+):
+    """
+    الحصول على الاستدعاءات المرسلة من المستخدم الحالي مع حالة الرد
+    """
+    user_id = user.get('user_id')
+    role = user.get('role', '')
+    
+    query = {"notification_type": "summon"}
+    
+    # stas يرى الكل، الباقي يرون فقط ما أرسلوه
+    if role != 'stas':
+        query["sender_id"] = user_id
+    
+    summons = await db.notifications.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    # إضافة اسم الموظف
+    for s in summons:
+        emp = await db.employees.find_one({"id": s.get('employee_id')}, {"_id": 0, "full_name_ar": 1})
+        s['employee_name'] = emp.get('full_name_ar', '') if emp else ''
+    
+    return {
+        "summons": summons,
+        "count": len(summons)
     }
 
