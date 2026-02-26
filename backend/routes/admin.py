@@ -660,3 +660,95 @@ async def import_all_data(body: dict):
     }
 
 
+
+
+# ==================== إدارة إصدار التطبيق ====================
+
+@router.get("/app-version")
+async def get_app_version():
+    """الحصول على إصدار التطبيق الحالي - متاح للجميع"""
+    version = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    if not version:
+        return {
+            "version": "1.0.0",
+            "build": 1,
+            "updated_at": None,
+            "updated_by": None,
+            "release_notes": "الإصدار الأولي"
+        }
+    return version.get("value", {})
+
+
+@router.post("/app-version/update")
+async def update_app_version(
+    version: str = None,
+    release_notes: str = None,
+    force_refresh: bool = True,
+    user=Depends(get_current_user)
+):
+    """
+    تحديث إصدار التطبيق - متاح فقط لـ STAS
+    عند التحديث، جميع المستخدمين سيُطلب منهم تحديث الصفحة
+    """
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="هذه الخدمة متاحة فقط لمسؤول النظام")
+    
+    # جلب الإصدار الحالي
+    current = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    current_value = current.get("value", {}) if current else {}
+    current_build = current_value.get("build", 0)
+    
+    # زيادة رقم البناء
+    new_build = current_build + 1
+    
+    # تحديد الإصدار
+    if not version:
+        # زيادة تلقائية
+        cv = current_value.get("version", "1.0.0")
+        parts = cv.split(".")
+        parts[-1] = str(int(parts[-1]) + 1)
+        version = ".".join(parts)
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    new_value = {
+        "version": version,
+        "build": new_build,
+        "updated_at": now,
+        "updated_by": user.get('username', user['user_id']),
+        "release_notes": release_notes or f"تحديث الإصدار {version}",
+        "force_refresh": force_refresh,
+        "refresh_token": str(uuid.uuid4())[:8]  # رمز فريد لإجبار التحديث
+    }
+    
+    await db.settings.update_one(
+        {"type": "app_version"},
+        {"$set": {"type": "app_version", "value": new_value}},
+        upsert=True
+    )
+    
+    return {
+        "message": f"تم تحديث التطبيق إلى الإصدار {version}",
+        "version": new_value
+    }
+
+
+@router.get("/app-version/check")
+async def check_version_update(current_build: int = 0):
+    """
+    التحقق من وجود تحديث - يستخدمه الـ Frontend
+    """
+    version = await db.settings.find_one({"type": "app_version"}, {"_id": 0})
+    if not version:
+        return {"needs_update": False}
+    
+    server_build = version.get("value", {}).get("build", 0)
+    force_refresh = version.get("value", {}).get("force_refresh", False)
+    
+    return {
+        "needs_update": server_build > current_build and force_refresh,
+        "server_build": server_build,
+        "server_version": version.get("value", {}).get("version"),
+        "release_notes": version.get("value", {}).get("release_notes"),
+        "refresh_token": version.get("value", {}).get("refresh_token")
+    }
