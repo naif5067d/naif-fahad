@@ -1368,6 +1368,55 @@ export default function ContractsManagementPage() {
                             {CONTRACT_CATEGORIES[contract.contract_category]?.label || contract.contract_category}
                           </span>
                         </div>
+                        
+                        {/* تنبيهات انتهاء العقد والإقامة */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {/* تنبيه انتهاء العقد - 3 شهور */}
+                          {contract.end_date && contract.status === 'active' && (() => {
+                            const today = new Date();
+                            const endDate = new Date(contract.end_date);
+                            const diffDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+                            if (diffDays < 0) {
+                              return (
+                                <Badge variant="destructive" className="text-xs animate-pulse">
+                                  <AlertTriangle className="w-3 h-3 ml-1" />
+                                  العقد منتهي!
+                                </Badge>
+                              );
+                            } else if (diffDays <= 90) {
+                              return (
+                                <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50">
+                                  <Clock className="w-3 h-3 ml-1" />
+                                  ينتهي خلال {diffDays} يوم
+                                </Badge>
+                              );
+                            }
+                            return null;
+                          })()}
+                          
+                          {/* تنبيه انتهاء الإقامة */}
+                          {!contract.is_saudi && contract.iqama_expiry_date && (() => {
+                            const today = new Date();
+                            const expiryDate = new Date(contract.iqama_expiry_date);
+                            const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                            if (diffDays < 0) {
+                              return (
+                                <Badge variant="destructive" className="text-xs animate-pulse">
+                                  <AlertTriangle className="w-3 h-3 ml-1" />
+                                  الإقامة منتهية!
+                                </Badge>
+                              );
+                            } else if (diffDays <= 90) {
+                              return (
+                                <Badge variant="outline" className="text-xs border-red-500 text-red-600 bg-red-50">
+                                  <FileText className="w-3 h-3 ml-1" />
+                                  الإقامة تنتهي خلال {diffDays} يوم
+                                </Badge>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
                       
                       {/* Actions */}
