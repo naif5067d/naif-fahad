@@ -299,10 +299,18 @@ export default function TeamAttendancePage() {
         params.year = year;
       }
       
-      // إذا كان عرض موظف واحد
-      if (viewMode === 'single' && selectedEmployee) {
+      // إذا كان هناك موظفين محددين (multi-select)
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      // إذا كان عرض موظف واحد (legacy)
+      else if (viewMode === 'single' && selectedEmployee) {
         params.employee_id = selectedEmployee;
       }
+      
+      // إضافة الفترة من-إلى
+      params.start_date = startDate;
+      params.end_date = endDate;
       
       const response = await api.get('/api/team-attendance/print-report', {
         params,
