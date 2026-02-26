@@ -1038,86 +1038,217 @@ export default function TeamAttendancePage() {
 
         {/* Daily Tab */}
         <TabsContent value="daily">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
-                {lang === 'ar' ? 'سجل الحضور اليومي' : 'Daily Attendance'}
-                {viewMode === 'single' && selectedEmployeeData && (
-                  <span className="text-sm font-normal text-muted-foreground mr-2">
-                    - {selectedEmployeeData.full_name_ar}
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <RefreshCw className="animate-spin text-primary" size={32} />
-                </div>
-              ) : (viewMode === 'all' ? dailyData : employeeRecord?.daily || []).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/30">
-                        <th className="text-center p-3 w-12">#</th>
-                        {viewMode === 'all' && <th className="text-start p-3">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>}
-                        {viewMode === 'single' && <th className="text-start p-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>}
-                        <th className="text-center p-3">{lang === 'ar' ? 'الموقع' : 'Location'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'In'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
-                        <th className="text-start p-3">{lang === 'ar' ? 'الملاحظات' : 'Notes'}</th>
-                        <th className="text-center p-3">{lang === 'ar' ? 'إجراء' : 'Action'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(viewMode === 'all' ? dailyData : employeeRecord?.daily || []).map((emp, idx) => (
-                        <tr key={emp.employee_id + '-' + (emp.date || idx)} className="border-b hover:bg-muted/50">
-                          {/* Quick Check Icon */}
-                          <td className="p-3 text-center">
-                            {['PRESENT', 'LATE', 'ON_LEAVE', 'ON_MISSION', 'HOLIDAY', 'WEEKEND', 'PERMISSION'].includes(emp.final_status) ? (
-                              <CheckCircle className="text-[hsl(var(--success))] mx-auto" size={20} />
-                            ) : emp.final_status === 'ABSENT' ? (
-                              <XCircle className="text-red-500 mx-auto" size={20} />
-                            ) : (
-                              <AlertTriangle className="text-[hsl(var(--warning))] mx-auto" size={18} />
-                            )}
-                          </td>
-                          {viewMode === 'all' && (
-                            <td className="p-3">
-                              <div>
-                                <p className="font-medium">{emp.employee_name_ar || emp.employee_name}</p>
-                                <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
-                              </div>
+          {/* عرض موظفين متعددين - كل موظف في قسم منفصل */}
+          {selectedEmployees.length > 0 ? (
+            <div className="space-y-6" data-testid="multi-employee-view">
+              {selectedEmployees.map((empId, empIndex) => {
+                const emp = employees.find(e => e.id === empId);
+                const empData = dailyData.filter(d => d.employee_id === empId);
+                
+                return (
+                  <Card key={empId} className="border-2 border-primary/20 print:break-inside-avoid">
+                    {/* Employee Header */}
+                    <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 py-3">
+                      <CardTitle className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                          {empIndex + 1}
+                        </span>
+                        <div>
+                          <p className="text-lg font-bold">{emp?.full_name_ar || 'موظف'}</p>
+                          <p className="text-xs text-muted-foreground font-normal">
+                            {emp?.employee_number} • {emp?.job_title_ar || emp?.role || ''}
+                          </p>
+                        </div>
+                        <div className="mr-auto text-sm text-muted-foreground">
+                          {lang === 'ar' ? 'الفترة:' : 'Period:'} {startDate} → {endDate}
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    
+                    <CardContent className="p-0">
+                      {empData.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {lang === 'ar' ? 'لا توجد بيانات لهذه الفترة' : 'No data for this period'}
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b bg-muted/50">
+                                <th className="text-center p-3 w-10">#</th>
+                                <th className="text-start p-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'اليوم' : 'Day'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'Check In'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Check Out'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'الموقع' : 'Location'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <th className="text-center p-3">{lang === 'ar' ? 'التأخير' : 'Late'}</th>
+                                <th className="text-start p-3">{lang === 'ar' ? 'ملاحظات' : 'Notes'}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {empData.map((record, idx) => {
+                                const recordDate = new Date(record.date);
+                                const dayName = recordDate.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { weekday: 'short' });
+                                const isAbsent = record.final_status === 'ABSENT';
+                                const isLate = record.final_status === 'LATE' || record.late_minutes > 0;
+                                const isWeekend = ['WEEKEND', 'HOLIDAY'].includes(record.final_status);
+                                
+                                return (
+                                  <tr 
+                                    key={idx} 
+                                    className={`border-b ${
+                                      isAbsent ? 'bg-red-50 dark:bg-red-900/10' : 
+                                      isLate ? 'bg-amber-50 dark:bg-amber-900/10' : 
+                                      isWeekend ? 'bg-gray-50 dark:bg-gray-800/20' : 
+                                      'hover:bg-muted/30'
+                                    }`}
+                                  >
+                                    <td className="p-2 text-center text-xs text-muted-foreground">{idx + 1}</td>
+                                    <td className="p-2 font-mono text-sm">{record.date}</td>
+                                    <td className="p-2 text-center text-xs">{dayName}</td>
+                                    <td className="p-2 text-center font-mono text-sm font-medium">
+                                      {formatTime(record.check_in_time) || '--:--'}
+                                    </td>
+                                    <td className="p-2 text-center font-mono text-sm font-medium">
+                                      {formatTime(record.check_out_time) || '--:--'}
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                                        <MapPin size={10} />
+                                        {record.work_location_name_ar || record.work_location || (lang === 'ar' ? 'المقر' : 'HQ')}
+                                      </span>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      <Badge 
+                                        className={`text-xs ${STATUS_COLORS[record.final_status] || STATUS_COLORS.UNKNOWN}`}
+                                      >
+                                        {STATUS_AR[record.final_status] || record.status_ar || record.final_status}
+                                      </Badge>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                      {record.late_minutes > 0 ? (
+                                        <span className="text-amber-600 font-medium text-sm">{record.late_minutes} {lang === 'ar' ? 'د' : 'm'}</span>
+                                      ) : '-'}
+                                    </td>
+                                    <td className="p-2 text-xs text-muted-foreground max-w-[150px] truncate">
+                                      {record.decision_reason_ar || record.notes || '-'}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            {/* Summary Footer */}
+                            <tfoot className="bg-muted/30 border-t-2">
+                              <tr>
+                                <td colSpan="6" className="p-3 text-start font-semibold">
+                                  {lang === 'ar' ? 'الملخص:' : 'Summary:'}
+                                </td>
+                                <td colSpan="3" className="p-3">
+                                  <div className="flex gap-4 text-xs">
+                                    <span className="text-green-600">
+                                      ✓ {empData.filter(d => ['PRESENT', 'ON_MISSION', 'ON_LEAVE', 'HOLIDAY', 'WEEKEND'].includes(d.final_status)).length} {lang === 'ar' ? 'حضور' : 'Present'}
+                                    </span>
+                                    <span className="text-red-600">
+                                      ✗ {empData.filter(d => d.final_status === 'ABSENT').length} {lang === 'ar' ? 'غياب' : 'Absent'}
+                                    </span>
+                                    <span className="text-amber-600">
+                                      ⏱ {empData.filter(d => d.final_status === 'LATE').length} {lang === 'ar' ? 'تأخير' : 'Late'}
+                                    </span>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            /* العرض العادي - جميع الموظفين أو موظف واحد */
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">
+                  {lang === 'ar' ? 'سجل الحضور اليومي' : 'Daily Attendance'}
+                  {viewMode === 'single' && selectedEmployeeData && (
+                    <span className="text-sm font-normal text-muted-foreground mr-2">
+                      - {selectedEmployeeData.full_name_ar}
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <RefreshCw className="animate-spin text-primary" size={32} />
+                  </div>
+                ) : (viewMode === 'all' ? dailyData : employeeRecord?.daily || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {lang === 'ar' ? 'لا توجد بيانات' : 'No data'}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/30">
+                          <th className="text-center p-3 w-12">#</th>
+                          {viewMode === 'all' && <th className="text-start p-3">{lang === 'ar' ? 'الموظف' : 'Employee'}</th>}
+                          {viewMode === 'single' && <th className="text-start p-3">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>}
+                          <th className="text-center p-3">{lang === 'ar' ? 'الموقع' : 'Location'}</th>
+                          <th className="text-center p-3">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                          <th className="text-center p-3">{lang === 'ar' ? 'الدخول' : 'In'}</th>
+                          <th className="text-center p-3">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
+                          <th className="text-center p-3">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
+                          <th className="text-start p-3">{lang === 'ar' ? 'الملاحظات' : 'Notes'}</th>
+                          <th className="text-center p-3">{lang === 'ar' ? 'إجراء' : 'Action'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(viewMode === 'all' ? dailyData : employeeRecord?.daily || []).map((emp, idx) => (
+                          <tr key={emp.employee_id + '-' + (emp.date || idx)} className="border-b hover:bg-muted/50">
+                            {/* Quick Check Icon */}
+                            <td className="p-3 text-center">
+                              {['PRESENT', 'LATE', 'ON_LEAVE', 'ON_MISSION', 'HOLIDAY', 'WEEKEND', 'PERMISSION'].includes(emp.final_status) ? (
+                                <CheckCircle className="text-[hsl(var(--success))] mx-auto" size={20} />
+                              ) : emp.final_status === 'ABSENT' ? (
+                                <XCircle className="text-red-500 mx-auto" size={20} />
+                              ) : (
+                                <AlertTriangle className="text-[hsl(var(--warning))] mx-auto" size={18} />
+                              )}
                             </td>
-                          )}
-                          {viewMode === 'single' && (
-                            <td className="p-3 font-mono text-sm">{emp.date}</td>
-                          )}
-                          {/* Work Location */}
-                          <td className="p-3 text-center">
-                            <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                              <MapPin size={12} />
-                              {emp.work_location_name_ar || emp.work_location_name || (lang === 'ar' ? 'المقر الرئيسي' : 'Main Office')}
-                            </span>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge className={STATUS_COLORS[emp.final_status] || STATUS_COLORS.UNKNOWN}>
-                              {STATUS_AR[emp.final_status] || emp.status_ar || emp.final_status}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center font-mono text-xs">
-                            {formatTime(emp.check_in_time)}
-                          </td>
-                          <td className="p-3 text-center font-mono text-xs">
-                            {formatTime(emp.check_out_time)}
-                          </td>
-                          <td className="p-3 text-center">
+                            {viewMode === 'all' && (
+                              <td className="p-3">
+                                <div>
+                                  <p className="font-medium">{emp.employee_name_ar || emp.employee_name}</p>
+                                  <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
+                                </div>
+                              </td>
+                            )}
+                            {viewMode === 'single' && (
+                              <td className="p-3 font-mono text-sm">{emp.date}</td>
+                            )}
+                            {/* Work Location */}
+                            <td className="p-3 text-center">
+                              <span className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                                <MapPin size={12} />
+                                {emp.work_location_name_ar || emp.work_location_name || (lang === 'ar' ? 'المقر الرئيسي' : 'Main Office')}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              <Badge className={STATUS_COLORS[emp.final_status] || STATUS_COLORS.UNKNOWN}>
+                                {STATUS_AR[emp.final_status] || emp.status_ar || emp.final_status}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center font-mono text-xs">
+                              {formatTime(emp.check_in_time)}
+                            </td>
+                            <td className="p-3 text-center font-mono text-xs">
+                              {formatTime(emp.check_out_time)}
+                            </td>
+                            <td className="p-3 text-center">
                             {emp.late_minutes > 0 && (
                               <span className="text-[hsl(var(--warning))] font-medium">{emp.late_minutes} د</span>
                             )}
