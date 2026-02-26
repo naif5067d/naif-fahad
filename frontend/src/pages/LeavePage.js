@@ -390,6 +390,21 @@ export default function LeavePage() {
                       <div><Label>{lang === 'ar' ? 'من تاريخ' : 'Start Date'}</Label><Input data-testid="holiday-start-date" type="date" value={holidayForm.start_date || holidayForm.date || ''} onChange={e => setHolidayForm(f => ({ ...f, start_date: e.target.value, date: e.target.value }))} /></div>
                       <div><Label>{lang === 'ar' ? 'إلى تاريخ' : 'End Date'}</Label><Input data-testid="holiday-end-date" type="date" value={holidayForm.end_date || holidayForm.date || ''} onChange={e => setHolidayForm(f => ({ ...f, end_date: e.target.value }))} /></div>
                     </div>
+                    {/* عرض عدد الأيام المحسوب */}
+                    {(holidayForm.start_date || holidayForm.date) && (holidayForm.end_date || holidayForm.date) && (
+                      <div className="p-3 bg-[hsl(var(--success)/0.1)] rounded-lg text-center">
+                        <span className="text-[hsl(var(--success))] font-bold text-lg">
+                          {(() => {
+                            const start = new Date(holidayForm.start_date || holidayForm.date);
+                            const end = new Date(holidayForm.end_date || holidayForm.date || holidayForm.start_date);
+                            const diffTime = Math.abs(end - start);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                            return diffDays;
+                          })()}
+                        </span>
+                        <span className="text-sm text-muted-foreground mr-1">{lang === 'ar' ? 'يوم' : 'days'}</span>
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {lang === 'ar' ? 'سيتم إضافة جميع أيام الإجازة تلقائياً بين التاريخين' : 'All holiday days between the dates will be added automatically'}
                     </p>
