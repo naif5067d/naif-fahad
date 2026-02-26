@@ -648,56 +648,186 @@ export default function TeamAttendancePage() {
             {lang === 'ar' ? 'تحضير' : 'Process'}
           </Button>
           
-          {/* Employee Selector */}
-          <Select value={selectedEmployee || 'all'} onValueChange={handleEmployeeSelect}>
-            <SelectTrigger className="w-[200px]" data-testid="employee-selector">
-              <SelectValue placeholder={lang === 'ar' ? 'اختر موظف' : 'Select Employee'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                <span className="flex items-center gap-2">
-                  <Users size={16} />
-                  {lang === 'ar' ? 'جميع الموظفين' : 'All Employees'}
-                </span>
-              </SelectItem>
-              {filteredEmployees.map(emp => (
-                <SelectItem key={emp.id} value={emp.id}>
-                  <span className="flex items-center gap-2">
-                    <User size={16} />
-                    {lang === 'ar' ? emp.full_name_ar : emp.full_name} ({emp.employee_number})
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          {/* Date Selector */}
-          {tab !== 'yearly' && (
-            <Input
-              type={tab === 'monthly' ? 'month' : 'date'}
-              value={tab === 'monthly' ? month : date}
-              onChange={(e) => tab === 'monthly' ? setMonth(e.target.value) : setDate(e.target.value)}
-              className="w-auto"
-            />
-          )}
-          {tab === 'yearly' && (
-            <Select value={year} onValueChange={setYear}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[2024, 2025, 2026].map(y => (
-                  <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
           <Button variant="outline" size="icon" onClick={() => viewMode === 'all' ? fetchAllData() : fetchEmployeeData()} disabled={loading}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>
+
+      {/* ZKT-Style Filters */}
+      <Card className="border-2 border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Date Range Mode */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-muted-foreground">{lang === 'ar' ? 'الفترة:' : 'Period:'}</span>
+              <div className="flex rounded-lg border overflow-hidden">
+                {[
+                  { key: 'daily', label: lang === 'ar' ? 'يومي' : 'Daily' },
+                  { key: 'weekly', label: lang === 'ar' ? 'أسبوعي' : 'Weekly' },
+                  { key: 'monthly', label: lang === 'ar' ? 'شهري' : 'Monthly' },
+                  { key: 'yearly', label: lang === 'ar' ? 'سنوي' : 'Yearly' },
+                  { key: 'custom', label: lang === 'ar' ? 'مخصص' : 'Custom' },
+                ].map(mode => (
+                  <button
+                    key={mode.key}
+                    onClick={() => {
+                      setDateRangeMode(mode.key);
+                      setTab(mode.key === 'custom' ? 'daily' : mode.key);
+                      // Set date ranges automatically
+                      const today = new Date();
+                      if (mode.key === 'daily') {
+                        setStartDate(today.toISOString().split('T')[0]);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      } else if (mode.key === 'weekly') {
+                        const weekStart = new Date(today);
+                        weekStart.setDate(today.getDate() - today.getDay());
+                        setStartDate(weekStart.toISOString().split('T')[0]);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      } else if (mode.key === 'monthly') {
+                        setStartDate(`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      } else if (mode.key === 'yearly') {
+                        setStartDate(`${today.getFullYear()}-01-01`);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                      dateRangeMode === mode.key 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-background hover:bg-muted'
+                    }`}
+                    data-testid={`date-mode-${mode.key}`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date Range Inputs */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-muted-foreground">{lang === 'ar' ? 'من:' : 'From:'}</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDate(e.target.value);
+                  if (dateRangeMode !== 'custom') setDateRangeMode('custom');
+                }}
+                className="w-[150px]"
+                data-testid="start-date"
+              />
+              <span className="text-sm font-medium text-muted-foreground">{lang === 'ar' ? 'إلى:' : 'To:'}</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  if (dateRangeMode !== 'custom') setDateRangeMode('custom');
+                }}
+                className="w-[150px]"
+                data-testid="end-date"
+              />
+            </div>
+
+            {/* Employee Multi-Select */}
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-sm font-medium text-muted-foreground">{lang === 'ar' ? 'الموظفين:' : 'Employees:'}</span>
+              <div className="relative flex-1 max-w-md">
+                <button
+                  onClick={() => setShowEmployeeSelector(!showEmployeeSelector)}
+                  className="w-full flex items-center justify-between px-3 py-2 border rounded-lg bg-background hover:bg-muted/50 text-sm"
+                  data-testid="multi-employee-selector"
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <Users size={16} className="text-muted-foreground" />
+                    {selectedEmployees.length === 0 
+                      ? (lang === 'ar' ? 'جميع الموظفين' : 'All Employees')
+                      : selectedEmployees.length === 1
+                        ? (employees.find(e => e.id === selectedEmployees[0])?.full_name_ar || 'موظف')
+                        : `${selectedEmployees.length} ${lang === 'ar' ? 'موظفين' : 'employees'}`
+                    }
+                  </span>
+                  <ChevronDown size={16} className={`transition-transform ${showEmployeeSelector ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown */}
+                {showEmployeeSelector && (
+                  <div className="absolute z-50 top-full mt-1 w-full bg-card border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    {/* Select All / Clear */}
+                    <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
+                      <button 
+                        onClick={() => setSelectedEmployees([])}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {lang === 'ar' ? 'الكل' : 'All'}
+                      </button>
+                      <button 
+                        onClick={() => setSelectedEmployees(filteredEmployees.map(e => e.id))}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {lang === 'ar' ? 'اختيار الكل' : 'Select All'}
+                      </button>
+                      <button 
+                        onClick={() => setShowEmployeeSelector(false)}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    {/* Employee List */}
+                    {filteredEmployees.map(emp => (
+                      <label
+                        key={emp.id}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedEmployees.includes(emp.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedEmployees(prev => [...prev, emp.id]);
+                            } else {
+                              setSelectedEmployees(prev => prev.filter(id => id !== emp.id));
+                            }
+                          }}
+                          className="rounded border-border"
+                        />
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold">
+                            {emp.full_name_ar?.[0] || '?'}
+                          </div>
+                          <div className="truncate">
+                            <p className="text-sm font-medium truncate">{emp.full_name_ar}</p>
+                            <p className="text-xs text-muted-foreground">{emp.employee_number}</p>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Selected Tags */}
+              {selectedEmployees.length > 0 && selectedEmployees.length <= 3 && (
+                <div className="flex gap-1 flex-wrap">
+                  {selectedEmployees.map(empId => {
+                    const emp = employees.find(e => e.id === empId);
+                    return (
+                      <Badge key={empId} variant="secondary" className="text-xs gap-1">
+                        {emp?.full_name_ar?.split(' ')[0] || '?'}
+                        <button onClick={() => setSelectedEmployees(prev => prev.filter(id => id !== empId))} className="hover:text-destructive">×</button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Selected Employee Info */}
       {viewMode === 'single' && selectedEmployeeData && (
