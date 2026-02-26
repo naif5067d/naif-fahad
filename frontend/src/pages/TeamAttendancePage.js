@@ -1151,7 +1151,7 @@ export default function TeamAttendancePage() {
                                           variant="ghost"
                                           size="icon"
                                           className="h-7 w-7"
-                                          onClick={() => openEditDialog({...record, employee_id: empId})}
+                                          onClick={() => setEditDialog({...record, employee_id: empId})}
                                           title={lang === 'ar' ? 'تعديل الحالة' : 'Edit Status'}
                                           data-testid={`edit-status-${empId}-${record.date}`}
                                         >
