@@ -3,10 +3,20 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Settings, Wrench, History, Volume2, Building2, 
-  ChevronRight, Shield, Database, Users, Bell
+  ChevronRight, Shield, Database, Users, Bell, Rocket
 } from 'lucide-react';
 
 const CONTROL_ITEMS = [
+  {
+    id: 'versionManagement',
+    icon: Rocket,
+    path: '/version-management',
+    color: 'bg-red-500',
+    titleAr: 'إدارة إصدار التطبيق',
+    titleEn: 'App Version Management',
+    descAr: 'نشر التحديثات وإجبار المستخدمين على التحديث',
+    descEn: 'Deploy updates and force users to refresh'
+  },
   {
     id: 'systemMaintenance',
     icon: Wrench,
