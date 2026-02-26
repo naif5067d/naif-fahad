@@ -112,15 +112,22 @@ export default function TeamAttendancePage() {
   // Main tab: 'attendance' or 'penalties'
   const [mainTab, setMainTab] = useState('attendance');
   
-  // View mode: 'all' for all employees, 'single' for one employee
+  // View mode: 'all' for all employees, 'selected' for selected employees
   const [viewMode, setViewMode] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployees, setSelectedEmployees] = useState([]); // Multi-select
   const [employees, setEmployees] = useState([]);
   
   const [tab, setTab] = useState('daily');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [year, setYear] = useState(new Date().getFullYear().toString());
+  
+  // Date range filter (ZKT style)
+  const [dateRangeMode, setDateRangeMode] = useState('daily'); // daily, weekly, monthly, yearly, custom
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showEmployeeSelector, setShowEmployeeSelector] = useState(false);
   
   const [summary, setSummary] = useState(null);
   const [dailyData, setDailyData] = useState([]);
