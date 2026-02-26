@@ -52,7 +52,7 @@ const NAV_ITEMS = {
   // ستاس - صلاحيات كاملة
   stas: [
     // 📌 الاستخدام اليومي
-    'dashboard', 'transactions', 'attendancePenalties', 'tasks',
+    'dashboard', 'transactions', 'leave', 'attendancePenalties', 'tasks',
     // 👥 إدارة الموظفين
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     // 💰 المالية والعهد
