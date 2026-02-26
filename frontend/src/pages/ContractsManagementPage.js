@@ -2067,6 +2067,91 @@ export default function ContractsManagementPage() {
               </p>
             </div>
 
+            {/* بيانات الهوية والإقامة */}
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <FileText className="w-4 h-4" />
+                بيانات الهوية والإقامة
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>رقم الهوية / الإقامة</Label>
+                  <Input 
+                    value={formData.id_number}
+                    onChange={e => setFormData(p => ({ ...p, id_number: e.target.value }))}
+                    placeholder="10 أرقام"
+                    dir="ltr"
+                    data-testid="edit-id-number-input"
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="edit-is-saudi"
+                      checked={formData.is_saudi}
+                      onCheckedChange={(checked) => setFormData(p => ({ 
+                        ...p, 
+                        is_saudi: checked, 
+                        iqama_number: checked ? '' : p.iqama_number, 
+                        iqama_expiry_date: checked ? '' : p.iqama_expiry_date 
+                      }))}
+                      data-testid="edit-is-saudi-switch"
+                    />
+                    <Label htmlFor="edit-is-saudi">سعودي</Label>
+                  </div>
+                </div>
+              </div>
+              
+              {/* حقول الإقامة لغير السعوديين */}
+              {!formData.is_saudi && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-3 bg-amber-100/50 dark:bg-amber-800/20 rounded-lg">
+                  <div>
+                    <Label className="text-xs">الجنسية</Label>
+                    <Input 
+                      value={formData.nationality}
+                      onChange={e => setFormData(p => ({ ...p, nationality: e.target.value }))}
+                      placeholder="مثال: مصري، هندي"
+                      data-testid="edit-nationality-input"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">رقم الإقامة</Label>
+                    <Input 
+                      value={formData.iqama_number}
+                      onChange={e => setFormData(p => ({ ...p, iqama_number: e.target.value }))}
+                      placeholder="رقم الإقامة"
+                      dir="ltr"
+                      data-testid="edit-iqama-number-input"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">تاريخ انتهاء الإقامة</Label>
+                    <Input 
+                      type="date"
+                      value={formData.iqama_expiry_date}
+                      onChange={e => setFormData(p => ({ ...p, iqama_expiry_date: e.target.value }))}
+                      data-testid="edit-iqama-expiry-input"
+                    />
+                  </div>
+                  {formData.iqama_expiry_date && (
+                    <div className="col-span-3">
+                      {(() => {
+                        const today = new Date();
+                        const expiry = new Date(formData.iqama_expiry_date);
+                        const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+                        if (diffDays < 0) {
+                          return <div className="text-red-600 text-xs font-bold p-2 bg-red-100 rounded">⚠️ الإقامة منتهية!</div>;
+                        } else if (diffDays <= 90) {
+                          return <div className="text-amber-600 text-xs font-bold p-2 bg-amber-100 rounded">⚠️ الإقامة تنتهي خلال {diffDays} يوم - يجب التجديد!</div>;
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* سياسات الإجازات */}
             <div className="p-4 bg-muted/40 rounded-lg">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
