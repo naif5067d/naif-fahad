@@ -143,18 +143,40 @@ export default function STASMirrorPage() {
   };
 
   // === Version Management Functions ===
+  const [versionHistory, setVersionHistory] = useState([]);
+  
   const fetchVersion = async () => {
     try {
-      const res = await api.get('/api/settings/version');
-      setVersionInfo(res.data);
-      setNewVersion(res.data.version || '1.0.0');
-      setReleaseNotesAr(res.data.release_notes_ar || '');
-      setReleaseNotesEn(res.data.release_notes_en || '');
+      const [versionRes, historyRes] = await Promise.all([
+        api.get('/api/admin/app-version'),
+        api.get('/api/admin/app-version/history').catch(() => ({ data: { history: [] } }))
+      ]);
+      setVersionInfo(versionRes.data);
+      setNewVersion(versionRes.data.version || '1.0.0');
+      setReleaseNotesAr(versionRes.data.release_notes || '');
+      setVersionHistory(historyRes.data.history || []);
     } catch (err) {
       console.error('Failed to fetch version:', err);
     }
   };
 
+  // تحديث فوري - زيادة تلقائية
+  const handleQuickVersionUpdate = async () => {
+    setUpdatingVersion(true);
+    try {
+      const res = await api.post('/api/admin/app-version/update', {
+        force_refresh: true
+      });
+      toast.success(res.data.message || (lang === 'ar' ? 'تم نشر التحديث بنجاح!' : 'Update deployed!'));
+      fetchVersion();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل نشر التحديث' : 'Failed to deploy'));
+    } finally {
+      setUpdatingVersion(false);
+    }
+  };
+
+  // تحديث يدوي
   const handleUpdateVersion = async () => {
     if (!newVersion.trim()) {
       toast.error(lang === 'ar' ? 'يرجى إدخال رقم الإصدار' : 'Please enter version number');
@@ -163,12 +185,12 @@ export default function STASMirrorPage() {
     
     setUpdatingVersion(true);
     try {
-      await api.put('/api/settings/version', {
+      const res = await api.post('/api/admin/app-version/update', {
         version: newVersion.trim(),
-        release_notes_ar: releaseNotesAr.trim(),
-        release_notes_en: releaseNotesEn.trim()
+        release_notes: releaseNotesAr.trim() || releaseNotesEn.trim(),
+        force_refresh: true
       });
-      toast.success(lang === 'ar' ? 'تم تحديث الإصدار بنجاح' : 'Version updated successfully');
+      toast.success(res.data.message || (lang === 'ar' ? 'تم تحديث الإصدار بنجاح' : 'Version updated successfully'));
       setVersionDialogOpen(false);
       fetchVersion();
     } catch (err) {
