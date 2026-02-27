@@ -882,10 +882,15 @@ export default function AttendanceManagementPage() {
                   <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1">
                     <span className="text-sm text-green-700">
                       محدد: {selectedOutsideRows.length} سجل | 
-                      {' '}{selectedOutsideRows.reduce((sum, key) => {
-                        const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
-                        return sum + (rec?.total_hours || 0);
-                      }, 0).toFixed(1)} ساعة
+                      {' '}{(() => {
+                        const totalMins = Math.round(selectedOutsideRows.reduce((sum, key) => {
+                          const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
+                          return sum + ((rec?.total_hours || 0) * 60);
+                        }, 0));
+                        const hours = Math.floor(totalMins / 60);
+                        const mins = totalMins % 60;
+                        return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                      })()}
                     </span>
                     <Button
                       size="sm"
