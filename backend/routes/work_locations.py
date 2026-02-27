@@ -169,6 +169,87 @@ async def delete_work_location(location_id: str, user=Depends(get_current_user))
     return {"message": "Work location deleted"}
 
 
+@router.post("/{location_id}/execute")
+async def execute_work_location(location_id: str, user=Depends(get_current_user)):
+    """تنفيذ وتفعيل موقع عمل - STAS فقط"""
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه تنفيذ المواقع")
+    
+    location = await db.work_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="الموقع غير موجود")
+    
+    if location.get('status') == 'active':
+        raise HTTPException(status_code=400, detail="الموقع مُفعّل بالفعل")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.work_locations.update_one(
+        {"id": location_id},
+        {
+            "$set": {
+                "status": "active",
+                "is_active": True,
+                "executed_by": user['user_id'],
+                "executed_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    updated = await db.work_locations.find_one({"id": location_id}, {"_id": 0})
+    return {
+        "success": True,
+        "message_ar": f"تم تنفيذ وتفعيل الموقع: {location.get('name_ar')}",
+        "location": updated
+    }
+
+
+@router.post("/{location_id}/reject")
+async def reject_work_location(location_id: str, user=Depends(get_current_user)):
+    """رفض موقع عمل - STAS فقط"""
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه رفض المواقع")
+    
+    location = await db.work_locations.find_one({"id": location_id})
+    if not location:
+        raise HTTPException(status_code=404, detail="الموقع غير موجود")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    await db.work_locations.update_one(
+        {"id": location_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "is_active": False,
+                "rejected_by": user['user_id'],
+                "rejected_at": now,
+                "updated_at": now
+            }
+        }
+    )
+    
+    return {
+        "success": True,
+        "message_ar": f"تم رفض الموقع: {location.get('name_ar')}"
+    }
+
+
+@router.get("/pending/list")
+async def list_pending_locations(user=Depends(get_current_user)):
+    """عرض المواقع المعلقة بانتظار موافقة ستاس"""
+    if user.get('role') != 'stas':
+        raise HTTPException(status_code=403, detail="فقط STAS يمكنه عرض المواقع المعلقة")
+    
+    locations = await db.work_locations.find(
+        {"status": "pending_stas"},
+        {"_id": 0}
+    ).to_list(100)
+    
+    return {"pending_locations": locations, "count": len(locations)}
+
+
 @router.post("/{location_id}/assign")
 async def assign_employees(location_id: str, employee_ids: List[str], user=Depends(get_current_user)):
     """Assign employees to a work location - Sultan, Naif only (STAS monitors)"""
