@@ -626,13 +626,14 @@ export default function AttendanceManagementPage() {
                               <table className="w-full text-sm">
                                 <thead className="bg-[hsl(var(--navy)/0.05)]">
                                   <tr>
-                                    <th className="text-start p-2 font-medium">التاريخ</th>
+                                    <th className="text-center p-2 font-medium">اليوم</th>
+                                    <th className="text-center p-2 font-medium">الدخول تاريخ</th>
+                                    <th className="text-center p-2 font-medium">الخروج تاريخ</th>
+                                    <th className="text-center p-2 font-medium">موقع البصمة</th>
                                     <th className="text-center p-2 font-medium">الحالة</th>
-                                    <th className="text-center p-2 font-medium">بصمة الدخول</th>
-                                    <th className="text-center p-2 font-medium">بصمة الخروج</th>
-                                    <th className="text-center p-2 font-medium">تأخير</th>
-                                    <th className="text-center p-2 font-medium">مبكر</th>
-                                    <th className="text-start p-2 font-medium">البيان</th>
+                                    <th className="text-center p-2 font-medium">التأخير</th>
+                                    <th className="text-center p-2 font-medium">سبب التعديل</th>
+                                    <th className="text-center p-2 font-medium">ملاحظات</th>
                                     <th className="text-center p-2 font-medium">تعديل</th>
                                   </tr>
                                 </thead>
@@ -641,62 +642,64 @@ export default function AttendanceManagementPage() {
                                     const config = STATUS_CONFIG[day.status] || STATUS_CONFIG['PRESENT'];
                                     
                                     // استخراج التاريخ والوقت من بصمة الدخول
-                                    let checkInDate = '--/--';
-                                    let checkInTime = '--:--';
+                                    let checkInDateTime = '--/-- --:--';
                                     if (day.check_in_time) {
                                       const checkInParts = day.check_in_time.split('T');
                                       if (checkInParts.length >= 2) {
-                                        checkInDate = checkInParts[0].slice(5); // MM-DD
-                                        checkInTime = checkInParts[1].slice(0, 5); // HH:MM
+                                        const date = checkInParts[0]; // YYYY-MM-DD
+                                        const time = checkInParts[1].slice(0, 5); // HH:MM
+                                        checkInDateTime = `${date} ${time}`;
                                       }
                                     }
                                     
                                     // استخراج التاريخ والوقت من بصمة الخروج
-                                    let checkOutDate = '--/--';
-                                    let checkOutTime = '--:--';
+                                    let checkOutDateTime = '--/-- --:--';
                                     if (day.check_out_time) {
                                       const checkOutParts = day.check_out_time.split('T');
                                       if (checkOutParts.length >= 2) {
-                                        checkOutDate = checkOutParts[0].slice(5); // MM-DD
-                                        checkOutTime = checkOutParts[1].slice(0, 5); // HH:MM
+                                        const date = checkOutParts[0]; // YYYY-MM-DD
+                                        const time = checkOutParts[1].slice(0, 5); // HH:MM
+                                        checkOutDateTime = `${date} ${time}`;
                                       }
                                     }
                                     
+                                    // حساب إجمالي التأخير
+                                    const totalLate = (day.late_minutes || 0) + (day.early_leave_minutes || 0);
+                                    
                                     return (
                                       <tr key={idx} className={`border-t ${config.bg}`}>
-                                        <td className="p-2 font-mono text-xs">{day.date}</td>
+                                        <td className="p-2 text-center font-mono text-xs">{day.date}</td>
+                                        <td className="p-2 text-center">
+                                          <span className={`font-mono text-xs ${day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}`}>
+                                            {checkInDateTime}
+                                          </span>
+                                        </td>
+                                        <td className="p-2 text-center">
+                                          <span className={`font-mono text-xs ${day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}`}>
+                                            {checkOutDateTime}
+                                          </span>
+                                        </td>
+                                        <td className="p-2 text-center text-xs">
+                                          {day.work_location || '-'}
+                                        </td>
                                         <td className="p-2 text-center">
                                           <Badge variant="secondary" className={`text-xs ${config.text}`}>
                                             {day.status_ar || config.label}
                                           </Badge>
                                         </td>
                                         <td className="p-2 text-center">
-                                          <div className={`font-mono text-xs ${day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}`}>
-                                            <div>{checkInDate}</div>
-                                            <div className="text-sm font-semibold">{checkInTime}</div>
-                                          </div>
-                                        </td>
-                                        <td className="p-2 text-center">
-                                          <div className={`font-mono text-xs ${day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}`}>
-                                            <div>{checkOutDate}</div>
-                                            <div className="text-sm font-semibold">{checkOutTime}</div>
-                                          </div>
-                                        </td>
-                                        <td className="p-2 text-center">
-                                          {day.late_minutes > 0 ? (
-                                            <span className="text-amber-600 font-bold">{day.late_minutes}د</span>
+                                          {totalLate > 0 ? (
+                                            <span className="text-red-600 font-bold">{totalLate}د</span>
                                           ) : '-'}
                                         </td>
-                                        <td className="p-2 text-center">
-                                          {day.early_leave_minutes > 0 ? (
-                                            <span className="text-orange-600 font-bold">{day.early_leave_minutes}د</span>
-                                          ) : '-'}
+                                        <td className="p-2 text-xs text-center">
+                                          {day.correction_reason || day.penalty_reason_ar || '-'}
                                         </td>
                                         <td className="p-2 text-xs">
-                                          {day.penalty_reason_ar || (
+                                          {day.notes || (
                                             day.status === 'ABSENT' ? 'غياب - خصم يوم' :
-                                            day.late_minutes > 0 || day.early_leave_minutes > 0 ? 'نقص ساعات' :
-                                            'لا خصم'
+                                            totalLate > 0 ? 'نقص ساعات' :
+                                            '-'
                                           )}
                                         </td>
                                         <td className="p-2 text-center">
