@@ -268,7 +268,7 @@ export default function AttendanceManagementPage() {
   const handleRunDailyProcess = async () => {
     try {
       toast.info('جاري تشغيل التحضير...');
-      const res = await api.post('/api/attendance-engine/run-daily', {
+      const res = await api.post('/api/attendance-engine/jobs/daily', {
         target_date: endDate
       });
       toast.success(res.data?.message || 'تم تشغيل التحضير بنجاح');
