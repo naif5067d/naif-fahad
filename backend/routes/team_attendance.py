@@ -513,7 +513,7 @@ async def update_employee_status(
     employee_id: str,
     date: str,
     body: StatusUpdateRequest,
-    user=Depends(require_roles('sultan', 'naif', 'stas'))
+    user=Depends(require_roles('sultan', 'naif', 'stas', 'supervisor'))
 ):
     """
     تعديل حالة الموظف - سلطان/نايف/STAS فقط (قرار نهائي ونافذ)
