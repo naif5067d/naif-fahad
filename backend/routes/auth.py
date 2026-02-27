@@ -376,7 +376,9 @@ async def login(req: LoginRequest, request: Request):
             "browser": browser,
             "os": os_name,
             "is_mobile": is_mobile,
-            "status": "active"
+            "status": "active",
+            "fingerprint_data": req.fingerprint_data,  # إضافة بصمة الجهاز الكاملة
+            "core_signature": generate_core_hardware_signature(req.fingerprint_data) if req.fingerprint_data else None
         })
         logger.info(f"Login session created for {employee_id or user_id}")
     except Exception as e:
