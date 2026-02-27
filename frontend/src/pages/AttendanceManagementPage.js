@@ -727,6 +727,7 @@ export default function AttendanceManagementPage() {
                                                 status: day.status,
                                                 reason: ''
                                               });
+                                              setStatusAcknowledged(false); // reset التعهد
                                               setShowStatusDialog(true);
                                             }}
                                           >
