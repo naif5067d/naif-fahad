@@ -2441,6 +2441,10 @@ async def count_outside_hours_as_attendance(
     
     - إذا hours_to_count = None → احتساب كحضور كامل (تحويل الغياب إلى حاضر)
     - إذا hours_to_count = قيمة → تعويض ساعات تأخير بهذا القدر
+    
+    قواعد التعويض:
+    - لا يمكن التعويض إذا تجاوز العجز 7 ساعات (420 دقيقة)
+    - لا يمكن التعويض بعد تنفيذ الخصم
     """
     # التحقق من وجود بصمة خارج الدوام
     outside_record = await db.attendance_ledger.find_one({
@@ -2465,6 +2469,21 @@ async def count_outside_hours_as_attendance(
     
     if existing_deduction:
         raise HTTPException(400, "لا يمكن التعويض - تم تنفيذ خصم لهذا الشهر")
+    
+    # التحقق من قاعدة 7 ساعات (إذا كان تعويض ساعات)
+    if req.hours_to_count is not None:
+        daily = await db.daily_status.find_one(
+            {"employee_id": req.employee_id, "date": req.date},
+            {"_id": 0}
+        )
+        
+        if daily:
+            total_deficit_minutes = (daily.get("late_minutes", 0) or 0) + (daily.get("early_leave_minutes", 0) or 0)
+            if total_deficit_minutes > 420:  # 7 ساعات = 420 دقيقة
+                raise HTTPException(
+                    400, 
+                    f"لا يمكن التعويض - العجز ({total_deficit_minutes} دقيقة) يتجاوز الحد المسموح (7 ساعات). يرجى إنشاء معاملة خصم."
+                )
     
     now = datetime.now(timezone.utc).isoformat()
     
