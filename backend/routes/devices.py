@@ -249,6 +249,35 @@ async def set_primary_device(
 
 # ==================== LOGIN SESSIONS - سجل الدخول والخروج ====================
 
+@router.get("/all-sessions")
+async def get_all_active_sessions(
+    status: str = "active",
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    جلب جميع الجلسات (للوحة الأمان)
+    """
+    query = {}
+    if status == "active":
+        query["status"] = "active"
+    
+    sessions = await db.login_sessions.find(
+        query,
+        {"_id": 0}
+    ).sort("login_at", -1).limit(500).to_list(500)
+    
+    # إضافة اسم الموظف
+    for session in sessions:
+        emp = await db.employees.find_one(
+            {"id": session.get('employee_id')},
+            {"_id": 0, "full_name_ar": 1, "employee_number": 1}
+        )
+        session['employee_name'] = emp.get('full_name_ar', '') if emp else session.get('username', '')
+        session['employee_number'] = emp.get('employee_number', '') if emp else ''
+    
+    return sessions
+
+
 @router.get("/login-sessions")
 async def get_all_login_sessions(
     employee_id: Optional[str] = None,
