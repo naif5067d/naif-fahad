@@ -2325,3 +2325,213 @@ async def execute_early_leave(
         "message": f"تم تنفيذ الطلب {'مع الخصم' if deduct_from_balance else 'كإعفاء'}",
         "deducted": deduct_from_balance
     }
+
+
+
+# ============================================================
+# جدول خارج أوقات العمل
+# ============================================================
+
+@router.get("/outside-hours")
+async def get_outside_hours_records(
+    start_date: str = Query(..., description="تاريخ البداية YYYY-MM-DD"),
+    end_date: str = Query(..., description="تاريخ النهاية YYYY-MM-DD"),
+    employee_ids: Optional[str] = Query(None, description="معرفات الموظفين مفصولة بفاصلة"),
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    جلب سجلات البصمة خارج أوقات العمل
+    - البصمات بعد انتهاء الدوام الرسمي + فترة السماح
+    - البصمات في الويكند
+    """
+    query = {
+        "date": {"$gte": start_date, "$lte": end_date},
+        "$or": [
+            {"category": "outside_hours"},
+            {"category": "weekend"},
+            {"is_official": False}
+        ]
+    }
+    
+    if employee_ids:
+        emp_list = [e.strip() for e in employee_ids.split(',')]
+        query["employee_id"] = {"$in": emp_list}
+    
+    # جلب البصمات خارج الدوام
+    records = await db.attendance_ledger.find(
+        query, {"_id": 0}
+    ).sort([("date", -1), ("timestamp", -1)]).to_list(1000)
+    
+    # تجميع البيانات حسب الموظف والتاريخ
+    employee_data = {}
+    for rec in records:
+        emp_id = rec.get("employee_id")
+        date = rec.get("date")
+        key = f"{emp_id}_{date}"
+        
+        if key not in employee_data:
+            employee_data[key] = {
+                "employee_id": emp_id,
+                "date": date,
+                "check_in": None,
+                "check_out": None,
+                "check_in_time": None,
+                "check_out_time": None,
+                "total_hours": 0,
+                "work_location": rec.get("work_location"),
+                "category": rec.get("category", "outside_hours"),
+                "color": "orange" if rec.get("category") == "weekend" else "yellow"
+            }
+        
+        if rec.get("type") == "check_in":
+            employee_data[key]["check_in"] = rec.get("timestamp")
+            employee_data[key]["check_in_time"] = rec.get("time")
+        elif rec.get("type") == "check_out":
+            employee_data[key]["check_out"] = rec.get("timestamp")
+            employee_data[key]["check_out_time"] = rec.get("time")
+    
+    # حساب الساعات
+    result = []
+    for key, data in employee_data.items():
+        if data["check_in"] and data["check_out"]:
+            try:
+                checkin_dt = datetime.fromisoformat(data["check_in"].replace('Z', '+00:00'))
+                checkout_dt = datetime.fromisoformat(data["check_out"].replace('Z', '+00:00'))
+                diff = (checkout_dt - checkin_dt).total_seconds() / 3600
+                data["total_hours"] = round(diff, 2)
+            except:
+                pass
+        
+        # جلب اسم الموظف
+        emp = await db.employees.find_one({"id": data["employee_id"]}, {"_id": 0, "full_name_ar": 1, "full_name": 1})
+        data["employee_name_ar"] = emp.get("full_name_ar") if emp else data["employee_id"]
+        data["employee_name"] = emp.get("full_name") if emp else data["employee_id"]
+        
+        result.append(data)
+    
+    # ترتيب حسب التاريخ
+    result.sort(key=lambda x: x["date"], reverse=True)
+    
+    return {
+        "records": result,
+        "total_records": len(result),
+        "summary": {
+            "total_hours": sum(r["total_hours"] for r in result),
+            "unique_employees": len(set(r["employee_id"] for r in result)),
+            "unique_dates": len(set(r["date"] for r in result))
+        }
+    }
+
+
+class CountAsAttendanceRequest(BaseModel):
+    """طلب احتساب بصمة خارج الدوام كحضور"""
+    employee_id: str
+    date: str
+    hours_to_count: Optional[float] = None  # لتعويض التأخير، None = احتساب كحضور كامل
+    note: Optional[str] = ""
+
+
+@router.post("/outside-hours/count-as-attendance")
+async def count_outside_hours_as_attendance(
+    req: CountAsAttendanceRequest,
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    احتساب بصمة خارج أوقات العمل كحضور أو تعويض ساعات
+    
+    - إذا hours_to_count = None → احتساب كحضور كامل (تحويل الغياب إلى حاضر)
+    - إذا hours_to_count = قيمة → تعويض ساعات تأخير بهذا القدر
+    """
+    # التحقق من وجود بصمة خارج الدوام
+    outside_record = await db.attendance_ledger.find_one({
+        "employee_id": req.employee_id,
+        "date": req.date,
+        "$or": [
+            {"category": "outside_hours"},
+            {"category": "weekend"},
+            {"is_official": False}
+        ]
+    }, {"_id": 0})
+    
+    if not outside_record:
+        raise HTTPException(404, "لا توجد بصمة خارج أوقات العمل لهذا الموظف في هذا التاريخ")
+    
+    # التحقق من عدم وجود خصم منفذ
+    existing_deduction = await db.deduction_transactions.find_one({
+        "employee_id": req.employee_id,
+        "month": req.date[:7],
+        "status": "executed"
+    })
+    
+    if existing_deduction:
+        raise HTTPException(400, "لا يمكن التعويض - تم تنفيذ خصم لهذا الشهر")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    if req.hours_to_count is None:
+        # احتساب كحضور كامل
+        await db.daily_status.update_one(
+            {"employee_id": req.employee_id, "date": req.date},
+            {
+                "$set": {
+                    "final_status": "PRESENT",
+                    "status_ar": "حاضر",
+                    "late_minutes": 0,
+                    "early_leave_minutes": 0,
+                    "compensation_source": "outside_hours",
+                    "compensation_by": user["user_id"],
+                    "compensation_at": now,
+                    "compensation_note": req.note or "احتساب من خارج أوقات العمل"
+                }
+            },
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "message": f"تم احتساب {req.date} كحضور للموظف",
+            "action": "full_attendance"
+        }
+    else:
+        # تعويض ساعات فقط
+        daily = await db.daily_status.find_one(
+            {"employee_id": req.employee_id, "date": req.date},
+            {"_id": 0}
+        )
+        
+        if not daily:
+            raise HTTPException(404, "لا يوجد سجل حضور لهذا اليوم")
+        
+        current_late = daily.get("late_minutes", 0) or 0
+        current_early = daily.get("early_leave_minutes", 0) or 0
+        total_deficit = current_late + current_early
+        
+        # تحويل الساعات إلى دقائق
+        compensation_minutes = req.hours_to_count * 60
+        
+        new_late = max(0, current_late - compensation_minutes)
+        remaining_comp = compensation_minutes - (current_late - new_late)
+        new_early = max(0, current_early - remaining_comp)
+        
+        await db.daily_status.update_one(
+            {"employee_id": req.employee_id, "date": req.date},
+            {
+                "$set": {
+                    "late_minutes": new_late,
+                    "early_leave_minutes": new_early,
+                    "compensated_minutes": compensation_minutes,
+                    "compensation_source": "outside_hours",
+                    "compensation_by": user["user_id"],
+                    "compensation_at": now,
+                    "compensation_note": req.note or f"تعويض {req.hours_to_count} ساعة"
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "message": f"تم تعويض {req.hours_to_count} ساعة",
+            "action": "hours_compensation",
+            "before": {"late": current_late, "early": current_early},
+            "after": {"late": new_late, "early": new_early}
+        }
