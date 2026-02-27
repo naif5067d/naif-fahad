@@ -101,10 +101,18 @@ export default function AttendanceManagementPage() {
   // Dialogs
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [statusForm, setStatusForm] = useState({ employee_id: '', date: '', status: '', reason: '' });
+  const [statusAcknowledged, setStatusAcknowledged] = useState(false); // تعهد المسؤولية
   const [showDeductionDialog, setShowDeductionDialog] = useState(false);
   const [deductionForm, setDeductionForm] = useState({ employee_id: '', amount: 0, reason: '', month: '' });
   const [showCompensateDialog, setShowCompensateDialog] = useState(false);
   const [compensateForm, setCompensateForm] = useState({ employee_id: '', date: '', hours: null, note: '' });
+
+  // التحقق من صلاحية عرض معاملات الخصم (للمدراء الرئيسيين فقط)
+  const canViewDeductions = useMemo(() => {
+    const allowedRoles = ['sultan', 'stas', 'naif', 'mohammed'];
+    return allowedRoles.includes(user?.role?.toLowerCase()) || 
+           allowedRoles.includes(user?.username?.toLowerCase());
+  }, [user]);
 
   // Fetch employees
   useEffect(() => {
