@@ -331,74 +331,120 @@ export default function AttendanceManagementPage() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-3 items-end flex-wrap">
-            {/* Multi-select Employees */}
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-xs mb-1 block">الموظفين</Label>
-              <Select
-                value={selectedEmployees.length === 0 ? 'all' : selectedEmployees.length === 1 ? selectedEmployees[0] : 'multiple'}
-                onValueChange={(v) => {
-                  if (v === 'all') setSelectedEmployees([]);
-                  else if (v !== 'multiple') setSelectedEmployees([v]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue>
-                    {selectedEmployees.length === 0 
-                      ? 'جميع الموظفين' 
-                      : selectedEmployees.length === 1 
-                        ? employees.find(e => e.id === selectedEmployees[0])?.full_name_ar || 'موظف محدد'
-                        : `${selectedEmployees.length} موظفين`}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع الموظفين</SelectItem>
-                  {employees.map(emp => (
-                    <SelectItem key={emp.id} value={emp.id}>
+          <div className="flex flex-col gap-4">
+            {/* Multi-select Employees with Checkboxes */}
+            <div>
+              <Label className="text-xs mb-2 block font-medium">تحديد الموظفين</Label>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/20 max-h-[200px] overflow-y-auto">
+                {/* Select All / Deselect All */}
+                <Button
+                  variant={selectedEmployees.length === 0 ? "default" : "outline"}
+                  size="sm"
+                  className={selectedEmployees.length === 0 ? "bg-[hsl(var(--navy))]" : ""}
+                  onClick={() => setSelectedEmployees([])}
+                >
+                  الكل
+                </Button>
+                
+                {employees.map((emp, idx) => {
+                  const isSelected = selectedEmployees.includes(emp.id);
+                  const selectionOrder = selectedEmployees.indexOf(emp.id) + 1;
+                  
+                  return (
+                    <Button
+                      key={emp.id}
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className={`relative ${isSelected ? "bg-[hsl(var(--navy))] pr-8" : ""}`}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedEmployees(prev => prev.filter(id => id !== emp.id));
+                        } else {
+                          setSelectedEmployees(prev => [...prev, emp.id]);
+                        }
+                      }}
+                    >
+                      {isSelected && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white text-[hsl(var(--navy))] text-xs font-bold flex items-center justify-center">
+                          {selectionOrder}
+                        </span>
+                      )}
                       {emp.full_name_ar || emp.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              {/* Selected Summary */}
+              {selectedEmployees.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                  <span className="text-xs text-muted-foreground">المحدد:</span>
+                  {selectedEmployees.map((empId, idx) => {
+                    const emp = employees.find(e => e.id === empId);
+                    return (
+                      <Badge 
+                        key={empId} 
+                        variant="secondary" 
+                        className="text-xs cursor-pointer hover:bg-red-100"
+                        onClick={() => setSelectedEmployees(prev => prev.filter(id => id !== empId))}
+                      >
+                        {idx + 1}. {emp?.full_name_ar || emp?.full_name} ×
+                      </Badge>
+                    );
+                  })}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-red-500 hover:text-red-700"
+                    onClick={() => setSelectedEmployees([])}
+                  >
+                    مسح الكل
+                  </Button>
+                </div>
+              )}
             </div>
             
-            {/* Date Range */}
-            <div className="flex gap-2">
-              <div>
-                <Label className="text-xs mb-1 block">من</Label>
-                <Input 
-                  type="date" 
-                  value={startDate} 
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-[130px]"
-                />
+            {/* Date Range and Actions */}
+            <div className="flex flex-col md:flex-row gap-3 items-end flex-wrap">
+              {/* Date Range */}
+              <div className="flex gap-2">
+                <div>
+                  <Label className="text-xs mb-1 block">من تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">إلى تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
               </div>
-              <div>
-                <Label className="text-xs mb-1 block">إلى</Label>
-                <Input 
-                  type="date" 
-                  value={endDate} 
-                  onChange={e => setEndDate(e.target.value)}
-                  className="w-[130px]"
-                />
-              </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleRunDailyProcess}
-                title="تشغيل التحضير التلقائي لليوم المحدد"
-              >
-                <RefreshCw size={16} className="ml-1" />
-                تحضير
-              </Button>
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer size={16} className="ml-1" />
-                طباعة
-              </Button>
+              
+              <div className="flex-1" />
+              
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRunDailyProcess}
+                  title="تشغيل التحضير التلقائي لليوم المحدد"
+                >
+                  <RefreshCw size={16} className="ml-1" />
+                  تحضير
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Printer size={16} className="ml-1" />
+                  طباعة {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
+                </Button>
               <Button 
                 size="sm" 
                 className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))]"
