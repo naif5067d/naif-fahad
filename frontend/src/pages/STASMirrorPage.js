@@ -830,15 +830,6 @@ export default function STASMirrorPage() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="devices" data-testid="tab-devices" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
-            <Smartphone size={16} />
-            <span className="hidden sm:inline">{lang === 'ar' ? 'الأجهزة' : 'Devices'}</span>
-            {pendingDevices.length > 0 && (
-              <span className="bg-warning text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                {pendingDevices.length}
-              </span>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="my-transactions" data-testid="tab-my-transactions" className="rounded-lg flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md transition-all">
             <FileText size={16} />
             <span className="hidden sm:inline">{lang === 'ar' ? 'معاملاتي' : 'My Trans'}</span>
