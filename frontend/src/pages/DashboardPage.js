@@ -334,14 +334,19 @@ export default function DashboardPage() {
     
     setAcknowledgingSummon(summonId);
     try {
-      await api.post(`/api/notifications/summons/${summonId}/acknowledge`, null, {
-        params: { reply: reply || undefined }
-      });
+      // إرسال الرد كـ query parameter (الباك اند يتوقع query param)
+      const url = reply.trim() 
+        ? `/api/notifications/summons/${summonId}/acknowledge?reply=${encodeURIComponent(reply)}`
+        : `/api/notifications/summons/${summonId}/acknowledge`;
+      await api.post(url);
+      
       setActiveSummons(prev => prev.filter(s => s.id !== summonId));
       setSummonReply(prev => ({ ...prev, [summonId]: '' }));
       setShowReplyInput(prev => ({ ...prev, [summonId]: false }));
+      toast.success(lang === 'ar' ? 'تم إرسال الرد بنجاح' : 'Reply sent successfully');
     } catch (err) {
       console.error('Failed to acknowledge summon', err);
+      toast.error(lang === 'ar' ? 'خطأ في إرسال الرد' : 'Failed to send reply');
     }
     setAcknowledgingSummon(null);
   };
