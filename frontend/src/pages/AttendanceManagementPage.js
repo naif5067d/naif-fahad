@@ -999,7 +999,12 @@ export default function AttendanceManagementPage() {
                             </td>
                             <td className="p-3 text-center">
                               <Badge className={`${isSelected ? 'bg-green-200 text-green-800' : 'bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]'}`}>
-                                {rec.total_hours?.toFixed(1) || 0} س
+                                {(() => {
+                                  const totalMins = Math.round((rec.total_hours || 0) * 60);
+                                  const hours = Math.floor(totalMins / 60);
+                                  const mins = totalMins % 60;
+                                  return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                                })()}
                               </Badge>
                             </td>
                             <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
