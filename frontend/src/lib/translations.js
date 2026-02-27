@@ -12,6 +12,7 @@ export const translations = {
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
       attendancePenalties: "Attendance & Penalties", loginSessions: "Login Sessions", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS",
+      deductionTransactions: "Deduction Transactions",
       policies: "Policies", soundSettings: "Sound Settings", controlPanel: "Control Panel"
     },
     login: {
