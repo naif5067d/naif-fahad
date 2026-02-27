@@ -92,7 +92,7 @@ const PATHS = {
   contractsManagement: '/contracts-management', settlement: '/settlement', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance', myFinances: '/my-finances', teamAttendance: '/team-attendance', penalties: '/penalties',
-  attendancePenalties: '/team-attendance', deviceMonitoring: '/device-monitoring', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
+  attendancePenalties: '/team-attendance', deviceMonitoring: '/device-monitoring', security: '/security', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
   deductionTransactions: '/deduction-transactions',
   executive: '/executive', ats: '/ats', policies: '/policies', soundSettings: '/sound-settings', controlPanel: '/control-panel',
 };
