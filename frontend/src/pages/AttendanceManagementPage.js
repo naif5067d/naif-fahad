@@ -58,19 +58,19 @@ import {
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
-// ألوان الحالات
+// ألوان الحالات - باستخدام ألوان الشركة الرسمية فقط
 const STATUS_CONFIG = {
-  'PRESENT': { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'حاضر', icon: '✅' },
-  'ABSENT': { bg: 'bg-red-100', text: 'text-red-700', label: 'غائب', icon: '❌' },
-  'LATE': { bg: 'bg-amber-100', text: 'text-amber-700', label: 'متأخر', icon: '⏰' },
-  'ON_LEAVE': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'مجاز', icon: '🏖️' },
-  'ON_MISSION': { bg: 'bg-purple-100', text: 'text-purple-700', label: 'مهمة', icon: '🚗' },
-  'WEEKEND': { bg: 'bg-slate-100', text: 'text-slate-500', label: 'نهاية أسبوع', icon: '📅' },
-  'HOLIDAY': { bg: 'bg-indigo-100', text: 'text-indigo-600', label: 'عطلة رسمية', icon: '🎉' },
-  'EXEMPTED': { bg: 'bg-gray-100', text: 'text-gray-600', label: 'إعفاء', icon: '🆓' },
-  'EXCUSED': { bg: 'bg-gray-100', text: 'text-gray-600', label: 'معذور', icon: '✔️' },
-  'PERMISSION': { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'استئذان', icon: '🙋' },
-  'EARLY_LEAVE': { bg: 'bg-orange-100', text: 'text-orange-700', label: 'خروج مبكر', icon: '🚪' },
+  'PRESENT': { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'حاضر' },
+  'ABSENT': { bg: 'bg-red-50', text: 'text-red-700', label: 'غائب' },
+  'LATE': { bg: 'bg-amber-50', text: 'text-amber-700', label: 'متأخر' },
+  'ON_LEAVE': { bg: 'bg-blue-50', text: 'text-blue-700', label: 'مجاز' },
+  'ON_MISSION': { bg: 'bg-purple-50', text: 'text-purple-700', label: 'مهمة' },
+  'WEEKEND': { bg: 'bg-slate-50', text: 'text-slate-500', label: 'نهاية أسبوع' },
+  'HOLIDAY': { bg: 'bg-indigo-50', text: 'text-indigo-600', label: 'عطلة رسمية' },
+  'EXEMPTED': { bg: 'bg-gray-50', text: 'text-gray-600', label: 'إعفاء' },
+  'EXCUSED': { bg: 'bg-gray-50', text: 'text-gray-600', label: 'معذور' },
+  'PERMISSION': { bg: 'bg-cyan-50', text: 'text-cyan-700', label: 'استئذان' },
+  'EARLY_LEAVE': { bg: 'bg-orange-50', text: 'text-orange-700', label: 'خروج مبكر' },
 };
 
 export default function AttendanceManagementPage() {
@@ -198,11 +198,9 @@ export default function AttendanceManagementPage() {
     }
     
     try {
-      await api.post(`/api/team-attendance/correct-status`, {
-        employee_id: statusForm.employee_id,
-        date: statusForm.date,
+      await api.post(`/api/team-attendance/${statusForm.employee_id}/update-status?date=${statusForm.date}`, {
         new_status: statusForm.status,
-        reason: statusForm.reason
+        reason: statusForm.reason || 'تعديل إداري'
       });
       toast.success('تم تعديل الحالة بنجاح');
       setShowStatusDialog(false);
