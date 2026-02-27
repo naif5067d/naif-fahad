@@ -60,6 +60,8 @@ const NAV_ITEMS = {
     'financialCustody', 'custody',
     // 📊 التقارير
     'executive', 'maintenanceTracking', 'ats',
+    // 🔐 مراقبة الأجهزة
+    'deviceMonitoring',
     // 🔧 لوحة التحكم (STAS فقط)
     'controlPanel',
     // 🪞 مرآة ستاس (مستقلة)
