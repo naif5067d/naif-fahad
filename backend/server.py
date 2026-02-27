@@ -121,6 +121,7 @@ app.include_router(ats_admin_router)
 app.include_router(ats_public_router)
 app.include_router(policies_router)
 app.include_router(deduction_transactions_router)
+app.include_router(security_router)
 
 app.add_middleware(
     CORSMiddleware,
