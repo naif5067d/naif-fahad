@@ -28,16 +28,6 @@ const CONTROL_ITEMS = [
     descEn: 'Company name, logo, basic information'
   },
   {
-    id: 'loginSessions',
-    icon: History,
-    path: '/login-sessions',
-    color: 'bg-orange-500',
-    titleAr: 'جلسات الدخول',
-    titleEn: 'Login Sessions',
-    descAr: 'مراقبة جلسات المستخدمين، تسجيل الخروج الإجباري',
-    descEn: 'Monitor user sessions, force logout'
-  },
-  {
     id: 'soundSettings',
     icon: Volume2,
     path: '/sound-settings',
