@@ -322,6 +322,33 @@ export default function AttendanceManagementPage() {
     }
   };
 
+  // طباعة تقرير خارج العمل الرسمي
+  const handlePrintOutsideHours = async () => {
+    try {
+      const params = {
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      
+      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      toast.success('تم فتح التقرير');
+    } catch (err) {
+      toast.error('خطأ في طباعة التقرير');
+    }
+  };
+
   return (
     <div className="space-y-4 p-4 md:p-6" dir="rtl">
       {/* Header */}
