@@ -1818,7 +1818,16 @@ async def print_attendance_report(
             status_data = status_map.get(key, {})
             attend_data = attendance_map.get(key, {})
             
+            # التحقق من يوم الجمعة (عطلة نهاية أسبوع)
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            day_name = day_names_ar[dt.weekday()]
+            is_friday = dt.weekday() == 4  # الجمعة
+            
             final_status = status_data.get('final_status', 'NOT_REGISTERED')
+            
+            # إذا كان يوم الجمعة ولم يكن هناك حالة محددة، اعتبره عطلة
+            if is_friday and final_status in ['NOT_REGISTERED', 'NOT_PROCESSED']:
+                final_status = 'WEEKEND'
             
             # حساب الإحصائيات
             if final_status in ['PRESENT', 'LATE', 'ON_MISSION', 'EARLY_LEAVE', 'PERMISSION']:
@@ -1832,20 +1841,23 @@ async def print_attendance_report(
             
             # عرض التاريخ والوقت معاً
             check_in_display = '-'
-            if raw_check_in:
-                if 'T' in str(raw_check_in):
-                    parts = str(raw_check_in).split('T')
-                    check_in_display = f"{parts[0]} {parts[1][:5]}"
-                else:
-                    check_in_display = str(raw_check_in)[:16]
-            
             check_out_display = '-'
-            if raw_check_out:
-                if 'T' in str(raw_check_out):
-                    parts = str(raw_check_out).split('T')
-                    check_out_display = f"{parts[0]} {parts[1][:5]}"
-                else:
-                    check_out_display = str(raw_check_out)[:16]
+            
+            # لا نعرض بصمات في أيام العطل
+            if final_status not in ['WEEKEND', 'HOLIDAY']:
+                if raw_check_in:
+                    if 'T' in str(raw_check_in):
+                        parts = str(raw_check_in).split('T')
+                        check_in_display = f"{parts[0]} {parts[1][:5]}"
+                    else:
+                        check_in_display = str(raw_check_in)[:16]
+                
+                if raw_check_out:
+                    if 'T' in str(raw_check_out):
+                        parts = str(raw_check_out).split('T')
+                        check_out_display = f"{parts[0]} {parts[1][:5]}"
+                    else:
+                        check_out_display = str(raw_check_out)[:16]
             
             # التأخير (تأخير + خروج مبكر)
             late_min = (status_data.get('late_minutes', 0) or 0) + (status_data.get('early_leave_minutes', 0) or 0)
@@ -1862,9 +1874,11 @@ async def print_attendance_report(
             if modified_by or source == 'manual_correction':
                 note = f"تعديل: {note}" if note else "تعديل إداري"
             
-            # اسم اليوم
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
-            day_name = day_names_ar[dt.weekday()]
+            # ملاحظة خاصة للعطل
+            if final_status == 'WEEKEND':
+                note = 'عطلة نهاية أسبوع'
+            elif final_status == 'HOLIDAY':
+                note = 'عطلة رسمية'
             
             table_data.append([
                 str(day_idx),
