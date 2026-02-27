@@ -24,6 +24,8 @@ const NAV_ITEMS = {
     'financialCustody', 'custody',
     // 📊 التقارير
     'executive', 'maintenanceTracking', 'ats',
+    // 🔐 مراقبة الأجهزة
+    'deviceMonitoring',
     // 📚 المرجع
     'policies'
   ],
