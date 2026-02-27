@@ -1,238 +1,402 @@
+/**
+ * Advanced Security Command Center - مركز قيادة الأمان المتقدم
+ * ============================================================
+ * لوحة تحكم أمنية متقدمة لكشف التلاعب وإدارة الحسابات
+ * V2.0 - Enterprise Security Dashboard
+ */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Shield, Search, User, Smartphone, Monitor, Tablet, Laptop,
-  Clock, Calendar, AlertTriangle, Eye, RefreshCw, Lock, Unlock,
-  Cpu, HardDrive, Wifi, Battery, Activity, Globe, Server,
-  CheckCircle, XCircle, History, Fingerprint, Signal, Zap
+  Shield, ShieldAlert, ShieldCheck, ShieldOff, ShieldX,
+  Search, User, Users, UserX, UserCheck, UserCog,
+  Smartphone, Monitor, Tablet, Laptop, Cpu, HardDrive,
+  Clock, Calendar, AlertTriangle, AlertCircle, AlertOctagon,
+  Eye, EyeOff, RefreshCw, Lock, Unlock, LogOut,
+  Activity, Globe, Server, Signal, Zap, Power,
+  CheckCircle, XCircle, History, Fingerprint, Wifi,
+  ChevronDown, ChevronUp, ChevronRight, MoreVertical,
+  Ban, Check, X, Trash2, FileText, Download,
+  Radio, Circle, CircleDot, CircleOff, 
+  Settings, Bell, BellOff, BellRing
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Parse User Agent to get device info
+// ==================== UTILITY FUNCTIONS ====================
+
 const parseUserAgent = (ua) => {
   if (!ua) return { device: 'Unknown', os: '', browser: '', deviceType: 'desktop' };
-  
   const uaLower = ua.toLowerCase();
   
-  // Device Detection
-  let device = '';
-  let deviceType = 'desktop';
-  let os = '';
-  let browser = '';
+  let device = '', deviceType = 'desktop', os = '', browser = '';
   
-  // iPhone Detection
   if (uaLower.includes('iphone')) {
-    deviceType = 'mobile';
-    os = 'iOS';
-    
-    // Try to detect iPhone model from screen or UA
-    if (uaLower.includes('iphone14') || ua.includes('iPhone14')) device = 'iPhone 14';
-    else if (uaLower.includes('iphone15') || ua.includes('iPhone15')) device = 'iPhone 15';
-    else if (uaLower.includes('iphone13') || ua.includes('iPhone13')) device = 'iPhone 13';
-    else if (uaLower.includes('iphone12') || ua.includes('iPhone12')) device = 'iPhone 12';
-    else device = 'iPhone';
-    
-    // iOS Version
-    const iosMatch = ua.match(/iPhone OS (\d+)_(\d+)/);
-    if (iosMatch) os = `iOS ${iosMatch[1]}.${iosMatch[2]}`;
-  }
-  // iPad Detection
-  else if (uaLower.includes('ipad') || (uaLower.includes('macintosh') && 'ontouchend' in document)) {
-    deviceType = 'tablet';
-    device = 'iPad';
-    os = 'iPadOS';
-  }
-  // Mac Detection
-  else if (uaLower.includes('macintosh') || uaLower.includes('mac os')) {
-    deviceType = 'desktop';
-    device = 'Mac';
-    os = 'macOS';
-    const macMatch = ua.match(/Mac OS X (\d+)[_.](\d+)/);
-    if (macMatch) os = `macOS ${macMatch[1]}.${macMatch[2]}`;
-  }
-  // Android Detection
-  else if (uaLower.includes('android')) {
-    os = 'Android';
-    const androidMatch = ua.match(/Android\s*(\d+\.?\d*)/i);
-    if (androidMatch) os = `Android ${androidMatch[1]}`;
-    
-    // Samsung
-    if (uaLower.includes('samsung') || uaLower.includes('sm-')) {
-      deviceType = 'mobile';
-      if (uaLower.includes('sm-s9') || uaLower.includes('s24')) device = 'Samsung Galaxy S24';
-      else if (uaLower.includes('sm-s9') || uaLower.includes('s23')) device = 'Samsung Galaxy S23';
-      else if (uaLower.includes('sm-a')) device = 'Samsung Galaxy A';
-      else if (uaLower.includes('sm-t') || uaLower.includes('tab')) {
-        device = 'Samsung Galaxy Tab';
-        deviceType = 'tablet';
-      }
-      else device = 'Samsung Galaxy';
-    }
-    // Huawei
-    else if (uaLower.includes('huawei') || uaLower.includes('honor')) {
-      deviceType = 'mobile';
-      device = 'Huawei';
-    }
-    // Xiaomi
-    else if (uaLower.includes('xiaomi') || uaLower.includes('redmi') || uaLower.includes('poco')) {
-      deviceType = 'mobile';
-      if (uaLower.includes('redmi note')) device = 'Redmi Note';
-      else if (uaLower.includes('redmi')) device = 'Redmi';
-      else if (uaLower.includes('poco')) device = 'Poco';
-      else device = 'Xiaomi';
-    }
-    // Generic Android
-    else {
-      deviceType = uaLower.includes('mobile') ? 'mobile' : 'tablet';
-      const modelMatch = ua.match(/;\s*([^;)]+)\s*Build/i);
-      device = modelMatch ? modelMatch[1].trim() : 'Android Device';
-    }
-  }
-  // Windows Detection
-  else if (uaLower.includes('windows')) {
-    deviceType = 'desktop';
-    device = 'Windows PC';
-    const winMatch = ua.match(/Windows NT (\d+\.?\d*)/);
-    if (winMatch) {
-      const ver = parseFloat(winMatch[1]);
-      if (ver >= 10) os = 'Windows 10/11';
-      else if (ver >= 6.3) os = 'Windows 8.1';
-      else if (ver >= 6.1) os = 'Windows 7';
-      else os = 'Windows';
-    }
-  }
-  // Linux Detection
-  else if (uaLower.includes('linux') && !uaLower.includes('android')) {
-    deviceType = 'desktop';
-    device = 'Linux PC';
-    os = 'Linux';
+    deviceType = 'mobile'; os = 'iOS'; device = 'iPhone';
+  } else if (uaLower.includes('ipad')) {
+    deviceType = 'tablet'; device = 'iPad'; os = 'iPadOS';
+  } else if (uaLower.includes('macintosh')) {
+    deviceType = 'desktop'; device = 'Mac'; os = 'macOS';
+  } else if (uaLower.includes('android')) {
+    deviceType = 'mobile'; os = 'Android';
+    if (uaLower.includes('samsung')) device = 'Samsung';
+    else if (uaLower.includes('huawei')) device = 'Huawei';
+    else if (uaLower.includes('xiaomi')) device = 'Xiaomi';
+    else device = 'Android';
+  } else if (uaLower.includes('windows')) {
+    deviceType = 'desktop'; device = 'Windows PC'; os = 'Windows';
   }
   
-  // Browser Detection
-  if (uaLower.includes('edg/') || uaLower.includes('edge')) browser = 'Edge';
-  else if (uaLower.includes('opr/') || uaLower.includes('opera')) browser = 'Opera';
-  else if (uaLower.includes('samsungbrowser')) browser = 'Samsung Browser';
+  if (uaLower.includes('chrome')) browser = 'Chrome';
+  else if (uaLower.includes('safari')) browser = 'Safari';
   else if (uaLower.includes('firefox')) browser = 'Firefox';
-  else if (uaLower.includes('chrome')) browser = 'Chrome';
-  else if (uaLower.includes('safari') && !uaLower.includes('chrome')) browser = 'Safari';
-  else browser = 'Unknown';
+  else if (uaLower.includes('edge')) browser = 'Edge';
   
   return { device, os, browser, deviceType };
 };
 
-// Device Icon Component
-const DeviceIcon = ({ type, size = 24, className = '' }) => {
-  const icons = {
-    smartphone: Smartphone,
-    mobile: Smartphone,
-    tablet: Tablet,
-    laptop: Laptop,
-    desktop: Monitor,
-    default: Monitor
+const formatTime = (dateStr) => {
+  if (!dateStr) return '--:--';
+  return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
+};
+
+const formatFullDateTime = (dateStr) => {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  return `${days[d.getDay()]} ${formatDate(dateStr)} ${formatTime(dateStr)}`;
+};
+
+const calculateDuration = (loginAt, logoutAt) => {
+  if (!loginAt) return '-';
+  const login = new Date(loginAt);
+  const logout = logoutAt ? new Date(logoutAt) : new Date();
+  const diff = Math.floor((logout - login) / 1000 / 60);
+  const hours = Math.floor(diff / 60);
+  const mins = diff % 60;
+  return `${hours}:${mins.toString().padStart(2,'0')}`;
+};
+
+// ==================== COMPONENTS ====================
+
+const DeviceIcon = ({ type, size = 20, className = '' }) => {
+  const icons = { 
+    smartphone: Smartphone, mobile: Smartphone, 
+    tablet: Tablet, laptop: Laptop, 
+    desktop: Monitor, default: Monitor 
   };
   const Icon = icons[type] || icons.default;
   return <Icon size={size} className={className} />;
 };
 
+const SeverityBadge = ({ severity }) => {
+  const config = {
+    critical: { bg: 'bg-red-500', text: 'text-white', label: 'حرج' },
+    high: { bg: 'bg-orange-500', text: 'text-white', label: 'عالي' },
+    medium: { bg: 'bg-yellow-500', text: 'text-black', label: 'متوسط' },
+    low: { bg: 'bg-blue-500', text: 'text-white', label: 'منخفض' }
+  };
+  const cfg = config[severity] || config.low;
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cfg.bg} ${cfg.text}`}>
+      {cfg.label}
+    </span>
+  );
+};
+
+const StatCard = ({ icon: Icon, label, value, subValue, color = 'slate', trend, onClick }) => {
+  const colors = {
+    green: 'from-emerald-500 to-emerald-600',
+    red: 'from-red-500 to-red-600',
+    yellow: 'from-amber-500 to-amber-600',
+    blue: 'from-blue-500 to-blue-600',
+    purple: 'from-purple-500 to-purple-600',
+    slate: 'from-slate-600 to-slate-700'
+  };
+  
+  return (
+    <div 
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${colors[color]} p-5 text-white shadow-lg ${onClick ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-white/70 text-xs font-medium mb-1">{label}</p>
+          <p className="text-3xl font-bold">{value}</p>
+          {subValue && <p className="text-white/60 text-xs mt-1">{subValue}</p>}
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+          <Icon size={24} />
+        </div>
+      </div>
+      {trend && (
+        <div className={`absolute bottom-2 left-4 text-xs flex items-center gap-1 ${trend > 0 ? 'text-green-300' : 'text-red-300'}`}>
+          {trend > 0 ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {Math.abs(trend)}%
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== MAIN COMPONENT ====================
+
 export default function DeviceMonitoringPage() {
   const { lang } = useLanguage();
+  const { user } = useAuth();
+  const isStas = user?.role === 'stas';
   
-  // State
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  // ========== STATE ==========
+  const [activeTab, setActiveTab] = useState('alerts');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
-  // Employee Data
-  const [employeeDevices, setEmployeeDevices] = useState([]);
-  const [employeeSessions, setEmployeeSessions] = useState([]);
-  const [selectedSession, setSelectedSession] = useState(null);
+  // Stats
+  const [stats, setStats] = useState({
+    active_sessions: 0,
+    suspended_accounts: 0,
+    blocked_devices: 0,
+    logins_today: 0,
+    alerts_today: 0,
+    new_devices_today: 0
+  });
+  
+  // Alerts
+  const [alerts, setAlerts] = useState([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  
+  // Employees & Sessions
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSessions, setActiveSessions] = useState([]);
+  
+  // Suspend Dialog
+  const [suspendDialog, setSuspendDialog] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendDuration, setSuspendDuration] = useState('');
+  const [suspendLoading, setSuspendLoading] = useState(false);
+  
+  // Suspended Accounts
+  const [suspendedAccounts, setSuspendedAccounts] = useState([]);
+  
+  // Security Log
+  const [securityLog, setSecurityLog] = useState([]);
+  
+  // Session Details Modal
+  const [sessionDetails, setSessionDetails] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   
-  // Period filter
-  const [period, setPeriod] = useState('monthly');
-
-  // Fetch employees
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  // Fetch employee data when selected
-  useEffect(() => {
-    if (selectedEmployee) {
-      fetchEmployeeData();
+  // ========== DATA FETCHING ==========
+  
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/api/security/stats');
+      setStats(res.data);
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
     }
-  }, [selectedEmployee, period]);
-
+  };
+  
+  const fetchAlerts = async () => {
+    setLoadingAlerts(true);
+    try {
+      const res = await api.get('/api/security/fraud-alerts');
+      setAlerts(res.data);
+    } catch (err) {
+      console.error('Failed to fetch alerts:', err);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  };
+  
   const fetchEmployees = async () => {
     try {
-      const res = await api.get('/api/employees');
-      setEmployees(res.data.filter(e => e.is_active));
+      const [empRes, usersRes] = await Promise.all([
+        api.get('/api/employees'),
+        api.get('/api/security/suspended-accounts').catch(() => ({ data: [] }))
+      ]);
+      
+      const activeEmps = empRes.data.filter(e => e.is_active);
+      // Add suspension info
+      const suspendedIds = new Set(usersRes.data.map(u => u.employee_id));
+      const empsWithStatus = activeEmps.map(emp => ({
+        ...emp,
+        is_suspended: suspendedIds.has(emp.id)
+      }));
+      
+      setEmployees(empsWithStatus);
+      setSuspendedAccounts(usersRes.data);
     } catch (err) {
       console.error('Failed to fetch employees:', err);
     }
   };
-
-  const fetchEmployeeData = async () => {
-    if (!selectedEmployee) return;
-    setLoading(true);
-    
+  
+  const fetchActiveSessions = async () => {
     try {
-      const [devicesRes, sessionsRes] = await Promise.all([
-        api.get(`/api/devices/employee/${selectedEmployee.id}`),
-        api.get(`/api/devices/login-sessions/${selectedEmployee.id}?period=${period}`)
-      ]);
-      
-      setEmployeeDevices(devicesRes.data);
-      
-      // Process sessions to add device info
-      const processedSessions = sessionsRes.data.map(session => {
-        const fp = session.fingerprint_data || {};
-        const ua = fp.userAgent || session.user_agent || '';
-        const parsed = parseUserAgent(ua);
-        
-        // Use advanced fingerprint data if available
-        let deviceName = fp.deviceModel || fp.deviceBrand || parsed.device;
-        let osDisplay = fp.osName ? `${fp.osName} ${fp.osVersion || ''}` : parsed.os;
-        let browserDisplay = fp.browserName ? `${fp.browserName} ${fp.browserVersion || ''}` : parsed.browser;
-        
-        // Screen info
-        let screenInfo = fp.screenResolution || '';
-        
-        // GPU info
-        let gpuInfo = fp.webglRenderer || '';
-        if (gpuInfo && gpuInfo.length > 50) gpuInfo = gpuInfo.substring(0, 50) + '...';
-        
-        return {
-          ...session,
-          deviceName: deviceName || 'Unknown Device',
-          osDisplay: osDisplay || 'Unknown OS',
-          browserDisplay: browserDisplay || 'Unknown',
-          deviceType: fp.deviceType || parsed.deviceType || 'desktop',
-          screenInfo,
-          gpuInfo,
-          cpuCores: fp.hardwareConcurrency || '',
-          memory: fp.deviceMemory ? `${fp.deviceMemory} GB` : '',
-          connectionType: fp.connectionEffectiveType || ''
-        };
-      });
-      
-      setEmployeeSessions(processedSessions);
+      // Get all active sessions from login_sessions
+      const res = await api.get('/api/devices/all-sessions?status=active');
+      setActiveSessions(res.data || []);
     } catch (err) {
-      console.error('Failed to fetch employee data:', err);
-      toast.error('فشل تحميل البيانات');
-    } finally {
-      setLoading(false);
+      // If endpoint doesn't exist, try alternative
+      try {
+        const empRes = await api.get('/api/employees');
+        const activeEmps = empRes.data.filter(e => e.is_active);
+        let allSessions = [];
+        
+        for (const emp of activeEmps.slice(0, 10)) { // Limit for performance
+          try {
+            const sessRes = await api.get(`/api/devices/login-sessions/${emp.id}?period=daily`);
+            const activeSess = sessRes.data.filter(s => s.status === 'active');
+            allSessions = [...allSessions, ...activeSess.map(s => ({ ...s, employee_name: emp.full_name_ar }))];
+          } catch {}
+        }
+        
+        setActiveSessions(allSessions);
+      } catch {}
     }
   };
-
-  // Filter employees
+  
+  const fetchSecurityLog = async () => {
+    try {
+      const res = await api.get('/api/security/security-log?limit=50');
+      setSecurityLog(res.data);
+    } catch (err) {
+      console.error('Failed to fetch security log:', err);
+    }
+  };
+  
+  const refreshAll = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchStats(),
+      fetchAlerts(),
+      fetchEmployees(),
+      fetchActiveSessions(),
+      fetchSecurityLog()
+    ]);
+    setRefreshing(false);
+    toast.success('تم تحديث البيانات');
+  };
+  
+  // Initial load
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetchStats(),
+      fetchAlerts(),
+      fetchEmployees(),
+      fetchActiveSessions(),
+      fetchSecurityLog()
+    ]).finally(() => setLoading(false));
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchAlerts();
+      fetchActiveSessions();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // ========== ACTIONS ==========
+  
+  const handleSuspendAccounts = async () => {
+    if (selectedEmployees.length === 0) {
+      toast.error('اختر موظفاً واحداً على الأقل');
+      return;
+    }
+    if (!suspendReason.trim()) {
+      toast.error('أدخل سبب التعطيل');
+      return;
+    }
+    
+    setSuspendLoading(true);
+    try {
+      const res = await api.post('/api/security/suspend-accounts', {
+        employee_ids: selectedEmployees,
+        reason: suspendReason,
+        duration_hours: suspendDuration ? parseInt(suspendDuration) : null,
+        notify_employee: true
+      });
+      
+      toast.success(res.data.message_ar || `تم تعطيل ${res.data.suspended_count} حساب`);
+      setSuspendDialog(false);
+      setSuspendReason('');
+      setSuspendDuration('');
+      setSelectedEmployees([]);
+      
+      // Refresh data
+      await Promise.all([fetchEmployees(), fetchStats(), fetchSecurityLog()]);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل تعطيل الحسابات');
+    } finally {
+      setSuspendLoading(false);
+    }
+  };
+  
+  const handleUnblockAccount = async (employeeId) => {
+    try {
+      const res = await api.post('/api/security/unblock-accounts', {
+        employee_ids: [employeeId],
+        reason: 'إلغاء التعطيل من لوحة الأمان'
+      });
+      
+      toast.success(res.data.message_ar || 'تم إلغاء التعطيل');
+      await Promise.all([fetchEmployees(), fetchStats(), fetchSecurityLog()]);
+    } catch (err) {
+      toast.error('فشل إلغاء التعطيل');
+    }
+  };
+  
+  const handleForceLogout = async (employeeId, employeeName) => {
+    if (!confirm(`هل تريد إنهاء جميع جلسات ${employeeName}؟`)) return;
+    
+    try {
+      const res = await api.post(`/api/security/force-logout/${employeeId}`);
+      toast.success(res.data.message_ar || 'تم إنهاء الجلسات');
+      await Promise.all([fetchActiveSessions(), fetchStats()]);
+    } catch (err) {
+      toast.error('فشل إنهاء الجلسات');
+    }
+  };
+  
+  const handleEmergencyLogoutAll = async () => {
+    if (!confirm('تحذير! سيتم إنهاء جلسات جميع المستخدمين. هل أنت متأكد؟')) return;
+    
+    try {
+      const res = await api.post('/api/security/force-logout-all');
+      toast.success(res.data.message_ar || 'تم إنهاء جميع الجلسات');
+      await Promise.all([fetchActiveSessions(), fetchStats()]);
+    } catch (err) {
+      toast.error('فشل الإجراء');
+    }
+  };
+  
+  const viewSessionDetails = async (session) => {
+    setSessionDetails(session);
+    setDetailsOpen(true);
+  };
+  
+  // ========== FILTERED DATA ==========
+  
   const filteredEmployees = useMemo(() => {
     if (!searchQuery) return employees;
     const q = searchQuery.toLowerCase();
@@ -242,519 +406,843 @@ export default function DeviceMonitoringPage() {
       e.employee_number?.includes(q)
     );
   }, [employees, searchQuery]);
-
-  // Select employee
-  const selectEmployee = (emp) => {
-    setSelectedEmployee(emp);
-    setEmployeeDevices([]);
-    setEmployeeSessions([]);
+  
+  const toggleEmployeeSelection = (empId) => {
+    setSelectedEmployees(prev => 
+      prev.includes(empId) 
+        ? prev.filter(id => id !== empId)
+        : [...prev, empId]
+    );
   };
-
-  // View session details
-  const viewSessionDetails = (session) => {
-    setSelectedSession(session);
-    setDetailsOpen(true);
-  };
-
-  // Format time
-  const formatTime = (dateStr) => {
-    if (!dateStr) return '--:--';
-    return new Date(dateStr).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
-  };
-
-  const formatFullDate = (dateStr) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-  };
-
-  // Calculate duration
-  const calculateDuration = (loginAt, logoutAt) => {
-    if (!loginAt) return '-';
-    const login = new Date(loginAt);
-    const logout = logoutAt ? new Date(logoutAt) : new Date();
-    const diff = Math.floor((logout - login) / 1000 / 60);
-    const hours = Math.floor(diff / 60);
-    const mins = diff % 60;
-    return `${hours}:${mins.toString().padStart(2,'0')}`;
-  };
-
-  // Stats
-  const stats = useMemo(() => {
-    const totalSessions = employeeSessions.length;
-    const uniqueDevices = new Set(employeeSessions.map(s => s.core_signature || s.device_id)).size;
-    const activeSessions = employeeSessions.filter(s => s.status === 'active').length;
-    
-    return { totalSessions, uniqueDevices, activeSessions };
-  }, [employeeSessions]);
-
-  // Group sessions by date
-  const groupedSessions = useMemo(() => {
-    const groups = {};
-    employeeSessions.forEach(session => {
-      const date = formatDate(session.login_at);
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(session);
+  
+  const selectAllFiltered = () => {
+    const ids = filteredEmployees.map(e => e.id);
+    setSelectedEmployees(prev => {
+      const allSelected = ids.every(id => prev.includes(id));
+      if (allSelected) return prev.filter(id => !ids.includes(id));
+      return [...new Set([...prev, ...ids])];
     });
-    return groups;
-  }, [employeeSessions]);
-
-  return (
-    <div className="min-h-screen bg-slate-100" data-testid="device-monitoring-page">
-      {/* Header */}
-      <div className="bg-slate-900 text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
-              <Fingerprint size={28} className="text-white" />
+  };
+  
+  // ========== RENDER ==========
+  
+  if (!isStas) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6" data-testid="access-denied">
+        <Card className="max-w-md border-0 bg-slate-800">
+          <CardContent className="pt-8 pb-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <ShieldX size={40} className="text-red-500" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">مراقبة الأجهزة</h1>
-              <p className="text-slate-400 text-sm">تتبع الأجهزة وسجل الدخول والخروج</p>
+            <h2 className="text-xl font-bold text-white mb-2">غير مصرح</h2>
+            <p className="text-slate-400">هذه الصفحة متاحة فقط لمسؤول النظام (STAS)</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen bg-slate-900" data-testid="device-monitoring-page">
+      {/* ========== HEADER ========== */}
+      <div className="bg-gradient-to-l from-slate-800 via-slate-900 to-black border-b border-slate-700/50">
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/20">
+                <ShieldAlert size={28} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">مركز قيادة الأمان</h1>
+                <p className="text-slate-400 text-sm">نظام متقدم لكشف التلاعب ومراقبة الأجهزة</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={refreshAll}
+                disabled={refreshing}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                <span className="mr-2">تحديث</span>
+              </Button>
+              
+              {stats.alerts_today > 0 && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/30">
+                  <BellRing size={16} className="text-red-400 animate-pulse" />
+                  <span className="text-red-400 text-sm font-bold">{stats.alerts_today} تنبيه</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Employees */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6 border-0 shadow-lg">
-              <CardHeader className="pb-3 bg-slate-50 rounded-t-xl">
-                <CardTitle className="text-base flex items-center gap-2 text-slate-700">
-                  <User size={18} />
-                  الموظفين
-                </CardTitle>
-                <div className="relative mt-3">
-                  <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="بحث..."
-                    className="pr-10 text-sm bg-white border-slate-200"
-                  />
+      
+      {/* ========== STATS CARDS ========== */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <StatCard 
+            icon={Activity} 
+            label="جلسات نشطة" 
+            value={stats.active_sessions}
+            color="green"
+            onClick={() => setActiveTab('sessions')}
+          />
+          <StatCard 
+            icon={AlertOctagon} 
+            label="تنبيهات اليوم" 
+            value={stats.alerts_today}
+            color={stats.alerts_today > 0 ? 'red' : 'slate'}
+            onClick={() => setActiveTab('alerts')}
+          />
+          <StatCard 
+            icon={UserX} 
+            label="حسابات معطلة" 
+            value={stats.suspended_accounts}
+            color={stats.suspended_accounts > 0 ? 'yellow' : 'slate'}
+            onClick={() => setActiveTab('suspended')}
+          />
+          <StatCard 
+            icon={Ban} 
+            label="أجهزة محظورة" 
+            value={stats.blocked_devices}
+            color="purple"
+          />
+          <StatCard 
+            icon={LogOut} 
+            label="دخول اليوم" 
+            value={stats.logins_today}
+            color="blue"
+            onClick={() => setActiveTab('sessions')}
+          />
+          <StatCard 
+            icon={Smartphone} 
+            label="أجهزة جديدة" 
+            value={stats.new_devices_today}
+            color="slate"
+          />
+        </div>
+      </div>
+      
+      {/* ========== MAIN CONTENT ========== */}
+      <div className="max-w-7xl mx-auto px-6 pb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-slate-800 border border-slate-700 p-1 rounded-xl">
+            <TabsTrigger 
+              value="alerts" 
+              className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-lg px-4"
+            >
+              <AlertTriangle size={16} className="ml-2" />
+              تنبيهات الأمان
+              {alerts.length > 0 && (
+                <Badge variant="destructive" className="mr-2 text-[10px]">{alerts.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="sessions" 
+              className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white rounded-lg px-4"
+            >
+              <Activity size={16} className="ml-2" />
+              الجلسات النشطة
+            </TabsTrigger>
+            <TabsTrigger 
+              value="control" 
+              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-4"
+            >
+              <UserCog size={16} className="ml-2" />
+              التحكم بالحسابات
+            </TabsTrigger>
+            <TabsTrigger 
+              value="suspended" 
+              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black rounded-lg px-4"
+            >
+              <Lock size={16} className="ml-2" />
+              المعطلين
+            </TabsTrigger>
+            <TabsTrigger 
+              value="log" 
+              className="data-[state=active]:bg-purple-500 data-[state=active]:text-white rounded-lg px-4"
+            >
+              <History size={16} className="ml-2" />
+              سجل الأمان
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* ========== ALERTS TAB ========== */}
+          <TabsContent value="alerts" className="mt-0">
+            <Card className="border-0 bg-slate-800/50 shadow-2xl">
+              <CardHeader className="border-b border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <AlertTriangle className="text-red-500" size={20} />
+                    تنبيهات الأمان النشطة
+                  </CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={fetchAlerts}
+                    disabled={loadingAlerts}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <RefreshCw size={14} className={loadingAlerts ? 'animate-spin' : ''} />
+                  </Button>
                 </div>
               </CardHeader>
-              <CardContent className="max-h-[60vh] overflow-y-auto p-2">
-                {filteredEmployees.length === 0 ? (
-                  <p className="text-center text-slate-400 py-8 text-sm">لا يوجد موظفين</p>
+              <CardContent className="p-0">
+                {loadingAlerts ? (
+                  <div className="py-20 text-center">
+                    <RefreshCw size={32} className="animate-spin text-slate-500 mx-auto" />
+                  </div>
+                ) : alerts.length === 0 ? (
+                  <div className="py-20 text-center">
+                    <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                      <ShieldCheck size={40} className="text-emerald-500" />
+                    </div>
+                    <p className="text-slate-400 text-lg">لا توجد تنبيهات أمنية</p>
+                    <p className="text-slate-500 text-sm mt-1">النظام آمن</p>
+                  </div>
                 ) : (
-                  <div className="space-y-1">
-                    {filteredEmployees.map(emp => (
-                      <button
-                        key={emp.id}
-                        onClick={() => selectEmployee(emp)}
-                        className={`w-full text-right p-3 rounded-xl transition-all ${
-                          selectedEmployee?.id === emp.id
-                            ? 'bg-slate-900 text-white'
-                            : 'hover:bg-slate-100'
+                  <div className="divide-y divide-slate-700/50">
+                    {alerts.map((alert, idx) => (
+                      <div 
+                        key={alert.id || idx}
+                        className={`p-5 hover:bg-slate-700/30 transition-colors ${
+                          alert.severity === 'critical' ? 'bg-red-500/10' : ''
                         }`}
                       >
-                        <p className="font-semibold text-sm">{emp.full_name_ar}</p>
-                        <p className={`text-xs ${selectedEmployee?.id === emp.id ? 'text-slate-400' : 'text-slate-500'}`}>
-                          #{emp.employee_number}
-                        </p>
-                      </button>
+                        <div className="flex items-start gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            alert.severity === 'critical' ? 'bg-red-500/20' :
+                            alert.severity === 'high' ? 'bg-orange-500/20' :
+                            'bg-yellow-500/20'
+                          }`}>
+                            {alert.type === 'shared_device' ? (
+                              <Users className={
+                                alert.severity === 'critical' ? 'text-red-500' :
+                                alert.severity === 'high' ? 'text-orange-500' : 'text-yellow-500'
+                              } size={24} />
+                            ) : (
+                              <Activity className={
+                                alert.severity === 'critical' ? 'text-red-500' :
+                                alert.severity === 'high' ? 'text-orange-500' : 'text-yellow-500'
+                              } size={24} />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <SeverityBadge severity={alert.severity} />
+                              <span className="text-white font-bold">{alert.title_ar}</span>
+                            </div>
+                            <p className="text-slate-300 text-sm">{alert.message_ar}</p>
+                            
+                            {alert.employee_names && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {alert.employee_names.map((name, i) => (
+                                  <span key={i} className="px-2 py-1 rounded bg-slate-700 text-slate-300 text-xs">
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <p className="text-slate-500 text-xs mt-2">
+                              <Clock size={12} className="inline ml-1" />
+                              {formatFullDateTime(alert.detected_at)}
+                            </p>
+                          </div>
+                          
+                          {alert.employees && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="border-red-500/50 text-red-400 hover:bg-red-500/20"
+                              onClick={() => {
+                                setSelectedEmployees(alert.employees);
+                                setActiveTab('control');
+                              }}
+                            >
+                              <Ban size={14} className="ml-1" />
+                              تعطيل
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {!selectedEmployee ? (
-              <Card className="border-2 border-dashed border-slate-300 bg-white/50">
-                <CardContent className="py-20 text-center">
-                  <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                    <Fingerprint size={40} className="text-slate-400" />
-                  </div>
-                  <p className="text-lg text-slate-500">اختر موظفاً لعرض تفاصيل أجهزته</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                {/* Employee Header */}
-                <Card className="border-0 shadow-lg overflow-hidden">
-                  <div className="bg-gradient-to-l from-slate-900 to-slate-800 p-6 text-white">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-2xl font-bold">
-                          {selectedEmployee.full_name_ar?.charAt(0)}
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-bold">{selectedEmployee.full_name_ar}</h2>
-                          <p className="text-slate-400">#{selectedEmployee.employee_number}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Stats */}
-                      <div className="flex items-center gap-8">
-                        <div className="text-center">
-                          <p className="text-3xl font-bold">{stats.totalSessions}</p>
-                          <p className="text-xs text-slate-400">جلسة</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-3xl font-bold">{stats.uniqueDevices}</p>
-                          <p className="text-xs text-slate-400">جهاز</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-3xl font-bold text-green-400">{stats.activeSessions}</p>
-                          <p className="text-xs text-slate-400">نشط</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Period Filter */}
-                <div className="flex items-center gap-2 bg-white p-2 rounded-xl shadow">
-                  <span className="text-sm text-slate-600 px-2">الفترة:</span>
-                  {[
-                    { value: 'daily', label: 'اليوم' },
-                    { value: 'weekly', label: 'أسبوع' },
-                    { value: 'monthly', label: 'شهر' },
-                    { value: 'yearly', label: 'سنة' },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setPeriod(opt.value)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        period === opt.value
-                          ? 'bg-slate-900 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
-                      }`}
+          </TabsContent>
+          
+          {/* ========== SESSIONS TAB ========== */}
+          <TabsContent value="sessions" className="mt-0">
+            <Card className="border-0 bg-slate-800/50 shadow-2xl">
+              <CardHeader className="border-b border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Activity className="text-emerald-500" size={20} />
+                    الجلسات النشطة حالياً
+                    <Badge className="bg-emerald-500">{activeSessions.length}</Badge>
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={fetchActiveSessions}
+                      className="text-slate-400 hover:text-white"
                     >
-                      {opt.label}
-                    </button>
-                  ))}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={fetchEmployeeData} 
-                    disabled={loading}
-                    className="mr-auto"
-                  >
-                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-                  </Button>
+                      <RefreshCw size={14} />
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={handleEmergencyLogoutAll}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      <Power size={14} className="ml-1" />
+                      إنهاء الكل (طوارئ)
+                    </Button>
+                  </div>
                 </div>
-
-                {/* Sessions Table */}
-                <Card className="border-0 shadow-lg overflow-hidden">
-                  <CardHeader className="bg-slate-50 border-b">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <History size={18} />
-                      سجل الجلسات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {loading ? (
-                      <div className="py-20 text-center">
-                        <RefreshCw size={32} className="animate-spin text-slate-400 mx-auto" />
-                      </div>
-                    ) : employeeSessions.length === 0 ? (
-                      <div className="py-20 text-center">
-                        <Clock size={48} className="mx-auto text-slate-300 mb-4" />
-                        <p className="text-slate-500">لا توجد جلسات في هذه الفترة</p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="bg-slate-800 text-white text-xs">
-                              <th className="p-3 text-right font-medium">التاريخ</th>
-                              <th className="p-3 text-center font-medium">الدخول</th>
-                              <th className="p-3 text-center font-medium">الخروج</th>
-                              <th className="p-3 text-center font-medium">المدة</th>
-                              <th className="p-3 text-right font-medium">الجهاز</th>
-                              <th className="p-3 text-right font-medium">النظام</th>
-                              <th className="p-3 text-center font-medium">الحالة</th>
-                              <th className="p-3 text-center font-medium w-16"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(groupedSessions).map(([date, sessions]) => (
-                              <>
-                                {/* Date Header */}
-                                <tr key={`d-${date}`} className="bg-slate-100">
-                                  <td colSpan={8} className="p-2">
-                                    <div className="flex items-center gap-2 text-slate-600 font-medium text-xs">
-                                      <Calendar size={14} />
-                                      {formatFullDate(sessions[0]?.login_at)}
-                                      <span className="text-slate-400">({sessions.length} جلسة)</span>
-                                    </div>
-                                  </td>
-                                </tr>
-                                {/* Session Rows */}
-                                {sessions.map((s) => (
-                                  <tr 
-                                    key={s.id} 
-                                    className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
-                                    onClick={() => viewSessionDetails(s)}
-                                  >
-                                    <td className="p-3 text-xs text-slate-500">{date}</td>
-                                    <td className="p-3 text-center">
-                                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-mono text-xs font-bold">
-                                        {formatTime(s.login_at)}
-                                      </span>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                      {s.logout_at ? (
-                                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded font-mono text-xs font-bold">
-                                          {formatTime(s.logout_at)}
-                                        </span>
-                                      ) : (
-                                        <span className="text-slate-400 text-xs">--:--</span>
-                                      )}
-                                    </td>
-                                    <td className="p-3 text-center font-mono text-xs font-bold text-slate-700">
-                                      {calculateDuration(s.login_at, s.logout_at)}
-                                    </td>
-                                    <td className="p-3">
-                                      <div className="flex items-center gap-2">
-                                        <DeviceIcon 
-                                          type={s.deviceType} 
-                                          size={16}
-                                          className={s.status === 'active' ? 'text-green-600' : 'text-slate-500'}
-                                        />
-                                        <span className="text-xs font-medium text-slate-700">{s.deviceName}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-3">
-                                      <div className="text-xs">
-                                        <p className="text-slate-600">{s.osDisplay}</p>
-                                        <p className="text-slate-400">{s.browserDisplay}</p>
-                                      </div>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                      {s.status === 'active' ? (
-                                        <span className="inline-flex items-center gap-1 bg-green-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                                          نشط
-                                        </span>
-                                      ) : s.status === 'force_logout' ? (
-                                        <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                          إجباري
-                                        </span>
-                                      ) : (
-                                        <span className="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-[10px]">
-                                          منتهية
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className="p-3 text-center">
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <Eye size={14} className="text-slate-400" />
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Devices Grid */}
-                <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-slate-50 border-b">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Smartphone size={18} />
-                      الأجهزة المسجلة
-                      <span className="text-xs bg-slate-200 px-2 py-0.5 rounded-full text-slate-600">
-                        {employeeDevices.length}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    {employeeDevices.length === 0 ? (
-                      <div className="text-center py-12 text-slate-500">
-                        <Smartphone size={40} className="mx-auto mb-3 text-slate-300" />
-                        <p>لا توجد أجهزة مسجلة</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {employeeDevices.map(device => {
-                          const fp = device.fingerprint_data || {};
-                          const parsed = parseUserAgent(fp.userAgent || device.user_agent || '');
+              </CardHeader>
+              <CardContent className="p-0">
+                {activeSessions.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <Activity size={48} className="mx-auto text-slate-600 mb-4" />
+                    <p className="text-slate-400">لا توجد جلسات نشطة حالياً</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-slate-900/50 text-slate-400 text-xs">
+                          <th className="p-4 text-right font-medium">الموظف</th>
+                          <th className="p-4 text-right font-medium">الجهاز</th>
+                          <th className="p-4 text-center font-medium">وقت الدخول</th>
+                          <th className="p-4 text-center font-medium">المدة</th>
+                          <th className="p-4 text-center font-medium">الحالة</th>
+                          <th className="p-4 text-center font-medium w-32">إجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700/50">
+                        {activeSessions.map((session, idx) => {
+                          const fp = session.fingerprint_data || {};
+                          const parsed = parseUserAgent(fp.userAgent || session.user_agent || '');
+                          const deviceName = fp.deviceModel || fp.deviceBrand || parsed.device || 'جهاز';
                           
                           return (
-                            <div 
-                              key={device.id}
-                              className={`p-4 rounded-xl border-2 transition-all ${
-                                device.status === 'trusted' ? 'border-green-200 bg-green-50/50' :
-                                device.status === 'blocked' ? 'border-red-200 bg-red-50/50' :
-                                'border-yellow-200 bg-yellow-50/50'
-                              }`}
+                            <tr 
+                              key={session.id || idx}
+                              className="hover:bg-slate-700/30 transition-colors"
                             >
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                    device.status === 'trusted' ? 'bg-green-100' :
-                                    device.status === 'blocked' ? 'bg-red-100' : 'bg-yellow-100'
-                                  }`}>
-                                    <DeviceIcon 
-                                      type={fp.deviceType || parsed.deviceType || 'desktop'} 
-                                      size={24}
-                                      className={
-                                        device.status === 'trusted' ? 'text-green-600' :
-                                        device.status === 'blocked' ? 'text-red-600' : 'text-yellow-600'
-                                      }
-                                    />
+                              <td className="p-4">
+                                <div>
+                                  <p className="text-white font-medium">{session.employee_name || session.username}</p>
+                                  <p className="text-slate-500 text-xs">#{session.employee_id?.slice(-8)}</p>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
+                                    <DeviceIcon type={fp.deviceType || parsed.deviceType} size={18} className="text-slate-400" />
                                   </div>
                                   <div>
-                                    <p className="font-bold text-slate-800">
-                                      {fp.deviceModel || fp.deviceBrand || parsed.device || device.friendly_name || 'جهاز'}
-                                    </p>
-                                    <p className="text-xs text-slate-500">
-                                      {fp.osName || parsed.os || device.os} - {fp.browserName || parsed.browser || device.browser}
+                                    <p className="text-white text-sm">{deviceName}</p>
+                                    <p className="text-slate-500 text-xs">
+                                      {fp.osName || parsed.os} - {fp.browserName || parsed.browser}
                                     </p>
                                   </div>
                                 </div>
-                                <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                                  device.status === 'trusted' ? 'bg-green-500 text-white' :
-                                  device.status === 'blocked' ? 'bg-red-500 text-white' :
-                                  'bg-yellow-500 text-white'
-                                }`}>
-                                  {device.status === 'trusted' ? 'موثوق' :
-                                   device.status === 'blocked' ? 'محظور' : 'معلق'}
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="text-emerald-400 font-mono text-sm">
+                                  {formatTime(session.login_at)}
                                 </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="text-white font-mono text-sm">
+                                  {calculateDuration(session.login_at, null)}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">
+                                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                                  نشط
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-slate-400 hover:text-white"
+                                    onClick={() => viewSessionDetails(session)}
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                    onClick={() => handleForceLogout(session.employee_id, session.employee_name || session.username)}
+                                  >
+                                    <LogOut size={16} />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* ========== CONTROL TAB ========== */}
+          <TabsContent value="control" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Employee List */}
+              <Card className="lg:col-span-2 border-0 bg-slate-800/50 shadow-2xl">
+                <CardHeader className="border-b border-slate-700/50">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <Users size={20} className="text-blue-500" />
+                      اختيار الموظفين
+                      {selectedEmployees.length > 0 && (
+                        <Badge className="bg-blue-500">{selectedEmployees.length} محدد</Badge>
+                      )}
+                    </CardTitle>
+                  </div>
+                  
+                  {/* Search & Actions */}
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="relative flex-1">
+                      <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="بحث بالاسم أو الرقم الوظيفي..."
+                        className="pr-10 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+                      />
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={selectAllFiltered}
+                      className="border-slate-600 text-slate-300"
+                    >
+                      {filteredEmployees.every(e => selectedEmployees.includes(e.id)) ? 'إلغاء الكل' : 'تحديد الكل'}
+                    </Button>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px]">
+                    <div className="divide-y divide-slate-700/50">
+                      {filteredEmployees.map(emp => (
+                        <div 
+                          key={emp.id}
+                          className={`p-4 flex items-center gap-4 hover:bg-slate-700/30 transition-colors cursor-pointer ${
+                            selectedEmployees.includes(emp.id) ? 'bg-blue-500/10' : ''
+                          }`}
+                          onClick={() => toggleEmployeeSelection(emp.id)}
+                        >
+                          <Checkbox 
+                            checked={selectedEmployees.includes(emp.id)}
+                            className="border-slate-600 data-[state=checked]:bg-blue-500"
+                          />
+                          
+                          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold">
+                            {emp.full_name_ar?.charAt(0) || '?'}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-medium">{emp.full_name_ar}</p>
+                            <p className="text-slate-500 text-xs">#{emp.employee_number}</p>
+                          </div>
+                          
+                          {emp.is_suspended && (
+                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                              <Lock size={12} className="ml-1" />
+                              معطل
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              
+              {/* Actions Panel */}
+              <Card className="border-0 bg-slate-800/50 shadow-2xl">
+                <CardHeader className="border-b border-slate-700/50">
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <Settings size={20} className="text-slate-400" />
+                    إجراءات الأمان
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-5 space-y-4">
+                  {/* Selected Summary */}
+                  {selectedEmployees.length > 0 && (
+                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                      <p className="text-blue-400 text-sm font-medium">
+                        تم تحديد {selectedEmployees.length} موظف
+                      </p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {selectedEmployees.slice(0, 5).map(id => {
+                          const emp = employees.find(e => e.id === id);
+                          return (
+                            <span key={id} className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-xs">
+                              {emp?.full_name_ar?.split(' ')[0]}
+                            </span>
+                          );
+                        })}
+                        {selectedEmployees.length > 5 && (
+                          <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-400 text-xs">
+                            +{selectedEmployees.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Suspend Button */}
+                  <Button 
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    disabled={selectedEmployees.length === 0}
+                    onClick={() => setSuspendDialog(true)}
+                  >
+                    <Ban size={18} className="ml-2" />
+                    تعطيل الحسابات المحددة
+                  </Button>
+                  
+                  {/* Force Logout Selected */}
+                  <Button 
+                    variant="outline"
+                    className="w-full border-orange-500/50 text-orange-400 hover:bg-orange-500/20"
+                    disabled={selectedEmployees.length === 0}
+                    onClick={async () => {
+                      if (!confirm(`إنهاء جلسات ${selectedEmployees.length} موظف؟`)) return;
+                      for (const empId of selectedEmployees) {
+                        try {
+                          await api.post(`/api/security/force-logout/${empId}`);
+                        } catch {}
+                      }
+                      toast.success('تم إنهاء الجلسات');
+                      await fetchActiveSessions();
+                    }}
+                  >
+                    <LogOut size={18} className="ml-2" />
+                    إنهاء جلسات المحددين
+                  </Button>
+                  
+                  <div className="border-t border-slate-700 pt-4 mt-4">
+                    <p className="text-slate-500 text-xs text-center">
+                      جميع الإجراءات يتم تسجيلها في سجل الأمان
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          {/* ========== SUSPENDED TAB ========== */}
+          <TabsContent value="suspended" className="mt-0">
+            <Card className="border-0 bg-slate-800/50 shadow-2xl">
+              <CardHeader className="border-b border-slate-700/50">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Lock className="text-yellow-500" size={20} />
+                  الحسابات المعطلة
+                  <Badge className="bg-yellow-500/20 text-yellow-400">{suspendedAccounts.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {suspendedAccounts.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <Unlock size={48} className="mx-auto text-slate-600 mb-4" />
+                    <p className="text-slate-400">لا توجد حسابات معطلة</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-700/50">
+                    {suspendedAccounts.map((account, idx) => (
+                      <div key={account.id || idx} className="p-5 flex items-center justify-between hover:bg-slate-700/30">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                            <UserX className="text-red-500" size={24} />
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">{account.employee_name_ar || account.full_name}</p>
+                            <p className="text-slate-500 text-xs">#{account.employee_number || account.username}</p>
+                            {account.suspend_reason && (
+                              <p className="text-red-400 text-xs mt-1">السبب: {account.suspend_reason}</p>
+                            )}
+                            {account.suspended_until && (
+                              <p className="text-yellow-400 text-xs">
+                                حتى: {formatFullDateTime(account.suspended_until)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20"
+                          onClick={() => handleUnblockAccount(account.employee_id)}
+                        >
+                          <Unlock size={14} className="ml-1" />
+                          إلغاء التعطيل
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* ========== LOG TAB ========== */}
+          <TabsContent value="log" className="mt-0">
+            <Card className="border-0 bg-slate-800/50 shadow-2xl">
+              <CardHeader className="border-b border-slate-700/50">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <History className="text-purple-500" size={20} />
+                  سجل الأمان
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {securityLog.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <FileText size={48} className="mx-auto text-slate-600 mb-4" />
+                    <p className="text-slate-400">لا توجد سجلات</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[500px]">
+                    <div className="divide-y divide-slate-700/50">
+                      {securityLog.map((log, idx) => {
+                        const actionConfig = {
+                          account_suspended: { icon: Ban, color: 'text-red-500', label: 'تعطيل حساب' },
+                          account_unblocked: { icon: Unlock, color: 'text-emerald-500', label: 'إلغاء تعطيل' },
+                          force_logout: { icon: LogOut, color: 'text-orange-500', label: 'إنهاء جلسة' },
+                          emergency_logout_all: { icon: Power, color: 'text-red-600', label: 'إنهاء جميع الجلسات' },
+                          device_blocked: { icon: Ban, color: 'text-purple-500', label: 'حظر جهاز' },
+                          device_unblocked: { icon: Check, color: 'text-emerald-500', label: 'إلغاء حظر جهاز' },
+                        };
+                        const cfg = actionConfig[log.action] || { icon: Activity, color: 'text-slate-400', label: log.action };
+                        const Icon = cfg.icon;
+                        
+                        return (
+                          <div key={log.id || idx} className="p-4 hover:bg-slate-700/30">
+                            <div className="flex items-start gap-3">
+                              <div className={`w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center ${cfg.color}`}>
+                                <Icon size={16} />
                               </div>
-                              
-                              {/* Device Specs */}
-                              <div className="space-y-2 text-xs border-t pt-3">
-                                {(fp.screenResolution || device.screen_resolution) && (
-                                  <div className="flex items-center gap-2 text-slate-600">
-                                    <Monitor size={12} />
-                                    <span>الشاشة: {fp.screenResolution || device.screen_resolution}</span>
-                                  </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white font-medium text-sm">{cfg.label}</span>
+                                  {log.employee_name && (
+                                    <span className="text-slate-400 text-sm">- {log.employee_name}</span>
+                                  )}
+                                </div>
+                                {log.reason && (
+                                  <p className="text-slate-500 text-xs mt-1">السبب: {log.reason}</p>
                                 )}
-                                {(fp.webglRenderer) && (
-                                  <div className="flex items-center gap-2 text-slate-600">
-                                    <Cpu size={12} />
-                                    <span className="truncate">GPU: {fp.webglRenderer.substring(0, 35)}...</span>
-                                  </div>
-                                )}
-                                {(fp.hardwareConcurrency) && (
-                                  <div className="flex items-center gap-2 text-slate-600">
-                                    <Server size={12} />
-                                    <span>المعالج: {fp.hardwareConcurrency} أنوية</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-2 text-slate-400 pt-2 border-t">
-                                  <Clock size={12} />
-                                  <span>آخر استخدام: {formatFullDate(device.last_used_at)}</span>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                  <span>
+                                    <User size={12} className="inline ml-1" />
+                                    {log.performed_by_name || log.performed_by}
+                                  </span>
+                                  <span>
+                                    <Clock size={12} className="inline ml-1" />
+                                    {formatFullDateTime(log.created_at)}
+                                  </span>
+                                  {log.ip_address && (
+                                    <span>
+                                      <Globe size={12} className="inline ml-1" />
+                                      {log.ip_address}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </div>
-        </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {/* Session Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      
+      {/* ========== SUSPEND DIALOG ========== */}
+      <Dialog open={suspendDialog} onOpenChange={setSuspendDialog}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-slate-800">
-              <Fingerprint size={20} />
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <Ban size={20} />
+              تعطيل الحسابات
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              سيتم منع {selectedEmployees.length} موظف من تسجيل الدخول وإنهاء جلساتهم النشطة
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm text-slate-400 block mb-2">سبب التعطيل *</label>
+              <Textarea
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                placeholder="أدخل سبب التعطيل..."
+                className="bg-slate-900 border-slate-700 text-white"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm text-slate-400 block mb-2">مدة التعطيل</label>
+              <Select value={suspendDuration} onValueChange={setSuspendDuration}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                  <SelectValue placeholder="دائم (حتى الإلغاء)" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectItem value="">دائم (حتى الإلغاء)</SelectItem>
+                  <SelectItem value="1">ساعة واحدة</SelectItem>
+                  <SelectItem value="4">4 ساعات</SelectItem>
+                  <SelectItem value="8">8 ساعات</SelectItem>
+                  <SelectItem value="24">24 ساعة</SelectItem>
+                  <SelectItem value="48">48 ساعة</SelectItem>
+                  <SelectItem value="168">أسبوع</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setSuspendDialog(false)}
+              className="border-slate-600 text-slate-300"
+            >
+              إلغاء
+            </Button>
+            <Button 
+              onClick={handleSuspendAccounts}
+              disabled={suspendLoading || !suspendReason.trim()}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {suspendLoading ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <Ban size={16} className="ml-1" />
+                  تعطيل {selectedEmployees.length} حساب
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* ========== SESSION DETAILS DIALOG ========== */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Fingerprint size={20} className="text-blue-500" />
               تفاصيل الجلسة وبصمة الجهاز
             </DialogTitle>
           </DialogHeader>
           
-          {selectedSession && (
-            <div className="space-y-6">
-              {/* Session Info */}
+          {sessionDetails && (
+            <div className="space-y-6 py-4">
+              {/* Basic Info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <InfoBox label="الدخول" value={formatTime(selectedSession.login_at)} color="green" />
-                <InfoBox label="الخروج" value={selectedSession.logout_at ? formatTime(selectedSession.logout_at) : '--:--'} color="red" />
-                <InfoBox label="المدة" value={calculateDuration(selectedSession.login_at, selectedSession.logout_at)} />
-                <InfoBox 
-                  label="الحالة" 
-                  value={selectedSession.status === 'active' ? 'نشط' : 'منتهية'} 
-                  color={selectedSession.status === 'active' ? 'green' : 'gray'}
-                />
+                <div className="p-3 rounded-lg bg-slate-900">
+                  <p className="text-slate-500 text-[10px] uppercase">الدخول</p>
+                  <p className="text-emerald-400 font-bold">{formatTime(sessionDetails.login_at)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900">
+                  <p className="text-slate-500 text-[10px] uppercase">الخروج</p>
+                  <p className="text-red-400 font-bold">{sessionDetails.logout_at ? formatTime(sessionDetails.logout_at) : 'نشط'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900">
+                  <p className="text-slate-500 text-[10px] uppercase">المدة</p>
+                  <p className="text-white font-bold">{calculateDuration(sessionDetails.login_at, sessionDetails.logout_at)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-slate-900">
+                  <p className="text-slate-500 text-[10px] uppercase">الحالة</p>
+                  <p className={`font-bold ${sessionDetails.status === 'active' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    {sessionDetails.status === 'active' ? 'نشط' : 'منتهية'}
+                  </p>
+                </div>
               </div>
-
+              
               {/* Device Info */}
-              <div className="bg-slate-50 rounded-xl p-4">
-                <h3 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                  <DeviceIcon type={selectedSession.deviceType} size={18} />
-                  معلومات الجهاز
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-slate-500 text-xs">الجهاز</p>
-                    <p className="font-semibold text-slate-800">{selectedSession.deviceName}</p>
+              {sessionDetails.fingerprint_data && (
+                <>
+                  <div className="p-4 rounded-xl bg-slate-900">
+                    <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                      <Monitor size={16} />
+                      معلومات الجهاز
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-slate-500 text-xs">الجهاز</p>
+                        <p className="text-white">{sessionDetails.fingerprint_data.deviceModel || sessionDetails.fingerprint_data.deviceBrand || 'غير محدد'}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 text-xs">نظام التشغيل</p>
+                        <p className="text-white">{sessionDetails.fingerprint_data.osName} {sessionDetails.fingerprint_data.osVersion}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 text-xs">المتصفح</p>
+                        <p className="text-white">{sessionDetails.fingerprint_data.browserName} {sessionDetails.fingerprint_data.browserVersion}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500 text-xs">الشاشة</p>
+                        <p className="text-white">{sessionDetails.fingerprint_data.screenResolution}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-slate-500 text-xs">نظام التشغيل</p>
-                    <p className="font-semibold text-slate-800">{selectedSession.osDisplay}</p>
+                  
+                  {/* Technical Fingerprint */}
+                  <div className="p-4 rounded-xl bg-black font-mono text-xs">
+                    <p className="text-slate-500 mb-2">// البصمة التقنية الكاملة</p>
+                    <div className="space-y-1 text-emerald-400">
+                      <p>gpu: {sessionDetails.fingerprint_data.webglRenderer || '-'}</p>
+                      <p>vendor: {sessionDetails.fingerprint_data.webglVendor || '-'}</p>
+                      <p>memory: {sessionDetails.fingerprint_data.deviceMemory || '-'} GB</p>
+                      <p>cores: {sessionDetails.fingerprint_data.hardwareConcurrency || '-'}</p>
+                      <p>screen: {sessionDetails.fingerprint_data.screenResolution || '-'}</p>
+                      <p>pixel_ratio: {sessionDetails.fingerprint_data.devicePixelRatio || '-'}</p>
+                      <p>touch_points: {sessionDetails.fingerprint_data.maxTouchPoints || '-'}</p>
+                      <p>platform: {sessionDetails.fingerprint_data.platform || '-'}</p>
+                      <p>timezone: {sessionDetails.fingerprint_data.timezone || '-'}</p>
+                      <p>canvas_fp: {sessionDetails.fingerprint_data.canvasFingerprint?.substring(0, 16) || '-'}...</p>
+                      <p>audio_fp: {sessionDetails.fingerprint_data.audioFingerprint?.substring(0, 16) || '-'}...</p>
+                      {sessionDetails.core_signature && (
+                        <p className="text-yellow-400 mt-2">signature: {sessionDetails.core_signature}</p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-slate-500 text-xs">المتصفح</p>
-                    <p className="font-semibold text-slate-800">{selectedSession.browserDisplay}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 text-xs">نوع الاتصال</p>
-                    <p className="font-semibold text-slate-800">{selectedSession.connectionType || 'غير محدد'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical Fingerprint */}
-              {selectedSession.fingerprint_data && (
-                <div className="bg-slate-900 rounded-xl p-4 text-green-400 font-mono text-xs overflow-x-auto">
-                  <p className="text-slate-500 mb-2">// البصمة التقنية</p>
-                  <p>screen: {selectedSession.fingerprint_data.screenResolution || '-'}</p>
-                  <p>memory: {selectedSession.fingerprint_data.deviceMemory || '-'} GB</p>
-                  <p>cores: {selectedSession.fingerprint_data.hardwareConcurrency || '-'}</p>
-                  <p>gpu: {selectedSession.fingerprint_data.webglRenderer || '-'}</p>
-                  <p>canvas: {selectedSession.fingerprint_data.canvasFingerprint?.substring(0, 20) || '-'}...</p>
-                  <p>platform: {selectedSession.fingerprint_data.platform || '-'}</p>
-                  <p>timezone: {selectedSession.fingerprint_data.timezone || '-'}</p>
-                </div>
+                </>
               )}
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-// Info Box Component
-function InfoBox({ label, value, color = 'slate' }) {
-  const colors = {
-    green: 'bg-green-50 border-green-200',
-    red: 'bg-red-50 border-red-200',
-    gray: 'bg-slate-50 border-slate-200',
-    slate: 'bg-slate-50 border-slate-200'
-  };
-  
-  return (
-    <div className={`p-3 rounded-lg border ${colors[color]}`}>
-      <p className="text-[10px] text-slate-500 uppercase">{label}</p>
-      <p className="text-lg font-bold text-slate-800">{value}</p>
     </div>
   );
 }
