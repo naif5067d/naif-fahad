@@ -341,3 +341,87 @@ async def get_employee_login_sessions(
     return sessions
 
 
+
+
+# ==================== FRAUD ANALYSIS - تحليل التلاعب ====================
+
+@router.get("/fraud-analysis/{employee_id}")
+async def analyze_employee_fraud(
+    employee_id: str,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    تحليل جلسات الموظف للكشف عن مؤشرات التلاعب
+    """
+    from services.advanced_device_analysis import detect_fraud_indicators
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    start_date = now - timedelta(days=90)  # آخر 90 يوم
+    
+    # جلب الجلسات
+    sessions = await db.login_sessions.find(
+        {
+            "employee_id": employee_id,
+            "login_at": {"$gte": start_date.isoformat()}
+        },
+        {"_id": 0}
+    ).sort("login_at", -1).to_list(500)
+    
+    # تحليل التلاعب
+    alerts = detect_fraud_indicators(sessions)
+    
+    return {
+        "employee_id": employee_id,
+        "sessions_analyzed": len(sessions),
+        "alerts": alerts,
+        "alert_count": len(alerts),
+        "critical_count": len([a for a in alerts if a.get('severity') == 'critical']),
+        "analysis_period": {
+            "from": start_date.isoformat(),
+            "to": now.isoformat()
+        }
+    }
+
+
+@router.get("/fingerprint-details/{session_id}")
+async def get_session_fingerprint_details(
+    session_id: str,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    جلب تفاصيل بصمة الجهاز لجلسة معينة مع التحليل
+    """
+    from services.advanced_device_analysis import analyze_device_fingerprint
+    
+    session = await db.login_sessions.find_one(
+        {"id": session_id},
+        {"_id": 0}
+    )
+    
+    if not session:
+        raise HTTPException(404, "الجلسة غير موجودة")
+    
+    # تحليل البصمة
+    fingerprint_data = session.get('fingerprint_data', {})
+    analysis = analyze_device_fingerprint(fingerprint_data)
+    
+    return {
+        "session": session,
+        "analysis": analysis
+    }
+
+
+@router.post("/compare-fingerprints")
+async def compare_two_fingerprints(
+    fp1: dict,
+    fp2: dict,
+    user=Depends(require_roles('stas', 'sultan', 'naif'))
+):
+    """
+    مقارنة بصمتين لكشف التلاعب
+    """
+    from services.advanced_device_analysis import compare_fingerprints
+    
+    result = compare_fingerprints(fp1, fp2)
+    return result
