@@ -2588,16 +2588,19 @@ async def print_outside_hours_report(
     user=Depends(require_roles('sultan', 'naif', 'stas'))
 ):
     """
-    طباعة تقرير خارج العمل الرسمي
+    طباعة تقرير خارج العمل الرسمي مع ترويسة الشركة و QR
     """
     from io import BytesIO
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.units import mm
     import arabic_reshaper
     from bidi.algorithm import get_display
+    import qrcode
+    import base64
     
     # تسجيل خط عربي
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
@@ -2614,6 +2617,17 @@ async def print_outside_hours_report(
             return get_display(reshaped)
         except:
             return str(text)
+    
+    # إنشاء QR Code
+    def create_qr_code(data_str):
+        qr = qrcode.QRCode(version=1, box_size=3, border=1)
+        qr.add_data(data_str)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        return buffer
     
     # جلب البيانات
     query = {
@@ -2657,7 +2671,7 @@ async def print_outside_hours_report(
             employee_data[key]["check_out"] = rec.get("timestamp")
             employee_data[key]["check_out_time"] = rec.get("time")
     
-    # حساب الساعات وجلب أسماء الموظفين
+    # حساب الدقائق والساعات وجلب أسماء الموظفين
     result = []
     emp_ids = list(set([d["employee_id"] for d in employee_data.values()]))
     employees = await db.employees.find({"id": {"$in": emp_ids}}, {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1}).to_list(100)
@@ -2667,16 +2681,17 @@ async def print_outside_hours_report(
         emp = emp_map.get(data["employee_id"], {})
         data["employee_name_ar"] = emp.get("full_name_ar") or emp.get("full_name") or data["employee_id"]
         
-        total_hours = 0
+        total_minutes = 0
         if data["check_in"] and data["check_out"]:
             try:
-                from datetime import datetime
                 checkin = datetime.fromisoformat(data["check_in"].replace('Z', '+00:00'))
                 checkout = datetime.fromisoformat(data["check_out"].replace('Z', '+00:00'))
-                total_hours = (checkout - checkin).total_seconds() / 3600
+                total_minutes = int((checkout - checkin).total_seconds() / 60)
             except:
                 pass
-        data["total_hours"] = round(total_hours, 2)
+        data["total_minutes"] = total_minutes
+        data["hours"] = total_minutes // 60
+        data["mins"] = total_minutes % 60
         result.append(data)
     
     # ترتيب حسب التاريخ
@@ -2684,30 +2699,61 @@ async def print_outside_hours_report(
     
     # إنشاء PDF
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=(842, 595), rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=40)
+    doc = SimpleDocTemplate(buffer, pagesize=(842, 595), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('Title', parent=styles['Title'], fontName='Arabic', fontSize=18, alignment=TA_CENTER)
-    header_style = ParagraphStyle('Header', parent=styles['Normal'], fontName='Arabic', fontSize=10, alignment=TA_RIGHT)
+    title_style = ParagraphStyle('Title', parent=styles['Title'], fontName='Arabic', fontSize=16, alignment=TA_CENTER, spaceAfter=5)
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontName='Arabic', fontSize=10, alignment=TA_CENTER, textColor=colors.grey)
+    header_style = ParagraphStyle('Header', parent=styles['Normal'], fontName='Arabic', fontSize=9, alignment=TA_RIGHT)
+    company_style = ParagraphStyle('Company', parent=styles['Normal'], fontName='Arabic', fontSize=14, alignment=TA_CENTER, textColor=colors.Color(0.1, 0.2, 0.4))
     
     elements = []
     
+    # ترويسة الشركة
+    company_header = Table([
+        [
+            Paragraph(arabic_text("دار الكود للاستشارات الهندسية"), company_style),
+        ],
+        [
+            Paragraph(arabic_text("DAR AL CODE Engineering Consultants"), subtitle_style),
+        ],
+        [
+            Paragraph(arabic_text("الرياض - المملكة العربية السعودية"), subtitle_style),
+        ]
+    ], colWidths=[700])
+    company_header.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+    ]))
+    elements.append(company_header)
+    elements.append(Spacer(1, 10))
+    
+    # خط فاصل
+    line = Table([['']], colWidths=[750])
+    line.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, -1), 2, colors.Color(0.1, 0.2, 0.4)),
+    ]))
+    elements.append(line)
+    elements.append(Spacer(1, 15))
+    
     # عنوان التقرير
     elements.append(Paragraph(arabic_text("تقرير خارج العمل الرسمي"), title_style))
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 5))
     elements.append(Paragraph(arabic_text(f"الفترة: {start_date} إلى {end_date}"), header_style))
-    elements.append(Spacer(1, 20))
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    elements.append(Paragraph(arabic_text(f"تاريخ الطباعة: {now_str}"), header_style))
+    elements.append(Spacer(1, 15))
     
     # إنشاء الجدول
     table_header = [
-        arabic_text('#'),
-        arabic_text('الموظف'),
-        arabic_text('التاريخ'),
-        arabic_text('بصمة الدخول'),
-        arabic_text('بصمة الخروج'),
-        arabic_text('الموقع'),
+        arabic_text('الساعات'),
         arabic_text('النوع'),
-        arabic_text('الساعات')
+        arabic_text('الموقع'),
+        arabic_text('بصمة الخروج'),
+        arabic_text('بصمة الدخول'),
+        arabic_text('التاريخ'),
+        arabic_text('الموظف'),
+        arabic_text('#'),
     ]
     table_data = [table_header]
     
@@ -2716,6 +2762,7 @@ async def print_outside_hours_report(
         'outside_hours': 'خارج الدوام'
     }
     
+    total_minutes_all = 0
     for idx, rec in enumerate(result, 1):
         # تنسيق البصمات
         check_in_display = '-'
@@ -2734,31 +2781,41 @@ async def print_outside_hours_report(
             except:
                 check_out_display = rec.get('check_out_time', '-')
         
+        # تنسيق الساعات بشكل مفهوم
+        hours = rec.get('hours', 0)
+        mins = rec.get('mins', 0)
+        time_display = f"{hours}س {mins}د" if hours > 0 else f"{mins}د"
+        
+        total_minutes_all += rec.get('total_minutes', 0)
+        
         table_data.append([
-            str(idx),
-            arabic_text(rec.get('employee_name_ar', '')),
-            rec.get('date', ''),
-            check_in_display,
-            check_out_display,
-            arabic_text(rec.get('work_location', '')[:20] if rec.get('work_location') else '-'),
+            arabic_text(time_display),
             arabic_text(category_ar.get(rec.get('category'), rec.get('category', ''))),
-            f"{rec.get('total_hours', 0):.1f}"
+            arabic_text(rec.get('work_location', '')[:15] if rec.get('work_location') else '-'),
+            check_out_display,
+            check_in_display,
+            rec.get('date', ''),
+            arabic_text(rec.get('employee_name_ar', '')),
+            str(idx),
         ])
     
     # إضافة صف الإجمالي
-    total_hours = sum(r.get('total_hours', 0) for r in result)
+    total_hours = total_minutes_all // 60
+    total_mins = total_minutes_all % 60
+    total_display = f"{total_hours}س {total_mins}د" if total_hours > 0 else f"{total_mins}د"
+    
     table_data.append([
+        arabic_text(total_display),
+        '',
+        '',
+        '',
+        '',
         '',
         arabic_text('الإجمالي'),
         '',
-        '',
-        '',
-        '',
-        '',
-        f"{total_hours:.1f}"
     ])
     
-    col_widths = [30, 120, 70, 100, 100, 100, 80, 50]
+    col_widths = [60, 70, 90, 100, 100, 70, 120, 30]
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
     
     table.setStyle(TableStyle([
@@ -2769,12 +2826,33 @@ async def print_outside_hours_report(
         ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
         ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.1, 0.2, 0.4)),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('BACKGROUND', (0, -1), (-1, -1), colors.Color(0.9, 0.9, 0.9)),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.Color(0.9, 0.9, 0.95)),
         ('FONTSIZE', (0, 0), (-1, 0), 9),
         ('ROWHEIGHT', (0, 0), (-1, -1), 22),
     ]))
     
     elements.append(table)
+    elements.append(Spacer(1, 20))
+    
+    # QR Code + توقيع
+    qr_data = f"DAR_AL_CODE|OUTSIDE_HOURS|{start_date}|{end_date}|RECORDS:{len(result)}|TOTAL:{total_display}"
+    qr_buffer = create_qr_code(qr_data)
+    qr_image = Image(qr_buffer, width=50, height=50)
+    
+    footer_table = Table([
+        [
+            Paragraph(arabic_text("للتحقق من صحة التقرير"), ParagraphStyle('Footer', fontName='Arabic', fontSize=7, alignment=TA_CENTER)),
+            Paragraph(arabic_text(f"عدد السجلات: {len(result)}"), ParagraphStyle('Footer', fontName='Arabic', fontSize=8, alignment=TA_RIGHT)),
+        ],
+        [
+            qr_image,
+            Paragraph(arabic_text(f"إجمالي الوقت: {total_display}"), ParagraphStyle('Footer', fontName='Arabic', fontSize=8, alignment=TA_RIGHT)),
+        ]
+    ], colWidths=[100, 550])
+    footer_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(footer_table)
     
     doc.build(elements)
     buffer.seek(0)
