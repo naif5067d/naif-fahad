@@ -690,6 +690,7 @@ async def validate_full_punch(
     work_location = None
     gps_valid = False
     distance_km = None
+    is_weekend = False  # تعريف متغير الويكند
     
     if current_time is None:
         current_time = datetime.now(timezone.utc)
