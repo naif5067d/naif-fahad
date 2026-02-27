@@ -209,6 +209,9 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
     work_location = punch_validation.get('work_location')
     gps_valid = punch_validation.get('gps_valid', False)
     distance = punch_validation.get('distance_km')
+    
+    # تحديد هل البصمة داخل أو خارج ساعات العمل
+    work_hours_check = is_within_work_hours(riyadh_now, work_location)
 
     entry = {
         "id": str(uuid.uuid4()),
@@ -227,7 +230,12 @@ async def check_in(req: CheckInRequest, user=Depends(get_current_user)):
         "work_location_id": work_location.get('id') if work_location else None,
         "warnings": validation.get('warnings', []) + punch_validation.get('warnings', []),
         "created_at": riyadh_now.isoformat(),
-        "source": "self_checkin"
+        "source": "self_checkin",
+        # تصنيف البصمة
+        "category": work_hours_check["category"],  # official | outside_hours | weekend
+        "is_official": work_hours_check["is_official"],
+        "status_ar": work_hours_check["status_ar"],  # حاضر | غير محتسب
+        "color": work_hours_check["color"]  # green | yellow | orange
     }
     
     await db.attendance_ledger.insert_one(entry)
