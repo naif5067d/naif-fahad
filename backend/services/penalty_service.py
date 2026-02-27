@@ -64,10 +64,86 @@ DEFICIT_HOURS_PER_DAY = 8
 class PenaltyCalculator:
     """محرك حساب العقوبات"""
     
+    # ترجمات الحالات
+    STATUS_AR = {
+        'PRESENT': 'حاضر',
+        'ABSENT': 'غائب',
+        'LATE': 'متأخر',
+        'ON_LEAVE': 'إجازة',
+        'ON_ADMIN_LEAVE': 'إجازة إدارية',
+        'GIFT_LEAVE': 'إجازة مكافأة',
+        'EXEMPTED': 'إعفاء',
+        'WEEKEND': 'عطلة نهاية أسبوع',
+        'HOLIDAY': 'عطلة رسمية',
+        'ON_MISSION': 'مهمة خارجية',
+        'NOT_REGISTERED': 'لم يُسجل',
+        'NOT_PROCESSED': 'غير محلل',
+        'PERMISSION': 'استئذان',
+        'EARLY_LEAVE': 'خروج مبكر'
+    }
+    
     def __init__(self, employee_id: str):
         self.employee_id = employee_id
         self.employee = None
         self.contract = None
+    
+    def _get_status_ar(self, status: str) -> str:
+        """ترجمة الحالة للعربية"""
+        return self.STATUS_AR.get(status, status or 'غير معروف')
+    
+    def _generate_penalty_reason(self, record: Dict) -> str:
+        """
+        إنشاء بيان تفصيلي لسبب الخصم
+        يوضح للمدير سبب العقوبة بدقة
+        """
+        status = record.get("final_status")
+        late_minutes = record.get("late_minutes", 0) or 0
+        early_leave_minutes = record.get("early_leave_minutes", 0) or 0
+        check_in = record.get("check_in_time", "")
+        check_out = record.get("check_out_time", "")
+        expected_in = record.get("expected_check_in", "08:00")
+        expected_out = record.get("expected_check_out", "17:00")
+        
+        reasons = []
+        
+        if status == "ABSENT":
+            reasons.append("⛔ غائب بدون عذر - خصم يوم كامل")
+        elif status in ["ON_LEAVE", "ON_ADMIN_LEAVE", "GIFT_LEAVE", "EXEMPTED", "ON_MISSION", "HOLIDAY", "WEEKEND"]:
+            reasons.append("✅ لا يوجد خصم - " + self._get_status_ar(status))
+        elif status == "PERMISSION":
+            reasons.append("✅ استئذان معتمد - لا خصم")
+        else:
+            # حاضر أو متأخر
+            if late_minutes > 0:
+                in_time = check_in[11:16] if check_in and len(check_in) > 16 else check_in
+                reasons.append(f"⏰ تأخير {late_minutes} دقيقة (حضر {in_time or '؟'} بدلاً من {expected_in})")
+            
+            if early_leave_minutes > 0:
+                out_time = check_out[11:16] if check_out and len(check_out) > 16 else check_out
+                reasons.append(f"🚪 خروج مبكر {early_leave_minutes} دقيقة (خرج {out_time or '؟'} بدلاً من {expected_out})")
+            
+            if not reasons:
+                reasons.append("✅ حضور كامل - لا خصم")
+        
+        return " | ".join(reasons)
+    
+    def _calculate_day_penalty(self, record: Dict) -> Dict:
+        """
+        حساب قيمة الخصم لهذا اليوم
+        """
+        status = record.get("final_status")
+        late_minutes = record.get("late_minutes", 0) or 0
+        early_leave_minutes = record.get("early_leave_minutes", 0) or 0
+        
+        if status == "ABSENT":
+            return {"days": 1, "minutes": 0, "type": "absence", "type_ar": "غياب"}
+        elif status in ["ON_LEAVE", "ON_ADMIN_LEAVE", "GIFT_LEAVE", "EXEMPTED", "ON_MISSION", "HOLIDAY", "WEEKEND", "PERMISSION"]:
+            return {"days": 0, "minutes": 0, "type": "none", "type_ar": "بدون خصم"}
+        else:
+            total_minutes = late_minutes + early_leave_minutes
+            if total_minutes > 0:
+                return {"days": 0, "minutes": total_minutes, "type": "deficit", "type_ar": "نقص ساعات"}
+            return {"days": 0, "minutes": 0, "type": "none", "type_ar": "بدون خصم"}
     
     async def load_employee(self):
         """تحميل بيانات الموظف"""
