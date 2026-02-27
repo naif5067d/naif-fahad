@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Settings, Wrench, History, Volume2, Building2, 
+  Settings, Wrench, Volume2, Building2, 
   ChevronRight, Shield, Database, Users, Bell
 } from 'lucide-react';
 
