@@ -401,23 +401,24 @@ export default function PenaltiesPage() {
                 </div>
               </div>
 
-              {/* جدول التفاصيل اليومية */}
+              {/* جدول التفاصيل اليومية - محسّن */}
               {detailsDialog.daily_details && detailsDialog.daily_details.length > 0 ? (
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Clock size={16} />
-                    {lang === 'ar' ? 'التفاصيل اليومية' : 'Daily Details'}
+                    {lang === 'ar' ? 'التفاصيل اليومية الكاملة' : 'Full Daily Details'}
                   </h4>
                   <div className="overflow-x-auto border rounded-lg">
                     <table className="w-full text-sm">
                       <thead className="bg-muted">
                         <tr>
-                          <th className="text-start p-3 font-medium">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
-                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'اليوم' : 'Day'}</th>
-                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'تأخير (د)' : 'Late (min)'}</th>
-                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'خروج مبكر (د)' : 'Early (min)'}</th>
-                          <th className="text-center p-3 font-medium">{lang === 'ar' ? 'ملاحظات' : 'Notes'}</th>
+                          <th className="text-start p-2 font-medium text-xs">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                          <th className="text-center p-2 font-medium text-xs">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                          <th className="text-center p-2 font-medium text-xs">{lang === 'ar' ? 'الدخول' : 'In'}</th>
+                          <th className="text-center p-2 font-medium text-xs">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
+                          <th className="text-center p-2 font-medium text-xs">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
+                          <th className="text-center p-2 font-medium text-xs">{lang === 'ar' ? 'خروج مبكر' : 'Early'}</th>
+                          <th className="text-start p-2 font-medium text-xs">{lang === 'ar' ? 'البيان / سبب الخصم' : 'Reason'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -427,15 +428,22 @@ export default function PenaltiesPage() {
                           const isAbsent = day.status === 'ABSENT';
                           const isLate = day.status === 'LATE' || day.late_minutes > 0;
                           const isEarly = day.early_leave_minutes > 0;
+                          const hasPenalty = isAbsent || isLate || isEarly;
+                          
+                          // استخراج الوقت من timestamp
+                          const checkIn = day.check_in_time ? day.check_in_time.slice(11, 16) : '--:--';
+                          const checkOut = day.check_out_time ? day.check_out_time.slice(11, 16) : '--:--';
                           
                           return (
                             <tr 
                               key={idx} 
-                              className={`border-t ${isAbsent ? 'bg-red-50 dark:bg-red-900/10' : isLate || isEarly ? 'bg-amber-50 dark:bg-amber-900/10' : ''}`}
+                              className={`border-t ${isAbsent ? 'bg-red-50 dark:bg-red-900/10' : (isLate || isEarly) ? 'bg-amber-50 dark:bg-amber-900/10' : ''}`}
                             >
-                              <td className="p-3 font-mono text-xs">{day.date}</td>
-                              <td className="p-3 text-center text-xs">{dayName}</td>
-                              <td className="p-3 text-center">
+                              <td className="p-2">
+                                <span className="font-mono text-xs">{day.date}</span>
+                                <span className="text-xs text-muted-foreground mr-1">({dayName})</span>
+                              </td>
+                              <td className="p-2 text-center">
                                 <Badge 
                                   variant={isAbsent ? 'destructive' : day.status === 'PRESENT' ? 'default' : 'secondary'}
                                   className="text-xs"
@@ -443,24 +451,55 @@ export default function PenaltiesPage() {
                                   {day.status_ar || day.status}
                                 </Badge>
                               </td>
-                              <td className="p-3 text-center">
+                              <td className="p-2 text-center">
+                                <div className="flex flex-col items-center">
+                                  <span className={`font-mono text-xs font-bold ${isLate ? 'text-amber-600' : ''}`}>{checkIn}</span>
+                                  <span className="text-[10px] text-muted-foreground">({day.expected_check_in || '08:00'})</span>
+                                </div>
+                              </td>
+                              <td className="p-2 text-center">
+                                <div className="flex flex-col items-center">
+                                  <span className={`font-mono text-xs font-bold ${isEarly ? 'text-orange-600' : ''}`}>{checkOut}</span>
+                                  <span className="text-[10px] text-muted-foreground">({day.expected_check_out || '17:00'})</span>
+                                </div>
+                              </td>
+                              <td className="p-2 text-center">
                                 {day.late_minutes > 0 ? (
-                                  <span className="text-amber-600 font-medium">{day.late_minutes}</span>
+                                  <span className="text-amber-600 font-bold">{day.late_minutes} د</span>
                                 ) : '-'}
                               </td>
-                              <td className="p-3 text-center">
+                              <td className="p-2 text-center">
                                 {day.early_leave_minutes > 0 ? (
-                                  <span className="text-orange-600 font-medium">{day.early_leave_minutes}</span>
+                                  <span className="text-orange-600 font-bold">{day.early_leave_minutes} د</span>
                                 ) : '-'}
                               </td>
-                              <td className="p-3 text-center text-xs text-muted-foreground">
-                                {isAbsent && (lang === 'ar' ? '⚠️ خصم يوم' : '⚠️ 1 day deduction')}
-                                {isLate && day.late_minutes > 0 && (lang === 'ar' ? `تأخير ${day.late_minutes} د` : `${day.late_minutes}min late`)}
+                              <td className="p-2 text-start">
+                                <span className={`text-xs ${hasPenalty ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                  {day.penalty_reason_ar || (isAbsent ? '⛔ غياب - خصم يوم' : isLate || isEarly ? '⏰ نقص ساعات' : '✅ لا خصم')}
+                                </span>
                               </td>
                             </tr>
                           );
                         })}
                       </tbody>
+                      {/* ملخص في نهاية الجدول */}
+                      <tfoot className="bg-muted/50 border-t-2">
+                        <tr>
+                          <td colSpan="4" className="p-2 font-semibold text-sm">
+                            {lang === 'ar' ? 'إجمالي الخصم:' : 'Total Deduction:'}
+                          </td>
+                          <td colSpan="3" className="p-2 text-sm">
+                            <span className="text-red-600 font-bold">
+                              {detailsDialog.total_deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}
+                            </span>
+                            {detailsDialog.total_deduction_amount > 0 && (
+                              <span className="text-muted-foreground mr-2">
+                                ({new Intl.NumberFormat('ar-SA', { style: 'currency', currency: 'SAR' }).format(detailsDialog.total_deduction_amount)})
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
