@@ -480,11 +480,13 @@ export default function AttendanceManagementPage() {
             <span className="hidden sm:inline">خارج العمل الرسمي</span>
             <span className="sm:hidden">خارج</span>
           </TabsTrigger>
-          <TabsTrigger value="deductions" className="flex items-center gap-2">
-            <DollarSign size={16} />
-            <span className="hidden sm:inline">معاملات الخصم</span>
-            <span className="sm:hidden">الخصومات</span>
-          </TabsTrigger>
+          {canViewDeductions && (
+            <TabsTrigger value="deductions" className="flex items-center gap-2">
+              <DollarSign size={16} />
+              <span className="hidden sm:inline">معاملات الخصم</span>
+              <span className="sm:hidden">الخصومات</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Tab 1: Official Attendance */}
