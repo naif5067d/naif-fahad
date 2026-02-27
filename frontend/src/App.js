@@ -27,6 +27,7 @@ import ContractsManagementPageNew from "@/pages/contracts";
 import SettlementPage from "@/pages/SettlementPage";
 import MyFinancesPage from "@/pages/MyFinancesPage";
 import TeamAttendancePage from "@/pages/TeamAttendancePage";
+import AttendanceManagementPage from "@/pages/AttendanceManagementPage";
 import PenaltiesPage from "@/pages/PenaltiesPage";
 import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import TasksPage from "@/pages/TasksPage";
