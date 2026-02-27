@@ -44,6 +44,7 @@ const NAV_ITEMS = {
   mohammed: [
     'dashboard', 'transactions', 'tasks',
     'employees',
+    'deductionTransactions',
     'financialCustody',
     'executive',
     'policies'
@@ -52,7 +53,7 @@ const NAV_ITEMS = {
   // ستاس - صلاحيات كاملة
   stas: [
     // 📌 الاستخدام اليومي
-    'dashboard', 'transactions', 'leave', 'attendancePenalties', 'tasks',
+    'dashboard', 'transactions', 'leave', 'attendancePenalties', 'deductionTransactions', 'tasks',
     // 👥 إدارة الموظفين
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     // 💰 المالية والعهد
