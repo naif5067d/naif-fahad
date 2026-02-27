@@ -31,6 +31,7 @@ import AttendanceManagementPage from "@/pages/AttendanceManagementPage";
 import DeductionTransactionsPage from "@/pages/DeductionTransactionsPage";
 import PenaltiesPage from "@/pages/PenaltiesPage";
 import DeviceMonitoringPage from "@/pages/DeviceMonitoringPage";
+import SecurityMonitoringPage from "@/pages/SecurityMonitoringPage";
 import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
