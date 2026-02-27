@@ -302,8 +302,9 @@ async def get_employee_login_sessions(
     period: str = "monthly",
     user=Depends(require_roles('stas', 'sultan', 'naif'))
 ):
-    """جلب سجل جلسات موظف معين"""
+    """جلب سجل جلسات موظف معين مع تحليل الجهاز"""
     from datetime import timedelta
+    from services.advanced_device_analysis import analyze_device_fingerprint
     
     now = datetime.now(timezone.utc)
     
@@ -337,6 +338,27 @@ async def get_employee_login_sessions(
     for session in sessions:
         session['employee_name_ar'] = emp_name
         session['employee_number'] = emp_number
+        
+        # تحليل بصمة الجهاز وإضافة المعلومات
+        fp_data = session.get('fingerprint_data', {})
+        if fp_data:
+            analysis = analyze_device_fingerprint(fp_data)
+            session['device_name'] = analysis.get('device_name_ar', 'جهاز')
+            session['device_brand'] = analysis.get('device_brand', '')
+            session['device_model'] = analysis.get('device_model', '')
+            session['device_type'] = analysis.get('device_type', 'desktop')
+            session['os'] = analysis.get('os_name', '')
+            session['os_display'] = analysis.get('os_display_ar', '')
+            session['browser'] = analysis.get('browser_name', '')
+            session['is_mobile'] = analysis.get('is_mobile', False)
+            session['is_tablet'] = analysis.get('is_tablet', False)
+        else:
+            # بيانات افتراضية
+            session['device_name'] = 'جهاز'
+            session['device_type'] = 'desktop'
+            session['os'] = ''
+            session['browser'] = ''
+            session['is_mobile'] = False
     
     return sessions
 
