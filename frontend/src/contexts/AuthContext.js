@@ -1,11 +1,24 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
+import generateAdvancedFingerprint from '@/utils/advancedFingerprint';
 
 const AuthContext = createContext(null);
 
-// Generate device fingerprint for security
-// تجميع بصمة الجهاز الكاملة مع فصل Hardware عن Browser
-const generateDeviceFingerprint = () => {
+// Generate device fingerprint for security - استخدام البصمة المتقدمة
+const generateDeviceFingerprint = async () => {
+  try {
+    // استخدام البصمة المتقدمة
+    const advancedFp = await generateAdvancedFingerprint();
+    return advancedFp;
+  } catch (e) {
+    console.warn('Advanced fingerprint failed, using basic:', e);
+    // Fallback to basic fingerprint
+    return generateBasicFingerprint();
+  }
+};
+
+// البصمة الأساسية (fallback)
+const generateBasicFingerprint = () => {
   // Canvas Fingerprint
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
