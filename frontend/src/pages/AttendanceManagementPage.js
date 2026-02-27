@@ -349,6 +349,23 @@ export default function AttendanceManagementPage() {
     }
   };
 
+  // جلب استعلام العجز
+  const fetchDeficitSummary = async () => {
+    try {
+      setLoading(true);
+      const [year, month] = startDate.substring(0, 7).split('-');
+      const res = await api.get('/api/team-attendance/employee-deficit-summary', {
+        params: { year: parseInt(year), month: parseInt(month) }
+      });
+      setDeficitSummary(res.data.employees || []);
+      setShowDeficitDialog(true);
+    } catch (err) {
+      toast.error('خطأ في جلب بيانات العجز');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // طباعة التقرير
   const handlePrint = async () => {
     try {
