@@ -1800,8 +1800,8 @@ async def print_attendance_report(
             arabic_text('#'),
             arabic_text('التاريخ'),
             arabic_text('اليوم'),
-            arabic_text('الدخول'),
-            arabic_text('الخروج'),
+            arabic_text('بصمة الدخول'),
+            arabic_text('بصمة الخروج'),
             arabic_text('موقع البصمة'),
             arabic_text('الحالة'),
             arabic_text('التأخير'),
@@ -1826,20 +1826,29 @@ async def print_attendance_report(
             elif final_status == 'ABSENT':
                 absent_count += 1
             
-            # تنسيق الوقت
-            check_in = status_data.get('check_in_time', attend_data.get('check_in', ''))
-            check_out = status_data.get('check_out_time', attend_data.get('check_out', ''))
-            if check_in and 'T' in str(check_in):
-                check_in = str(check_in).split('T')[1][:5]
-            elif check_in:
-                check_in = str(check_in)[:5]
-            if check_out and 'T' in str(check_out):
-                check_out = str(check_out).split('T')[1][:5]
-            elif check_out:
-                check_out = str(check_out)[:5]
+            # تنسيق الوقت مع التاريخ - أولاً من status_data ثم من attend_data
+            raw_check_in = status_data.get('check_in_time') or attend_data.get('check_in', '')
+            raw_check_out = status_data.get('check_out_time') or attend_data.get('check_out', '')
             
-            # التأخير
-            late_min = status_data.get('late_minutes', 0) or 0
+            # عرض التاريخ والوقت معاً
+            check_in_display = '-'
+            if raw_check_in:
+                if 'T' in str(raw_check_in):
+                    parts = str(raw_check_in).split('T')
+                    check_in_display = f"{parts[0]} {parts[1][:5]}"
+                else:
+                    check_in_display = str(raw_check_in)[:16]
+            
+            check_out_display = '-'
+            if raw_check_out:
+                if 'T' in str(raw_check_out):
+                    parts = str(raw_check_out).split('T')
+                    check_out_display = f"{parts[0]} {parts[1][:5]}"
+                else:
+                    check_out_display = str(raw_check_out)[:16]
+            
+            # التأخير (تأخير + خروج مبكر)
+            late_min = (status_data.get('late_minutes', 0) or 0) + (status_data.get('early_leave_minutes', 0) or 0)
             if final_status not in ['ON_MISSION', 'ON_LEAVE', 'ON_ADMIN_LEAVE', 'HOLIDAY', 'WEEKEND', 'PERMISSION']:
                 total_late += late_min
             
@@ -1847,9 +1856,9 @@ async def print_attendance_report(
             work_location = status_data.get('work_location_name_ar', status_data.get('work_location', '')) or ''
             
             # الملاحظات (سبب التعديل)
-            note = status_data.get('decision_reason_ar', '') or ''
+            note = status_data.get('decision_reason_ar', '') or status_data.get('correction_reason', '') or ''
             source = status_data.get('decision_source', '')
-            modified_by = status_data.get('modified_by', '')
+            modified_by = status_data.get('modified_by', '') or status_data.get('corrected_by', '')
             if modified_by or source == 'manual_correction':
                 note = f"تعديل: {note}" if note else "تعديل إداري"
             
@@ -1861,8 +1870,8 @@ async def print_attendance_report(
                 str(day_idx),
                 date_str,
                 arabic_text(day_name),
-                check_in or '-',
-                check_out or '-',
+                check_in_display if check_in_display != '-' else '-',
+                check_out_display if check_out_display != '-' else '-',
                 arabic_text(work_location[:15]) if work_location else '-',
                 status_ar_map.get(final_status, final_status),
                 arabic_text(f"{late_min} د") if late_min > 0 else '-',
