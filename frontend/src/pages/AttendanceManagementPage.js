@@ -264,6 +264,27 @@ export default function AttendanceManagementPage() {
     }
   };
 
+  // تشغيل التحضير التلقائي
+  const handleRunDailyProcess = async () => {
+    try {
+      toast.info('جاري تشغيل التحضير...');
+      const res = await api.post('/api/attendance-engine/run-daily', {
+        target_date: endDate
+      });
+      toast.success(res.data?.message || 'تم تشغيل التحضير بنجاح');
+      // إعادة جلب البيانات
+      setLoading(true);
+      const month = startDate.substring(0, 7);
+      const reportRes = await api.get('/api/penalties/monthly-report', {
+        params: { year: parseInt(month.split('-')[0]), month: parseInt(month.split('-')[1]) }
+      });
+      setAttendanceData(reportRes.data.employees || []);
+      setLoading(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'خطأ في تشغيل التحضير');
+    }
+  };
+
   // طباعة التقرير
   const handlePrint = async () => {
     try {
