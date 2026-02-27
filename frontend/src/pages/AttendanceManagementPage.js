@@ -627,8 +627,8 @@ export default function AttendanceManagementPage() {
                                   <tr>
                                     <th className="text-start p-2 font-medium">التاريخ</th>
                                     <th className="text-center p-2 font-medium">الحالة</th>
-                                    <th className="text-center p-2 font-medium">الدخول</th>
-                                    <th className="text-center p-2 font-medium">الخروج</th>
+                                    <th className="text-center p-2 font-medium">بصمة الدخول</th>
+                                    <th className="text-center p-2 font-medium">بصمة الخروج</th>
                                     <th className="text-center p-2 font-medium">تأخير</th>
                                     <th className="text-center p-2 font-medium">مبكر</th>
                                     <th className="text-start p-2 font-medium">البيان</th>
@@ -638,8 +638,28 @@ export default function AttendanceManagementPage() {
                                 <tbody>
                                   {emp.daily_details.map((day, idx) => {
                                     const config = STATUS_CONFIG[day.status] || STATUS_CONFIG['PRESENT'];
-                                    const checkIn = day.check_in_time ? day.check_in_time.slice(11, 16) : '--:--';
-                                    const checkOut = day.check_out_time ? day.check_out_time.slice(11, 16) : '--:--';
+                                    
+                                    // استخراج التاريخ والوقت من بصمة الدخول
+                                    let checkInDate = '--/--';
+                                    let checkInTime = '--:--';
+                                    if (day.check_in_time) {
+                                      const checkInParts = day.check_in_time.split('T');
+                                      if (checkInParts.length >= 2) {
+                                        checkInDate = checkInParts[0].slice(5); // MM-DD
+                                        checkInTime = checkInParts[1].slice(0, 5); // HH:MM
+                                      }
+                                    }
+                                    
+                                    // استخراج التاريخ والوقت من بصمة الخروج
+                                    let checkOutDate = '--/--';
+                                    let checkOutTime = '--:--';
+                                    if (day.check_out_time) {
+                                      const checkOutParts = day.check_out_time.split('T');
+                                      if (checkOutParts.length >= 2) {
+                                        checkOutDate = checkOutParts[0].slice(5); // MM-DD
+                                        checkOutTime = checkOutParts[1].slice(0, 5); // HH:MM
+                                      }
+                                    }
                                     
                                     return (
                                       <tr key={idx} className={`border-t ${config.bg}`}>
@@ -649,15 +669,17 @@ export default function AttendanceManagementPage() {
                                             {day.status_ar || config.label}
                                           </Badge>
                                         </td>
-                                        <td className="p-2 text-center font-mono text-xs">
-                                          <span className={day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}>
-                                            {checkIn}
-                                          </span>
+                                        <td className="p-2 text-center">
+                                          <div className={`font-mono text-xs ${day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}`}>
+                                            <div>{checkInDate}</div>
+                                            <div className="text-sm font-semibold">{checkInTime}</div>
+                                          </div>
                                         </td>
-                                        <td className="p-2 text-center font-mono text-xs">
-                                          <span className={day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}>
-                                            {checkOut}
-                                          </span>
+                                        <td className="p-2 text-center">
+                                          <div className={`font-mono text-xs ${day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}`}>
+                                            <div>{checkOutDate}</div>
+                                            <div className="text-sm font-semibold">{checkOutTime}</div>
+                                          </div>
                                         </td>
                                         <td className="p-2 text-center">
                                           {day.late_minutes > 0 ? (
