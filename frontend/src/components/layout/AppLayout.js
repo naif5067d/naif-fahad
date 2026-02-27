@@ -17,7 +17,7 @@ const NAV_ITEMS = {
   // سلطان - مدير العمليات
   sultan: [
     // 📌 الاستخدام اليومي
-    'dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'tasks',
+    'dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'deductionTransactions', 'tasks',
     // 👥 إدارة الموظفين
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     // 💰 المالية والعهد
@@ -30,7 +30,7 @@ const NAV_ITEMS = {
   
   // نايف - العمليات الاستراتيجية
   naif: [
-    'dashboard', 'transactions', 'leave', 'attendancePenalties', 'tasks',
+    'dashboard', 'transactions', 'leave', 'attendancePenalties', 'deductionTransactions', 'tasks',
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     'financialCustody', 'custody',
     'executive', 'maintenanceTracking', 'ats',
