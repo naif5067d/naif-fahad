@@ -175,7 +175,7 @@ export const translations = {
       custody: "العهد العينية", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
-      attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
+      attendancePenalties: "الحضور والعقوبات", loginSessions: "سجل الدخول", deviceMonitoring: "مراقبة الأجهزة", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
       deductionTransactions: "معاملات الخصم",
       policies: "السياسات", soundSettings: "إعدادات الأصوات", controlPanel: "لوحة التحكم"
     },
