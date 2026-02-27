@@ -94,6 +94,7 @@ export default function AttendanceManagementPage() {
   
   // Outside hours data
   const [outsideHoursData, setOutsideHoursData] = useState([]);
+  const [selectedOutsideRows, setSelectedOutsideRows] = useState([]); // الصفوف المحددة للاحتساب
   
   // Deduction transactions
   const [deductionTransactions, setDeductionTransactions] = useState([]);
