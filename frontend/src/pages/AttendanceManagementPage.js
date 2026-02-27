@@ -894,12 +894,12 @@ export default function AttendanceManagementPage() {
                   <SelectValue placeholder="اختر الحالة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PRESENT">✅ حاضر</SelectItem>
-                  <SelectItem value="EXCUSED">✔️ معذور</SelectItem>
-                  <SelectItem value="EXEMPTED">🆓 إعفاء</SelectItem>
-                  <SelectItem value="ON_LEAVE">🏖️ مجاز</SelectItem>
-                  <SelectItem value="ON_MISSION">🚗 مهمة</SelectItem>
-                  <SelectItem value="ABSENT">❌ غائب</SelectItem>
+                  <SelectItem value="PRESENT">حاضر</SelectItem>
+                  <SelectItem value="EXCUSED">معذور</SelectItem>
+                  <SelectItem value="EXEMPTED">إعفاء</SelectItem>
+                  <SelectItem value="ON_LEAVE">مجاز</SelectItem>
+                  <SelectItem value="ON_MISSION">مهمة</SelectItem>
+                  <SelectItem value="ABSENT">غائب</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -914,7 +914,7 @@ export default function AttendanceManagementPage() {
             </div>
             
             <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
-              ⚠️ تعديل الحالة سيؤثر على حساب العقوبات. تأكد من السبب قبل الحفظ.
+              تعديل الحالة سيؤثر على حساب العقوبات. تأكد من السبب قبل الحفظ.
             </div>
           </div>
           
@@ -971,7 +971,7 @@ export default function AttendanceManagementPage() {
             </div>
             
             <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              ℹ️ سيتم إرسال المعاملة لمحمد للموافقة، ثم لستاس للتنفيذ.
+              سيتم إرسال المعاملة لمحمد للموافقة، ثم لستاس للتنفيذ.
             </div>
           </div>
           
