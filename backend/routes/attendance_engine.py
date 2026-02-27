@@ -555,7 +555,7 @@ class DateRangeRequest(BaseModel):
 
 
 @router.post("/jobs/daily")
-async def api_run_daily_job(req: DailyJobRequest, user=Depends(require_roles('stas'))):
+async def api_run_daily_job(req: DailyJobRequest, user=Depends(require_roles('stas', 'sultan', 'naif'))):
     """
     تشغيل Job الحضور اليومي
     
