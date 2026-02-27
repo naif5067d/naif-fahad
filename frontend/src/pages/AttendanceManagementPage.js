@@ -453,14 +453,16 @@ export default function AttendanceManagementPage() {
                   <Printer size={16} className="ml-1" />
                   طباعة {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
                 </Button>
-                <Button 
-                  size="sm" 
-                  className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))]"
-                  onClick={() => setShowDeductionDialog(true)}
-                >
-                  <Plus size={16} className="ml-1" />
-                  معاملة خصم
-                </Button>
+                {canViewDeductions && (
+                  <Button 
+                    size="sm" 
+                    className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))]"
+                    onClick={() => setShowDeductionDialog(true)}
+                  >
+                    <Plus size={16} className="ml-1" />
+                    معاملة خصم
+                  </Button>
+                )}
               </div>
             </div>
           </div>
