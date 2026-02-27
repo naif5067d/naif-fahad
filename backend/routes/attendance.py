@@ -142,7 +142,7 @@ class CheckOutRequest(BaseModel):
 
 
 # المستخدمين المسموح لهم تجاوز قيود GPS والجهاز
-BYPASS_ROLES = ['stas', 'sultan', 'naif']
+BYPASS_ROLES = ['stas']  # فقط ستاس معفى من قيود التبصيم
 BYPASS_GPS_ROLES = BYPASS_ROLES
 
 
