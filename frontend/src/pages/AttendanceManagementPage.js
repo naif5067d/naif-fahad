@@ -1047,7 +1047,12 @@ export default function AttendanceManagementPage() {
                   <div className="mt-4 p-3 bg-slate-50 rounded-lg flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
                       إجمالي السجلات: {outsideHoursData.length} | 
-                      إجمالي الساعات: {outsideHoursData.reduce((sum, r) => sum + (r.total_hours || 0), 0).toFixed(1)} ساعة
+                      إجمالي الوقت: {(() => {
+                        const totalMins = Math.round(outsideHoursData.reduce((sum, r) => sum + ((r.total_hours || 0) * 60), 0));
+                        const hours = Math.floor(totalMins / 60);
+                        const mins = totalMins % 60;
+                        return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                      })()}
                     </span>
                   </div>
                 </div>
