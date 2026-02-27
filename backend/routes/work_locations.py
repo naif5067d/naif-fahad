@@ -76,6 +76,11 @@ async def create_work_location(req: WorkLocationCreate, user=Depends(get_current
     grace_checkout = max(0, min(15, req.grace_checkout_minutes))
     
     now = datetime.now(timezone.utc).isoformat()
+    
+    # تحديد الحالة: ستاس يُنفذ مباشرة، سلطان/نايف ينتظر موافقة ستاس
+    is_stas = user.get('role') == 'stas'
+    status = 'active' if is_stas else 'pending_stas'
+    
     location = {
         "id": str(uuid.uuid4()),
         "name": req.name,
@@ -90,14 +95,18 @@ async def create_work_location(req: WorkLocationCreate, user=Depends(get_current
         "work_days": req.work_days.model_dump(),
         "assigned_employees": req.assigned_employees,
         "created_by": user['user_id'],
+        "created_by_name": user.get('name_ar') or user.get('name') or user['user_id'],
         "created_at": now,
         "updated_at": now,
-        "is_active": True
+        "is_active": is_stas,  # مفعل فقط إذا أنشأه ستاس
+        "status": status  # pending_stas أو active
     }
     
     await db.work_locations.insert_one(location)
     location.pop('_id', None)
-    return location
+    
+    message = "تم إنشاء الموقع وتفعيله" if is_stas else "تم إنشاء الموقع وإرساله لستاس للتنفيذ"
+    return {**location, "message_ar": message}
 
 
 @router.put("/{location_id}")
