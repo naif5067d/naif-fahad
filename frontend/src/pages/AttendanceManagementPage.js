@@ -273,6 +273,54 @@ export default function AttendanceManagementPage() {
     }
   };
 
+  // القبول الجماعي للساعات المحددة
+  const handleBulkApprove = async () => {
+    if (selectedOutsideRows.length === 0) {
+      toast.error('يرجى تحديد سجلات للقبول');
+      return;
+    }
+    
+    try {
+      toast.info(`جاري قبول ${selectedOutsideRows.length} سجل...`);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const key of selectedOutsideRows) {
+        const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
+        if (!rec) continue;
+        
+        try {
+          await api.post('/api/team-attendance/outside-hours/count-as-attendance', {
+            employee_id: rec.employee_id,
+            date: rec.date,
+            hours_to_count: null, // احتساب كحضور كامل
+            note: 'قبول جماعي'
+          });
+          successCount++;
+        } catch (err) {
+          errorCount++;
+          console.error(`Error approving ${rec.employee_name_ar} - ${rec.date}:`, err);
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`تم قبول ${successCount} سجل بنجاح`);
+      }
+      if (errorCount > 0) {
+        toast.error(`فشل قبول ${errorCount} سجل`);
+      }
+      
+      // إعادة تعيين وإعادة جلب البيانات
+      setSelectedOutsideRows([]);
+      const params = { start_date: startDate, end_date: endDate };
+      const res = await api.get('/api/team-attendance/outside-hours', { params });
+      setOutsideHoursData(res.data.records || []);
+    } catch (err) {
+      toast.error('خطأ في القبول الجماعي');
+    }
+  };
+
   // تشغيل التحضير التلقائي
   const handleRunDailyProcess = async () => {
     try {
