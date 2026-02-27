@@ -682,15 +682,15 @@ export default function AttendanceManagementPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Moon size={20} className="text-yellow-500" />
-                سجل خارج أوقات العمل
-                <Badge className="bg-yellow-100 text-yellow-700 mr-2">غير محتسب</Badge>
+                <Clock size={20} className="text-[hsl(var(--navy))]" />
+                سجل خارج العمل الرسمي
+                <Badge className="bg-slate-100 text-slate-700 mr-2">غير محتسب</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <RefreshCw className="animate-spin text-yellow-500" size={32} />
+                  <RefreshCw className="animate-spin text-[hsl(var(--navy))]" size={32} />
                 </div>
               ) : outsideHoursData.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -699,7 +699,7 @@ export default function AttendanceManagementPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-yellow-50">
+                    <thead className="bg-slate-50">
                       <tr>
                         <th className="text-start p-3 font-medium">الموظف</th>
                         <th className="text-center p-3 font-medium">التاريخ</th>
@@ -713,31 +713,31 @@ export default function AttendanceManagementPage() {
                     </thead>
                     <tbody>
                       {outsideHoursData.map((rec, idx) => (
-                        <tr key={idx} className={`border-t ${rec.category === 'weekend' ? 'bg-orange-50' : 'bg-yellow-50'}`}>
+                        <tr key={idx} className={`border-t ${rec.category === 'weekend' ? 'bg-orange-50' : 'bg-amber-50'}`}>
                           <td className="p-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold text-xs">
+                              <div className="w-8 h-8 rounded-full bg-[hsl(var(--navy)/0.1)] flex items-center justify-center text-[hsl(var(--navy))] font-bold text-xs">
                                 {rec.employee_name_ar?.[0] || '?'}
                               </div>
                               <span className="font-medium">{rec.employee_name_ar}</span>
                             </div>
                           </td>
                           <td className="p-3 text-center font-mono">{rec.date}</td>
-                          <td className="p-3 text-center font-mono text-yellow-700 font-bold">
+                          <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
                             {rec.check_in_time || '--:--'}
                           </td>
-                          <td className="p-3 text-center font-mono text-yellow-700 font-bold">
+                          <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
                             {rec.check_out_time || '--:--'}
                           </td>
                           <td className="p-3 text-center">
-                            <Badge className="bg-yellow-200 text-yellow-800">
+                            <Badge className="bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]">
                               {rec.total_hours?.toFixed(1) || 0} س
                             </Badge>
                           </td>
                           <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
                           <td className="p-3 text-center">
-                            <Badge className={rec.category === 'weekend' ? 'bg-orange-200 text-orange-800' : 'bg-yellow-200 text-yellow-800'}>
-                              {rec.category === 'weekend' ? '🟠 ويكند' : '🟡 يوم عمل'}
+                            <Badge className={rec.category === 'weekend' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}>
+                              {rec.category === 'weekend' ? 'نهاية أسبوع' : 'يوم عمل'}
                             </Badge>
                           </td>
                           <td className="p-3 text-center">
