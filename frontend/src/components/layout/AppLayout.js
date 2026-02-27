@@ -82,7 +82,7 @@ const ICONS = {
   attendance: Clock, contracts: FileSignature,
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
-  attendancePenalties: UsersRound, loginSessions: History, deviceMonitoring: Fingerprint, tasks: ClipboardList, maintenanceTracking: Hammer, ats: ClipboardCheck,
+  attendancePenalties: UsersRound, deviceMonitoring: Fingerprint, tasks: ClipboardList, maintenanceTracking: Hammer, ats: ClipboardCheck,
   policies: Book, soundSettings: Volume2, controlPanel: Settings, deductionTransactions: Receipt,
 };
 
@@ -92,7 +92,7 @@ const PATHS = {
   contractsManagement: '/contracts-management', settlement: '/settlement', employees: '/employees', settings: '/settings', stasMirror: '/stas-mirror',
   workLocations: '/work-locations', custody: '/custody', financialCustody: '/financial-custody',
   systemMaintenance: '/system-maintenance', myFinances: '/my-finances', teamAttendance: '/team-attendance', penalties: '/penalties',
-  attendancePenalties: '/team-attendance', loginSessions: '/login-sessions', deviceMonitoring: '/device-monitoring', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
+  attendancePenalties: '/team-attendance', deviceMonitoring: '/device-monitoring', tasks: '/tasks', maintenanceTracking: '/maintenance-tracking',
   deductionTransactions: '/deduction-transactions',
   executive: '/executive', ats: '/ats', policies: '/policies', soundSettings: '/sound-settings', controlPanel: '/control-panel',
 };
