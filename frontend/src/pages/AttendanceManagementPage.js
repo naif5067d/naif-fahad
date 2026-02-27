@@ -50,7 +50,6 @@ import {
   XCircle,
   Filter,
   Building,
-  Moon,
   DollarSign,
   Edit,
   ArrowRight
