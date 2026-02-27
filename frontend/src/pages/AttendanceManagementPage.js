@@ -882,7 +882,8 @@ export default function AttendanceManagementPage() {
           </Card>
         </TabsContent>
 
-        {/* Tab 3: Deduction Transactions */}
+        {/* Tab 3: Deduction Transactions - للمدراء الرئيسيين فقط */}
+        {canViewDeductions && (
         <TabsContent value="deductions">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-4">
