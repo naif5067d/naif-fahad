@@ -11,7 +11,7 @@ export const translations = {
       custody: "In-Kind Custody", financialCustody: "Financial Custody",
       companySettings: "Company Settings", systemMaintenance: "System Maintenance",
       myFinances: "My Finances", teamAttendance: "Attendance & Penalties", penalties: "Penalties",
-      attendancePenalties: "Attendance & Penalties", deviceMonitoring: "Device Monitoring", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS",
+      attendancePenalties: "Attendance & Penalties", deviceMonitoring: "Device Monitoring", security: "Security Center", tasks: "Tasks", maintenanceTracking: "Maintenance", ats: "ATS",
       deductionTransactions: "Deduction Transactions",
       policies: "Policies", soundSettings: "Sound Settings", controlPanel: "Control Panel"
     },
@@ -175,7 +175,7 @@ export const translations = {
       custody: "العهد العينية", financialCustody: "العهدة المالية",
       companySettings: "إعدادات الشركة", systemMaintenance: "صيانة النظام",
       myFinances: "ماليّاتي", teamAttendance: "الحضور والعقوبات", penalties: "العقوبات",
-      attendancePenalties: "الحضور والعقوبات", deviceMonitoring: "مراقبة الأجهزة", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
+      attendancePenalties: "الحضور والعقوبات", deviceMonitoring: "مراقبة الأجهزة", security: "مركز الأمان", tasks: "المهام", maintenanceTracking: "متابعة الصيانة", ats: "التوظيف",
       deductionTransactions: "معاملات الخصم",
       policies: "السياسات", soundSettings: "إعدادات الأصوات", controlPanel: "لوحة التحكم"
     },
