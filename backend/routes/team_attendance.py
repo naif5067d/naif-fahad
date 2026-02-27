@@ -2580,6 +2580,152 @@ async def count_outside_hours_as_attendance(
 
 
 
+@router.get("/employee-deficit-summary")
+async def get_employee_deficit_summary(
+    year: int = Query(..., description="السنة"),
+    month: int = Query(..., description="الشهر"),
+    employee_id: Optional[str] = Query(None, description="معرف الموظف (اختياري)"),
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    استعلام تفصيلي عن عجز كل موظف:
+    - عدد أيام الغياب
+    - إجمالي دقائق التأخير
+    - إجمالي دقائق الخروج المبكر
+    - الساعات المتاحة للتعويض من خارج العمل الرسمي
+    - هل تم تنفيذ خصم لهذا الشهر
+    """
+    # حساب نطاق التواريخ
+    start_date = f"{year}-{month:02d}-01"
+    if month == 12:
+        end_date = f"{year + 1}-01-01"
+    else:
+        end_date = f"{year}-{month + 1:02d}-01"
+    
+    # استعلام الموظفين
+    emp_query = {"status": {"$ne": "terminated"}}
+    if employee_id:
+        emp_query["id"] = employee_id
+    
+    employees = await db.employees.find(emp_query, {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1}).to_list(100)
+    emp_ids = [e["id"] for e in employees]
+    emp_map = {e["id"]: e for e in employees}
+    
+    # جلب الحالات اليومية
+    daily_statuses = await db.daily_status.find({
+        "employee_id": {"$in": emp_ids},
+        "date": {"$gte": start_date, "$lt": end_date}
+    }, {"_id": 0}).to_list(3000)
+    
+    # جلب سجلات خارج أوقات العمل
+    outside_records = await db.attendance_ledger.find({
+        "employee_id": {"$in": emp_ids},
+        "date": {"$gte": start_date, "$lt": end_date},
+        "$or": [
+            {"category": "outside_hours"},
+            {"category": "weekend"},
+            {"is_official": False}
+        ]
+    }, {"_id": 0}).to_list(1000)
+    
+    # جلب معاملات الخصم المنفذة
+    executed_deductions = await db.deduction_transactions.find({
+        "employee_id": {"$in": emp_ids},
+        "month": f"{year}-{month:02d}",
+        "status": "executed"
+    }, {"_id": 0}).to_list(100)
+    executed_emp_ids = {d["employee_id"] for d in executed_deductions}
+    
+    # تجميع البيانات لكل موظف
+    result = []
+    for emp_id in emp_ids:
+        emp = emp_map.get(emp_id, {})
+        
+        # حساب العجز من daily_status
+        emp_statuses = [s for s in daily_statuses if s.get("employee_id") == emp_id]
+        
+        absent_days = sum(1 for s in emp_statuses if s.get("final_status") == "ABSENT")
+        total_late_minutes = sum(s.get("late_minutes", 0) or 0 for s in emp_statuses)
+        total_early_leave_minutes = sum(s.get("early_leave_minutes", 0) or 0 for s in emp_statuses)
+        total_deficit_minutes = total_late_minutes + total_early_leave_minutes
+        
+        # حساب أيام الحضور
+        present_days = sum(1 for s in emp_statuses if s.get("final_status") in ["PRESENT", "LATE", "EARLY_LEAVE"])
+        
+        # حساب أيام الإجازة
+        leave_days = sum(1 for s in emp_statuses if s.get("final_status") == "ON_LEAVE")
+        
+        # حساب ساعات خارج العمل الرسمي المتاحة
+        emp_outside = {}
+        for rec in outside_records:
+            if rec.get("employee_id") != emp_id:
+                continue
+            key = f"{rec.get('employee_id')}_{rec.get('date')}"
+            if key not in emp_outside:
+                emp_outside[key] = {"check_in": None, "check_out": None}
+            if rec.get("type") == "check_in":
+                emp_outside[key]["check_in"] = rec.get("timestamp")
+            elif rec.get("type") == "check_out":
+                emp_outside[key]["check_out"] = rec.get("timestamp")
+        
+        outside_minutes = 0
+        for key, data in emp_outside.items():
+            if data["check_in"] and data["check_out"]:
+                try:
+                    checkin = datetime.fromisoformat(data["check_in"].replace('Z', '+00:00'))
+                    checkout = datetime.fromisoformat(data["check_out"].replace('Z', '+00:00'))
+                    outside_minutes += int((checkout - checkin).total_seconds() / 60)
+                except:
+                    pass
+        
+        # حساب التعويض المطلوب
+        compensation_needed_minutes = max(0, total_deficit_minutes - outside_minutes)
+        
+        # هل تم تنفيذ خصم
+        has_executed_deduction = emp_id in executed_emp_ids
+        
+        # هل يمكن التعويض (العجز <= 7 ساعات ولم يُنفذ خصم)
+        can_compensate = total_deficit_minutes <= 420 and not has_executed_deduction
+        
+        result.append({
+            "employee_id": emp_id,
+            "employee_name_ar": emp.get("full_name_ar") or emp.get("full_name") or emp_id,
+            "present_days": present_days,
+            "absent_days": absent_days,
+            "leave_days": leave_days,
+            "late_minutes": total_late_minutes,
+            "late_display": f"{total_late_minutes // 60}س {total_late_minutes % 60}د" if total_late_minutes > 0 else "-",
+            "early_leave_minutes": total_early_leave_minutes,
+            "early_leave_display": f"{total_early_leave_minutes // 60}س {total_early_leave_minutes % 60}د" if total_early_leave_minutes > 0 else "-",
+            "total_deficit_minutes": total_deficit_minutes,
+            "total_deficit_display": f"{total_deficit_minutes // 60}س {total_deficit_minutes % 60}د" if total_deficit_minutes > 0 else "-",
+            "outside_hours_available_minutes": outside_minutes,
+            "outside_hours_display": f"{outside_minutes // 60}س {outside_minutes % 60}د" if outside_minutes > 0 else "-",
+            "compensation_needed_minutes": compensation_needed_minutes,
+            "compensation_needed_display": f"{compensation_needed_minutes // 60}س {compensation_needed_minutes % 60}د" if compensation_needed_minutes > 0 else "-",
+            "has_executed_deduction": has_executed_deduction,
+            "can_compensate": can_compensate,
+            "status_summary": "تم الخصم" if has_executed_deduction else ("يمكن التعويض" if can_compensate and total_deficit_minutes > 0 else ("عجز كبير - خصم مطلوب" if total_deficit_minutes > 420 else "لا عجز"))
+        })
+    
+    # ترتيب حسب العجز
+    result.sort(key=lambda x: x["total_deficit_minutes"], reverse=True)
+    
+    return {
+        "year": year,
+        "month": month,
+        "period": f"{year}-{month:02d}",
+        "employees": result,
+        "summary": {
+            "total_employees": len(result),
+            "with_deficit": sum(1 for r in result if r["total_deficit_minutes"] > 0),
+            "with_executed_deduction": sum(1 for r in result if r["has_executed_deduction"]),
+            "can_compensate": sum(1 for r in result if r["can_compensate"] and r["total_deficit_minutes"] > 0)
+        }
+    }
+
+
+
 @router.get("/outside-hours/print-report")
 async def print_outside_hours_report(
     start_date: str = Query(..., description="تاريخ البداية YYYY-MM-DD"),
