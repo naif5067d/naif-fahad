@@ -1014,22 +1014,51 @@ export default function AttendanceManagementPage() {
             </div>
             
             <div>
-              <Label>السبب</Label>
+              <Label>السبب (إلزامي)</Label>
               <Textarea 
                 value={statusForm.reason}
                 onChange={e => setStatusForm(f => ({ ...f, reason: e.target.value }))}
                 placeholder="اكتب سبب التعديل..."
+                className="min-h-[80px]"
               />
             </div>
             
-            <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
-              تعديل الحالة سيؤثر على حساب العقوبات. تأكد من السبب قبل الحفظ.
+            {/* تنبيه هام */}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <strong>تنبيه هام:</strong> تعديل الحالة يؤثر على حساب العقوبات. 
+              لا يُسمح بتعديل وقت البصمة الفعلي أو موقعها - التزوير ممنوع.
+            </div>
+            
+            {/* تعهد المسؤولية */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statusAcknowledged}
+                  onChange={e => setStatusAcknowledged(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-slate-700">
+                  أتعهد بأن هذا التعديل صحيح ومبني على أساس موثق، وأتحمل كامل المسؤولية 
+                  عن أي تبعات تنتج عن هذا التعديل. وأقر بأن البصمات المسجلة في النظام 
+                  لا يمكن تعديلها وهذا التعديل للحالة فقط.
+                </span>
+              </label>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>إلغاء</Button>
-            <Button className="bg-[hsl(var(--navy))]" onClick={handleStatusChange}>حفظ التعديل</Button>
+            <Button variant="outline" onClick={() => {
+              setShowStatusDialog(false);
+              setStatusAcknowledged(false);
+            }}>إلغاء</Button>
+            <Button 
+              className="bg-[hsl(var(--navy))]" 
+              onClick={handleStatusChange}
+              disabled={!statusAcknowledged || !statusForm.reason?.trim()}
+            >
+              حفظ التعديل
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
