@@ -794,12 +794,18 @@ export default function AttendanceManagementPage() {
 
           {/* Outside Hours List */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock size={20} className="text-[hsl(var(--navy))]" />
                 سجل خارج العمل الرسمي
                 <Badge className="bg-slate-100 text-slate-700 mr-2">غير محتسب</Badge>
               </CardTitle>
+              {outsideHoursData.length > 0 && (
+                <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
+                  <Printer size={16} className="ml-1" />
+                  طباعة
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {loading ? (
