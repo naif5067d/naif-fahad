@@ -30,7 +30,6 @@ import TeamAttendancePage from "@/pages/TeamAttendancePage";
 import AttendanceManagementPage from "@/pages/AttendanceManagementPage";
 import DeductionTransactionsPage from "@/pages/DeductionTransactionsPage";
 import PenaltiesPage from "@/pages/PenaltiesPage";
-import LoginSessionsPage from "@/pages/LoginSessionsPage";
 import DeviceMonitoringPage from "@/pages/DeviceMonitoringPage";
 import TasksPage from "@/pages/TasksPage";
 import MaintenanceTrackingPage from "@/pages/MaintenanceTrackingPage";
