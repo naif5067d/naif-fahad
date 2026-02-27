@@ -99,6 +99,10 @@ export default function AttendanceManagementPage() {
   // Deduction transactions
   const [deductionTransactions, setDeductionTransactions] = useState([]);
   
+  // Employee deficit summary
+  const [deficitSummary, setDeficitSummary] = useState([]);
+  const [showDeficitDialog, setShowDeficitDialog] = useState(false);
+  
   // Dialogs
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [statusForm, setStatusForm] = useState({ employee_id: '', date: '', status: '', reason: '' });
