@@ -1800,6 +1800,15 @@ export default function TeamAttendancePage() {
                               <div className="text-sm space-y-1">
                                 <p>{lang === 'ar' ? 'إجمالي أيام الغياب:' : 'Total absent days:'} <strong>{emp.absence?.total_days || 0}</strong></p>
                                 <p>{lang === 'ar' ? 'خصم:' : 'Deduction:'} <strong>{emp.absence?.deduction_days || 0} {lang === 'ar' ? 'يوم' : 'days'}</strong></p>
+                                {/* فترات الغياب المتصل */}
+                                {emp.absence?.consecutive_streaks?.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-red-200">
+                                    <p className="text-xs font-medium text-red-600 mb-1">{lang === 'ar' ? 'فترات الغياب:' : 'Absence periods:'}</p>
+                                    {emp.absence.consecutive_streaks.map((s, i) => (
+                                      <p key={i} className="text-xs text-red-500">{s.start} → {s.end} ({s.days} {lang === 'ar' ? 'يوم' : 'days'})</p>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
@@ -1837,6 +1846,75 @@ export default function TeamAttendancePage() {
                               )}
                             </div>
                           </div>
+                          
+                          {/* التفاصيل اليومية الكاملة */}
+                          {emp.daily_details && emp.daily_details.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                <FileText size={16} />
+                                {lang === 'ar' ? 'التفاصيل اليومية' : 'Daily Details'}
+                              </h4>
+                              <div className="overflow-x-auto border rounded-lg">
+                                <table className="w-full text-xs">
+                                  <thead className="bg-muted">
+                                    <tr>
+                                      <th className="text-start p-2 font-medium">{lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                                      <th className="text-center p-2 font-medium">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                                      <th className="text-center p-2 font-medium">{lang === 'ar' ? 'الدخول' : 'In'}</th>
+                                      <th className="text-center p-2 font-medium">{lang === 'ar' ? 'الخروج' : 'Out'}</th>
+                                      <th className="text-center p-2 font-medium">{lang === 'ar' ? 'تأخير' : 'Late'}</th>
+                                      <th className="text-center p-2 font-medium">{lang === 'ar' ? 'خروج مبكر' : 'Early'}</th>
+                                      <th className="text-start p-2 font-medium">{lang === 'ar' ? 'البيان' : 'Reason'}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {emp.daily_details.filter(d => d.status === 'ABSENT' || d.late_minutes > 0 || d.early_leave_minutes > 0 || d.status === 'ON_MISSION').map((day, idx) => {
+                                      const isAbsent = day.status === 'ABSENT';
+                                      const isLate = day.late_minutes > 0;
+                                      const isEarly = day.early_leave_minutes > 0;
+                                      const checkIn = day.check_in_time ? day.check_in_time.slice(11, 16) : '--:--';
+                                      const checkOut = day.check_out_time ? day.check_out_time.slice(11, 16) : '--:--';
+                                      
+                                      return (
+                                        <tr key={idx} className={`border-t ${isAbsent ? 'bg-red-50 dark:bg-red-900/10' : (isLate || isEarly) ? 'bg-amber-50 dark:bg-amber-900/10' : ''}`}>
+                                          <td className="p-2 font-mono">{day.date}</td>
+                                          <td className="p-2 text-center">
+                                            <Badge variant={isAbsent ? 'destructive' : 'secondary'} className="text-[10px]">
+                                              {day.status_ar || day.status}
+                                            </Badge>
+                                          </td>
+                                          <td className="p-2 text-center">
+                                            <span className={`font-mono ${isLate ? 'text-amber-600 font-bold' : ''}`}>{checkIn}</span>
+                                            <span className="text-muted-foreground text-[10px] block">({day.expected_check_in || '08:00'})</span>
+                                          </td>
+                                          <td className="p-2 text-center">
+                                            <span className={`font-mono ${isEarly ? 'text-orange-600 font-bold' : ''}`}>{checkOut}</span>
+                                            <span className="text-muted-foreground text-[10px] block">({day.expected_check_out || '17:00'})</span>
+                                          </td>
+                                          <td className="p-2 text-center">
+                                            {day.late_minutes > 0 ? <span className="text-amber-600 font-bold">{day.late_minutes} د</span> : '-'}
+                                          </td>
+                                          <td className="p-2 text-center">
+                                            {day.early_leave_minutes > 0 ? <span className="text-orange-600 font-bold">{day.early_leave_minutes} د</span> : '-'}
+                                          </td>
+                                          <td className="p-2 text-start">
+                                            <span className={`${isAbsent || isLate || isEarly ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                              {day.penalty_reason_ar || (isAbsent ? '⛔ غياب - خصم يوم' : isLate || isEarly ? '⏰ نقص ساعات' : '✅ لا خصم')}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                              {emp.daily_details.filter(d => d.status === 'ABSENT' || d.late_minutes > 0 || d.early_leave_minutes > 0).length === 0 && (
+                                <p className="text-center py-4 text-muted-foreground text-sm">
+                                  {lang === 'ar' ? '✅ لا توجد مخالفات مسجلة' : '✅ No violations recorded'}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
