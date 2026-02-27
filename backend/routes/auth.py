@@ -244,6 +244,44 @@ async def login(req: LoginRequest, request: Request):
             }
         )
     
+    # التحقق من الحساب المعطل مؤقتاً (من STAS)
+    if user.get('is_suspended'):
+        # التحقق من انتهاء مدة التعطيل
+        suspended_until = user.get('suspended_until')
+        if suspended_until:
+            try:
+                until_dt = datetime.fromisoformat(suspended_until.replace('Z', '+00:00'))
+                if datetime.now(timezone.utc) >= until_dt:
+                    # انتهت مدة التعطيل - إلغاء التعطيل تلقائياً
+                    await db.users.update_one(
+                        {"id": user['id']},
+                        {"$set": {"is_suspended": False}, "$unset": {"suspended_until": ""}}
+                    )
+                else:
+                    # لا يزال معطلاً
+                    remaining = until_dt - datetime.now(timezone.utc)
+                    hours = remaining.seconds // 3600
+                    raise HTTPException(
+                        status_code=403, 
+                        detail={
+                            "error": "ACCOUNT_SUSPENDED",
+                            "message_ar": f"حسابك معطل مؤقتاً. السبب: {user.get('suspend_reason', 'غير محدد')}. متبقي: {hours} ساعة",
+                            "message_en": f"Your account is temporarily suspended. Remaining: {hours} hours"
+                        }
+                    )
+            except (ValueError, TypeError):
+                pass
+        else:
+            # تعطيل دائم حتى الإلغاء
+            raise HTTPException(
+                status_code=403, 
+                detail={
+                    "error": "ACCOUNT_SUSPENDED",
+                    "message_ar": f"حسابك معطل. السبب: {user.get('suspend_reason', 'غير محدد')}. راجع STAS لإلغاء التعطيل.",
+                    "message_en": "Your account is suspended. Contact STAS to unblock."
+                }
+            )
+    
     employee_id = user.get('employee_id')
     role = user.get('role', 'employee')
     user_id = user['id']
