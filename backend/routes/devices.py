@@ -342,23 +342,69 @@ async def get_employee_login_sessions(
         # تحليل بصمة الجهاز وإضافة المعلومات
         fp_data = session.get('fingerprint_data', {})
         if fp_data:
-            analysis = analyze_device_fingerprint(fp_data)
-            session['device_name'] = analysis.get('device_name_ar', 'جهاز')
-            session['device_brand'] = analysis.get('device_brand', '')
-            session['device_model'] = analysis.get('device_model', '')
-            session['device_type'] = analysis.get('device_type', 'desktop')
-            session['os'] = analysis.get('os_name', '')
-            session['os_display'] = analysis.get('os_display_ar', '')
-            session['browser'] = analysis.get('browser_name', '')
-            session['is_mobile'] = analysis.get('is_mobile', False)
-            session['is_tablet'] = analysis.get('is_tablet', False)
+            # استخدام البيانات المباشرة من fingerprint_data (أولوية)
+            device_brand = fp_data.get('deviceBrand', '')
+            device_model = fp_data.get('deviceModel', '')
+            os_name = fp_data.get('osName', '')
+            os_version = fp_data.get('osVersion', '')
+            browser_name = fp_data.get('browserName', '')
+            browser_version = fp_data.get('browserVersion', '')
+            device_type = fp_data.get('deviceType', 'desktop')
+            
+            # تكوين اسم الجهاز
+            if device_brand and device_model:
+                device_name = f"{device_brand} {device_model}"
+            elif device_model:
+                device_name = device_model
+            elif device_brand:
+                device_name = device_brand
+            elif device_type == 'mobile':
+                device_name = 'هاتف محمول'
+            elif device_type == 'tablet':
+                device_name = 'جهاز لوحي'
+            else:
+                device_name = 'كمبيوتر'
+            
+            # تكوين عرض نظام التشغيل
+            if os_name:
+                os_display = f"{os_name} {os_version}".strip()
+            else:
+                os_display = ''
+            
+            # تكوين عرض المتصفح
+            if browser_name:
+                browser_display = f"{browser_name} {browser_version}".strip()
+            else:
+                browser_display = ''
+            
+            session['device_name'] = device_name
+            session['device_brand'] = device_brand
+            session['device_model'] = device_model
+            session['device_type'] = device_type
+            session['os'] = os_name
+            session['os_version'] = os_version
+            session['os_display'] = os_display
+            session['browser'] = browser_name
+            session['browser_version'] = browser_version
+            session['browser_display'] = browser_display
+            session['is_mobile'] = fp_data.get('isIPhone', False) or fp_data.get('isAndroid', False) or device_type == 'mobile'
+            session['is_tablet'] = fp_data.get('isIPad', False) or device_type == 'tablet'
+            session['gpu'] = fp_data.get('webglRenderer', '')
+            session['screen'] = fp_data.get('screenResolution', '')
+            session['memory'] = fp_data.get('deviceMemory', '')
+            session['cores'] = fp_data.get('hardwareConcurrency', '')
+            session['connection'] = fp_data.get('connectionEffectiveType', '')
         else:
-            # بيانات افتراضية
-            session['device_name'] = 'جهاز'
+            # بيانات افتراضية للجلسات القديمة بدون بصمة
+            session['device_name'] = 'جهاز غير معروف'
             session['device_type'] = 'desktop'
             session['os'] = ''
+            session['os_display'] = ''
             session['browser'] = ''
+            session['browser_display'] = ''
             session['is_mobile'] = False
+            session['gpu'] = ''
+            session['screen'] = ''
     
     return sessions
 
