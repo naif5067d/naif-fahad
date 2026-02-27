@@ -158,16 +158,25 @@ class PenaltyCalculator:
             "total_deduction_days": total_days_deduction,
             "total_deduction_amount": round(total_deduction_amount, 2),
             
-            # تفاصيل يومية
+            # تفاصيل يومية مع بيانات كاملة
             "daily_details": [
                 {
                     "date": r["date"],
                     "status": r.get("final_status"),
-                    "status_ar": r.get("status_ar"),
+                    "status_ar": r.get("status_ar") or self._get_status_ar(r.get("final_status")),
                     "late_minutes": r.get("late_minutes", 0),
                     "early_leave_minutes": r.get("early_leave_minutes", 0),
                     "actual_hours": r.get("actual_hours", 0),
-                    "required_hours": r.get("required_hours", 8)
+                    "required_hours": r.get("required_hours", 8),
+                    # أوقات البصمة الفعلية
+                    "check_in_time": r.get("check_in_time"),
+                    "check_out_time": r.get("check_out_time"),
+                    # الأوقات المطلوبة
+                    "expected_check_in": r.get("expected_check_in", "08:00"),
+                    "expected_check_out": r.get("expected_check_out", "17:00"),
+                    # سبب الخصم بالتفصيل
+                    "penalty_reason_ar": self._generate_penalty_reason(r),
+                    "penalty_amount": self._calculate_day_penalty(r)
                 }
                 for r in daily_records
             ]
