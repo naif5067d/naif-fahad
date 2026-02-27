@@ -36,6 +36,7 @@ const NAV_ITEMS = {
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     'financialCustody', 'custody',
     'executive', 'maintenanceTracking', 'ats',
+    'deviceMonitoring',
     'policies'
   ],
   
