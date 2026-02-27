@@ -1891,8 +1891,8 @@ async def print_attendance_report(
             arabic_text(f"خصم: {total_late/480:.2f} يوم") if total_late > 480 else ''
         ])
         
-        # إنشاء الجدول
-        col_widths = [25, 70, 55, 45, 45, 80, 60, 50, 150]
+        # إنشاء الجدول - عرض أكبر لأعمدة الدخول والخروج
+        col_widths = [20, 60, 50, 85, 85, 70, 55, 45, 130]
         emp_table = Table(table_data, colWidths=col_widths, repeatRows=1)
         
         emp_table.setStyle(TableStyle([
