@@ -477,6 +477,16 @@ export default function AttendanceManagementPage() {
                     </Button>
                   );
                 })}
+                
+                {/* رسالة إذا لم يتم العثور على نتائج */}
+                {employeeSearch.trim() && employees.filter(emp => {
+                  const search = employeeSearch.toLowerCase();
+                  const nameAr = (emp.full_name_ar || '').toLowerCase();
+                  const nameEn = (emp.full_name || '').toLowerCase();
+                  return nameAr.includes(search) || nameEn.includes(search);
+                }).length === 0 && (
+                  <span className="text-sm text-muted-foreground">لا يوجد موظف بهذا الاسم</span>
+                )}
               </div>
               
               {/* Selected Summary */}
