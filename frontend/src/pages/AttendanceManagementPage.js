@@ -386,6 +386,15 @@ export default function AttendanceManagementPage() {
             
             {/* Actions */}
             <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRunDailyProcess}
+                title="تشغيل التحضير التلقائي لليوم المحدد"
+              >
+                <RefreshCw size={16} className="ml-1" />
+                تحضير
+              </Button>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer size={16} className="ml-1" />
                 طباعة
