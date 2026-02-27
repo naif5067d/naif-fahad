@@ -72,6 +72,7 @@ from routes.company_settings import router as company_settings_router
 from routes.ats_admin import router as ats_admin_router
 from routes.ats_public import router as ats_public_router
 from routes.policies import router as policies_router
+from routes.deduction_transactions import router as deduction_transactions_router
 from seed import seed_database
 from services.auto_sync import auto_sync_database
 
