@@ -1421,6 +1421,86 @@ export default function AttendanceManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog استعلام العجز */}
+      <Dialog open={showDeficitDialog} onOpenChange={setShowDeficitDialog}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-amber-600" size={20} />
+              استعلام عجز الموظفين - {startDate.substring(0, 7)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100 sticky top-0">
+                <tr>
+                  <th className="text-start p-2 font-medium">الموظف</th>
+                  <th className="text-center p-2 font-medium">حضور</th>
+                  <th className="text-center p-2 font-medium">غياب</th>
+                  <th className="text-center p-2 font-medium">إجازة</th>
+                  <th className="text-center p-2 font-medium">تأخير</th>
+                  <th className="text-center p-2 font-medium">خروج مبكر</th>
+                  <th className="text-center p-2 font-medium">إجمالي العجز</th>
+                  <th className="text-center p-2 font-medium">متاح للتعويض</th>
+                  <th className="text-center p-2 font-medium">مطلوب تعويض</th>
+                  <th className="text-center p-2 font-medium">الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deficitSummary.map((emp, idx) => (
+                  <tr key={emp.employee_id} className={`border-t ${emp.has_executed_deduction ? 'bg-green-50' : emp.total_deficit_minutes > 420 ? 'bg-red-50' : emp.total_deficit_minutes > 0 ? 'bg-amber-50' : ''}`}>
+                    <td className="p-2 font-medium">{emp.employee_name_ar}</td>
+                    <td className="p-2 text-center text-green-600 font-bold">{emp.present_days}</td>
+                    <td className="p-2 text-center text-red-600 font-bold">{emp.absent_days}</td>
+                    <td className="p-2 text-center text-blue-600">{emp.leave_days}</td>
+                    <td className="p-2 text-center">{emp.late_display}</td>
+                    <td className="p-2 text-center">{emp.early_leave_display}</td>
+                    <td className="p-2 text-center font-bold text-amber-600">{emp.total_deficit_display}</td>
+                    <td className="p-2 text-center text-[hsl(var(--navy))]">{emp.outside_hours_display}</td>
+                    <td className="p-2 text-center font-bold text-red-600">{emp.compensation_needed_display}</td>
+                    <td className="p-2 text-center">
+                      <Badge className={
+                        emp.has_executed_deduction ? 'bg-green-100 text-green-700' :
+                        emp.total_deficit_minutes > 420 ? 'bg-red-100 text-red-700' :
+                        emp.can_compensate && emp.total_deficit_minutes > 0 ? 'bg-amber-100 text-amber-700' :
+                        'bg-slate-100 text-slate-600'
+                      }>
+                        {emp.status_summary}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* ملخص */}
+          <div className="mt-4 p-3 bg-slate-50 rounded-lg grid grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-xs text-muted-foreground">إجمالي الموظفين</p>
+              <p className="text-lg font-bold">{deficitSummary.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">لديهم عجز</p>
+              <p className="text-lg font-bold text-amber-600">{deficitSummary.filter(e => e.total_deficit_minutes > 0).length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">تم خصمهم</p>
+              <p className="text-lg font-bold text-green-600">{deficitSummary.filter(e => e.has_executed_deduction).length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">يمكن تعويضهم</p>
+              <p className="text-lg font-bold text-[hsl(var(--navy))]">{deficitSummary.filter(e => e.can_compensate && e.total_deficit_minutes > 0).length}</p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeficitDialog(false)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
