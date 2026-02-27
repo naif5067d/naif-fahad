@@ -566,7 +566,16 @@ export default function AttendanceManagementPage() {
               <div className="flex-1" />
               
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchDeficitSummary}
+                  title="استعلام عجز الموظفين"
+                >
+                  <AlertTriangle size={16} className="ml-1" />
+                  استعلام العجز
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
