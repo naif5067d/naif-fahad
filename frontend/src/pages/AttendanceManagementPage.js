@@ -419,9 +419,18 @@ export default function AttendanceManagementPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4">
-            {/* Multi-select Employees with Checkboxes */}
+            {/* Multi-select Employees with Search */}
             <div>
-              <Label className="text-xs mb-2 block font-medium">تحديد الموظفين</Label>
+              <div className="flex items-center gap-2 mb-2">
+                <Label className="text-xs font-medium">تحديد الموظفين</Label>
+                <Input
+                  type="text"
+                  placeholder="بحث بالاسم..."
+                  value={employeeSearch}
+                  onChange={e => setEmployeeSearch(e.target.value)}
+                  className="h-7 text-xs w-[180px]"
+                />
+              </div>
               <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/20 max-h-[200px] overflow-y-auto">
                 {/* Select All / Deselect All */}
                 <Button
@@ -433,7 +442,15 @@ export default function AttendanceManagementPage() {
                   الكل
                 </Button>
                 
-                {employees.map((emp, idx) => {
+                {employees
+                  .filter(emp => {
+                    if (!employeeSearch.trim()) return true;
+                    const search = employeeSearch.toLowerCase();
+                    const nameAr = (emp.full_name_ar || '').toLowerCase();
+                    const nameEn = (emp.full_name || '').toLowerCase();
+                    return nameAr.includes(search) || nameEn.includes(search);
+                  })
+                  .map((emp, idx) => {
                   const isSelected = selectedEmployees.includes(emp.id);
                   const selectionOrder = selectedEmployees.indexOf(emp.id) + 1;
                   
