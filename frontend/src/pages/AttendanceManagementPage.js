@@ -107,6 +107,9 @@ export default function AttendanceManagementPage() {
   const [deductionForm, setDeductionForm] = useState({ employee_id: '', amount: 0, reason: '', month: '' });
   const [showCompensateDialog, setShowCompensateDialog] = useState(false);
   const [compensateForm, setCompensateForm] = useState({ employee_id: '', date: '', hours: null, note: '' });
+  
+  // بحث الموظفين
+  const [employeeSearch, setEmployeeSearch] = useState('');
 
   // التحقق من صلاحية عرض معاملات الخصم (للمدراء الرئيسيين فقط)
   const canViewDeductions = useMemo(() => {
