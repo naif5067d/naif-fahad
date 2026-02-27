@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
   // Real login function with device fingerprint
   const login = useCallback(async (username, password) => {
     const deviceSignature = generateDeviceSignature();
-    const fingerprintData = generateDeviceFingerprint();
+    const fingerprintData = await generateDeviceFingerprint();
 
     const res = await api.post('/api/auth/login', {
       username,
