@@ -96,7 +96,6 @@ function AppRoutes() {
       <Route path="/team-attendance-old" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'supervisor']}><TeamAttendancePage /></ProtectedRoute>} />
       <Route path="/penalties" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><PenaltiesPage /></ProtectedRoute>} />
       <Route path="/deduction-transactions" element={<ProtectedRoute allowedRoles={['mohammed']}><DeductionTransactionsPage /></ProtectedRoute>} />
-      <Route path="/login-sessions" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><LoginSessionsPage /></ProtectedRoute>} />
       <Route path="/device-monitoring" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><DeviceMonitoringPage /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
       <Route path="/maintenance-tracking" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><MaintenanceTrackingPage /></ProtectedRoute>} />
