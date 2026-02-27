@@ -2577,3 +2577,210 @@ async def count_outside_hours_as_attendance(
             "before": {"late": current_late, "early": current_early},
             "after": {"late": new_late, "early": new_early}
         }
+
+
+
+@router.get("/outside-hours/print-report")
+async def print_outside_hours_report(
+    start_date: str = Query(..., description="تاريخ البداية YYYY-MM-DD"),
+    end_date: str = Query(..., description="تاريخ النهاية YYYY-MM-DD"),
+    employee_ids: Optional[str] = Query(None, description="معرفات الموظفين مفصولة بفاصلة"),
+    user=Depends(require_roles('sultan', 'naif', 'stas'))
+):
+    """
+    طباعة تقرير خارج العمل الرسمي
+    """
+    from io import BytesIO
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+    
+    # تسجيل خط عربي
+    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    try:
+        pdfmetrics.registerFont(TTFont('Arabic', font_path))
+    except:
+        pass
+    
+    def arabic_text(text):
+        if not text:
+            return ""
+        try:
+            reshaped = arabic_reshaper.reshape(str(text))
+            return get_display(reshaped)
+        except:
+            return str(text)
+    
+    # جلب البيانات
+    query = {
+        "date": {"$gte": start_date, "$lte": end_date},
+        "$or": [
+            {"category": "outside_hours"},
+            {"category": "weekend"},
+            {"is_official": False}
+        ]
+    }
+    
+    if employee_ids:
+        emp_list = [e.strip() for e in employee_ids.split(',')]
+        query["employee_id"] = {"$in": emp_list}
+    
+    records = await db.attendance_ledger.find(query, {"_id": 0}).sort([("date", -1)]).to_list(1000)
+    
+    # جمع البيانات
+    employee_data = {}
+    for rec in records:
+        emp_id = rec.get("employee_id")
+        date = rec.get("date")
+        key = f"{emp_id}_{date}"
+        
+        if key not in employee_data:
+            employee_data[key] = {
+                "employee_id": emp_id,
+                "date": date,
+                "check_in": None,
+                "check_out": None,
+                "check_in_time": None,
+                "check_out_time": None,
+                "work_location": rec.get("work_location"),
+                "category": rec.get("category", "outside_hours")
+            }
+        
+        if rec.get("type") == "check_in":
+            employee_data[key]["check_in"] = rec.get("timestamp")
+            employee_data[key]["check_in_time"] = rec.get("time")
+        elif rec.get("type") == "check_out":
+            employee_data[key]["check_out"] = rec.get("timestamp")
+            employee_data[key]["check_out_time"] = rec.get("time")
+    
+    # حساب الساعات وجلب أسماء الموظفين
+    result = []
+    emp_ids = list(set([d["employee_id"] for d in employee_data.values()]))
+    employees = await db.employees.find({"id": {"$in": emp_ids}}, {"_id": 0, "id": 1, "full_name_ar": 1, "full_name": 1}).to_list(100)
+    emp_map = {e["id"]: e for e in employees}
+    
+    for key, data in employee_data.items():
+        emp = emp_map.get(data["employee_id"], {})
+        data["employee_name_ar"] = emp.get("full_name_ar") or emp.get("full_name") or data["employee_id"]
+        
+        total_hours = 0
+        if data["check_in"] and data["check_out"]:
+            try:
+                from datetime import datetime
+                checkin = datetime.fromisoformat(data["check_in"].replace('Z', '+00:00'))
+                checkout = datetime.fromisoformat(data["check_out"].replace('Z', '+00:00'))
+                total_hours = (checkout - checkin).total_seconds() / 3600
+            except:
+                pass
+        data["total_hours"] = round(total_hours, 2)
+        result.append(data)
+    
+    # ترتيب حسب التاريخ
+    result.sort(key=lambda x: (x["date"], x["employee_name_ar"]), reverse=True)
+    
+    # إنشاء PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=(842, 595), rightMargin=30, leftMargin=30, topMargin=40, bottomMargin=40)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('Title', parent=styles['Title'], fontName='Arabic', fontSize=18, alignment=TA_CENTER)
+    header_style = ParagraphStyle('Header', parent=styles['Normal'], fontName='Arabic', fontSize=10, alignment=TA_RIGHT)
+    
+    elements = []
+    
+    # عنوان التقرير
+    elements.append(Paragraph(arabic_text("تقرير خارج العمل الرسمي"), title_style))
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(arabic_text(f"الفترة: {start_date} إلى {end_date}"), header_style))
+    elements.append(Spacer(1, 20))
+    
+    # إنشاء الجدول
+    table_header = [
+        arabic_text('#'),
+        arabic_text('الموظف'),
+        arabic_text('التاريخ'),
+        arabic_text('بصمة الدخول'),
+        arabic_text('بصمة الخروج'),
+        arabic_text('الموقع'),
+        arabic_text('النوع'),
+        arabic_text('الساعات')
+    ]
+    table_data = [table_header]
+    
+    category_ar = {
+        'weekend': 'نهاية أسبوع',
+        'outside_hours': 'خارج الدوام'
+    }
+    
+    for idx, rec in enumerate(result, 1):
+        # تنسيق البصمات
+        check_in_display = '-'
+        if rec.get('check_in'):
+            try:
+                parts = rec['check_in'].split('T')
+                check_in_display = f"{parts[0]} {parts[1][:5]}"
+            except:
+                check_in_display = rec.get('check_in_time', '-')
+        
+        check_out_display = '-'
+        if rec.get('check_out'):
+            try:
+                parts = rec['check_out'].split('T')
+                check_out_display = f"{parts[0]} {parts[1][:5]}"
+            except:
+                check_out_display = rec.get('check_out_time', '-')
+        
+        table_data.append([
+            str(idx),
+            arabic_text(rec.get('employee_name_ar', '')),
+            rec.get('date', ''),
+            check_in_display,
+            check_out_display,
+            arabic_text(rec.get('work_location', '')[:20] if rec.get('work_location') else '-'),
+            arabic_text(category_ar.get(rec.get('category'), rec.get('category', ''))),
+            f"{rec.get('total_hours', 0):.1f}"
+        ])
+    
+    # إضافة صف الإجمالي
+    total_hours = sum(r.get('total_hours', 0) for r in result)
+    table_data.append([
+        '',
+        arabic_text('الإجمالي'),
+        '',
+        '',
+        '',
+        '',
+        '',
+        f"{total_hours:.1f}"
+    ])
+    
+    col_widths = [30, 120, 70, 100, 100, 100, 80, 50]
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Arabic'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.1, 0.2, 0.4)),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.Color(0.9, 0.9, 0.9)),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('ROWHEIGHT', (0, 0), (-1, -1), 22),
+    ]))
+    
+    elements.append(table)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=outside_hours_report_{start_date}_{end_date}.pdf"}
+    )
