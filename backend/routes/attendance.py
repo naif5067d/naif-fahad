@@ -33,6 +33,97 @@ def utc_to_riyadh(dt):
     return dt.astimezone(RIYADH_TZ)
 
 
+def is_within_work_hours(current_time: datetime, work_location: dict) -> dict:
+    """
+    تحديد هل الوقت داخل ساعات العمل الرسمية أم خارجها
+    
+    Returns:
+        {
+            "is_official": True/False,
+            "category": "official" | "outside_hours" | "weekend",
+            "status_ar": "حاضر" | "غير محتسب",
+            "color": "green" | "yellow" | "orange"
+        }
+    """
+    from datetime import time as dt_time
+    
+    if not work_location:
+        # لا يوجد موقع عمل - نفترض داخل الدوام
+        return {
+            "is_official": True,
+            "category": "official",
+            "status_ar": "حاضر",
+            "color": "green"
+        }
+    
+    # استخراج إعدادات موقع العمل
+    work_start_str = work_location.get('work_start', '08:00')
+    work_end_str = work_location.get('work_end', '17:00')
+    grace_checkout = work_location.get('grace_checkout_minutes', 0)
+    allow_early = work_location.get('allow_early_checkin_minutes', 120)
+    work_days = work_location.get('work_days', {})
+    
+    # تحويل الأوقات
+    try:
+        work_start = dt_time(int(work_start_str.split(':')[0]), int(work_start_str.split(':')[1]))
+        work_end = dt_time(int(work_end_str.split(':')[0]), int(work_end_str.split(':')[1]))
+    except:
+        work_start = dt_time(8, 0)
+        work_end = dt_time(17, 0)
+    
+    current_t = current_time.time()
+    day_name = current_time.strftime('%A').lower()  # monday, tuesday, etc.
+    
+    # التحقق من يوم العمل
+    day_mapping = {
+        'sunday': 'sunday', 'monday': 'monday', 'tuesday': 'tuesday',
+        'wednesday': 'wednesday', 'thursday': 'thursday',
+        'friday': 'friday', 'saturday': 'saturday'
+    }
+    
+    is_work_day = work_days.get(day_mapping.get(day_name, day_name), True)
+    
+    # إذا كان ويكند
+    if not is_work_day:
+        return {
+            "is_official": False,
+            "category": "weekend",
+            "status_ar": "غير محتسب",
+            "color": "orange"
+        }
+    
+    # حساب نطاق الدوام الرسمي مع السماحات
+    from datetime import timedelta
+    
+    # بداية الدوام مع سماح التبصيم المبكر
+    early_start_minutes = work_start.hour * 60 + work_start.minute - allow_early
+    if early_start_minutes < 0:
+        early_start_minutes = 0
+    early_start = dt_time(early_start_minutes // 60, early_start_minutes % 60)
+    
+    # نهاية الدوام مع سماح الخروج
+    late_end_minutes = work_end.hour * 60 + work_end.minute + grace_checkout
+    if late_end_minutes >= 24 * 60:
+        late_end_minutes = 23 * 60 + 59
+    late_end = dt_time(late_end_minutes // 60, late_end_minutes % 60)
+    
+    # التحقق هل الوقت داخل النطاق الرسمي
+    if early_start <= current_t <= late_end:
+        return {
+            "is_official": True,
+            "category": "official",
+            "status_ar": "حاضر",
+            "color": "green"
+        }
+    else:
+        return {
+            "is_official": False,
+            "category": "outside_hours",
+            "status_ar": "غير محتسب",
+            "color": "yellow"
+        }
+
+
 class CheckInRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
