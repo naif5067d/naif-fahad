@@ -471,7 +471,7 @@ export default function AttendanceManagementPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className={`grid w-full ${canViewDeductions ? 'grid-cols-3' : 'grid-cols-2'} mb-4`}>
           <TabsTrigger value="official" className="flex items-center gap-2">
             <Building size={16} />
             <span className="hidden sm:inline">الدوام الرسمي</span>
