@@ -764,20 +764,16 @@ async def validate_full_punch(
     work_day_check = await check_work_day(employee_id, local_time)
     work_location = work_day_check.get("work_location")
     
-    if not work_day_check.get("is_work_day"):
-        return {
-            "valid": False,
-            "errors": [work_day_check.get("error")],
-            "warnings": [],
-            "work_location": work_location,
-            "gps_valid": False,
-            "distance_km": None,
-            "is_sandbox": False,
-            "day_info": {
-                "day_name": work_day_check.get("day_name"),
-                "day_name_ar": work_day_check.get("day_name_ar")
-            }
-        }
+    # إذا لم يكن يوم عمل - نسمح بالتبصيم كـ "خارج أوقات العمل"
+    is_weekend = not work_day_check.get("is_work_day")
+    
+    if is_weekend:
+        # نضيف تحذير بدلاً من رفض البصمة
+        warnings.append({
+            "code": "warning.weekend_punch",
+            "message": f"This is a weekend ({work_day_check.get('day_name_ar')}). Punch will be recorded as 'outside work hours'.",
+            "message_ar": f"هذا يوم عطلة ({work_day_check.get('day_name_ar')}). سيتم تسجيل البصمة كـ 'خارج أوقات العمل'"
+        })
     
     if work_day_check.get("warning"):
         warnings.append(work_day_check["warning"])
