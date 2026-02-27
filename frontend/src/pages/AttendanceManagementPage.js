@@ -822,18 +822,48 @@ export default function AttendanceManagementPage() {
 
           {/* Outside Hours List */}
           <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Clock size={20} className="text-[hsl(var(--navy))]" />
                 سجل خارج العمل الرسمي
                 <Badge className="bg-slate-100 text-slate-700 mr-2">غير محتسب</Badge>
               </CardTitle>
-              {outsideHoursData.length > 0 && (
-                <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
-                  <Printer size={16} className="ml-1" />
-                  طباعة
-                </Button>
-              )}
+              <div className="flex gap-2 items-center">
+                {/* عرض الإجمالي المحدد */}
+                {selectedOutsideRows.length > 0 && (
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1">
+                    <span className="text-sm text-green-700">
+                      محدد: {selectedOutsideRows.length} سجل | 
+                      {' '}{selectedOutsideRows.reduce((sum, key) => {
+                        const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
+                        return sum + (rec?.total_hours || 0);
+                      }, 0).toFixed(1)} ساعة
+                    </span>
+                    <Button
+                      size="sm"
+                      className="h-7 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleBulkApprove}
+                    >
+                      <CheckCircle size={14} className="ml-1" />
+                      قبول المحدد
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-red-500"
+                      onClick={() => setSelectedOutsideRows([])}
+                    >
+                      إلغاء
+                    </Button>
+                  </div>
+                )}
+                {outsideHoursData.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
+                    <Printer size={16} className="ml-1" />
+                    طباعة
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -849,6 +879,20 @@ export default function AttendanceManagementPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50">
                       <tr>
+                        <th className="text-center p-3 font-medium w-10">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded"
+                            checked={selectedOutsideRows.length === outsideHoursData.length && outsideHoursData.length > 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOutsideRows(outsideHoursData.map(r => `${r.employee_id}_${r.date}`));
+                              } else {
+                                setSelectedOutsideRows([]);
+                              }
+                            }}
+                          />
+                        </th>
                         <th className="text-start p-3 font-medium">الموظف</th>
                         <th className="text-center p-3 font-medium">التاريخ</th>
                         <th className="text-center p-3 font-medium">الدخول</th>
@@ -860,57 +904,94 @@ export default function AttendanceManagementPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {outsideHoursData.map((rec, idx) => (
-                        <tr key={idx} className={`border-t ${rec.category === 'weekend' ? 'bg-orange-50' : 'bg-amber-50'}`}>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-[hsl(var(--navy)/0.1)] flex items-center justify-center text-[hsl(var(--navy))] font-bold text-xs">
-                                {rec.employee_name_ar?.[0] || '?'}
+                      {outsideHoursData.map((rec, idx) => {
+                        const rowKey = `${rec.employee_id}_${rec.date}`;
+                        const isSelected = selectedOutsideRows.includes(rowKey);
+                        
+                        return (
+                          <tr 
+                            key={idx} 
+                            className={`border-t cursor-pointer ${isSelected ? 'bg-green-100' : rec.category === 'weekend' ? 'bg-orange-50' : 'bg-amber-50'}`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedOutsideRows(prev => prev.filter(k => k !== rowKey));
+                              } else {
+                                setSelectedOutsideRows(prev => [...prev, rowKey]);
+                              }
+                            }}
+                          >
+                            <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedOutsideRows(prev => [...prev, rowKey]);
+                                  } else {
+                                    setSelectedOutsideRows(prev => prev.filter(k => k !== rowKey));
+                                  }
+                                }}
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-[hsl(var(--navy)/0.1)] flex items-center justify-center text-[hsl(var(--navy))] font-bold text-xs">
+                                  {rec.employee_name_ar?.[0] || '?'}
+                                </div>
+                                <span className="font-medium">{rec.employee_name_ar}</span>
                               </div>
-                              <span className="font-medium">{rec.employee_name_ar}</span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-center font-mono">{rec.date}</td>
-                          <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
-                            {rec.check_in_time || '--:--'}
-                          </td>
-                          <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
-                            {rec.check_out_time || '--:--'}
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge className="bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]">
-                              {rec.total_hours?.toFixed(1) || 0} س
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
-                          <td className="p-3 text-center">
-                            <Badge className={rec.category === 'weekend' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}>
-                              {rec.category === 'weekend' ? 'نهاية أسبوع' : 'يوم عمل'}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 border-green-500 text-green-600 hover:bg-green-50"
-                              onClick={() => {
-                                setCompensateForm({
-                                  employee_id: rec.employee_id,
-                                  date: rec.date,
-                                  hours: rec.total_hours,
-                                  note: ''
-                                });
-                                setShowCompensateDialog(true);
-                              }}
-                            >
-                              <CheckCircle size={12} className="ml-1" />
-                              احتسب
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="p-3 text-center font-mono">{rec.date}</td>
+                            <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
+                              {rec.check_in_time || '--:--'}
+                            </td>
+                            <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
+                              {rec.check_out_time || '--:--'}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Badge className={`${isSelected ? 'bg-green-200 text-green-800' : 'bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]'}`}>
+                                {rec.total_hours?.toFixed(1) || 0} س
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
+                            <td className="p-3 text-center">
+                              <Badge className={rec.category === 'weekend' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}>
+                                {rec.category === 'weekend' ? 'نهاية أسبوع' : 'يوم عمل'}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7 border-green-500 text-green-600 hover:bg-green-50"
+                                onClick={() => {
+                                  setCompensateForm({
+                                    employee_id: rec.employee_id,
+                                    date: rec.date,
+                                    hours: rec.total_hours,
+                                    note: ''
+                                  });
+                                  setShowCompensateDialog(true);
+                                }}
+                              >
+                                <CheckCircle size={12} className="ml-1" />
+                                احتسب
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  
+                  {/* ملخص الإجمالي */}
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      إجمالي السجلات: {outsideHoursData.length} | 
+                      إجمالي الساعات: {outsideHoursData.reduce((sum, r) => sum + (r.total_hours || 0), 0).toFixed(1)} ساعة
+                    </span>
+                  </div>
                 </div>
               )}
             </CardContent>
