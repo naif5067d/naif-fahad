@@ -1,135 +1,100 @@
-# HR System - نظام الموارد البشرية
+# DAR AL CODE HR OS - Product Requirements Document
 
 ## Original Problem Statement
 نظام موارد بشرية شامل لشركة دار الكود للاستشارات الهندسية يشمل:
-- إدارة الموظفين والعقود
-- نظام المخالصات النهائية
+- إدارة الحضور والانصراف
+- إدارة الإجازات والعقود
 - إدارة العهد المالية والعينية
-- نظام الإجازات والحضور
-- المسيرات والرواتب
+- نظام مراقبة الأجهزة وكشف التلاعب
 
-## User Credentials
-- **Admin/Manager:** `sultan` / `123456`
-- **CEO:** `mohammed` / `123456`
-- **SysAdmin:** `stas506` / `654321`
-- **Accountant:** `salah` / `123456`
+## User Personas
+- **STAS (stas506)**: مسؤول النظام - صلاحيات كاملة
+- **Sultan**: مدير العمليات - إدارة الموظفين والحضور
+- **Naif**: العمليات الاستراتيجية
+- **Mohammed (CEO)**: الرئيس التنفيذي
+- **Salah**: المحاسب
 
----
+## Core Requirements
 
-## ما تم إنجازه (Completed)
+### 1. Attendance System
+- ✅ نظام حضور جديد مع فصل "ساعات العمل الرسمية" عن "الساعات الخارجية"
+- ✅ فلتر متعدد الموظفين مع بحث
+- ✅ موافقة جماعية للساعات الخارجية
+- ✅ استعلام عجز الحضور
 
-### 2026-02-27 - إكمال نظام الحضور والعقوبات (P0 + P1)
-- ✅ **فلتر الموظفين المتعدد** - يمكن اختيار عدة موظفين مع ترقيمهم (1، 2، 3...)
-- ✅ **عرض التاريخ والوقت للبصمات** - كل بصمة تُظهر التاريخ (MM-DD) والوقت (HH:MM)
-- ✅ **إزالة جميع الإيموجي** من صفحة الحضور والعقوبات
-- ✅ **استخدام ألوان الشركة الرسمية فقط** (navy, emerald, amber, etc.)
-- ✅ **إصلاح مشكلة "Not Found"** عند تعديل الحالات
-- ✅ **تغيير اسم التبويب** من "خارج الدوام" إلى "خارج العمل الرسمي"
-- ✅ **إضافة زر "تحضير"** لتشغيل التحضير التلقائي يدوياً
-- ✅ **أتمتة معالجة الحضور اليومي** - الـ scheduler يعمل الساعة 7 صباحاً
-- ✅ **قاعدة حد 7 ساعات للتعويض** - لا يمكن التعويض إذا تجاوز العجز 7 ساعات
-- ✅ **قاعدة منع التعويض بعد الخصم** - لا يمكن التعويض بعد تنفيذ خصم الشهر
-- ✅ **انعكاس الإجازات في الحضور** - عند تنفيذ إجازة، يتحدث daily_status تلقائياً إلى "مجاز"
+### 2. Device Monitoring System (NEW - 27/02/2026)
+- ✅ بصمة جهاز متقدمة تكشف نوع الجهاز بالتفصيل
+- ✅ صفحة موحدة `/device-monitoring` تجمع:
+  - قائمة الموظفين مع بحث
+  - سجل جلسات الدخول/الخروج
+  - الأجهزة المسجلة
+  - تنبيهات التلاعب التلقائية
+- ✅ كشف التلاعب: جلسات متزامنة، تغيير الجهاز، أوقات غير اعتيادية
 
-### 2026-02-26 - إصلاح أخطاء العطل والطباعة
-- ✅ **إصلاح حساب الأيام في صفحة العطل** - كان يعرض عدد السجلات بدلاً من الفرق بين التواريخ
-- ✅ **إضافة عرض ديناميكي لعدد الأيام** - يظهر عدد الأيام المحسوب في نموذج إضافة/تعديل العطلة
-- ✅ **إصلاح خطأ الطباعة (Script error)** - كان بسبب `PageBreak` غير مستورد في `team_attendance.py`
-- ✅ **تحسين وظيفة التحميل** - استبدال `window.open` بطريقة تحميل مباشر أكثر موثوقية
+### 3. Permissions & Controls
+- ✅ إخفاء ميزات الخصم من المشرفين
+- ✅ تعهد المسؤولية الإلزامي قبل تعديل الحضور
+- ✅ سير عمل موافقة للمواقع الجديدة
 
-### 2026-02-26 - نظام إدارة إصدار التطبيق
-- ✅ **دمج في مرآة ستاس** - تبويب "صيانة" يحتوي على إدارة الإصدارات
-- ✅ **زر "نشر تحديث فوري"** - تحديث بضغطة واحدة مع زيادة تلقائية للإصدار
-- ✅ **زر "تعديل يدوي"** - تحديد رقم الإصدار وملاحظات التحديث
-- ✅ **API تحديث الإصدار** `POST /api/admin/app-version/update`
-- ✅ **API التحقق من التحديث** `GET /api/admin/app-version/check`
-- ✅ **API سجل الإصدارات** `GET /api/admin/app-version/history`
-- ✅ **مكون VersionChecker** - يتحقق كل 30 ثانية ويعرض إشعار للمستخدمين
-- ✅ **إجبار التحديث** لجميع المستخدمين عند النشر
+### 4. Reports
+- ✅ تقرير طباعة للساعات الرسمية والخارجية
+- ✅ رأس الشركة + رمز QR
 
-### 2026-02-25 - المراقب الذكي بالذكاء الاصطناعي
-- ✅ **API جديد `/api/analytics/ai/smart-monitor`** - تقييم شامل لجميع الموظفين
-- ✅ **API جديد `/api/analytics/ai/employee/{id}`** - تقييم موظف محدد
-- ✅ **API جديد `/api/analytics/ai/annual-evaluation/{id}`** - التقييم السنوي
-- ✅ **صفحة المراقب الذكي** `/smart-monitor` - متاحة لـ sultan, salah, stas
-- ✅ **مؤشر الأعذار والاستئذان** يشمل:
-  - نسيان البصمة (X/3)
-  - تبرير التأخير (X/5)
-  - ساعات الخروج المبكر
-- ✅ **تصنيف ذكي**: ممتاز/جيد جداً/جيد/مقبول/يحتاج تحسين (1-5 نجوم)
-- ✅ **نقاط القوة والضعف** لكل موظف
-- ✅ **تنبيهات ذكية**: نسيان بصمة متكرر، تأخير متكرر، موظفين ممتازين
-- ✅ **التقييم السنوي**: جمع بيانات كل الشهور + توصيات (ترقية/مكافأة/تشجيع/متابعة/إنذار)
+## What's Been Implemented
 
-### 2026-02-25 - إصلاحات طلبات الحضور والتحقق
-- ✅ **ترجمة المعاينة**: إضافة ترجمات `from_time`, `to_time`, `request_type`
-- ✅ **فحوصات STAS لطلبات الحضور**
-- ✅ **التحقق التلقائي عند الإنشاء** (رفض تلقائي عند التجاوز)
-- ✅ **PDF طلبات الحضور**
-- ✅ **فحص الإجازات الثابتة**: زواج/وفاة (5 أيام)
+### 27/02/2026 - Device Monitoring System
+- Created `/app/frontend/src/utils/advancedFingerprint.js` - Advanced device fingerprinting
+- Created `/app/backend/services/advanced_device_analysis.py` - Device analysis service
+- Created `/app/frontend/src/pages/DeviceMonitoringPage.js` - Unified monitoring page
+- Added APIs: `/api/devices/fraud-analysis/{employee_id}`, `/api/devices/fingerprint-details/{session_id}`
+- Removed old `LoginSessionsPage.js` to avoid duplication
 
-### 2026-02-25 - إصلاحات الاستدعاء وزر التعديل
-- ✅ إصلاح ظهور زر التعديل للعقود النشطة
-- ✅ إضافة اسم مرسل الاستدعاء والتاريخ الهجري/الميلادي
-- ✅ رؤية الاستدعاء للمرسل و stas فقط
+### Previous Sessions
+- Attendance system overhaul
+- Print reports with QR codes
+- Location approval workflow
+- Data reset for fresh start
 
----
+## Prioritized Backlog
 
-## الأوزان في التقييم الذكي
+### P0 (Critical)
+- [ ] Full system health check after data reset
 
-| المؤشر | الوزن | المصدر |
-|---|---|---|
-| الحضور والانصراف | 25% | daily_status |
-| إنجاز المهام | 30% | tasks |
-| الأعذار والاستئذان | 20% | transactions |
-| الانضباط المالي | 15% | admin_custodies |
-| انضباط الطلبات | 10% | transactions |
+### P1 (High)
+- [ ] Verify compensation business rules (7-hour limit)
+- [ ] In-Kind custody workflow for unreturned items
 
----
+### P2 (Medium)
+- [ ] Verify MaintenanceTrackingPage stability
+- [ ] Refactor monolithic pages (ContractsManagementPage, STASMirrorPage)
+- [ ] Complete System Architecture view in Stas Mirror
 
-## قواعد طلبات الحضور
+### P3 (Low)
+- [ ] Mobile responsiveness improvements
+- [ ] Canva-like Smart Editor for Policies
+- [ ] Centralized RBAC system
 
-| النوع | النتيجة | الحد الشهري |
-|---|---|---|
-| مهمة خارجية | حاضر | - |
-| نسيان بصمة | معذور | **3 مرات** (الرابعة ترفض) |
-| خروج مبكر | يُخصم من الرصيد | **2-3 ساعات** |
-| تبرير تأخير | معذور | **5 مرات** |
+## Technical Architecture
 
----
+### Frontend
+- React with Shadcn/UI components
+- RTL support for Arabic
+- Role-based navigation
 
-## الصلاحيات
+### Backend
+- FastAPI with MongoDB
+- JWT authentication
+- Device fingerprinting for security
 
-| الصفحة | المستخدمين |
-|---|---|
-| الشاشة التنفيذية `/executive` | sultan, naif, stas, mohammed, salah |
-| إدارة الإصدارات `/version-management` | stas |
-| مرآة ستاس `/stas-mirror` | stas |
-| لوحة التحكم `/control-panel` | stas |
+### Key Files
+- `/app/frontend/src/pages/DeviceMonitoringPage.js` - Device monitoring
+- `/app/frontend/src/pages/NewTeamAttendancePage.js` - Attendance management
+- `/app/backend/routes/team_attendance.py` - Attendance APIs
+- `/app/backend/services/advanced_device_analysis.py` - Device analysis
 
----
-
-## المهام المعلقة (Backlog)
-
-### P1 - أولوية عالية
-- [ ] إكمال إعادة هيكلة صفحة العقود (2200+ سطر)
-- [ ] سير عمل العهد العينية
-- [ ] توضيح حساب أيام الإجازة (أيام عمل أم تقويمية)
-
-### P2 - أولوية متوسطة
-- [ ] تحسين التجاوب على الجوال
-- [ ] إصلاح صفحة تتبع الصيانة
-- [ ] إكمال عرض هيكل النظام في مرآة stas
-
----
-
-## Key Files
-- `backend/routes/admin.py` - APIs إدارة الإصدارات
-- `backend/routes/team_attendance.py` - APIs الحضور والطباعة (Line 36: PageBreak import)
-- `frontend/src/pages/LeavePage.js` - صفحة العطل الرسمية (Lines 452-463: حساب الأيام)
-- `frontend/src/pages/TeamAttendancePage.js` - صفحة الحضور (Lines 286-340: handlePrintReport)
-- `frontend/src/pages/VersionManagementPage.js` - صفحة إدارة الإصدارات
-- `frontend/src/components/VersionChecker.js` - مكون التحقق من التحديثات
-- `backend/routes/analytics.py` - APIs التقييم الذكي
-- `backend/routes/attendance.py` - طلبات الحضور مع التحقق
-- `backend/services/stas_mirror_service.py` - فحوصات STAS
+## Credentials
+- Admin/Manager: `sultan` / `123456`
+- CEO: `mohammed` / `123456`
+- SysAdmin: `stas506` / `654321`
+- Supervisor: `nayef` / `123456`
+- Accountant: `salah` / `123456`
