@@ -885,5 +885,6 @@ async def validate_full_punch(
         "work_location": work_location,
         "gps_valid": gps_valid,
         "distance_km": distance_km,
-        "is_sandbox": False
+        "is_sandbox": False,
+        "is_weekend": is_weekend  # إضافة معلومة الويكند
     }
