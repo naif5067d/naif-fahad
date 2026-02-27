@@ -1318,7 +1318,12 @@ export default function AttendanceManagementPage() {
           <div className="space-y-4">
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="text-sm"><strong>التاريخ:</strong> {compensateForm.date}</p>
-              <p className="text-sm"><strong>الساعات:</strong> {compensateForm.hours?.toFixed(1) || 0} ساعة</p>
+              <p className="text-sm"><strong>الوقت:</strong> {(() => {
+                const totalMins = Math.round((compensateForm.hours || 0) * 60);
+                const hours = Math.floor(totalMins / 60);
+                const mins = totalMins % 60;
+                return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+              })()}</p>
             </div>
             
             <div>
