@@ -392,8 +392,8 @@ export default function AttendanceManagementPage() {
             <span className="sm:hidden">الرسمي</span>
           </TabsTrigger>
           <TabsTrigger value="outside" className="flex items-center gap-2">
-            <Moon size={16} className="text-yellow-500" />
-            <span className="hidden sm:inline">خارج الدوام</span>
+            <Clock size={16} className="text-[hsl(var(--navy))]" />
+            <span className="hidden sm:inline">خارج العمل الرسمي</span>
             <span className="sm:hidden">خارج</span>
           </TabsTrigger>
           <TabsTrigger value="deductions" className="flex items-center gap-2">
@@ -571,7 +571,7 @@ export default function AttendanceManagementPage() {
                                         <td className="p-2 font-mono text-xs">{day.date}</td>
                                         <td className="p-2 text-center">
                                           <Badge variant="secondary" className={`text-xs ${config.text}`}>
-                                            {config.icon} {day.status_ar || config.label}
+                                            {day.status_ar || config.label}
                                           </Badge>
                                         </td>
                                         <td className="p-2 text-center font-mono text-xs">
@@ -596,9 +596,9 @@ export default function AttendanceManagementPage() {
                                         </td>
                                         <td className="p-2 text-xs">
                                           {day.penalty_reason_ar || (
-                                            day.status === 'ABSENT' ? '⛔ غياب - خصم يوم' :
-                                            day.late_minutes > 0 || day.early_leave_minutes > 0 ? '⏰ نقص ساعات' :
-                                            '✅ لا خصم'
+                                            day.status === 'ABSENT' ? 'غياب - خصم يوم' :
+                                            day.late_minutes > 0 || day.early_leave_minutes > 0 ? 'نقص ساعات' :
+                                            'لا خصم'
                                           )}
                                         </td>
                                         <td className="p-2 text-center">
