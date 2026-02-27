@@ -983,6 +983,7 @@ export default function AttendanceManagementPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Status Change Dialog */}
