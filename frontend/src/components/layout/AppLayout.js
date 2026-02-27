@@ -77,7 +77,7 @@ const ICONS = {
   contractsManagement: FileCheck, settlement: Receipt, employees: Users, settings: Settings, stasMirror: Shield, workLocations: MapPin,
   custody: Package, financialCustody: Wallet, systemMaintenance: Wrench, myFinances: Receipt, teamAttendance: UsersRound, penalties: AlertTriangle,
   attendancePenalties: UsersRound, loginSessions: History, tasks: ClipboardList, maintenanceTracking: Hammer, ats: ClipboardCheck,
-  policies: Book, soundSettings: Volume2, controlPanel: Settings,
+  policies: Book, soundSettings: Volume2, controlPanel: Settings, deductionTransactions: Receipt,
 };
 
 const PATHS = {
