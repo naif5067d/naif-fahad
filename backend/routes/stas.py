@@ -228,6 +228,55 @@ async def execute_transaction(transaction_id: str, user=Depends(require_roles('s
             "created_at": now
         })
         
+        # تحديث daily_status لأيام الإجازة - لتظهر كـ "مجاز" بدلاً من "غائب"
+        start_date = data.get('start_date')
+        end_date = data.get('adjusted_end_date') or data.get('end_date')
+        if start_date and end_date:
+            from datetime import timedelta
+            try:
+                start_dt = datetime.fromisoformat(start_date)
+                end_dt = datetime.fromisoformat(end_date)
+                current_dt = start_dt
+                
+                leave_type_labels = {
+                    'annual': 'إجازة سنوية',
+                    'sick': 'إجازة مرضية',
+                    'emergency': 'إجازة طارئة',
+                    'marriage': 'إجازة زواج',
+                    'bereavement': 'إجازة وفاة',
+                    'exam': 'إجازة امتحان',
+                    'unpaid': 'إجازة بدون راتب',
+                    'admin': 'إجازة إدارية'
+                }
+                leave_label = leave_type_labels.get(leave_type, 'مجاز')
+                
+                while current_dt <= end_dt:
+                    date_str = current_dt.strftime('%Y-%m-%d')
+                    
+                    # تحديث أو إنشاء سجل الحضور اليومي
+                    await db.daily_status.update_one(
+                        {"employee_id": emp_id, "date": date_str},
+                        {
+                            "$set": {
+                                "final_status": "ON_LEAVE",
+                                "status_ar": leave_label,
+                                "leave_type": leave_type,
+                                "leave_transaction_id": tx['id'],
+                                "late_minutes": 0,
+                                "early_leave_minutes": 0,
+                                "penalty_days": 0,
+                                "updated_at": now,
+                                "updated_by": "system_leave_execution"
+                            }
+                        },
+                        upsert=True
+                    )
+                    
+                    current_dt += timedelta(days=1)
+            except Exception as e:
+                # لا نوقف التنفيذ إذا فشل تحديث daily_status
+                print(f"Warning: Failed to update daily_status for leave: {e}")
+        
         # للإجازة المرضية: إشعار سلطان إذا دخل شريحة خصم
         if leave_type == 'sick':
             from services.hr_policy import calculate_sick_leave_consumption
