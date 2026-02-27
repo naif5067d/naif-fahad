@@ -98,6 +98,7 @@ function AppRoutes() {
       <Route path="/penalties" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><PenaltiesPage /></ProtectedRoute>} />
       <Route path="/deduction-transactions" element={<ProtectedRoute allowedRoles={['mohammed']}><DeductionTransactionsPage /></ProtectedRoute>} />
       <Route path="/device-monitoring" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><DeviceMonitoringPage /></ProtectedRoute>} />
+      <Route path="/security" element={<ProtectedRoute allowedRoles={['stas']}><SecurityMonitoringPage /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
       <Route path="/maintenance-tracking" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas']}><MaintenanceTrackingPage /></ProtectedRoute>} />
       <Route path="/executive" element={<ProtectedRoute allowedRoles={['sultan', 'naif', 'stas', 'mohammed', 'salah']} noLayout={true}><ExecutiveDashboard /></ProtectedRoute>} />
