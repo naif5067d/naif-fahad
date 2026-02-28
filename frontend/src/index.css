@@ -1089,3 +1089,348 @@ header .flex[style*="overflow: visible"] {
     display: none !important;
   }
 }
+
+
+/* ==================== COMPREHENSIVE MOBILE FIXES ==================== */
+/* تغطي جميع الصفحات تلقائياً */
+
+@media (max-width: 768px) {
+  /* ===== ALL TABLES - Force horizontal scroll ===== */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Table wrapper containers */
+  .table-container,
+  div:has(> table),
+  .rounded-xl:has(table),
+  .rounded-2xl:has(table) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ===== ALL TABS - Horizontal scroll ===== */
+  [role="tablist"],
+  .TabsList,
+  div[class*="TabsList"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+  }
+  
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+  
+  [role="tab"],
+  [role="tablist"] > button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  
+  /* ===== ALL GRIDS - Responsive columns ===== */
+  .grid.grid-cols-2:not(.mobile-keep-cols),
+  .grid.grid-cols-3:not(.mobile-keep-cols),
+  .grid.grid-cols-4:not(.mobile-keep-cols),
+  .grid.grid-cols-5:not(.mobile-keep-cols),
+  .grid.grid-cols-6:not(.mobile-keep-cols) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Very small screens - single column */
+  @media (max-width: 380px) {
+    .grid.grid-cols-2:not(.mobile-keep-cols),
+    .grid.grid-cols-3:not(.mobile-keep-cols),
+    .grid.grid-cols-4:not(.mobile-keep-cols) {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  
+  /* ===== ALL FLEX ROWS - Stack on mobile ===== */
+  .flex.items-center.justify-between:has(> .flex),
+  .flex.justify-between:has(> div > button),
+  .card-header .flex.justify-between {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  /* ===== ALL CARDS - Reduce padding ===== */
+  [class*="CardContent"],
+  [class*="card-content"],
+  .p-6:not(.mobile-keep-padding),
+  .p-8:not(.mobile-keep-padding) {
+    padding: 1rem !important;
+  }
+  
+  [class*="CardHeader"],
+  [class*="card-header"] {
+    padding: 1rem !important;
+  }
+  
+  /* ===== ALL GAPS - Reduce on mobile ===== */
+  .gap-6:not(.mobile-keep-gap) {
+    gap: 1rem !important;
+  }
+  
+  .gap-8:not(.mobile-keep-gap) {
+    gap: 1.25rem !important;
+  }
+  
+  .gap-4:not(.mobile-keep-gap) {
+    gap: 0.75rem !important;
+  }
+  
+  /* ===== PAGE CONTAINERS - Reduce padding ===== */
+  .space-y-6 {
+    --tw-space-y-reverse: 0;
+    margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+    margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+  }
+  
+  /* ===== ALL BUTTONS IN HEADER/ACTIONS - Compact ===== */
+  .flex.items-center.gap-2 > button,
+  .flex.items-center.gap-3 > button {
+    padding: 0.5rem !important;
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  /* ===== ALL ICONS - Slightly smaller on mobile ===== */
+  .lucide,
+  svg[class*="lucide"] {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Smaller icons in buttons */
+  button svg,
+  a svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* ===== ALL BADGES - Compact ===== */
+  [class*="Badge"],
+  .badge {
+    padding: 0.125rem 0.5rem;
+    font-size: 0.65rem;
+  }
+  
+  /* ===== ALL DIALOGS - Full width ===== */
+  [data-state="open"][role="dialog"] > div:first-child,
+  .DialogContent,
+  [class*="DialogContent"] {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: calc(100vw - 1.5rem) !important;
+    max-height: 90vh !important;
+    margin: 0.75rem !important;
+  }
+  
+  /* ===== STAT CARDS - Smaller text ===== */
+  .stat-card .text-3xl,
+  .stat-value,
+  [class*="stat"] .text-3xl {
+    font-size: 1.5rem !important;
+  }
+  
+  .stat-card .text-xs,
+  .stat-label,
+  [class*="stat"] .text-xs {
+    font-size: 0.65rem !important;
+  }
+  
+  /* ===== FILTERS/SEARCH BARS - Stack vertically ===== */
+  .filter-bar,
+  .search-bar,
+  .flex:has(> input):has(> button),
+  .flex:has(> input):has(> select) {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .filter-bar > *,
+  .search-bar > * {
+    width: 100% !important;
+  }
+  
+  /* ===== SELECT DROPDOWNS - Full width ===== */
+  [class*="SelectTrigger"],
+  select {
+    width: 100%;
+    min-width: auto !important;
+  }
+  
+  /* ===== ACTION BUTTONS ROW - Wrap ===== */
+  .action-buttons,
+  .flex.gap-2:has(> button:nth-child(3)),
+  .flex.gap-3:has(> button:nth-child(3)) {
+    flex-wrap: wrap;
+  }
+  
+  .action-buttons > button {
+    flex: 1;
+    min-width: 80px;
+  }
+  
+  /* ===== LONG TEXT - Truncate ===== */
+  .truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+  }
+  
+  /* ===== DATA CELLS - Smaller text ===== */
+  td, th {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  th {
+    font-size: 0.7rem !important;
+    white-space: nowrap;
+  }
+  
+  /* ===== EMPLOYEE/USER CARDS - Compact ===== */
+  .employee-card,
+  .user-card,
+  [class*="employee-item"],
+  [class*="user-item"] {
+    padding: 0.75rem !important;
+  }
+  
+  .employee-card .text-lg,
+  .user-card .text-lg {
+    font-size: 0.875rem !important;
+  }
+  
+  /* ===== AVATAR - Smaller ===== */
+  .avatar-lg,
+  [class*="avatar"].w-16,
+  [class*="avatar"].w-20 {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+  
+  .avatar-md,
+  [class*="avatar"].w-12,
+  [class*="avatar"].w-14 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  /* ===== PAGE HEADERS - Compact ===== */
+  .page-header,
+  [class*="page-header"],
+  main > div:first-child:has(h1) {
+    padding: 1rem !important;
+  }
+  
+  .page-header h1,
+  [class*="page-header"] h1 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* ===== CHARTS - Reduce height ===== */
+  [class*="chart"],
+  .recharts-wrapper {
+    max-height: 200px !important;
+  }
+  
+  /* ===== PROGRESS BARS - Full width ===== */
+  [class*="Progress"],
+  .progress-bar {
+    width: 100% !important;
+  }
+  
+  /* ===== SCROLLABLE LISTS - Touch friendly ===== */
+  .scroll-area,
+  [class*="ScrollArea"],
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  
+  /* ===== NOTIFICATIONS/ALERTS - Full width ===== */
+  .notification,
+  .alert,
+  [class*="Alert"],
+  [role="alert"] {
+    width: 100%;
+    padding: 0.75rem !important;
+  }
+  
+  /* ===== DATE/TIME PICKERS - Full width ===== */
+  [class*="Calendar"],
+  [class*="DatePicker"],
+  [class*="date-picker"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* ===== TOOLTIPS - Adjust for mobile ===== */
+  [role="tooltip"] {
+    max-width: 200px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* ===== VERY SMALL SCREENS (iPhone SE, Small Android) ===== */
+@media (max-width: 375px) {
+  /* Even smaller text */
+  h1, .text-2xl, .text-3xl {
+    font-size: 1.125rem !important;
+  }
+  
+  h2, .text-xl {
+    font-size: 1rem !important;
+  }
+  
+  /* Single column everything */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Smaller padding */
+  .p-4, .p-6, .p-8 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Hide secondary buttons text */
+  .btn-secondary span,
+  button.secondary span {
+    display: none;
+  }
+  
+  /* Smaller icons */
+  svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+/* ===== LANDSCAPE MOBILE - Adjust heights ===== */
+@media (max-width: 896px) and (orientation: landscape) {
+  .safe-header {
+    padding-top: 0 !important;
+    min-height: 48px !important;
+  }
+  
+  .mobile-nav {
+    height: 56px !important;
+    padding-bottom: 0 !important;
+  }
+  
+  /* Reduce modal heights in landscape */
+  [role="dialog"] > div {
+    max-height: 80vh !important;
+  }
+}
