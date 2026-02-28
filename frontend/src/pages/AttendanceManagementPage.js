@@ -388,10 +388,11 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `attendance-report-${startDate}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -399,7 +400,7 @@ export default function AttendanceManagementPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success('تم تحميل التقرير');
+      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
@@ -425,10 +426,11 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `outside-hours-report-${startDate}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -436,7 +438,7 @@ export default function AttendanceManagementPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success('تم تحميل التقرير');
+      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }

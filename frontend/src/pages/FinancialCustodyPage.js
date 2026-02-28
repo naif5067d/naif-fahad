@@ -191,10 +191,11 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `custody-${custodyNumber}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -202,7 +203,7 @@ export default function FinancialCustodyPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+      toast.success(lang === 'ar' ? 'جاري فتح الطباعة...' : 'Opening print...');
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
     } finally {
@@ -424,10 +425,11 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `custody-month-${selectedMonth}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -435,7 +437,7 @@ export default function FinancialCustodyPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success(lang === 'ar' ? `تم تحميل تقرير شهر ${selectedMonth}` : `Downloaded ${selectedMonth} report`);
+      toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
     } catch (e) {
       // محاولة قراءة رسالة الخطأ من blob
       if (e.response?.data instanceof Blob) {
