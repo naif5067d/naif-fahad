@@ -74,7 +74,18 @@ export default function TransactionDetailPage() {
     try {
       const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // تنظيف الذاكرة بعد ثانية
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       toast.error(lang === 'ar' ? 'فشل معاينة PDF' : 'Failed to preview PDF');
     } finally {
