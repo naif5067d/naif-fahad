@@ -395,23 +395,48 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `attendance-report-${startDate}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('تم تحميل التقرير');
-      } else {
-        toast.success('تم فتح التقرير');
-      }
-      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      // فتح المعاينة
+      setPdfPreviewUrl(url);
+      setPdfFileName(`attendance-report-${startDate}.pdf`);
+      setPdfPreviewOpen(true);
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
+    }
+  };
+  
+  // تحميل التقرير مباشرة
+  const handleDownload = async () => {
+    try {
+      const params = {
+        period: 'monthly',
+        month: startDate.substring(0, 7),
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      
+      const response = await api.get('/api/team-attendance/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `attendance-report-${startDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('تم تحميل التقرير');
+    } catch (err) {
+      toast.error('خطأ في تحميل التقرير');
     }
   };
 
@@ -435,21 +460,44 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `outside-hours-report-${startDate}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('تم تحميل التقرير');
-      } else {
-        toast.success('تم فتح التقرير');
+      // فتح المعاينة
+      setPdfPreviewUrl(url);
+      setPdfFileName(`outside-hours-report-${startDate}.pdf`);
+      setPdfPreviewOpen(true);
+    } catch (err) {
+      toast.error('خطأ في طباعة التقرير');
+    }
+  };
+  
+  // تحميل تقرير خارج العمل
+  const handleDownloadOutsideHours = async () => {
+    try {
+      const params = {
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
       }
-      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      
+      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `outside-hours-report-${startDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('تم تحميل التقرير');
       toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
