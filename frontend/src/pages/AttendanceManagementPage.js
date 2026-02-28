@@ -432,8 +432,7 @@ export default function AttendanceManagementPage() {
       document.body.removeChild(link);
       
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      
-      toast.success('تم فتح التقرير');
+      toast.success('تم تحميل التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
