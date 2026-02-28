@@ -667,9 +667,13 @@ export default function AttendanceManagementPage() {
                   <RefreshCw size={16} className="ml-1" />
                   تحضير
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Printer size={16} className="ml-1" />
-                  طباعة {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
+                <Button variant="outline" size="sm" onClick={handlePrint} title="معاينة التقرير">
+                  <Eye size={16} className="ml-1" />
+                  معاينة
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload} title="تحميل التقرير">
+                  <Download size={16} className="ml-1" />
+                  تحميل {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
                 </Button>
                 {canViewDeductions && (
                   <Button 
