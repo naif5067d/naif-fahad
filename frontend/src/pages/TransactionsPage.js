@@ -258,6 +258,46 @@ export default function TransactionsPage() {
 
   useEffect(() => { fetchTxs(); }, [filter]);
 
+  // Nuclear Delete Functions
+  const fetchNuclearStats = async () => {
+    setStatsLoading(true);
+    try {
+      const res = await api.get('/api/system/collections-stats');
+      setNuclearStats(res.data);
+    } catch (err) {
+      console.error('Failed to fetch stats:', err);
+      toast.error(lang === 'ar' ? 'فشل في جلب الإحصائيات' : 'Failed to fetch statistics');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const openNuclearDialog = () => {
+    setNuclearDialogOpen(true);
+    setNuclearConfirmText('');
+    fetchNuclearStats();
+  };
+
+  const handleNuclearDelete = async () => {
+    if (nuclearConfirmText !== 'حذف نهائي') {
+      toast.error(lang === 'ar' ? 'يجب كتابة "حذف نهائي" للتأكيد' : 'You must type "حذف نهائي" to confirm');
+      return;
+    }
+    
+    setNuclearLoading(true);
+    try {
+      const res = await api.post('/api/system/nuclear-delete');
+      toast.success(lang === 'ar' ? 'تم الحذف النووي بنجاح!' : 'Nuclear delete completed successfully!');
+      setNuclearDialogOpen(false);
+      setNuclearConfirmText('');
+      fetchTxs(); // Refresh transactions list
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل في الحذف النووي' : 'Nuclear delete failed'));
+    } finally {
+      setNuclearLoading(false);
+    }
+  };
+
   const filtered = transactions.filter(tx => {
     if (!search) return true;
     const s = search.toLowerCase();
