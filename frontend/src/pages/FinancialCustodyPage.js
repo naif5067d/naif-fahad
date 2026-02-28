@@ -191,11 +191,10 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      // تحميل مباشر لتجنب حظر المتصفح
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.download = `custody-${custodyNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -203,7 +202,7 @@ export default function FinancialCustodyPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success(lang === 'ar' ? 'جاري فتح الطباعة...' : 'Opening print...');
+      toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
     } finally {
