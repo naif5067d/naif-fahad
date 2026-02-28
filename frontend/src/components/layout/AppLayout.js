@@ -390,7 +390,7 @@ export default function AppLayout({ children }) {
           <div className="flex items-center justify-between px-3 md:px-6 h-12 md:h-16" style={{ overflow: 'visible' }}>
             {/* Mobile menu button */}
             <button 
-              className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl hover:bg-muted active:bg-muted/80 flex-shrink-0 touch-target" 
+              className="md:hidden w-[44px] h-[44px] flex items-center justify-center rounded-xl hover:bg-muted active:bg-muted/80 flex-shrink-0" 
               onClick={() => setSidebarOpen(true)} 
               data-testid="open-sidebar"
               aria-label="فتح القائمة"
