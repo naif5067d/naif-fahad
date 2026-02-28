@@ -1583,6 +1583,19 @@ export default function AttendanceManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfPreviewModal
+        open={pdfPreviewOpen}
+        onClose={() => {
+          setPdfPreviewOpen(false);
+          setPdfPreviewUrl(null);
+        }}
+        pdfUrl={pdfPreviewUrl}
+        fileName={pdfFileName}
+        title={lang === 'ar' ? 'معاينة التقرير' : 'Report Preview'}
+        lang={lang}
+      />
     </div>
   );
 }
