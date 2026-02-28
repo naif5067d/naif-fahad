@@ -37,17 +37,16 @@ import {
   FileCheck,
   Ban,
   Archive,
-  RotateCcw,
-  Pause
+  RotateCcw
 } from 'lucide-react';
 
 const CONTRACT_STATUS = {
   draft: { label: 'مسودة', labelEn: 'Draft', color: 'bg-slate-500', icon: Edit },
-  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-warning', icon: Edit },
-  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-warning', icon: Clock },
-  active: { label: 'نشط', labelEn: 'Active', color: 'bg-success', icon: CheckCircle },
-  terminated: { label: 'منتهي', labelEn: 'Terminated', color: 'bg-destructive', icon: XCircle },
-  closed: { label: 'مغلق', labelEn: 'Closed', color: 'bg-slate-500', icon: Archive },
+  draft_correction: { label: 'مسودة تصحيح', labelEn: 'Draft Correction', color: 'bg-orange-500', icon: Edit },
+  pending_stas: { label: 'في انتظار STAS', labelEn: 'Pending STAS', color: 'bg-amber-500', icon: Clock },
+  active: { label: 'نشط', labelEn: 'Active', color: 'bg-emerald-500', icon: CheckCircle },
+  terminated: { label: 'منتهي', labelEn: 'Terminated', color: 'bg-red-500', icon: XCircle },
+  closed: { label: 'مغلق', labelEn: 'Closed', color: 'bg-gray-600', icon: Archive },
 };
 
 const CONTRACT_CATEGORIES = {
@@ -88,13 +87,9 @@ export default function ContractsManagementPage() {
   const [viewContract, setViewContract] = useState(null);
   const [editContract, setEditContract] = useState(null);
   const [terminateContract, setTerminateContract] = useState(null);
-  const [deleteContract, setDeleteContract] = useState(null);
-  const [deleting, setDeleting] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
-    // الرقم المرجعي - تلقائي وقابل للتعديل
-    ref_no: '',
     // هل موظف جديد أو اختيار من القائمة
     is_new_employee: true,
     employee_id: '',
@@ -104,11 +99,6 @@ export default function ContractsManagementPage() {
     email: '',
     phone: '',
     national_id: '',
-    // بيانات الإقامة (لغير السعوديين)
-    is_saudi: true,
-    iqama_number: '',
-    iqama_expiry_date: '',
-    nationality: '',
     contract_category: 'employment',
     employment_type: 'unlimited',
     job_title: '',
@@ -147,13 +137,6 @@ export default function ContractsManagementPage() {
     // بدل طبيعة العمل
     nature_of_work_allowance: 0,
   });
-  
-  // توليد الرقم المرجعي تلقائياً
-  const generateRefNo = () => {
-    const year = new Date().getFullYear();
-    const randomNum = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
-    return `DAC-${year}-${randomNum}`;
-  };
   
   // Termination form
   const [terminationData, setTerminationData] = useState({
@@ -317,19 +300,16 @@ export default function ContractsManagementPage() {
     setActionLoading(false);
   };
 
-  // حذف نهائي للعقود الملغية (STAS فقط)
-  const handlePermanentDelete = async (contractId, contractSerial) => {
-    if (!confirm(`تحذير: هل تريد حذف العقد ${contractSerial} نهائياً؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+  const handleDeleteContract = async (contractId) => {
+    if (!confirm('هل تريد حذف هذا العقد؟')) return;
     
-    setActionLoading(true);
     try {
-      await api.delete(`/api/contracts-v2/${contractId}/permanent`);
-      toast.success(`تم حذف العقد ${contractSerial} نهائياً`);
+      await api.delete(`/api/contracts-v2/${contractId}`);
+      toast.success('تم حذف العقد');
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'فشل الحذف النهائي');
+      toast.error(err.response?.data?.detail || 'فشل الحذف');
     }
-    setActionLoading(false);
   };
 
   // إعادة العقد للمسودة للتعديل الكامل
@@ -345,97 +325,11 @@ export default function ContractsManagementPage() {
     }
   };
 
-  // تفعيل/إلغاء وضع التجربة (Sandbox)
-  const handleToggleSandbox = async (contractId, currentMode) => {
-    const newMode = !currentMode;
-    const action = newMode ? 'تفعيل' : 'إلغاء';
-    
-    if (!confirm(`هل تريد ${action} وضع التجربة لهذا العقد؟`)) return;
-    
-    setActionLoading(true);
-    try {
-      const payload = {
-        sandbox_mode: newMode,
-        work_start_date: newMode ? null : new Date().toISOString().split('T')[0]
-      };
-      await api.post(`/api/contracts-v2/${contractId}/sandbox-mode`, payload);
-      toast.success(`تم ${action} وضع التجربة`);
-      setViewContract(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || `فشل ${action} وضع التجربة`);
-    }
-    setActionLoading(false);
-  };
-
-  // إعادة تفعيل العقد من مسودة التصحيح
-  const handleReactivateContract = async (contractId) => {
-    if (!confirm('هل تريد إعادة تفعيل هذا العقد؟')) return;
-    
-    setActionLoading(true);
-    try {
-      await api.post(`/api/contracts-v2/${contractId}/reactivate`);
-      toast.success('تم إعادة تفعيل العقد بنجاح');
-      setViewContract(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'فشل إعادة التفعيل');
-    }
-    setActionLoading(false);
-  };
-
-  // تحديد تاريخ المباشرة
-  const handleSetWorkStartDate = async (contractId) => {
-    const date = prompt('أدخل تاريخ المباشرة (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
-    if (!date) return;
-    
-    setActionLoading(true);
-    try {
-      await api.post(`/api/contracts-v2/${contractId}/set-work-start-date?work_start_date=${date}`);
-      toast.success(`تم تحديد تاريخ المباشرة: ${date}`);
-      setViewContract(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'فشل تحديد تاريخ المباشرة');
-    }
-    setActionLoading(false);
-  };
-
-  // حذف العقد نهائياً - STAS فقط
-  const handleDeleteContract = async () => {
-    if (!deleteContract) return;
-    setDeleting(true);
-    
-    try {
-      await api.delete(`/api/contracts-v2/${deleteContract.id}`);
-      toast.success(`تم حذف العقد ${deleteContract.ref_no || ''} نهائياً`);
-      setDeleteContract(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || 'فشل حذف العقد');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const handlePreviewPDF = async (contractId) => {
     try {
       const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `contract-${contractId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('تم تحميل العقد');
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      window.open(url, '_blank');
     } catch (err) {
       toast.error('فشل تحميل PDF');
     }
@@ -443,7 +337,6 @@ export default function ContractsManagementPage() {
 
   const resetForm = () => {
     setFormData({
-      ref_no: '',
       is_new_employee: true,
       employee_id: '',
       employee_code: '',
@@ -452,10 +345,6 @@ export default function ContractsManagementPage() {
       email: '',
       phone: '',
       national_id: '',
-      is_saudi: true,
-      iqama_number: '',
-      iqama_expiry_date: '',
-      nationality: '',
       contract_category: 'employment',
       employment_type: 'unlimited',
       job_title: '',
@@ -483,16 +372,8 @@ export default function ContractsManagementPage() {
     });
   };
 
-  // فتح نموذج إنشاء عقد جديد مع رقم مرجعي تلقائي
-  const openCreateDialog = () => {
-    resetForm();
-    setFormData(prev => ({ ...prev, ref_no: generateRefNo() }));
-    setCreateDialogOpen(true);
-  };
-
   const openEditDialog = (contract) => {
     setFormData({
-      ref_no: contract.ref_no || '',
       is_new_employee: false,
       employee_id: contract.employee_id,
       employee_code: contract.employee_code,
@@ -500,11 +381,7 @@ export default function ContractsManagementPage() {
       employee_name_ar: contract.employee_name_ar,
       email: '',
       phone: '',
-      national_id: contract.national_id || '',
-      is_saudi: contract.is_saudi !== false,
-      iqama_number: contract.iqama_number || '',
-      iqama_expiry_date: contract.iqama_expiry_date || '',
-      nationality: contract.nationality || '',
+      national_id: '',
       contract_category: contract.contract_category,
       employment_type: contract.employment_type,
       job_title: contract.job_title,
@@ -513,9 +390,6 @@ export default function ContractsManagementPage() {
       department_ar: contract.department_ar,
       start_date: contract.start_date,
       end_date: contract.end_date || '',
-      // تاريخ المباشرة ووضع التجربة
-      work_start_date: contract.work_start_date || contract.start_date || '',
-      sandbox_mode: contract.sandbox_mode || false,
       probation_months: contract.probation_months,
       notice_period_days: contract.notice_period_days,
       basic_salary: contract.basic_salary,
@@ -528,58 +402,12 @@ export default function ContractsManagementPage() {
       annual_policy_days: contract.annual_policy_days || 21,
       monthly_permission_hours: contract.monthly_permission_hours || 2,
       is_migrated: contract.is_migrated,
-      // أرصدة الإجازات
-      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0 },
-      leave_consumed: contract.leave_consumed || { annual: 0, sick: 0, emergency: 0 },
-      // رصيد الساعات
-      permission_hours_balance: contract.permission_hours_balance || 0,
-      permission_hours_consumed: contract.permission_hours_consumed || 0,
+      leave_opening_balance: contract.leave_opening_balance || { annual: 0, sick: 0, emergency: 0, permission_hours: 0 },
       notes: contract.notes || '',
       bank_name: contract.bank_name || '',
       bank_iban: contract.bank_iban || '',
     });
     setEditContract(contract);
-  };
-
-  // حساب سنوات الخدمة من تاريخ التعيين
-  const calculateServiceYears = (startDate) => {
-    if (!startDate) return { years: 0, months: 0, days: 0, totalYears: 0, policyDays: 21 };
-    
-    const start = new Date(startDate);
-    const today = new Date();
-    
-    if (start > today) {
-      return { years: 0, months: 0, days: 0, totalYears: 0, policyDays: 21, future: true };
-    }
-    
-    let years = today.getFullYear() - start.getFullYear();
-    let months = today.getMonth() - start.getMonth();
-    let days = today.getDate() - start.getDate();
-    
-    if (days < 0) {
-      months--;
-      days += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
-    }
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-    
-    const totalYears = years + (months / 12) + (days / 365);
-    const policyDays = totalYears >= 5 ? 30 : 21;
-    
-    return { years, months, days, totalYears: Math.round(totalYears * 100) / 100, policyDays };
-  };
-
-  // معالجة تغيير تاريخ البداية
-  const handleStartDateChange = (dateValue) => {
-    const serviceInfo = calculateServiceYears(dateValue);
-    setFormData(p => ({ 
-      ...p, 
-      start_date: dateValue,
-      annual_policy_days: serviceInfo.policyDays,
-      annual_leave_days: serviceInfo.policyDays
-    }));
   };
 
   const formatDate = (dateStr) => {
@@ -599,24 +427,8 @@ export default function ContractsManagementPage() {
   };
 
   const filteredContracts = contracts.filter(c => {
-    // فلتر الحالة
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
-    // فلتر الفئة
     if (categoryFilter !== 'all' && c.contract_category !== categoryFilter) return false;
-    // فلتر البحث
-    if (searchQuery && searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      const matchSerial = c.contract_serial?.toLowerCase().includes(q);
-      const matchName = c.employee_name?.toLowerCase().includes(q) || c.employee_name_ar?.toLowerCase().includes(q);
-      const matchCode = c.employee_code?.toLowerCase().includes(q);
-      const matchId = c.employee_id?.toLowerCase().includes(q);
-      // البحث برقم فقط (مثل 16)
-      const matchNumber = c.contract_serial?.includes(q) || c.employee_code?.includes(q);
-      
-      if (!matchSerial && !matchName && !matchCode && !matchId && !matchNumber) {
-        return false;
-      }
-    }
     return true;
   });
 
@@ -645,7 +457,7 @@ export default function ContractsManagementPage() {
         {canCreate && (
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="create-contract-btn" onClick={openCreateDialog}>
+              <Button data-testid="create-contract-btn">
                 <Plus className="w-4 h-4 ml-2" />
                 إنشاء عقد جديد
               </Button>
@@ -657,134 +469,111 @@ export default function ContractsManagementPage() {
               </DialogHeader>
               
               <div className="space-y-4 py-4">
-                {/* الرقم المرجعي */}
-                <div className="p-4 border rounded-lg bg-slate-50/50">
-                  <Label className="text-sm font-medium">الرقم المرجعي</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input 
-                      value={formData.ref_no}
-                      onChange={e => setFormData(p => ({ ...p, ref_no: e.target.value }))}
-                      placeholder="DAC-2026-001"
-                      className="font-mono"
-                      data-testid="contract-ref-no"
+                {/* اختيار نوع الموظف: جديد أو قديم */}
+                <div className="flex gap-4 p-3 bg-muted/50 rounded-lg">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="employee_type" 
+                      checked={formData.is_new_employee}
+                      onChange={() => setFormData(p => ({ ...p, is_new_employee: true, employee_id: '' }))}
+                      className="accent-primary"
                     />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setFormData(p => ({ ...p, ref_no: generateRefNo() }))}
-                      type="button"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">يتم توليده تلقائياً ويمكنك تعديله</p>
+                    <span>موظف جديد</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="employee_type" 
+                      checked={!formData.is_new_employee}
+                      onChange={() => setFormData(p => ({ ...p, is_new_employee: false }))}
+                      className="accent-primary"
+                    />
+                    <span>موظف قديم (اختيار من القائمة)</span>
+                  </label>
                 </div>
 
-                {/* اختيار نوع الموظف: جديد أو قديم */}
-                {/* بيانات الموظف الجديد - الخيار الوحيد */}
-                <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50">
-                  <h4 className="font-medium text-sm flex items-center gap-2">
-                    <Users className="w-4 h-4" /> بيانات الموظف الجديد
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>الاسم بالعربي *</Label>
-                      <Input 
-                        value={formData.employee_name_ar}
-                        onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
-                        placeholder="أحمد محمد"
-                        dir="rtl"
-                        data-testid="employee-name-ar"
-                      />
-                    </div>
-                    <div>
-                      <Label>الاسم بالإنجليزي</Label>
-                      <Input 
-                        value={formData.employee_name}
-                        onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
-                        placeholder="Ahmed Mohammed"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div>
-                      <Label>رقم الهوية / الإقامة</Label>
-                      <Input 
-                        value={formData.national_id}
-                        onChange={e => setFormData(p => ({ ...p, national_id: e.target.value }))}
-                        placeholder="1234567890"
-                      />
-                    </div>
-                    
-                    {/* قسم الجنسية والإقامة */}
-                    <div className="col-span-2 grid grid-cols-4 gap-4 p-3 bg-muted/30 rounded-lg border">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={formData.is_saudi}
-                          onCheckedChange={(checked) => setFormData(p => ({ ...p, is_saudi: checked, iqama_number: '', iqama_expiry_date: '' }))}
+                {/* إذا موظف جديد - إدخال البيانات */}
+                {formData.is_new_employee ? (
+                  <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <Users className="w-4 h-4" /> بيانات الموظف الجديد
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>الاسم بالعربي *</Label>
+                        <Input 
+                          value={formData.employee_name_ar}
+                          onChange={e => setFormData(p => ({ ...p, employee_name_ar: e.target.value }))}
+                          placeholder="أحمد محمد"
+                          dir="rtl"
+                          data-testid="employee-name-ar"
                         />
-                        <Label className="text-sm">سعودي</Label>
                       </div>
-                      
-                      {!formData.is_saudi && (
-                        <>
-                          <div>
-                            <Label className="text-xs">الجنسية</Label>
-                            <Input 
-                              value={formData.nationality}
-                              onChange={e => setFormData(p => ({ ...p, nationality: e.target.value }))}
-                              placeholder="مصري / هندي / ..."
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">رقم الإقامة</Label>
-                            <Input 
-                              value={formData.iqama_number}
-                              onChange={e => setFormData(p => ({ ...p, iqama_number: e.target.value }))}
-                              placeholder="2xxxxxxxxx"
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">تاريخ انتهاء الإقامة</Label>
-                            <Input 
-                              type="date"
-                              value={formData.iqama_expiry_date}
-                              onChange={e => setFormData(p => ({ ...p, iqama_expiry_date: e.target.value }))}
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label>البريد الإلكتروني</Label>
-                      <Input 
-                        type="email"
-                        value={formData.email}
-                        onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                        placeholder="ahmed@company.com"
-                      />
-                    </div>
-                    <div>
-                      <Label>رقم الجوال</Label>
-                      <Input 
-                        value={formData.phone}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                        placeholder="05xxxxxxxx"
-                      />
-                    </div>
-                    <div>
-                      <Label>الرقم الوظيفي</Label>
-                      <Input 
-                        value={formData.employee_code}
-                        onChange={e => setFormData(p => ({ ...p, employee_code: e.target.value }))}
-                        placeholder="EMP-001"
-                      />
+                      <div>
+                        <Label>الاسم بالإنجليزي</Label>
+                        <Input 
+                          value={formData.employee_name}
+                          onChange={e => setFormData(p => ({ ...p, employee_name: e.target.value }))}
+                          placeholder="Ahmed Mohammed"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <Label>رقم الهوية / الإقامة</Label>
+                        <Input 
+                          value={formData.national_id}
+                          onChange={e => setFormData(p => ({ ...p, national_id: e.target.value }))}
+                          placeholder="1234567890"
+                        />
+                      </div>
+                      <div>
+                        <Label>البريد الإلكتروني</Label>
+                        <Input 
+                          type="email"
+                          value={formData.email}
+                          onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                          placeholder="ahmed@company.com"
+                        />
+                      </div>
+                      <div>
+                        <Label>رقم الجوال</Label>
+                        <Input 
+                          value={formData.phone}
+                          onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
+                          placeholder="05xxxxxxxx"
+                        />
+                      </div>
+                      <div>
+                        <Label>الرقم الوظيفي</Label>
+                        <Input 
+                          value={formData.employee_code}
+                          onChange={e => setFormData(p => ({ ...p, employee_code: e.target.value }))}
+                          placeholder="EMP-001"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  /* إذا موظف قديم - اختيار من القائمة */
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <Label>اختيار الموظف *</Label>
+                      <Select value={formData.employee_id} onValueChange={handleEmployeeSelect}>
+                        <SelectTrigger data-testid="employee-select">
+                          <SelectValue placeholder="اختر موظف من القائمة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employees.map(emp => (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              {emp.full_name_ar || emp.full_name} ({emp.employee_number || emp.id})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
                 
                 {/* المسمى الوظيفي والقسم */}
                 <div className="grid grid-cols-2 gap-4">
@@ -862,46 +651,15 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* Dates */}
-                {/* تاريخ البداية مع حساب سنوات الخدمة */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>تاريخ التعيين / البداية *</Label>
+                    <Label>تاريخ البداية *</Label>
                     <Input 
                       type="date" 
                       value={formData.start_date}
-                      onChange={e => handleStartDateChange(e.target.value)}
+                      onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
                       data-testid="start-date-input"
                     />
-                    {/* عرض سنوات الخدمة */}
-                    {formData.start_date && (
-                      <div className="mt-2 p-2 bg-primary/10 rounded-lg">
-                        {(() => {
-                          const info = calculateServiceYears(formData.start_date);
-                          if (info.future) {
-                            return (
-                              <p className="text-sm text-warning flex items-center gap-1">
-                                <Clock size={14} />
-                                تاريخ مستقبلي - لم تبدأ الخدمة بعد
-                              </p>
-                            );
-                          }
-                          return (
-                            <>
-                              <p className="text-sm font-bold text-primary flex items-center gap-1">
-                                <Calendar size={14} />
-                                مدة الخدمة: {info.years} سنة و {info.months} شهر
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                إجمالي: {info.totalYears} سنة → 
-                                <span className={`font-bold mr-1 ${info.policyDays === 30 ? 'text-[hsl(var(--success))]' : 'text-blue-600'}`}>
-                                  {info.policyDays} يوم إجازة سنوية
-                                </span>
-                              </p>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
                   </div>
                   <div>
                     <Label>تاريخ النهاية (اختياري)</Label>
@@ -914,10 +672,10 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {/* تاريخ المباشرة ووضع التجربة */}
-                <div className="grid grid-cols-2 gap-4 p-3 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
+                <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
                   <div>
                     <Label className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[hsl(var(--warning))]" />
+                      <Calendar className="w-4 h-4 text-amber-600" />
                       تاريخ المباشرة الفعلية
                     </Label>
                     <Input 
@@ -1114,8 +872,8 @@ export default function ContractsManagementPage() {
                 </div>
                 
                 {formData.is_migrated && (
-                  <div className="space-y-3 bg-[hsl(var(--warning)/0.1)] p-4 rounded-lg border border-[hsl(var(--warning)/0.3)]">
-                    <h4 className="font-medium text-sm text-[hsl(var(--warning))]">أرصدة افتتاحية (للموظف المُهاجر)</h4>
+                  <div className="space-y-3 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <h4 className="font-medium text-sm text-amber-800">أرصدة افتتاحية (للموظف المُهاجر)</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-xs">رصيد الإجازة السنوية (بالكسور)</Label>
@@ -1169,7 +927,7 @@ export default function ContractsManagementPage() {
                     </div>
                     
                     {/* الأرصدة المستهلكة - للتعديل الكامل */}
-                    <h4 className="font-medium text-sm text-[hsl(var(--warning))] mt-4">الأرصدة المستهلكة (للتصحيح)</h4>
+                    <h4 className="font-medium text-sm text-amber-800 mt-4">الأرصدة المستهلكة (للتصحيح)</h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label className="text-xs">سنوية مستهلكة</Label>
@@ -1345,7 +1103,7 @@ export default function ContractsManagementPage() {
                             {statusInfo.label}
                           </Badge>
                           {contract.is_migrated && (
-                            <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5">
+                            <Badge variant="outline" className="text-amber-600 border-amber-300">
                               مُهاجر
                             </Badge>
                           )}
@@ -1381,55 +1139,6 @@ export default function ContractsManagementPage() {
                             {CONTRACT_CATEGORIES[contract.contract_category]?.label || contract.contract_category}
                           </span>
                         </div>
-                        
-                        {/* تنبيهات انتهاء العقد والإقامة */}
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {/* تنبيه انتهاء العقد - 3 شهور */}
-                          {contract.end_date && contract.status === 'active' && (() => {
-                            const today = new Date();
-                            const endDate = new Date(contract.end_date);
-                            const diffDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-                            if (diffDays < 0) {
-                              return (
-                                <Badge variant="destructive" className="text-xs animate-pulse">
-                                  <AlertTriangle className="w-3 h-3 ml-1" />
-                                  العقد منتهي!
-                                </Badge>
-                              );
-                            } else if (diffDays <= 90) {
-                              return (
-                                <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50">
-                                  <Clock className="w-3 h-3 ml-1" />
-                                  ينتهي خلال {diffDays} يوم
-                                </Badge>
-                              );
-                            }
-                            return null;
-                          })()}
-                          
-                          {/* تنبيه انتهاء الإقامة */}
-                          {!contract.is_saudi && contract.iqama_expiry_date && (() => {
-                            const today = new Date();
-                            const expiryDate = new Date(contract.iqama_expiry_date);
-                            const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-                            if (diffDays < 0) {
-                              return (
-                                <Badge variant="destructive" className="text-xs animate-pulse">
-                                  <AlertTriangle className="w-3 h-3 ml-1" />
-                                  الإقامة منتهية!
-                                </Badge>
-                              );
-                            } else if (diffDays <= 90) {
-                              return (
-                                <Badge variant="outline" className="text-xs border-red-500 text-red-600 bg-red-50">
-                                  <FileText className="w-3 h-3 ml-1" />
-                                  الإقامة تنتهي خلال {diffDays} يوم
-                                </Badge>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
                       </div>
                       
                       {/* Actions */}
@@ -1438,18 +1147,9 @@ export default function ContractsManagementPage() {
                           <Eye className="w-4 h-4" />
                         </Button>
                         
-                        {/* Delete - STAS only */}
-                        {user?.role === 'stas' && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setDeleteContract(contract)}
-                            data-testid={`delete-contract-${contract.id}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <Button variant="ghost" size="sm" onClick={() => handlePreviewPDF(contract.id)}>
+                          <FileText className="w-4 h-4" />
+                        </Button>
                         
                         {/* Edit - للمسؤولين (سلطان/نايف/STAS) يمكنهم تعديل أي عقد */}
                         {isAdmin && (
@@ -1474,40 +1174,14 @@ export default function ContractsManagementPage() {
                         
                         {/* Submit to STAS - only draft */}
                         {contract.status === 'draft' && isAdmin && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleSubmitToSTAS(contract.id)}
-                              className="text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] hover:bg-[hsl(var(--warning)/0.1)]"
-                            >
-                              <Send className="w-4 h-4 ml-1" />
-                              إرسال لـ STAS
-                            </Button>
-                            <Button 
-                              variant="default" 
-                              size="sm" 
-                              onClick={() => handleExecuteContract(contract.id)}
-                              className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
-                              data-testid={`execute-draft-${contract.id}`}
-                            >
-                              <Play className="w-4 h-4 ml-1" />
-                              تنفيذ مباشر
-                            </Button>
-                          </>
-                        )}
-                        
-                        {/* draft_correction - إعادة التفعيل */}
-                        {contract.status === 'draft_correction' && isAdmin && (
                           <Button 
-                            variant="default" 
+                            variant="outline" 
                             size="sm" 
-                            onClick={() => handleReactivateContract(contract.id)}
-                            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
-                            data-testid={`reactivate-contract-${contract.id}`}
+                            onClick={() => handleSubmitToSTAS(contract.id)}
+                            className="text-amber-600 border-amber-300 hover:bg-amber-50"
                           >
-                            <CheckCircle className="w-4 h-4 ml-1" />
-                            إعادة التفعيل
+                            <Send className="w-4 h-4 ml-1" />
+                            إرسال لـ STAS
                           </Button>
                         )}
                         
@@ -1517,7 +1191,7 @@ export default function ContractsManagementPage() {
                             variant="default" 
                             size="sm" 
                             onClick={() => handleExecuteContract(contract.id)}
-                            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
+                            className="bg-emerald-600 hover:bg-emerald-700"
                             data-testid={`execute-contract-${contract.id}`}
                           >
                             <Play className="w-4 h-4 ml-1" />
@@ -1544,23 +1218,10 @@ export default function ContractsManagementPage() {
                             variant="ghost" 
                             size="sm" 
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => setDeleteContract(contract)}
+                            onClick={() => handleDeleteContract(contract.id)}
                             data-testid={`delete-contract-${contract.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                        
-                        {/* Permanent Delete - لـ STAS فقط للعقود الملغية */}
-                        {['terminated', 'closed'].includes(contract.status) && user?.role === 'stas' && (
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => handlePermanentDelete(contract.id, contract.contract_serial)}
-                            data-testid={`permanent-delete-${contract.id}`}
-                          >
-                            <Trash2 className="w-4 h-4 ml-1" />
-                            حذف نهائي
                           </Button>
                         )}
                       </div>
@@ -1591,7 +1252,7 @@ export default function ContractsManagementPage() {
                   {CONTRACT_STATUS[viewContract.status]?.label}
                 </Badge>
                 {viewContract.is_migrated && (
-                  <Badge variant="outline" className="text-primary border-primary/30 bg-primary/5">مُهاجر</Badge>
+                  <Badge variant="outline" className="text-amber-600">مُهاجر</Badge>
                 )}
                 <Badge variant="outline">V{viewContract.version}</Badge>
               </div>
@@ -1644,27 +1305,9 @@ export default function ContractsManagementPage() {
                     <span>{formatDate(viewContract.start_date)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">تاريخ المباشرة:</span>
-                    <span>{viewContract.work_start_date ? formatDate(viewContract.work_start_date) : formatDate(viewContract.start_date)}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">تاريخ النهاية:</span>
                     <span>{viewContract.end_date ? formatDate(viewContract.end_date) : 'غير محدد'}</span>
                   </div>
-                  {/* وضع التجربة */}
-                  <div className="flex justify-between items-center py-1 border-t border-b">
-                    <span className="text-muted-foreground">وضع التجربة:</span>
-                    <Badge variant={viewContract.sandbox_mode ? "destructive" : "secondary"}>
-                      {viewContract.sandbox_mode ? 'مفعّل - لا يُحتسب حضور' : 'غير مفعّل'}
-                    </Badge>
-                  </div>
-                  {/* سنوات الخدمة */}
-                  {viewContract.service_years !== undefined && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">سنوات الخدمة:</span>
-                      <span className="font-bold text-primary">{viewContract.service_years?.toFixed(1)} سنة</span>
-                    </div>
-                  )}
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">فترة التجربة:</span>
                     <span>{viewContract.probation_months} شهر</span>
@@ -1680,39 +1323,8 @@ export default function ContractsManagementPage() {
                 </CardContent>
               </Card>
               
-              {/* أرصدة الإجازات */}
-              <Card className="border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success)/0.1)]/50">
-                <CardHeader className="py-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-[hsl(var(--success))]">
-                    <Calendar className="w-4 h-4" /> أرصدة الإجازات والساعات
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-2 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">الإجازة السنوية (افتتاحي):</span>
-                    <span>{viewContract.leave_opening_balance?.annual || 0} يوم</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">الإجازة السنوية (مستهلك):</span>
-                    <span className="text-red-600">{viewContract.leave_consumed?.annual || 0} يوم</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">الإجازة المرضية (مستهلك):</span>
-                    <span className="text-red-600">{viewContract.leave_consumed?.sick || 0} يوم</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-1">
-                    <span className="text-muted-foreground">ساعات الاستئذان (رصيد):</span>
-                    <span className="font-bold">{viewContract.permission_hours_balance || 0} ساعة</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">ساعات الاستئذان (مستهلك):</span>
-                    <span className="text-red-600">{viewContract.permission_hours_consumed || 0} ساعة</span>
-                  </div>
-                </CardContent>
-              </Card>
-              
               {/* Salary (if applicable) */}
-              {viewContract.contract_category !== 'internship_unpaid' && viewContract.contract_category !== 'student_training' && (
+              {viewContract.contract_category !== 'internship_unpaid' && (
                 <Card>
                   <CardHeader className="py-3">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -1793,63 +1405,11 @@ export default function ContractsManagementPage() {
             </div>
           )}
           
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            {/* أزرار التحكم في وضع التجربة والتفعيل */}
-            <div className="flex flex-wrap gap-2">
-              {/* زر تفعيل/إلغاء وضع التجربة */}
-              {viewContract?.status === 'active' && (
-                <Button 
-                  variant={viewContract.sandbox_mode ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleToggleSandbox(viewContract.id, viewContract.sandbox_mode)}
-                  disabled={actionLoading}
-                  className={viewContract.sandbox_mode ? "bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]" : ""}
-                >
-                  {viewContract.sandbox_mode ? (
-                    <>
-                      <Play className="w-4 h-4 ml-1" /> بدء العمل الرسمي
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="w-4 h-4 ml-1" /> تفعيل وضع التجربة
-                    </>
-                  )}
-                </Button>
-              )}
-              
-              {/* زر تحديد تاريخ المباشرة */}
-              {viewContract?.status === 'active' && (
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSetWorkStartDate(viewContract.id)}
-                  disabled={actionLoading}
-                >
-                  <Calendar className="w-4 h-4 ml-1" /> تاريخ المباشرة
-                </Button>
-              )}
-              
-              {/* زر إعادة تفعيل من مسودة التصحيح */}
-              {viewContract?.status === 'draft_correction' && (
-                <Button 
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleReactivateContract(viewContract.id)}
-                  disabled={actionLoading}
-                  className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
-                >
-                  {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin ml-1" /> : <CheckCircle className="w-4 h-4 ml-1" />}
-                  إعادة التفعيل
-                </Button>
-              )}
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => handlePreviewPDF(viewContract?.id)}>
-                <FileText className="w-4 h-4 ml-2" /> عرض PDF
-              </Button>
-              <Button variant="outline" onClick={() => setViewContract(null)}>إغلاق</Button>
-            </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => handlePreviewPDF(viewContract?.id)}>
+              <FileText className="w-4 h-4 ml-2" /> عرض PDF
+            </Button>
+            <Button variant="outline" onClick={() => setViewContract(null)}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1900,12 +1460,12 @@ export default function ContractsManagementPage() {
               />
             </div>
             
-            <div className="bg-[hsl(var(--warning)/0.1)] border border-[hsl(var(--warning)/0.3)] rounded-lg p-3 text-sm">
-              <p className="flex items-center gap-2 text-[hsl(var(--warning))]">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+              <p className="flex items-center gap-2 text-amber-700">
                 <AlertTriangle className="w-4 h-4" />
                 <strong>تنبيه:</strong>
               </p>
-              <ul className="list-disc list-inside text-[hsl(var(--warning))] mt-1 text-xs">
+              <ul className="list-disc list-inside text-amber-600 mt-1 text-xs">
                 <li>سيتم إيقاف الحضور والطلبات للموظف</li>
                 <li>سيبقى الحساب نشطاً حتى إتمام المخالصة</li>
                 <li>هذا الإجراء لا يمكن التراجع عنه</li>
@@ -2017,26 +1577,12 @@ export default function ContractsManagementPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label>تاريخ التعيين / البداية</Label>
+                  <Label>تاريخ البداية</Label>
                   <Input 
                     type="date" 
                     value={formData.start_date}
-                    onChange={e => handleStartDateChange(e.target.value)}
+                    onChange={e => setFormData(p => ({ ...p, start_date: e.target.value }))}
                   />
-                  {/* عرض سنوات الخدمة */}
-                  {formData.start_date && (
-                    <div className="mt-2 p-2 bg-primary/10 rounded text-xs">
-                      {(() => {
-                        const info = calculateServiceYears(formData.start_date);
-                        if (info.future) return <span className="text-warning flex items-center gap-1"><Clock size={12} /> مستقبلي</span>;
-                        return (
-                          <span className="font-bold text-primary">
-                            {info.years} سنة → {info.policyDays} يوم
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  )}
                 </div>
                 <div>
                   <Label>تاريخ النهاية</Label>
@@ -2114,7 +1660,7 @@ export default function ContractsManagementPage() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 p-2 bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)] rounded text-sm">
+                <div className="mt-3 p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded text-sm">
                   <span className="font-semibold">إجمالي الراتب: </span>
                   {((formData.basic_salary || 0) + (formData.housing_allowance || 0) + (formData.transport_allowance || 0) + (formData.nature_of_work_allowance || 0) + (formData.other_allowances || 0)).toLocaleString()} ريال
                 </div>
@@ -2149,95 +1695,9 @@ export default function ContractsManagementPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-[hsl(var(--info))] dark:text-[hsl(var(--info))] mt-2 flex items-center gap-1">
-                <AlertTriangle size={12} />
-                معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت حتى للعقود النشطة
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                ⚠️ معلومات البنك مطلوبة للمخالصة - يمكن تعديلها في أي وقت حتى للعقود النشطة
               </p>
-            </div>
-
-            {/* بيانات الهوية والإقامة */}
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                <FileText className="w-4 h-4" />
-                بيانات الهوية والإقامة
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>رقم الهوية / الإقامة</Label>
-                  <Input 
-                    value={formData.id_number}
-                    onChange={e => setFormData(p => ({ ...p, id_number: e.target.value }))}
-                    placeholder="10 أرقام"
-                    dir="ltr"
-                    data-testid="edit-id-number-input"
-                  />
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="edit-is-saudi"
-                      checked={formData.is_saudi}
-                      onCheckedChange={(checked) => setFormData(p => ({ 
-                        ...p, 
-                        is_saudi: checked, 
-                        iqama_number: checked ? '' : p.iqama_number, 
-                        iqama_expiry_date: checked ? '' : p.iqama_expiry_date 
-                      }))}
-                      data-testid="edit-is-saudi-switch"
-                    />
-                    <Label htmlFor="edit-is-saudi">سعودي</Label>
-                  </div>
-                </div>
-              </div>
-              
-              {/* حقول الإقامة لغير السعوديين */}
-              {!formData.is_saudi && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 p-3 bg-amber-100/50 dark:bg-amber-800/20 rounded-lg">
-                  <div>
-                    <Label className="text-xs">الجنسية</Label>
-                    <Input 
-                      value={formData.nationality}
-                      onChange={e => setFormData(p => ({ ...p, nationality: e.target.value }))}
-                      placeholder="مثال: مصري، هندي"
-                      data-testid="edit-nationality-input"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">رقم الإقامة</Label>
-                    <Input 
-                      value={formData.iqama_number}
-                      onChange={e => setFormData(p => ({ ...p, iqama_number: e.target.value }))}
-                      placeholder="رقم الإقامة"
-                      dir="ltr"
-                      data-testid="edit-iqama-number-input"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">تاريخ انتهاء الإقامة</Label>
-                    <Input 
-                      type="date"
-                      value={formData.iqama_expiry_date}
-                      onChange={e => setFormData(p => ({ ...p, iqama_expiry_date: e.target.value }))}
-                      data-testid="edit-iqama-expiry-input"
-                    />
-                  </div>
-                  {formData.iqama_expiry_date && (
-                    <div className="col-span-3">
-                      {(() => {
-                        const today = new Date();
-                        const expiry = new Date(formData.iqama_expiry_date);
-                        const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-                        if (diffDays < 0) {
-                          return <div className="text-red-600 text-xs font-bold p-2 bg-red-100 rounded">⚠️ الإقامة منتهية!</div>;
-                        } else if (diffDays <= 90) {
-                          return <div className="text-amber-600 text-xs font-bold p-2 bg-amber-100 rounded">⚠️ الإقامة تنتهي خلال {diffDays} يوم - يجب التجديد!</div>;
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* سياسات الإجازات */}
@@ -2291,139 +1751,6 @@ export default function ContractsManagementPage() {
               </div>
             </div>
 
-            {/* أرصدة الإجازات والساعات - تعديل كامل */}
-            <div className="p-4 bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] rounded-lg border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
-                <Calendar className="w-4 h-4" />
-                أرصدة الإجازات والساعات (تعديل مباشر)
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <Label className="text-xs">رصيد سنوية (افتتاحي)</Label>
-                  <Input 
-                    type="number"
-                    step="0.5"
-                    value={formData.leave_opening_balance?.annual || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      leave_opening_balance: { 
-                        ...(p.leave_opening_balance || {}), 
-                        annual: parseFloat(e.target.value) || 0 
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">سنوية مستهلكة</Label>
-                  <Input 
-                    type="number"
-                    step="0.5"
-                    value={formData.leave_consumed?.annual || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      leave_consumed: { 
-                        ...(p.leave_consumed || {}), 
-                        annual: parseFloat(e.target.value) || 0 
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">رصيد مرضية (افتتاحي)</Label>
-                  <Input 
-                    type="number"
-                    value={formData.leave_opening_balance?.sick || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      leave_opening_balance: { 
-                        ...(p.leave_opening_balance || {}), 
-                        sick: parseInt(e.target.value) || 0 
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">مرضية مستهلكة</Label>
-                  <Input 
-                    type="number"
-                    value={formData.leave_consumed?.sick || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      leave_consumed: { 
-                        ...(p.leave_consumed || {}), 
-                        sick: parseInt(e.target.value) || 0 
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">رصيد ساعات الاستئذان</Label>
-                  <Input 
-                    type="number"
-                    step="0.5"
-                    value={formData.permission_hours_balance || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      permission_hours_balance: parseFloat(e.target.value) || 0 
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">ساعات مستهلكة</Label>
-                  <Input 
-                    type="number"
-                    step="0.5"
-                    value={formData.permission_hours_consumed || 0}
-                    onChange={e => setFormData(p => ({ 
-                      ...p, 
-                      permission_hours_consumed: parseFloat(e.target.value) || 0 
-                    }))}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))] mt-2 flex items-center gap-1">
-                <AlertTriangle size={12} />
-                هذه الأرصدة تُعدّل مباشرة على العقد - استخدم بحذر
-              </p>
-            </div>
-
-            {/* تاريخ المباشرة ووضع التجربة */}
-            <div className="p-4 bg-[hsl(var(--warning)/0.1)] dark:bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.3)]">
-              <h3 className="font-semibold mb-3 flex items-center gap-2 text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
-                <Clock className="w-4 h-4" />
-                تاريخ المباشرة ووضع التجربة
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>تاريخ المباشرة الفعلية</Label>
-                  <Input 
-                    type="date"
-                    value={formData.work_start_date || formData.start_date || ''}
-                    onChange={e => setFormData(p => ({ ...p, work_start_date: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    قبل هذا التاريخ لا يُحتسب حضور أو غياب
-                  </p>
-                </div>
-                <div className="flex flex-col justify-center">
-                  <Label className="mb-2">وضع التجربة (Sandbox)</Label>
-                  <div className="flex items-center gap-3">
-                    <Switch
-                      checked={formData.sandbox_mode || false}
-                      onCheckedChange={checked => setFormData(p => ({ ...p, sandbox_mode: checked }))}
-                    />
-                    <span className="text-sm">
-                      {formData.sandbox_mode ? (
-                        <Badge variant="destructive">مفعّل - لا يُحتسب حضور</Badge>
-                      ) : (
-                        <Badge variant="secondary">غير مفعّل</Badge>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* ملاحظات */}
             <div>
               <Label>ملاحظات</Label>
@@ -2443,50 +1770,6 @@ export default function ContractsManagementPage() {
               حفظ التعديلات
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Contract Dialog - STAS Only */}
-      <Dialog open={!!deleteContract} onOpenChange={() => setDeleteContract(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="text-destructive flex items-center gap-2">
-              <Trash2 size={20} />
-              حذف العقد نهائياً
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-              <p className="font-medium mb-2">
-                هل أنت متأكد من حذف العقد؟
-              </p>
-              <div className="text-sm space-y-1">
-                <p><strong>الرقم المرجعي:</strong> {deleteContract?.ref_no || 'غير محدد'}</p>
-                <p><strong>الموظف:</strong> {deleteContract?.employee_name_ar || deleteContract?.employee_name}</p>
-                <p><strong>تاريخ البداية:</strong> {deleteContract?.start_date}</p>
-              </div>
-            </div>
-            <p className="text-xs text-destructive font-bold">
-              ⚠️ هذا الإجراء لا يمكن التراجع عنه!
-            </p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setDeleteContract(null)} 
-                className="flex-1"
-              >
-                إلغاء
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteContract} 
-                className="flex-1"
-                disabled={deleting}
-              >
-                {deleting ? 'جاري الحذف...' : 'حذف نهائي'}
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
