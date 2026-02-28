@@ -363,8 +363,14 @@ export default function AppLayout({ children }) {
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed inset-y-0 start-0 w-72 bg-card border-e border-border z-50 animate-fade-in">
-            <div className="absolute top-4 end-4">
+          <aside 
+            className="fixed inset-y-0 start-0 w-72 bg-card border-e border-border z-50 animate-fade-in"
+            style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}
+          >
+            <div 
+              className="absolute end-4"
+              style={{ top: 'calc(max(env(safe-area-inset-top, 0px), 12px) + 4px)' }}
+            >
               <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg hover:bg-muted touch-target" data-testid="close-sidebar">
                 <X size={20} />
               </button>
