@@ -731,6 +731,117 @@ export default function TransactionsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* نافذة الحذف النووي */}
+      <Dialog open={nuclearDialogOpen} onOpenChange={setNuclearDialogOpen}>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-red-600">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <ShieldAlert size={24} className="text-red-600" />
+              </div>
+              <div>
+                <span className="text-xl">{lang === 'ar' ? 'تحذير: حذف نووي!' : 'Warning: Nuclear Delete!'}</span>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  {lang === 'ar' ? 'هذا الإجراء لا يمكن التراجع عنه' : 'This action is IRREVERSIBLE'}
+                </p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-5 pt-2">
+            {/* تحذير */}
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+              <p className="text-sm text-red-800 dark:text-red-200 font-medium">
+                {lang === 'ar' 
+                  ? 'سيتم حذف جميع البيانات المعاملاتية بما في ذلك:'
+                  : 'All transactional data will be deleted including:'}
+              </p>
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                <li>{lang === 'ar' ? 'جلسات تسجيل الدخول' : 'Login sessions'}</li>
+                <li>{lang === 'ar' ? 'سجلات الحضور' : 'Attendance records'}</li>
+                <li>{lang === 'ar' ? 'جميع المعاملات' : 'All transactions'}</li>
+                <li>{lang === 'ar' ? 'العهد المالية والعينية' : 'Financial & tangible custody'}</li>
+                <li>{lang === 'ar' ? 'طلبات الإجازات' : 'Leave requests'}</li>
+                <li>{lang === 'ar' ? 'الإشعارات والمهام' : 'Notifications & tasks'}</li>
+              </ul>
+            </div>
+            
+            {/* المحفوظ */}
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
+              <p className="text-sm text-emerald-800 dark:text-emerald-200 font-medium">
+                {lang === 'ar' ? 'سيتم الحفاظ على:' : 'Will be preserved:'}
+              </p>
+              <ul className="mt-2 text-sm text-emerald-700 dark:text-emerald-300 space-y-1 list-disc list-inside">
+                <li>{lang === 'ar' ? 'العقود' : 'Contracts'}</li>
+                <li>{lang === 'ar' ? 'المستخدمين والموظفين' : 'Users & Employees'}</li>
+                <li>{lang === 'ar' ? 'الإعدادات ومواقع العمل' : 'Settings & Work Locations'}</li>
+              </ul>
+            </div>
+            
+            {/* إحصائيات */}
+            {statsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : nuclearStats && (
+              <div className="bg-muted/30 rounded-xl p-4">
+                <p className="text-sm font-medium mb-2">
+                  {lang === 'ar' ? 'سيتم حذف:' : 'Will be deleted:'}
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {nuclearStats.total_documents?.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {lang === 'ar' ? 'سجل من قاعدة البيانات' : 'records from database'}
+                </p>
+              </div>
+            )}
+            
+            {/* حقل التأكيد */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {lang === 'ar' 
+                  ? 'للتأكيد، اكتب "حذف نهائي" في الحقل أدناه:'
+                  : 'To confirm, type "حذف نهائي" in the field below:'}
+              </label>
+              <Input
+                data-testid="nuclear-confirm-input"
+                placeholder="حذف نهائي"
+                value={nuclearConfirmText}
+                onChange={e => setNuclearConfirmText(e.target.value)}
+                className="h-12 rounded-xl text-center text-lg font-bold"
+                dir="rtl"
+              />
+            </div>
+            
+            {/* أزرار */}
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setNuclearDialogOpen(false)} 
+                className="flex-1 h-12 rounded-xl"
+                data-testid="cancel-nuclear"
+              >
+                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+              </Button>
+              <Button
+                onClick={handleNuclearDelete}
+                disabled={nuclearLoading || nuclearConfirmText !== 'حذف نهائي'}
+                className="flex-1 h-12 rounded-xl font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                data-testid="confirm-nuclear"
+              >
+                {nuclearLoading ? (
+                  <Loader2 size={18} className="animate-spin me-2" />
+                ) : (
+                  <Trash2 size={18} className="me-2" />
+                )}
+                {lang === 'ar' ? 'تنفيذ الحذف النووي' : 'Execute Nuclear Delete'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
