@@ -132,10 +132,8 @@
     min-height: 18px;
   }
   
-  /* === TEXT - Readable Sizes === */
-  html {
-    font-size: 14px;
-  }
+  /* === TEXT - Readable Sizes (using clamp for flexibility) === */
+  /* DO NOT change html font-size - it breaks rem-based sizing */
   
   h1, .text-2xl, .text-3xl, .text-4xl {
     font-size: 1.25rem !important;
