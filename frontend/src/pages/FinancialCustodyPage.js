@@ -232,31 +232,6 @@ export default function FinancialCustodyPage() {
     }
   };
 
-  const handleDownloadPdf = async (custodyId, custodyNumber) => {
-    setSubmitting(true);
-    try {
-      const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
-        responseType: 'blob'
-      });
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `custody_${custodyNumber}_${lang}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
-    } catch (e) {
-      toast.error(lang === 'ar' ? 'خطأ في التحميل' : 'Download error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   // ==================== DELETE ====================
 
   const handleDeleteSingle = async (custodyId, custodyNumber) => {
