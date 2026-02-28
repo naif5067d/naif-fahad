@@ -2667,8 +2667,7 @@ export default function STASMirrorPage() {
                     if (pdfUrl) {
                       const link = document.createElement('a');
                       link.href = pdfUrl;
-                      link.target = '_blank';
-                      link.rel = 'noopener noreferrer';
+                      link.download = 'document.pdf';
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
@@ -2677,7 +2676,7 @@ export default function STASMirrorPage() {
                   className="gap-2"
                 >
                   <ExternalLink size={16} />
-                  {lang === 'ar' ? 'فتح في نافذة جديدة' : 'Open in new tab'}
+                  {lang === 'ar' ? 'تحميل' : 'Download'}
                 </Button>
                 <Button 
                   variant="ghost" 
