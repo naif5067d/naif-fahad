@@ -110,6 +110,11 @@ export default function FinancialCustodyPage() {
   });
   const [signaturesOpen, setSignaturesOpen] = useState(false);
   const [savingSignatures, setSavingSignatures] = useState(false);
+  
+  // PDF Preview state
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
 
   // ==================== DATA FETCHING ====================
 
