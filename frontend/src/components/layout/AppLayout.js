@@ -497,7 +497,7 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-lang" 
                 onClick={toggleLang} 
-                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
+                className="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
                 title={t('lang.toggle')}
               >
                 <Globe size={18} />
@@ -507,7 +507,7 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-theme" 
                 onClick={toggleTheme} 
-                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
+                className="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
                 title={t('theme.toggle')}
               >
                 {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
@@ -518,7 +518,7 @@ export default function AppLayout({ children }) {
                 <button 
                   data-testid="logout-btn" 
                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
-                  className="p-2 rounded-xl hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 text-muted-foreground transition-colors flex-shrink-0"
+                  className="w-11 h-11 md:w-10 md:h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 text-muted-foreground transition-colors flex-shrink-0"
                   title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
                 >
                   <LogOut size={18} />
