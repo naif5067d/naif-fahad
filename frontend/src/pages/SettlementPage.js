@@ -234,10 +234,11 @@ export default function SettlementPage() {
       const res = await api.get(`/api/settlement/${settlementId}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `settlement-${settlementId}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

@@ -75,10 +75,11 @@ export default function TransactionDetailPage() {
       const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       
-      // تحميل مباشر لتجنب حظر المتصفح
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
       const link = document.createElement('a');
       link.href = url;
-      link.download = `transaction-${tx.ref_no || tx.id}.pdf`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -86,7 +87,7 @@ export default function TransactionDetailPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF');
+      toast.error(lang === 'ar' ? 'فشل معاينة PDF' : 'Failed to preview PDF');
     } finally {
       setPdfLoading(false);
     }
