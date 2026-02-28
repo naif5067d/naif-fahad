@@ -188,3 +188,49 @@ def shutdown_scheduler():
     """إيقاف الـ scheduler"""
     scheduler.shutdown(wait=False)
     logger.info("🛑 تم إيقاف جدولة المهام")
+
+
+async def check_and_run_missed_attendance():
+    """
+    🆕 التحقق من التحضير الفائت وتشغيله عند بدء الخادم
+    
+    المنطق:
+    1. الحصول على الوقت الحالي بتوقيت الرياض
+    2. إذا كان الوقت بعد 7:00 صباحاً
+    3. والتحضير لم يتم لليوم
+    4. → تشغيل التحضير التلقائي
+    """
+    from database import db
+    
+    try:
+        # انتظار قليل للتأكد من جاهزية قاعدة البيانات
+        await asyncio.sleep(5)
+        
+        # الوقت الحالي بتوقيت الرياض
+        now_riyadh = datetime.now(RIYADH_TZ)
+        today = now_riyadh.strftime("%Y-%m-%d")
+        current_hour = now_riyadh.hour
+        
+        logger.info(f"🔍 فحص التحضير الفائت - الوقت: {now_riyadh.strftime('%H:%M')} توقيت الرياض")
+        
+        # إذا كان الوقت قبل 7 صباحاً، لا حاجة للتحضير
+        if current_hour < 7:
+            logger.info("⏰ الوقت قبل 7 صباحاً - لا حاجة للتحضير الآن")
+            return
+        
+        # التحقق هل تم التحضير اليوم
+        today_job = await db.job_logs.find_one({
+            "job_type": "daily_auto_attendance",
+            "date": today
+        })
+        
+        if today_job:
+            logger.info(f"✅ التحضير تم مسبقاً اليوم ({today}) - لا حاجة للتحضير")
+            return
+        
+        # 🚀 تشغيل التحضير الفائت
+        logger.info(f"🚀 تشغيل التحضير الفائت لليوم: {today}")
+        await run_daily_auto_attendance()
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في فحص التحضير الفائت: {e}")
