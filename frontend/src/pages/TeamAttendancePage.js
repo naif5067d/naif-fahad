@@ -328,16 +328,11 @@ export default function TeamAttendancePage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر أولاً (لتجنب حظر المتصفح)
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // فتح المعاينة في نافذة منبثقة داخلية
+      setPdfPreviewUrl(url);
+      setPdfPreviewOpen(true);
       
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
+      toast.success(lang === 'ar' ? 'تم فتح المعاينة' : 'Preview opened');
     } catch (err) {
       console.error('Print error:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
