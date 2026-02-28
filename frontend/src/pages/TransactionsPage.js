@@ -385,8 +385,8 @@ export default function TransactionsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* زر الحذف النووي - للإدارة فقط */}
-          {['stas', 'sultan'].includes(user?.role) && (
+          {/* زر الحذف النووي - لـ STAS فقط */}
+          {user?.role === 'stas' && (
             <Button
               variant="destructive"
               size="sm"
