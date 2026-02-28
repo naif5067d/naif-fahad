@@ -1455,8 +1455,8 @@ export default function FinancialCustodyPage() {
                 <DialogHeader>
                   <DialogTitle>{lang === 'ar' ? 'قائمة الأكواد' : 'Codes List'}</DialogTitle>
                 </DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto">
-                  <table className="w-full text-sm">
+                <div className="max-h-[60vh] overflow-y-auto overflow-x-auto">
+                  <table className="w-full text-sm min-w-[400px]">
                     <thead className="sticky top-0 bg-background">
                       <tr className="border-b">
                         <th className="text-start p-2 font-medium">{lang === 'ar' ? 'الكود' : 'Code'}</th>
