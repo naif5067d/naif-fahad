@@ -737,17 +737,17 @@ export default function FinancialCustodyPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Print/Download Buttons */}
+              {/* Preview/Download Buttons */}
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => handlePrintPdf(selected.id, selected.custody_number)}
                 disabled={submitting}
                 className="gap-1.5"
-                data-testid="print-btn"
+                data-testid="preview-btn"
               >
-                <Printer size={14} />
-                {lang === 'ar' ? 'طباعة' : 'Print'}
+                <Eye size={14} />
+                {lang === 'ar' ? 'معاينة' : 'Preview'}
               </Button>
               <Button 
                 variant="outline" 
@@ -758,7 +758,7 @@ export default function FinancialCustodyPage() {
                 data-testid="download-btn"
               >
                 <Download size={14} />
-                PDF
+                {lang === 'ar' ? 'تحميل' : 'Download'}
               </Button>
               
               {/* زر تعديل العهدة */}
