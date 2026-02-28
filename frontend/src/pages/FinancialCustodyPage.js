@@ -197,16 +197,38 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح المعاينة في modal
+      // فتح المعاينة
       setPdfPreviewUrl(url);
       setPdfFileName(`custody_${custodyNumber}_${lang}.pdf`);
       setPdfPreviewOpen(true);
-      
-      toast.success(lang === 'ar' ? 'تم فتح المعاينة' : 'Preview opened');
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
     } finally {
       setSubmitting(false);
+    }
+  };
+  
+  // تحميل PDF مباشرة
+  const handleDownloadPdf = async (custodyId, custodyNumber) => {
+    try {
+      const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `custody_${custodyNumber}_${lang}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+    } catch (e) {
+      toast.error(lang === 'ar' ? 'خطأ في التحميل' : 'Download error');
     }
   };
 
