@@ -982,6 +982,93 @@
 }
 
 /* ==================== TABLET STYLES ==================== */
+
+/* ========== APPLE iPAD ========== */
+
+/* iPad Mini (768x1024) */
+@media only screen 
+  and (min-device-width: 768px) 
+  and (max-device-width: 1024px)
+  and (orientation: portrait) {
+  .safe-header { padding-top: 20px !important; }
+  .mobile-nav { display: none !important; }
+  aside.md\\:w-64 { width: 220px; }
+  .md\\:ms-64 { margin-inline-start: 220px; }
+}
+
+@media only screen 
+  and (min-device-width: 768px) 
+  and (max-device-width: 1024px)
+  and (orientation: landscape) {
+  .safe-header { padding-top: 20px !important; }
+  .mobile-nav { display: none !important; }
+  aside.md\\:w-64 { width: 256px; }
+  .md\\:ms-64 { margin-inline-start: 256px; }
+}
+
+/* iPad Air (820x1180) */
+@media only screen 
+  and (min-device-width: 820px) 
+  and (max-device-width: 1180px) {
+  .safe-header { padding-top: 20px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* iPad Pro 11" (834x1194) */
+@media only screen 
+  and (min-device-width: 834px) 
+  and (max-device-width: 1194px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* iPad Pro 12.9" (1024x1366) */
+@media only screen 
+  and (min-device-width: 1024px) 
+  and (max-device-width: 1366px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* ========== SAMSUNG TAB ========== */
+
+/* Samsung Galaxy Tab S7/S8/S9 (800x1280) */
+@media only screen 
+  and (min-device-width: 800px) 
+  and (max-device-width: 1280px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* Samsung Galaxy Tab S7+/S8+/S9+ (1600x2560) */
+@media only screen 
+  and (min-device-width: 1600px) 
+  and (max-device-width: 2560px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* ========== HUAWEI MATEPAD ========== */
+
+/* Huawei MatePad (800x1280) */
+@media only screen 
+  and (min-device-width: 800px) 
+  and (max-device-width: 1280px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* Huawei MatePad Pro (1600x2560) */
+@media only screen 
+  and (min-device-width: 1600px) 
+  and (max-device-width: 2560px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { display: none !important; }
+}
+
+/* ========== GENERIC TABLET FALLBACK ========== */
+
+/* All tablets (768px - 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
   /* Sidebar width */
   aside.md\\:w-64 {
@@ -998,6 +1085,16 @@
   .grid.grid-cols-5,
   .grid.grid-cols-6 {
     grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  /* Safe header */
+  .safe-header {
+    padding-top: 20px !important;
+  }
+  
+  /* Hide mobile nav on tablets */
+  .mobile-nav {
+    display: none !important;
   }
 }
 
