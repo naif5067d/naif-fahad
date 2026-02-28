@@ -1785,6 +1785,65 @@ export default function FinancialCustodyPage() {
           </table>
         </div>
       </div>
+
+      {/* PDF Preview Modal */}
+      <Dialog open={pdfPreviewOpen} onOpenChange={(open) => {
+        if (!open && pdfPreviewUrl) {
+          window.URL.revokeObjectURL(pdfPreviewUrl);
+          setPdfPreviewUrl(null);
+        }
+        setPdfPreviewOpen(open);
+      }}>
+        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b flex flex-row items-center justify-between">
+            <DialogTitle>{lang === 'ar' ? 'معاينة العهدة' : 'Custody Preview'}</DialogTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (pdfPreviewUrl) {
+                    const link = document.createElement('a');
+                    link.href = pdfPreviewUrl;
+                    link.download = pdfFileName || 'custody.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+                  }
+                }}
+              >
+                <Download size={16} className="me-2" />
+                {lang === 'ar' ? 'تحميل' : 'Download'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (pdfPreviewUrl) {
+                    const printWindow = window.open(pdfPreviewUrl);
+                    if (printWindow) {
+                      printWindow.onload = () => printWindow.print();
+                    }
+                  }
+                }}
+              >
+                <Printer size={16} className="me-2" />
+                {lang === 'ar' ? 'طباعة' : 'Print'}
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 h-full bg-slate-100">
+            {pdfPreviewUrl && (
+              <iframe
+                src={pdfPreviewUrl}
+                className="w-full h-[calc(90vh-80px)] border-0"
+                title="PDF Preview"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
