@@ -98,6 +98,13 @@ export default function TransactionsPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const scanIntervalRef = useRef(null);
+  
+  // Nuclear Delete States
+  const [nuclearDialogOpen, setNuclearDialogOpen] = useState(false);
+  const [nuclearConfirmText, setNuclearConfirmText] = useState('');
+  const [nuclearLoading, setNuclearLoading] = useState(false);
+  const [nuclearStats, setNuclearStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // فتح الكاميرا وبدء المسح التلقائي
   const startScanner = async () => {
