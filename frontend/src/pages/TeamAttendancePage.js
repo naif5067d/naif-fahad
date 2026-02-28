@@ -189,6 +189,10 @@ export default function TeamAttendancePage() {
   // Print state
   const [isPrinting, setIsPrinting] = useState(false);
   
+  // PDF Preview state
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  
   // Check if user is supervisor
   const isSupervisor = user?.role === 'supervisor';
   const isSultan = ['sultan', 'naif'].includes(user?.role);
