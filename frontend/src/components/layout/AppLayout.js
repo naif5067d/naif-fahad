@@ -310,6 +310,16 @@ export default function AppLayout({ children }) {
         </p>
       </div>
       
+      {/* Mobile Logo - with safe area padding */}
+      <div className="p-4 border-b border-border md:hidden">
+        <h1 className="text-base font-bold tracking-tight text-foreground" data-testid="app-title-mobile">
+          {lang === 'ar' ? companyName.ar : companyName.en}
+        </h1>
+        <p className="text-xs text-muted-foreground mt-1">
+          {lang === 'ar' ? 'نظام الموارد البشرية' : 'HR System'}
+        </p>
+      </div>
+      
       {/* Navigation */}
       <div className="flex-1 py-3 overflow-y-auto">
         {items.map(item => {
