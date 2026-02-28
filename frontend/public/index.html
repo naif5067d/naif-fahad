@@ -17,7 +17,7 @@
         
         <!-- iOS Safe Area Detection -->
         <style>
-            /* Critical: iOS Safe Area fallback for notch/Dynamic Island */
+            /* Critical: iOS Safe Area - CSS Variables */
             :root {
                 --safe-area-top: env(safe-area-inset-top, 0px);
                 --safe-area-bottom: env(safe-area-inset-bottom, 0px);
@@ -25,64 +25,77 @@
                 --safe-area-right: env(safe-area-inset-right, 0px);
             }
             
-            /* iPhone X and newer - Notch detection */
+            /* Older iOS support */
             @supports (padding-top: constant(safe-area-inset-top)) {
                 :root {
                     --safe-area-top: constant(safe-area-inset-top);
                     --safe-area-bottom: constant(safe-area-inset-bottom);
                 }
             }
-            @supports (padding-top: env(safe-area-inset-top)) {
-                :root {
-                    --safe-area-top: env(safe-area-inset-top);
-                    --safe-area-bottom: env(safe-area-inset-bottom);
-                }
-            }
             
-            /* Force safe area on body */
-            body {
-                padding-top: var(--safe-area-top);
-                padding-bottom: var(--safe-area-bottom);
-                padding-left: var(--safe-area-left);
-                padding-right: var(--safe-area-right);
-            }
+            /* DO NOT add padding to body - it breaks layout */
+            /* Instead, apply safe area to specific elements */
             
-            /* Ensure header respects safe area */
+            /* Header - must clear notch/Dynamic Island */
             .safe-header {
-                padding-top: max(var(--safe-area-top), 0px) !important;
+                padding-top: var(--safe-area-top, 0px) !important;
+                min-height: calc(48px + var(--safe-area-top, 0px));
             }
             
-            /* iOS detection - add extra padding for notch */
-            @media only screen 
-                and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2),
-                only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-                
-                body {
-                    padding-top: 47px;
-                }
-                
-                .safe-header {
-                    padding-top: 47px !important;
-                }
+            /* Bottom Nav - must clear home indicator */
+            .mobile-nav, .bottom-nav, nav[class*="mobile"] {
+                padding-bottom: var(--safe-area-bottom, 0px) !important;
             }
             
-            /* iPhone 14 Pro / 15 Pro with Dynamic Island */
-            @media only screen 
-                and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
-                only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-                
-                body {
-                    padding-top: 59px;
-                }
-                
-                .safe-header {
-                    padding-top: 59px !important;
-                }
+            /* === DEVICE-SPECIFIC OVERRIDES === */
+            /* These ensure the safe area works on ALL iPhone models */
+            
+            /* iPhone X, XS, 11 Pro - 44pt notch */
+            @media only screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 44px !important; min-height: 92px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone XR, 11 - 48pt notch */
+            @media only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) {
+                .safe-header { padding-top: 48px !important; min-height: 96px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone XS Max, 11 Pro Max */
+            @media only screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 44px !important; min-height: 92px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone 12, 13, 14 - 47pt notch */
+            @media only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 47px !important; min-height: 95px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone 12/13/14 Pro - 47pt notch */
+            @media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 59px !important; min-height: 107px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone 12/13/14 Plus */
+            @media only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 47px !important; min-height: 95px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone 14 Pro Max, 15 Pro Max - 59pt Dynamic Island */
+            @media only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+                .safe-header { padding-top: 59px !important; min-height: 107px; }
+                .mobile-nav { padding-bottom: 34px !important; }
+            }
+            
+            /* iPhone SE (no notch) */
+            @media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) {
+                .safe-header { padding-top: 20px !important; min-height: 68px; }
+                .mobile-nav { padding-bottom: 0 !important; }
             }
         </style>
         
