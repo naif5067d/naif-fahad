@@ -116,6 +116,11 @@ export default function AttendanceManagementPage() {
   
   // بحث الموظفين
   const [employeeSearch, setEmployeeSearch] = useState('');
+  
+  // PDF Preview state
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
 
   // التحقق من صلاحية عرض معاملات الخصم (للمدراء الرئيسيين فقط)
   const canViewDeductions = useMemo(() => {
