@@ -388,16 +388,21 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر (لتجنب حظر المتصفح)
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `attendance-report-${startDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      toast.success('تم تحميل التقرير');
+      // فتح PDF في تبويب جديد (fallback للتحميل)
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        // إذا حُظر، حمّل مباشرة
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `attendance-report-${startDate}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('تم تحميل التقرير');
+      } else {
+        toast.success('تم فتح التقرير');
+      }
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
@@ -423,15 +428,21 @@ export default function AttendanceManagementPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // تحميل مباشر (لتجنب حظر المتصفح)
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `outside-hours-report-${startDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      // فتح PDF في تبويب جديد (fallback للتحميل)
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        // إذا حُظر، حمّل مباشرة
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `outside-hours-report-${startDate}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('تم تحميل التقرير');
+      } else {
+        toast.success('تم فتح التقرير');
+      }
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
       toast.success('تم تحميل التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
