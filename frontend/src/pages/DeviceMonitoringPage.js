@@ -133,16 +133,17 @@ const StatCard = ({ icon: Icon, label, value, subValue, color = 'slate', trend, 
   return (
     <div 
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${colors[color]} p-5 text-white shadow-lg ${onClick ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
+      className={`relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-br ${colors[color]} p-3 md:p-5 text-white shadow-lg ${onClick ? 'cursor-pointer hover:scale-[1.02] transition-transform active:scale-[0.98]' : ''}`}
     >
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-white/70 text-xs font-medium mb-1">{label}</p>
-          <p className="text-3xl font-bold">{value}</p>
-          {subValue && <p className="text-white/60 text-xs mt-1">{subValue}</p>}
+        <div className="flex-1 min-w-0">
+          <p className="text-white/70 text-[10px] md:text-xs font-medium mb-0.5 md:mb-1 truncate">{label}</p>
+          <p className="text-xl md:text-3xl font-bold">{value}</p>
+          {subValue && <p className="text-white/60 text-[10px] md:text-xs mt-1 truncate">{subValue}</p>}
         </div>
-        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-          <Icon size={24} />
+        <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+          <Icon size={16} className="md:hidden" />
+          <Icon size={24} className="hidden md:block" />
         </div>
       </div>
       {trend && (
