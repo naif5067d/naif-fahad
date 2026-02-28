@@ -67,7 +67,7 @@
   .safe-header,
   header.safe-header {
     padding-top: max(var(--safe-top), 12px) !important;
-    min-height: calc(48px + var(--safe-top)) !important;
+    min-height: calc(52px + var(--safe-top)) !important;
   }
   
   /* === BOTTOM NAV - Safe Area === */
@@ -77,33 +77,33 @@
     padding-bottom: max(var(--safe-bottom), 8px) !important;
   }
   
-  /* === ALL BUTTONS - Touch Friendly === */
+  /* === ALL BUTTONS - Touch Friendly (44px minimum per Apple HIG) === */
   button,
   [role="button"],
   .btn,
   a.btn {
-    min-height: var(--touch-min);
-    min-width: var(--touch-min);
+    min-height: 44px;
+    min-width: 44px;
     padding: var(--space-sm) var(--space-md);
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
   
-  /* Small buttons */
+  /* Small buttons - still maintain 44px touch area */
   button.h-8,
   button.h-9,
   button[class*="size-sm"] {
-    min-height: var(--touch-sm);
-    min-width: var(--touch-sm);
-    padding: var(--space-xs) var(--space-sm);
+    min-height: 44px;
+    min-width: 44px;
+    padding: var(--space-sm);
   }
   
-  /* Icon buttons */
+  /* Icon buttons - 44px minimum */
   button.p-2,
   button.p-1,
   button[class*="icon"] {
-    min-height: var(--touch-min);
-    min-width: var(--touch-min);
-    padding: var(--space-sm) !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 10px !important;
   }
   
   /* === ALL INPUTS - Prevent iOS Zoom === */
@@ -112,21 +112,24 @@
   textarea,
   [contenteditable="true"] {
     font-size: 16px !important;
-    min-height: var(--touch-min);
+    min-height: 44px;
     padding: var(--space-sm) var(--space-md);
   }
   
   /* === ALL LINKS - Touch Targets === */
   a {
     padding: var(--space-xs);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
   
   /* === ICONS - Proper Size === */
   svg,
   .icon,
   [class*="lucide"] {
-    min-width: 16px;
-    min-height: 16px;
+    min-width: 18px;
+    min-height: 18px;
   }
   
   /* === TEXT - Readable Sizes === */
