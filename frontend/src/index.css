@@ -4,13 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* iOS Safe Area Support */
+/* ==================== iOS Safe Area Support ==================== */
+/* Critical for iPhone X, 11, 12, 13, 14, 15 with notch/Dynamic Island */
 @supports (padding-top: env(safe-area-inset-top)) {
   html {
     --sat: env(safe-area-inset-top);
     --sab: env(safe-area-inset-bottom);
     --sal: env(safe-area-inset-left);
     --sar: env(safe-area-inset-right);
+  }
+  
+  /* Ensure the app fills viewport correctly */
+  html, body, #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 }
 
