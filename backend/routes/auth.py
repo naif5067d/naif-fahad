@@ -509,7 +509,7 @@ async def logout(user=Depends(get_current_user)):
         )
     
     # تحديث login_sessions بوقت الخروج
-    await db.login_sessions.update_one(
+    await db.login_sessions.find_one_and_update(
         {"employee_id": employee_id, "status": "active"},
         {"$set": {"logout_at": datetime.now(timezone.utc).isoformat(), "status": "completed"}},
         sort=[("login_at", -1)]
