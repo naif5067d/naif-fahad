@@ -126,8 +126,8 @@ async def get_collections_stats(current_user: dict = Depends(get_current_user)):
     الحصول على إحصائيات المجموعات قبل الحذف
     Get collections statistics before deletion
     """
-    allowed_roles = ["stas", "sultan"]
-    if current_user.get("role") not in allowed_roles:
+    # التحقق من أن المستخدم stas فقط
+    if current_user.get("role") != "stas":
         raise HTTPException(status_code=403, detail="غير مصرح | Unauthorized")
     
     # المجموعات المعاملاتية
