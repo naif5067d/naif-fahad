@@ -423,11 +423,10 @@ export default function ContractsManagementPage() {
       const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       
-      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      // تحميل مباشر لتجنب حظر المتصفح
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.download = `contract-${contractId}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
