@@ -41,6 +41,7 @@ import {
   TrendingDown,
   FileText,
   Printer,
+  Download,
   Bell,
   ChevronDown,
   ChevronUp,
@@ -56,6 +57,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import PdfPreviewModal from '@/components/PdfPreviewModal';
 
 // ألوان الحالات - باستخدام ألوان الشركة الرسمية فقط
 const STATUS_CONFIG = {
