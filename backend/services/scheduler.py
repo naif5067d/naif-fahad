@@ -2,14 +2,19 @@
 Scheduler Service - جدولة المهام التلقائية
 - التحضير الذاتي في بداية كل يوم عمل (7:00 صباحاً)
 - ملخص الحضور الشهري (أول كل شهر)
+- التحضير عند بدء التشغيل إذا فات الوقت
 """
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
+
+# توقيت الرياض
+RIYADH_TZ = ZoneInfo("Asia/Riyadh")
 
 # Global scheduler instance
 scheduler = AsyncIOScheduler()
