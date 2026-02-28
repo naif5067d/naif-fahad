@@ -446,12 +446,10 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح المعاينة في modal
+      // فتح المعاينة
       setPdfPreviewUrl(url);
       setPdfFileName(`custody-month-${selectedMonth}.pdf`);
       setPdfPreviewOpen(true);
-      
-      toast.success(lang === 'ar' ? `تم فتح تقرير شهر ${selectedMonth}` : `Opened ${selectedMonth} report`);
     } catch (e) {
       // محاولة قراءة رسالة الخطأ من blob
       if (e.response?.data instanceof Blob) {
