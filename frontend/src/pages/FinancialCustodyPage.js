@@ -424,10 +424,18 @@ export default function FinancialCustodyPage() {
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open(url, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => printWindow.print();
-      }
+      
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // تنظيف الذاكرة بعد ثانية
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
       toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
     } catch (e) {
