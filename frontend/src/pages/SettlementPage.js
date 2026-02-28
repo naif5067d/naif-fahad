@@ -57,6 +57,24 @@ export default function SettlementPage() {
   
   // Editable preview data
   const [editablePreview, setEditablePreview] = useState(null);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualValues, setManualValues] = useState({
+    eos_amount: null,
+    leave_days: null,
+    leave_compensation: null,
+    additional_entitlements: 0,
+    additional_deductions: 0,
+  });
+  
+  // الخصومات والسلف اليدوية
+  const [manualDeductions, setManualDeductions] = useState([]);
+  const [manualLoans, setManualLoans] = useState([]);
+  const [inkindDamages, setInkindDamages] = useState([]);
+  const [addDeductionOpen, setAddDeductionOpen] = useState(false);
+  const [addLoanOpen, setAddLoanOpen] = useState(false);
+  const [newDeduction, setNewDeduction] = useState({ amount: '', note: '' });
+  const [newLoan, setNewLoan] = useState({ amount: '', note: '' });
+  const [selectedSettlement, setSelectedSettlement] = useState(null);
   
   // Validation warnings
   const [warnings, setWarnings] = useState([]);
@@ -71,6 +89,7 @@ export default function SettlementPage() {
   
   const canCreate = ['sultan', 'naif', 'stas'].includes(user?.role);
   const canExecute = user?.role === 'stas';
+  const canCancel = user?.role === 'stas'; // STAS فقط يمكنه الإلغاء
 
   useEffect(() => {
     loadData();
@@ -93,7 +112,15 @@ export default function SettlementPage() {
     setLoading(false);
   };
 
-  // جلب الموظفين الذين لديهم عقد نشط
+  // جلب المخالصات فقط
+  const fetchSettlements = async () => {
+    try {
+      const res = await api.get('/api/settlement');
+      setSettlements(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch settlements', err);
+    }
+  };
   const eligibleEmployees = employees.filter(emp => {
     const contract = contracts.find(c => 
       c.employee_id === emp.id && 
@@ -206,11 +233,123 @@ export default function SettlementPage() {
     try {
       const res = await api.get(`/api/settlement/${settlementId}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      
+      // فتح PDF في تبويب جديد (fallback للتحميل)
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        // إذا حُظر، حمّل مباشرة
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `settlement-${settlementId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('تم تحميل PDF');
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (err) {
       toast.error('فشل تحميل PDF');
     }
   };
+
+  // إضافة خصم يدوي - يُحفظ في الـ backend
+  const addManualDeduction = async () => {
+    if (!newDeduction.amount || !newDeduction.note) {
+      toast.error('المبلغ والسبب مطلوبان');
+      return;
+    }
+    if (!selectedSettlement?.id) {
+      toast.error('يرجى اختيار مخالصة أولاً');
+      return;
+    }
+    try {
+      const res = await api.post(`/api/settlement/${selectedSettlement.id}/manual-deduction`, {
+        deduction_type: 'deduction',
+        amount: parseFloat(newDeduction.amount),
+        note: newDeduction.note
+      });
+      toast.success('تم إضافة الخصم');
+      setNewDeduction({ amount: '', note: '' });
+      setAddDeductionOpen(false);
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إضافة الخصم');
+    }
+  };
+
+  // إضافة سلفة يدوية - تُحفظ في الـ backend
+  const addManualLoan = async () => {
+    if (!newLoan.amount || !newLoan.note) {
+      toast.error('المبلغ والسبب مطلوبان');
+      return;
+    }
+    if (!selectedSettlement?.id) {
+      toast.error('يرجى اختيار مخالصة أولاً');
+      return;
+    }
+    try {
+      const res = await api.post(`/api/settlement/${selectedSettlement.id}/manual-deduction`, {
+        deduction_type: 'loan',
+        amount: parseFloat(newLoan.amount),
+        note: newLoan.note
+      });
+      toast.success('تم إضافة السلفة');
+      setNewLoan({ amount: '', note: '' });
+      setAddLoanOpen(false);
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل إضافة السلفة');
+    }
+  };
+
+  // حذف خصم من الـ backend
+  const removeDeduction = async (id) => {
+    if (!selectedSettlement?.id) return;
+    try {
+      await api.delete(`/api/settlement/${selectedSettlement.id}/manual-deduction/${id}`);
+      toast.success('تم حذف الخصم');
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل حذف الخصم');
+    }
+  };
+
+  // حذف سلفة من الـ backend
+  const removeLoan = async (id) => {
+    if (!selectedSettlement?.id) return;
+    try {
+      await api.delete(`/api/settlement/${selectedSettlement.id}/manual-deduction/${id}`);
+      toast.success('تم حذف السلفة');
+      // تحديث البيانات
+      fetchSettlements();
+      if (selectedSettlement) {
+        const updated = await api.get(`/api/settlement/${selectedSettlement.id}`);
+        setSelectedSettlement(updated.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل حذف السلفة');
+    }
+  };
+
+  // حساب إجمالي الخصومات اليدوية من الـ snapshot
+  const getManualDeductions = (settlement) => settlement?.snapshot?.manual_deductions || [];
+  const getManualLoans = (settlement) => settlement?.snapshot?.manual_loans || [];
+  const totalInkindDamages = inkindDamages.reduce((sum, d) => sum + d.amount, 0);
 
   const resetForm = () => {
     setFormData({
@@ -284,6 +423,19 @@ export default function SettlementPage() {
       value: formatCurrency(data.leave?.compensation),
       status: 'success'
     });
+    
+    // Partial Month Salary - راتب خارج المسيرات
+    if (data.partial_month_salary?.amount > 0) {
+      auditItems.push({
+        icon: DollarSign,
+        title: 'راتب خارج المسيرات',
+        title_en: 'Partial Month Salary',
+        detail: data.partial_month_salary?.formula,
+        subdetail: data.partial_month_salary?.description_ar,
+        value: formatCurrency(data.partial_month_salary?.amount),
+        status: 'success'
+      });
+    }
     
     // Deductions
     if (data.deductions?.total > 0) {
@@ -469,6 +621,93 @@ export default function SettlementPage() {
           </table>
         </div>
         
+        {/* Manual Override Toggle */}
+        <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calculator size={16} className="text-amber-600" />
+              <span className="text-sm font-medium">{lang === 'ar' ? 'وضع التعديل اليدوي' : 'Manual Override Mode'}</span>
+            </div>
+            <Button 
+              variant={manualMode ? "default" : "outline"} 
+              size="sm"
+              onClick={() => {
+                setManualMode(!manualMode);
+                if (!manualMode) {
+                  setManualValues({
+                    eos_amount: snapshot.eos?.final_amount || 0,
+                    leave_days: snapshot.leave?.balance || 0,
+                    leave_compensation: snapshot.leave?.compensation || 0,
+                    additional_entitlements: 0,
+                    additional_deductions: 0,
+                  });
+                }
+              }}
+            >
+              {manualMode ? (lang === 'ar' ? 'تفعيل' : 'Active') : (lang === 'ar' ? 'تفعيل التعديل' : 'Enable')}
+            </Button>
+          </div>
+          
+          {manualMode && (
+            <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'End of Service'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.eos_amount} 
+                  onChange={e => setManualValues(v => ({ ...v, eos_amount: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'أيام الإجازة' : 'Leave Days'}</Label>
+                <Input 
+                  type="number" 
+                  step="0.5"
+                  value={manualValues.leave_days} 
+                  onChange={e => {
+                    const days = parseFloat(e.target.value) || 0;
+                    const dailyWage = snapshot.wages?.daily_wage || 0;
+                    setManualValues(v => ({ 
+                      ...v, 
+                      leave_days: days,
+                      leave_compensation: days * dailyWage 
+                    }));
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.leave_compensation} 
+                  onChange={e => setManualValues(v => ({ ...v, leave_compensation: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'إضافات أخرى' : 'Additional Entitlements'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.additional_entitlements} 
+                  onChange={e => setManualValues(v => ({ ...v, additional_entitlements: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">{lang === 'ar' ? 'خصومات إضافية' : 'Additional Deductions'}</Label>
+                <Input 
+                  type="number" 
+                  value={manualValues.additional_deductions} 
+                  onChange={e => setManualValues(v => ({ ...v, additional_deductions: parseFloat(e.target.value) || 0 }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
         {/* Entitlements & Deductions */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
@@ -477,34 +716,115 @@ export default function SettlementPage() {
               <tbody>
                 <tr className="border-b">
                   <td className="p-1">{lang === 'ar' ? 'مكافأة نهاية الخدمة' : 'End of Service'}</td>
-                  <td className="p-1 text-right">{snapshot.eos?.final_amount?.toLocaleString()}</td>
+                  <td className="p-1 text-right">{(manualMode ? manualValues.eos_amount : snapshot.eos?.final_amount)?.toLocaleString()}</td>
                 </tr>
                 <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'تعويض الإجازات' : 'Leave Compensation'}</td>
-                  <td className="p-1 text-right">{snapshot.leave?.compensation?.toLocaleString()}</td>
+                  <td className="p-1">{lang === 'ar' ? `تعويض الإجازات (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} يوم)` : `Leave (${manualMode ? manualValues.leave_days : snapshot.leave?.balance} days)`}</td>
+                  <td className="p-1 text-right">{(manualMode ? manualValues.leave_compensation : snapshot.leave?.compensation)?.toLocaleString()}</td>
                 </tr>
+                {/* راتب خارج المسيرات */}
+                {snapshot.partial_month_salary?.amount > 0 && (
+                  <tr className="border-b bg-blue-50">
+                    <td className="p-1">
+                      {lang === 'ar' 
+                        ? `راتب خارج المسيرات (${snapshot.partial_month_salary?.days} يوم)` 
+                        : `Partial Month (${snapshot.partial_month_salary?.days} days)`}
+                    </td>
+                    <td className="p-1 text-right">{snapshot.partial_month_salary?.amount?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {manualMode && manualValues.additional_entitlements > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'إضافات أخرى' : 'Additional'}</td>
+                    <td className="p-1 text-right">{manualValues.additional_entitlements?.toLocaleString()}</td>
+                  </tr>
+                )}
                 <tr className="bg-[hsl(var(--success)/0.1)] font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.entitlements?.total?.toLocaleString()}</td>
+                  <td className="p-1 text-right">
+                    {(manualMode 
+                      ? (manualValues.eos_amount + manualValues.leave_compensation + manualValues.additional_entitlements)
+                      : snapshot.totals?.entitlements?.total
+                    )?.toLocaleString()}
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div>
-            <div className="bg-red-600 text-white text-xs p-1 text-center">{lang === 'ar' ? 'الاستقطاعات' : 'Deductions'}</div>
+            <div className="bg-red-600 text-white text-xs p-1 text-center flex justify-between items-center">
+              <span>{lang === 'ar' ? 'الاستقطاعات' : 'Deductions'}</span>
+              {canCreate && (
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" className="h-5 px-1 text-white hover:bg-red-700" onClick={() => setAddLoanOpen(true)}>
+                    <Plus className="w-3 h-3" /> {lang === 'ar' ? 'سلفة' : 'Loan'}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-5 px-1 text-white hover:bg-red-700" onClick={() => setAddDeductionOpen(true)}>
+                    <Plus className="w-3 h-3" /> {lang === 'ar' ? 'خصم' : 'Deduction'}
+                  </Button>
+                </div>
+              )}
+            </div>
             <table className="w-full text-xs border">
               <tbody>
-                <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'القروض' : 'Loans'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="p-1">{lang === 'ar' ? 'أخرى' : 'Other'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
-                </tr>
-                <tr className="bg-red-50 font-bold">
+                {/* السلف التلقائية */}
+                {snapshot.totals?.deductions?.loans > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'السلف (تلقائي)' : 'Loans (Auto)'}</td>
+                    <td className="p-1 text-right">{snapshot.totals?.deductions?.loans?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {/* السلف اليدوية من الـ snapshot */}
+                {getManualLoans(selectedSettlement).map(loan => (
+                  <tr key={loan.id} className="border-b bg-yellow-50">
+                    <td className="p-1 flex items-center justify-between">
+                      <span>سلفة: {loan.note}</span>
+                      {selectedSettlement?.status !== 'cancelled' && (
+                        <button onClick={() => removeLoan(loan.id)} className="text-red-500 hover:text-red-700">×</button>
+                      )}
+                    </td>
+                    <td className="p-1 text-right">{loan.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* العهد المالية */}
+                {snapshot.custody_balance?.total > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'العهد المالية' : 'Financial Custody'}</td>
+                    <td className="p-1 text-right">{snapshot.custody_balance?.total?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {/* تلفيات العهد العينية */}
+                {inkindDamages.map(damage => (
+                  <tr key={damage.id} className="border-b bg-orange-50">
+                    <td className="p-1">تلف: {damage.item_name_ar}</td>
+                    <td className="p-1 text-right">{damage.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* الخصومات التلقائية */}
+                {snapshot.totals?.deductions?.deductions > 0 && (
+                  <tr className="border-b">
+                    <td className="p-1">{lang === 'ar' ? 'خصومات (تلقائي)' : 'Deductions (Auto)'}</td>
+                    <td className="p-1 text-right">{snapshot.totals?.deductions?.deductions?.toLocaleString()}</td>
+                  </tr>
+                )}
+                {/* الخصومات اليدوية من الـ snapshot */}
+                {getManualDeductions(selectedSettlement).map(ded => (
+                  <tr key={ded.id} className="border-b bg-red-50">
+                    <td className="p-1 flex items-center justify-between">
+                      <span>خصم: {ded.note}</span>
+                      {selectedSettlement?.status !== 'cancelled' && (
+                        <button onClick={() => removeDeduction(ded.id)} className="text-red-500 hover:text-red-700">×</button>
+                      )}
+                    </td>
+                    <td className="p-1 text-right">{ded.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* الإجمالي */}
+                <tr className="bg-red-100 font-bold">
                   <td className="p-1">{lang === 'ar' ? 'المجموع' : 'Total'}</td>
-                  <td className="p-1 text-right">{snapshot.totals?.deductions?.total?.toLocaleString()}</td>
+                  <td className="p-1 text-right">
+                    {(snapshot.totals?.deductions?.total || 0)?.toLocaleString()}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -514,7 +834,9 @@ export default function SettlementPage() {
         {/* Net Amount */}
         <div className="border-2 border-primary p-3 text-center mb-3 bg-primary/5">
           <div className="text-xs text-muted-foreground">{lang === 'ar' ? 'الصافي النهائي المستحق للموظف' : 'Net Amount Payable to Employee'}</div>
-          <div className="text-2xl font-bold text-primary">{snapshot.totals?.net_amount?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}</div>
+          <div className="text-2xl font-bold text-primary">
+            {(snapshot.totals?.net_amount || 0)?.toLocaleString()} {lang === 'ar' ? 'ريال' : 'SAR'}
+          </div>
         </div>
         
         {/* Signatures placeholder */}
@@ -666,17 +988,32 @@ export default function SettlementPage() {
                       
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Button variant="ghost" size="sm" onClick={() => setViewSettlement(settlement)}>
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectedSettlement(settlement); setViewSettlement(settlement); }}>
                           <Eye className="w-4 h-4" />
                         </Button>
                         
                         {settlement.status === 'executed' && (
-                          <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(settlement.id)}>
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(settlement.id)}>
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            {canExecute && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => {
+                                  setSelectedSettlement(settlement);
+                                  setViewSettlement(settlement);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 ml-1" />
+                                تعديل
+                              </Button>
+                            )}
+                          </>
                         )}
                         
-                        {settlement.status === 'pending_stas' && canExecute && (
+                        {(settlement.status === 'pending_stas' || settlement.status === 'executed') && canExecute && (
                           <Button 
                             variant="default" 
                             size="sm" 
@@ -684,18 +1021,20 @@ export default function SettlementPage() {
                             className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]"
                           >
                             <Play className="w-4 h-4 ml-1" />
-                            تنفيذ
+                            {settlement.status === 'executed' ? 'إعادة تنفيذ' : 'تنفيذ'}
                           </Button>
                         )}
                         
-                        {settlement.status === 'pending_stas' && canCreate && (
+                        {settlement.status === 'pending_stas' && canCancel && (
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleCancel(settlement.id)}
+                            data-testid={`cancel-settlement-${settlement.id}`}
                           >
-                            <Ban className="w-4 h-4" />
+                            <Ban className="w-4 h-4 ml-1" />
+                            إلغاء
                           </Button>
                         )}
                       </div>
@@ -919,6 +1258,84 @@ export default function SettlementPage() {
               </Button>
             )}
             <Button variant="outline" onClick={() => setViewSettlement(null)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog إضافة سلفة */}
+      <Dialog open={addLoanOpen} onOpenChange={setAddLoanOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="w-5 h-5" />
+              إضافة سلفة يدوية
+            </DialogTitle>
+            <DialogDescription>
+              أضف سلفة لم يسجلها النظام تلقائياً
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>المبلغ (ريال)</Label>
+              <Input 
+                type="number" 
+                value={newLoan.amount} 
+                onChange={e => setNewLoan({ ...newLoan, amount: e.target.value })}
+                placeholder="مثال: 5000"
+              />
+            </div>
+            <div>
+              <Label>السبب / الوصف</Label>
+              <Textarea 
+                value={newLoan.note} 
+                onChange={e => setNewLoan({ ...newLoan, note: e.target.value })}
+                placeholder="مثال: سلفة شهر يناير 2026"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddLoanOpen(false)}>إلغاء</Button>
+            <Button onClick={addManualLoan}>إضافة السلفة</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog إضافة خصم */}
+      <Dialog open={addDeductionOpen} onOpenChange={setAddDeductionOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingDown className="w-5 h-5" />
+              إضافة خصم يدوي
+            </DialogTitle>
+            <DialogDescription>
+              أضف خصم لم يسجله النظام تلقائياً (مثل: تلف عهدة، ذمم سابقة)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>المبلغ (ريال)</Label>
+              <Input 
+                type="number" 
+                value={newDeduction.amount} 
+                onChange={e => setNewDeduction({ ...newDeduction, amount: e.target.value })}
+                placeholder="مثال: 2000"
+              />
+            </div>
+            <div>
+              <Label>السبب / الوصف (يظهر في المخالصة)</Label>
+              <Textarea 
+                value={newDeduction.note} 
+                onChange={e => setNewDeduction({ ...newDeduction, note: e.target.value })}
+                placeholder="مثال: تلف زجاج المركبة"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDeductionOpen(false)}>إلغاء</Button>
+            <Button onClick={addManualDeduction} className="bg-red-600 hover:bg-red-700">إضافة الخصم</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

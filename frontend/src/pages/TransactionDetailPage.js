@@ -3,27 +3,27 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw } from 'lucide-react';
-import { formatGregorianHijriDateTime, formatSaudiDateTime } from '@/lib/dateUtils';
+import { ArrowLeft, Download, Eye, Loader2, Check, X as XIcon, RotateCcw, FileText } from 'lucide-react';
+import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
 import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
 // Status configuration
 const STATUS_CONFIG = {
-  executed: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  executed: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   rejected: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   cancelled: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
   pending_supervisor: { bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-500/20' },
-  pending_ops: { bg: 'bg-orange-500/10', text: 'text-orange-600', border: 'border-orange-500/20' },
-  pending_finance: { bg: 'bg-teal-500/10', text: 'text-teal-600', border: 'border-teal-500/20' },
+  pending_ops: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
+  pending_finance: { bg: 'bg-[hsl(var(--success)/0.1)]', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success)/0.2)]' },
   pending_ceo: { bg: 'bg-red-600/10', text: 'text-red-700', border: 'border-red-600/20' },
-  stas: { bg: 'bg-violet-500/10', text: 'text-violet-600', border: 'border-violet-500/20' },
-  pending_employee_accept: { bg: 'bg-sky-500/10', text: 'text-sky-600', border: 'border-sky-500/20' },
-  approve: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
-  approved: { bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/20' },
+  stas: { bg: 'bg-accent/100/10', text: 'text-accent', border: 'border-accent/20' },
+  pending_employee_accept: { bg: 'bg-[hsl(var(--info)/0.1)]', text: 'text-[hsl(var(--info))]', border: 'border-[hsl(var(--info)/0.2)]' },
+  approve: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
+  approved: { bg: 'bg-success/10', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success))]/20' },
   reject: { bg: 'bg-red-500/10', text: 'text-red-600', border: 'border-red-500/20' },
-  pending: { bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/20' },
+  pending: { bg: 'bg-warning/10', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))]/20' },
 };
 
 export default function TransactionDetailPage() {
@@ -74,19 +74,32 @@ export default function TransactionDetailPage() {
     try {
       const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      
+      // فتح PDF في تبويب جديد (fallback للتحميل)
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        // إذا حُظر، حمّل مباشرة
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `transaction-${tx.ref_no || tx.id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch {
-      toast.error(lang === 'ar' ? 'فشل معاينة PDF' : 'Failed to preview PDF');
+      toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF');
     } finally {
       setPdfLoading(false);
     }
   };
 
-  // Handle STAS actions
-  const handleAction = async (action) => {
+  // Handle approval/rejection actions
+  const handleAction = async (action, note = '') => {
     setActionLoading(true);
     try {
-      await api.post(`/api/transactions/${tx.id}/action`, { action, note: '' });
+      await api.post(`/api/transactions/${tx.id}/action`, { action, note });
       toast.success(lang === 'ar' ? 'تم بنجاح' : 'Success');
       // Refresh transaction
       const res = await api.get(`/api/transactions/${id}`);
@@ -98,26 +111,74 @@ export default function TransactionDetailPage() {
     }
   };
 
-  // Determine what actions STAS can take
-  const getStasActions = () => {
-    if (user?.role !== 'stas' || tx?.status !== 'stas') return null;
+  // Determine what actions the current user can take
+  const getUserActions = () => {
+    if (!tx || !user) return null;
     
-    const rejectionSource = tx?.rejection_source;
-    const ceoRejected = tx?.ceo_rejected;
-    const wasRejected = rejectionSource || ceoRejected;
+    const role = user.role;
+    const status = tx.status;
+    const currentStage = tx.current_stage;
     
-    // If rejected by CEO, show return to CEO
-    // If rejected by sultan/ops, show return to sultan
-    // If not rejected (normal flow), show execute and cancel
+    // STAS actions
+    if (role === 'stas' && status === 'stas') {
+      const rejectionSource = tx.rejection_source;
+      const ceoRejected = tx.ceo_rejected;
+      const wasRejected = rejectionSource || ceoRejected;
+      
+      return {
+        canApprove: !wasRejected,
+        canReject: true,
+        canReturn: wasRejected,
+        returnTo: ceoRejected ? 'ceo' : (rejectionSource === 'ops' || rejectionSource === 'supervisor') ? 'sultan' : null,
+        stageName: 'STAS',
+        isExecute: true
+      };
+    }
     
-    return {
-      canExecute: !wasRejected,
-      canCancel: true,
-      returnTo: ceoRejected ? 'ceo' : (rejectionSource === 'ops' || rejectionSource === 'supervisor') ? 'sultan' : null
-    };
+    // Sultan/Naif - Operations Manager
+    if ((role === 'sultan' || role === 'naif') && status === 'pending_ops') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'مدير العمليات' : 'Operations Manager'
+      };
+    }
+    
+    // Mohammed - CEO
+    if (role === 'mohammed' && status === 'pending_ceo') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: 'CEO'
+      };
+    }
+    
+    // Salah - Finance
+    if (role === 'salah' && status === 'pending_finance') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'المالية' : 'Finance'
+      };
+    }
+    
+    // Supervisor
+    if (role === 'supervisor' && status === 'pending_supervisor') {
+      return {
+        canApprove: true,
+        canReject: true,
+        canReturn: false,
+        stageName: lang === 'ar' ? 'المشرف' : 'Supervisor'
+      };
+    }
+    
+    return null;
   };
 
-  const stasActions = tx ? getStasActions() : null;
+  const userActions = tx ? getUserActions() : null;
 
   const getStatusStyle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   
@@ -189,6 +250,11 @@ export default function TransactionDetailPage() {
       serial_number: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
       estimatedvalue: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
       estimated_value: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
+      // Attendance request fields
+      from_time: { ar: 'من الساعة', en: 'From Time' },
+      to_time: { ar: 'إلى الساعة', en: 'To Time' },
+      date: { ar: 'التاريخ', en: 'Date' },
+      request_type: { ar: 'نوع الطلب', en: 'Request Type' },
     };
     return labels[key] ? (lang === 'ar' ? labels[key].ar : labels[key].en) : key.replace(/_/g, ' ');
   };
@@ -199,6 +265,21 @@ export default function TransactionDetailPage() {
         annual: { ar: 'سنوية', en: 'Annual' },
         sick: { ar: 'مرضية', en: 'Sick' },
         emergency: { ar: 'طارئة', en: 'Emergency' },
+        marriage: { ar: 'زواج', en: 'Marriage' },
+        bereavement: { ar: 'وفاة', en: 'Bereavement' },
+        exam: { ar: 'اختبار', en: 'Exam' },
+        unpaid: { ar: 'بدون راتب', en: 'Unpaid' },
+      };
+      return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
+    }
+    // ترجمة نوع طلب الحضور
+    if (key === 'request_type') {
+      const types = {
+        forget_checkin: { ar: 'نسيان بصمة', en: 'Forgot Check-in' },
+        field_work: { ar: 'مهمة خارجية', en: 'Field Work' },
+        early_leave_request: { ar: 'طلب خروج مبكر', en: 'Early Leave Request' },
+        late_excuse: { ar: 'تبرير تأخير', en: 'Late Excuse' },
+        admin_edit: { ar: 'تعديل إداري', en: 'Admin Edit' },
       };
       return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
     }
@@ -207,6 +288,13 @@ export default function TransactionDetailPage() {
     }
     if ((key === 'amount' || key === 'estimatedvalue' || key === 'estimated_value') && value) {
       return `${value} SAR`;
+    }
+    // تنسيق التواريخ - من YYYY-MM-DD إلى DD/MM/YYYY
+    if ((key === 'start_date' || key === 'end_date' || key === 'date' || key === 'adjusted_end_date') && value) {
+      const parts = String(value).split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
     }
     return String(value);
   };
@@ -244,7 +332,7 @@ export default function TransactionDetailPage() {
             <p className="text-sm text-muted-foreground font-mono">{tx.ref_no}</p>
             <h1 className="text-2xl font-bold mt-1">{getTypeLabel(tx.type)}</h1>
             <p className="text-muted-foreground mt-1">
-              {formatSaudiDateTime(tx.created_at)}
+              {formatGregorianHijriDateTime(tx.created_at).combined}
             </p>
           </div>
           
@@ -283,53 +371,62 @@ export default function TransactionDetailPage() {
         </div>
         
         {/* STAS Actions */}
-        {stasActions && (
+        {userActions && (
           <div className="mt-6 pt-6 border-t border-border">
-            <h3 className="text-sm font-semibold mb-4 text-muted-foreground">
-              {lang === 'ar' ? 'إجراءات STAS' : 'STAS Actions'}
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                {lang === 'ar' ? `إجراءات ${userActions.stageName}` : `${userActions.stageName} Actions`}
+              </h3>
+              <span className={`text-xs px-2 py-1 rounded-full ${STATUS_CONFIG[tx.status]?.bg} ${STATUS_CONFIG[tx.status]?.text}`}>
+                {lang === 'ar' ? 'بانتظار إجراءك' : 'Awaiting your action'}
+              </span>
+            </div>
+            
             <div className="flex flex-wrap gap-3">
-              {/* Execute Button - only if not rejected */}
-              {stasActions.canExecute && (
+              {/* Approve/Execute Button */}
+              {userActions.canApprove && (
                 <Button
                   onClick={() => handleAction('approve')}
                   disabled={actionLoading}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
-                  data-testid="stas-execute-btn"
+                  className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-xl px-6"
+                  data-testid="approve-btn"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <Check size={16} className="me-2" />}
-                  {lang === 'ar' ? 'تنفيذ' : 'Execute'}
-                </Button>
-              )}
-              
-              {/* Return Button - based on rejection source */}
-              {stasActions.returnTo && (
-                <Button
-                  onClick={() => handleAction(stasActions.returnTo === 'ceo' ? 'return_to_ceo' : 'return_to_sultan')}
-                  disabled={actionLoading}
-                  variant="outline"
-                  className="rounded-xl border-blue-400 text-blue-600 hover:bg-blue-50"
-                  data-testid="stas-return-btn"
-                >
-                  {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <RotateCcw size={16} className="me-2" />}
-                  {stasActions.returnTo === 'ceo' 
-                    ? (lang === 'ar' ? 'إعادة لـ CEO' : 'Return to CEO')
-                    : (lang === 'ar' ? 'إعادة لـ Sultan' : 'Return to Sultan')
+                  {userActions.isExecute 
+                    ? (lang === 'ar' ? 'تنفيذ' : 'Execute')
+                    : (lang === 'ar' ? 'موافقة' : 'Approve')
                   }
                 </Button>
               )}
               
-              {/* Cancel Button */}
-              {stasActions.canCancel && (
+              {/* Return Button - for STAS when rejected */}
+              {userActions.canReturn && userActions.returnTo && (
+                <Button
+                  onClick={() => handleAction(userActions.returnTo === 'ceo' ? 'return_to_ceo' : 'return_to_sultan')}
+                  disabled={actionLoading}
+                  variant="outline"
+                  className="rounded-xl border-blue-400 text-blue-600 hover:bg-blue-50"
+                  data-testid="return-btn"
+                >
+                  {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <RotateCcw size={16} className="me-2" />}
+                  {userActions.returnTo === 'ceo' 
+                    ? (lang === 'ar' ? 'إعادة لـ CEO' : 'Return to CEO')
+                    : (lang === 'ar' ? 'إعادة لمدير العمليات' : 'Return to Ops Manager')
+                  }
+                </Button>
+              )}
+              
+              {/* Reject Button */}
+              {userActions.canReject && (
                 <Button
                   onClick={() => handleAction('reject')}
                   disabled={actionLoading}
                   variant="destructive"
-                  className="rounded-xl"
-                  data-testid="stas-cancel-btn"
+                  className="rounded-xl px-6"
+                  data-testid="reject-btn"
                 >
                   {actionLoading ? <Loader2 size={16} className="animate-spin me-2" /> : <XIcon size={16} className="me-2" />}
-                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                  {lang === 'ar' ? 'رفض' : 'Reject'}
                 </Button>
               )}
             </div>
@@ -337,13 +434,14 @@ export default function TransactionDetailPage() {
         )}
       </div>
 
-      {/* Transaction Details */}
-      <div className="bg-card rounded-2xl border border-border p-6">
+      {/* Transaction Details - تصميم أفقي محسن */}
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
         <h2 className="text-lg font-semibold mb-4">
           {lang === 'ar' ? 'تفاصيل المعاملة' : 'Transaction Details'}
         </h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Horizontal scrollable cards for mobile */}
+        <div className="flex flex-wrap gap-3">
           {Object.entries(tx.data || {})
             .filter(([key, value]) => {
               // Skip Arabic name if showing English
@@ -352,43 +450,91 @@ export default function TransactionDetailPage() {
               if (key === 'employee_name' && lang === 'ar' && tx.data?.employee_name_ar) return false;
               // Skip internal/complex fields
               if (key === 'sick_tier_info') return false;
+              // Skip medical file - handled separately
+              if (key === 'medical_file_url') return false;
+              // Skip calculation_details - shown in separate section for STAS
+              if (key === 'calculation_details') return false;
+              // Skip redundant request type fields - show only one
+              if (key === 'request_type_ar' || key === 'request_type_en') return false;
               // Skip objects (complex nested data)
               if (typeof value === 'object' && value !== null) return false;
               return true;
             })
             .map(([key, value]) => (
-              <div key={key} className="bg-muted/30 rounded-xl p-4">
-                <p className="text-xs text-muted-foreground mb-1">{getDataKeyLabel(key)}</p>
-                <p className="font-medium">{getDataValueLabel(key, value)}</p>
+              <div key={key} className="flex-1 min-w-[140px] max-w-[200px] bg-muted/30 rounded-xl p-3 border border-border/50">
+                <p className="text-[10px] text-muted-foreground mb-0.5 uppercase tracking-wider">{getDataKeyLabel(key)}</p>
+                <p className="font-semibold text-sm">{getDataValueLabel(key, value)}</p>
               </div>
             ))
           }
         </div>
         
-        {/* PDF Hash Info */}
-        {tx.pdf_hash && (
+        {/* Medical File Attachment - ملف التقرير الطبي */}
+        {tx.data?.medical_file_url && (
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg">
+                  <FileText className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-red-800 dark:text-red-200">
+                    {lang === 'ar' ? 'التقرير الطبي المرفق' : 'Attached Medical Report'}
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {lang === 'ar' ? 'ملف PDF - انقر للعرض' : 'PDF File - Click to view'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(tx.data.medical_file_url, '_blank')}
+                className="border-red-300 text-red-600 hover:bg-red-100"
+                data-testid="view-medical-file"
+              >
+                <Eye size={14} className="me-2" />
+                {lang === 'ar' ? 'عرض الملف' : 'View File'}
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {/* Integrity ID only - without PDF hash */}
+        {tx.integrity_id && (
           <div className="mt-6 pt-4 border-t border-border">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
-                <span className="font-mono">{tx.integrity_id}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">{lang === 'ar' ? 'تجزئة PDF:' : 'PDF Hash:'} </span>
-                <span className="font-mono text-[10px]">{tx.pdf_hash?.slice(0, 32)}...</span>
-              </div>
+            <div className="text-xs">
+              <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
+              <span className="font-mono">{tx.integrity_id}</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Timeline */}
+      {/* Holiday Verification Badge for Sultan/Naif - رسالة بسيطة فقط */}
+      {tx.type === 'leave_request' && tx.data?.calculation_details && (user?.role === 'sultan' || user?.role === 'naif') && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--success)/0.1)] dark:bg-[hsl(var(--success)/0.15)] rounded-xl border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
+          <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
+            <span className="text-white text-xs">✓</span>
+          </div>
+          <span className="text-sm text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">
+            {lang === 'ar' ? 'تم التحقق من الإجازات الرسمية' : 'Public holidays verified'}
+          </span>
+          {tx.data.calculation_details.excluded_holidays?.length > 0 && (
+            <span className="text-xs text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">
+              ({tx.data.calculation_details.excluded_holidays.length} {lang === 'ar' ? 'مستثناة' : 'excluded'})
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Timeline - Horizontal for better mobile/tablet experience */}
       {tx.timeline?.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="text-lg font-semibold mb-6">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h2 className="text-lg font-semibold mb-4">
             {lang === 'ar' ? 'الجدول الزمني' : 'Timeline'}
           </h2>
-          <Timeline events={tx.timeline} />
+          <Timeline events={tx.timeline} horizontal={true} />
         </div>
       )}
 
@@ -435,7 +581,7 @@ export default function TransactionDetailPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {formatSaudiDateTime(a.timestamp)}
+                        {formatGregorianHijriDateTime(a.timestamp).combined}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">{a.note || '-'}</td>
                     </tr>
