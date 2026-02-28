@@ -443,15 +443,27 @@ export default function EmployeesPage() {
                           }`}
                           title={
                             activeSummon.acknowledged 
-                              ? `✓ ${lang === 'ar' ? 'اطلع' : 'Seen'}${activeSummon.reply ? ` - ${lang === 'ar' ? 'الرد' : 'Reply'}: ${activeSummon.reply}` : ''}`
+                              ? `✓ ${lang === 'ar' ? 'اطلع' : 'Seen'}${activeSummon.reply ? `\n${lang === 'ar' ? 'الرد' : 'Reply'}: ${activeSummon.reply}` : ''}\n\n${lang === 'ar' ? 'انقر للإخفاء' : 'Click to dismiss'}`
                               : `${activeSummon.sender_name || (lang === 'ar' ? 'الإدارة' : 'Management')}: ${activeSummon.comment || (lang === 'ar' ? 'استدعاء نشط' : 'Active summon')}`
                           }
+                          onClick={async () => {
+                            if (activeSummon.acknowledged) {
+                              // إخفاء الاستدعاء بعد قراءة الرد
+                              try {
+                                await api.post(`/api/notifications/summons/${activeSummon.id}/mark-reply-read`);
+                                setActiveSummons(prev => prev.filter(s => s.id !== activeSummon.id));
+                                toast.success(lang === 'ar' ? 'تم الإخفاء' : 'Dismissed');
+                              } catch (err) {
+                                console.error(err);
+                              }
+                            }
+                          }}
                         >
                           {activeSummon.acknowledged ? (
                             <>
                               <Check size={10} />
                               {activeSummon.reply 
-                                ? (lang === 'ar' ? 'رد' : 'Replied')
+                                ? (lang === 'ar' ? `رد: ${activeSummon.reply.substring(0, 15)}${activeSummon.reply.length > 15 ? '...' : ''}` : `Reply: ${activeSummon.reply.substring(0, 15)}...`)
                                 : (lang === 'ar' ? 'اطلع' : 'Seen')
                               }
                             </>
