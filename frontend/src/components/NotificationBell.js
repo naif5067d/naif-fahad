@@ -228,10 +228,9 @@ export default function NotificationBell() {
       <button
         data-testid="notification-bell-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative p-2.5 rounded-xl transition-all ${
+        className={`relative w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
           isOpen ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'
         }`}
-        style={{ minWidth: '44px', minHeight: '44px' }}
         title={lang === 'ar' ? 'الإشعارات' : 'Notifications'}
       >
         <Bell size={20} className={hasCritical ? 'animate-bounce' : ''} />
