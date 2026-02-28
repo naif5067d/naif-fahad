@@ -2663,7 +2663,17 @@ export default function STASMirrorPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => pdfUrl && window.open(pdfUrl, '_blank')}
+                  onClick={() => {
+                    if (pdfUrl) {
+                      const link = document.createElement('a');
+                      link.href = pdfUrl;
+                      link.target = '_blank';
+                      link.rel = 'noopener noreferrer';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }
+                  }}
                   className="gap-2"
                 >
                   <ExternalLink size={16} />
