@@ -375,22 +375,38 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6" data-testid="transactions-page">
       {/* الترويسة */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{lang === 'ar' ? 'المعاملات' : 'Transactions'}</h1>
-          <p className="text-muted-foreground mt-1">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{lang === 'ar' ? 'المعاملات' : 'Transactions'}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             {fetchLoading 
               ? (lang === 'ar' ? 'جارٍ التحميل...' : 'Loading...') 
               : (lang === 'ar' ? `${filtered.length} معاملة` : `${filtered.length} transactions`)}
           </p>
         </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`p-3 rounded-xl border transition-all ${showFilters ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'border-border hover:bg-muted hover:border-primary/30'}`}
-          data-testid="toggle-filters"
-        >
-          <Filter size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* زر الحذف النووي - للإدارة فقط */}
+          {['stas', 'sultan'].includes(user?.role) && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={openNuclearDialog}
+              className="h-11 px-3 sm:px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+              title={lang === 'ar' ? 'حذف نووي' : 'Nuclear Delete'}
+              data-testid="nuclear-delete-btn"
+            >
+              <AlertOctagon size={18} className="sm:me-2" />
+              <span className="hidden sm:inline">{lang === 'ar' ? 'حذف نووي' : 'Nuclear Delete'}</span>
+            </Button>
+          )}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-3 rounded-xl border transition-all min-w-[44px] min-h-[44px] ${showFilters ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'border-border hover:bg-muted hover:border-primary/30'}`}
+            data-testid="toggle-filters"
+          >
+            <Filter size={18} />
+          </button>
+        </div>
       </div>
 
       {/* البحث والفلاتر */}
