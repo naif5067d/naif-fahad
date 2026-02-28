@@ -228,7 +228,7 @@ export default function NotificationBell() {
       <button
         data-testid="notification-bell-btn"
         onClick={() => setIsOpen(!isOpen)}
-        className={`relative w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
+        className={`relative w-[44px] h-[44px] flex items-center justify-center rounded-xl transition-all ${
           isOpen ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'
         }`}
         title={lang === 'ar' ? 'الإشعارات' : 'Notifications'}
