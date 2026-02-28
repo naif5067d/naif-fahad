@@ -1057,10 +1057,16 @@ export default function AttendanceManagementPage() {
                   </div>
                 )}
                 {outsideHoursData.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
-                    <Printer size={16} className="ml-1" />
-                    طباعة
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" onClick={handlePrintOutsideHours} title="معاينة">
+                      <Eye size={16} className="ml-1" />
+                      معاينة
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleDownloadOutsideHours} title="تحميل">
+                      <Download size={16} className="ml-1" />
+                      تحميل
+                    </Button>
+                  </>
                 )}
               </div>
             </CardHeader>
