@@ -381,14 +381,14 @@ export default function AppLayout({ children }) {
       <div className="md:ms-64 pb-20 md:pb-0">
         {/* Top header - with safe area for iPhone notch/Dynamic Island */}
         <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header" style={{ overflow: 'visible' }}>
-          <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16" style={{ overflow: 'visible' }}>
+          <div className="flex items-center justify-between px-3 md:px-6 h-12 md:h-16" style={{ overflow: 'visible' }}>
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-2 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80" 
+              className="md:hidden p-2 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80 flex-shrink-0" 
               onClick={() => setSidebarOpen(true)} 
               data-testid="open-sidebar"
             >
-              <Menu size={22} />
+              <Menu size={20} />
             </button>
             
             {/* Page title (desktop) */}
@@ -398,8 +398,8 @@ export default function AppLayout({ children }) {
               </span>
             </div>
 
-            {/* Right side controls - FIXED: overflow and spacing */}
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0" style={{ overflow: 'visible' }}>
+            {/* Right side controls - MOBILE OPTIMIZED */}
+            <div className="flex items-center gap-1 md:gap-3 flex-shrink-0" style={{ overflow: 'visible' }}>
               {/* Fullscreen Toggle - Desktop only */}
               <button 
                 data-testid="toggle-fullscreen" 
@@ -419,16 +419,16 @@ export default function AppLayout({ children }) {
                   <button
                     data-testid="user-switcher-btn"
                     onClick={() => setSwitcherOpen(!switcherOpen)}
-                    className="flex items-center gap-1.5 px-1.5 sm:px-2 py-1.5 text-sm rounded-xl hover:bg-muted border border-border transition-all"
+                    className="flex items-center gap-1 px-1.5 py-1 text-sm rounded-xl hover:bg-muted border border-border transition-all"
                   >
                     <div 
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold text-white flex-shrink-0"
                       style={{ background: colors.bg }}
                     >
                       {lang === 'ar' ? 'س' : 'S'}
                     </div>
-                    <span className="hidden sm:inline text-sm font-medium truncate max-w-[80px]">{displayName}</span>
-                    <ChevronDown size={12} className={`text-muted-foreground transition-transform flex-shrink-0 ${switcherOpen ? 'rotate-180' : ''}`} />
+                    <span className="hidden md:inline text-sm font-medium truncate max-w-[80px]">{displayName}</span>
+                    <ChevronDown size={12} className={`hidden md:block text-muted-foreground transition-transform flex-shrink-0 ${switcherOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {switcherOpen && (
@@ -474,8 +474,8 @@ export default function AppLayout({ children }) {
                   )}
                 </div>
               ) : (
-                /* Regular user profile indicator */
-                <div className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-xl border border-border">
+                /* Regular user profile indicator - Hide on mobile for space */
+                <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 text-sm rounded-xl border border-border">
                   <div 
                     className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                     style={{ background: colors.bg }}
@@ -490,7 +490,7 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-lang" 
                 onClick={toggleLang} 
-                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors"
+                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
                 title={t('lang.toggle')}
               >
                 <Globe size={18} />
@@ -500,7 +500,7 @@ export default function AppLayout({ children }) {
               <button 
                 data-testid="toggle-theme" 
                 onClick={toggleTheme} 
-                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors"
+                className="p-2 rounded-xl hover:bg-muted active:bg-muted/80 text-muted-foreground transition-colors flex-shrink-0"
                 title={t('theme.toggle')}
               >
                 {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
@@ -511,7 +511,7 @@ export default function AppLayout({ children }) {
                 <button 
                   data-testid="logout-btn" 
                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
-                  className="p-2 rounded-xl hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 text-muted-foreground transition-colors"
+                  className="p-2 rounded-xl hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15 text-muted-foreground transition-colors flex-shrink-0"
                   title={lang === 'ar' ? 'تسجيل الخروج' : 'Logout'}
                 >
                   <LogOut size={18} />
