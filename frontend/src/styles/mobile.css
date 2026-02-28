@@ -1,0 +1,734 @@
+/**
+ * MOBILE-FIRST RESPONSIVE SYSTEM
+ * ================================
+ * نظام شامل للتجاوب مع جميع أجهزة الجوال والتابلت
+ * 
+ * يغطي:
+ * - iPhone (جميع الإصدارات مع notch/Dynamic Island)
+ * - iPad (جميع الأحجام)
+ * - Android (جميع الأحجام والشركات)
+ * - التابلت (جميع الأحجام)
+ */
+
+/* ==================== CSS VARIABLES ==================== */
+:root {
+  /* Safe Area Insets */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  
+  /* Mobile Breakpoints */
+  --mobile-sm: 375px;  /* iPhone SE, small Android */
+  --mobile-md: 390px;  /* iPhone 12/13/14 */
+  --mobile-lg: 430px;  /* iPhone 14 Pro Max, large Android */
+  --tablet-sm: 768px;  /* iPad Mini */
+  --tablet-lg: 1024px; /* iPad Pro */
+  
+  /* Touch Target Sizes */
+  --touch-min: 44px;
+  --touch-sm: 36px;
+  --touch-lg: 48px;
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+}
+
+/* ==================== SAFE AREA SUPPORT ==================== */
+/* iOS Safari - constant() for older iOS, env() for newer */
+@supports (padding-top: constant(safe-area-inset-top)) {
+  :root {
+    --safe-top: constant(safe-area-inset-top);
+    --safe-bottom: constant(safe-area-inset-bottom);
+  }
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  :root {
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ==================== MOBILE BASE STYLES ==================== */
+@media (max-width: 768px) {
+  /* === BODY === */
+  body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* === HEADER - Safe Area === */
+  .safe-header,
+  header.safe-header {
+    padding-top: max(var(--safe-top), 12px) !important;
+    min-height: calc(48px + var(--safe-top)) !important;
+  }
+  
+  /* === BOTTOM NAV - Safe Area === */
+  .mobile-nav,
+  nav.mobile-nav,
+  .bottom-nav {
+    padding-bottom: max(var(--safe-bottom), 8px) !important;
+  }
+  
+  /* === ALL BUTTONS - Touch Friendly === */
+  button,
+  [role="button"],
+  .btn,
+  a.btn {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    padding: var(--space-sm) var(--space-md);
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Small buttons */
+  button.h-8,
+  button.h-9,
+  button[class*="size-sm"] {
+    min-height: var(--touch-sm);
+    min-width: var(--touch-sm);
+    padding: var(--space-xs) var(--space-sm);
+  }
+  
+  /* Icon buttons */
+  button.p-2,
+  button.p-1,
+  button[class*="icon"] {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    padding: var(--space-sm) !important;
+  }
+  
+  /* === ALL INPUTS - Prevent iOS Zoom === */
+  input,
+  select,
+  textarea,
+  [contenteditable="true"] {
+    font-size: 16px !important;
+    min-height: var(--touch-min);
+    padding: var(--space-sm) var(--space-md);
+  }
+  
+  /* === ALL LINKS - Touch Targets === */
+  a {
+    padding: var(--space-xs);
+  }
+  
+  /* === ICONS - Proper Size === */
+  svg,
+  .icon,
+  [class*="lucide"] {
+    min-width: 16px;
+    min-height: 16px;
+  }
+  
+  /* === TEXT - Readable Sizes === */
+  html {
+    font-size: 14px;
+  }
+  
+  h1, .text-2xl, .text-3xl, .text-4xl {
+    font-size: 1.25rem !important;
+    line-height: 1.3;
+  }
+  
+  h2, .text-xl {
+    font-size: 1.125rem !important;
+  }
+  
+  h3, .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.8125rem !important;
+  }
+  
+  .text-xs {
+    font-size: 0.6875rem !important;
+  }
+}
+
+/* ==================== MOBILE TABLES → CARDS ==================== */
+@media (max-width: 768px) {
+  /* Hide table headers on mobile */
+  .mobile-cards thead,
+  .responsive-table thead {
+    display: none !important;
+  }
+  
+  /* Transform table to card layout */
+  .mobile-cards tbody,
+  .responsive-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  
+  .mobile-cards tr,
+  .responsive-table tr {
+    display: flex;
+    flex-direction: column;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+    transition: background-color 0.15s;
+  }
+  
+  .mobile-cards tr:active,
+  .responsive-table tr:active {
+    background: hsl(var(--muted));
+  }
+  
+  .mobile-cards td,
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) 0;
+    border: none !important;
+  }
+  
+  /* Add label from data attribute */
+  .mobile-cards td::before,
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+    flex-shrink: 0;
+    margin-left: var(--space-md);
+  }
+  
+  /* Hide action column icon buttons, make row clickable */
+  .mobile-cards td:last-child button[class*="ghost"],
+  .responsive-table td:last-child button[class*="ghost"] {
+    display: none;
+  }
+  
+  /* Regular tables - horizontal scroll */
+  table:not(.mobile-cards):not(.responsive-table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table:not(.mobile-cards):not(.responsive-table) thead,
+  table:not(.mobile-cards):not(.responsive-table) tbody,
+  table:not(.mobile-cards):not(.responsive-table) tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  
+  /* Table cells - compact */
+  td, th {
+    padding: var(--space-sm) !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap;
+  }
+  
+  th {
+    font-size: 0.6875rem !important;
+    font-weight: 600;
+  }
+}
+
+/* ==================== MOBILE TABS ==================== */
+@media (max-width: 768px) {
+  /* Tabs container - horizontal scroll */
+  [role="tablist"],
+  .TabsList {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: var(--space-xs);
+    padding: var(--space-xs);
+    margin: 0 calc(-1 * var(--space-lg));
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+  
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Tab buttons - compact */
+  [role="tab"],
+  [role="tablist"] > button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: var(--space-sm) var(--space-md) !important;
+    font-size: 0.75rem !important;
+    min-height: var(--touch-sm);
+    border-radius: 0.5rem;
+  }
+  
+  /* Tab icons */
+  [role="tab"] svg,
+  [role="tablist"] button svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+/* ==================== MOBILE GRIDS ==================== */
+@media (max-width: 768px) {
+  /* Force 2 columns for stat cards */
+  .grid.grid-cols-3,
+  .grid.grid-cols-4,
+  .grid.grid-cols-5,
+  .grid.grid-cols-6 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-sm) !important;
+  }
+  
+  /* Single column for content grids */
+  .grid.grid-cols-2:not(.mobile-2-cols) {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Keep 2 columns class */
+  .mobile-2-cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 375px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-sm) !important;
+  }
+  
+  .mobile-2-cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ==================== MOBILE CARDS ==================== */
+@media (max-width: 768px) {
+  /* Card padding */
+  [class*="CardContent"],
+  [class*="card-content"],
+  .card-content {
+    padding: var(--space-md) !important;
+  }
+  
+  [class*="CardHeader"],
+  [class*="card-header"],
+  .card-header {
+    padding: var(--space-md) !important;
+  }
+  
+  /* Card corners */
+  [class*="Card"],
+  .card {
+    border-radius: 0.75rem;
+  }
+}
+
+/* ==================== MOBILE DIALOGS ==================== */
+@media (max-width: 768px) {
+  /* Dialog - full width */
+  [role="dialog"] > div,
+  [data-state="open"][role="dialog"],
+  .DialogContent,
+  [class*="DialogContent"] {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    margin: 0.5rem !important;
+    border-radius: 1rem !important;
+    overflow-y: auto;
+  }
+  
+  /* Dialog header - sticky */
+  [role="dialog"] header,
+  .DialogHeader {
+    position: sticky;
+    top: 0;
+    background: inherit;
+    z-index: 10;
+    padding: var(--space-md) !important;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  /* Dialog content */
+  [role="dialog"] .p-4,
+  [role="dialog"] .p-6 {
+    padding: var(--space-md) !important;
+  }
+}
+
+/* ==================== MOBILE SPACING ==================== */
+@media (max-width: 768px) {
+  /* Page padding */
+  .p-6, .p-8, .px-6, .px-8 {
+    padding-left: var(--space-md) !important;
+    padding-right: var(--space-md) !important;
+  }
+  
+  .py-6, .py-8 {
+    padding-top: var(--space-md) !important;
+    padding-bottom: var(--space-md) !important;
+  }
+  
+  /* Gaps */
+  .gap-6, .gap-8 {
+    gap: var(--space-md) !important;
+  }
+  
+  .gap-4 {
+    gap: var(--space-sm) !important;
+  }
+  
+  /* Space between */
+  .space-y-6 > * + *,
+  .space-y-8 > * + * {
+    margin-top: var(--space-md) !important;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: var(--space-sm) !important;
+  }
+  
+  /* Main content - account for bottom nav */
+  main,
+  .main-content {
+    padding-bottom: calc(70px + var(--safe-bottom)) !important;
+  }
+}
+
+/* ==================== MOBILE FORMS ==================== */
+@media (max-width: 768px) {
+  /* Form layout - stack */
+  form .flex.gap-4,
+  form .flex.gap-3,
+  form .grid.grid-cols-2,
+  .form-row {
+    flex-direction: column !important;
+    display: flex !important;
+    gap: var(--space-sm) !important;
+  }
+  
+  form .grid.grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Form inputs - full width */
+  form input,
+  form select,
+  form textarea,
+  .form-input {
+    width: 100% !important;
+  }
+  
+  /* Submit buttons - full width */
+  form button[type="submit"],
+  .form-submit {
+    width: 100% !important;
+    margin-top: var(--space-md);
+  }
+  
+  /* Labels */
+  label {
+    font-size: 0.8125rem !important;
+    margin-bottom: var(--space-xs);
+    display: block;
+  }
+}
+
+/* ==================== MOBILE SELECT ==================== */
+@media (max-width: 768px) {
+  /* Select trigger - full width */
+  [class*="SelectTrigger"],
+  .select-trigger {
+    width: 100% !important;
+    min-height: var(--touch-min);
+  }
+  
+  /* Select content - full width */
+  [class*="SelectContent"] {
+    max-height: 50vh;
+  }
+  
+  /* Select items - touch friendly */
+  [class*="SelectItem"] {
+    min-height: var(--touch-min);
+    padding: var(--space-sm) var(--space-md);
+  }
+}
+
+/* ==================== MOBILE BADGES ==================== */
+@media (max-width: 768px) {
+  [class*="Badge"],
+  .badge {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.625rem !important;
+    border-radius: 0.25rem;
+  }
+}
+
+/* ==================== MOBILE AVATAR ==================== */
+@media (max-width: 768px) {
+  .w-16, .h-16,
+  .w-20, .h-20 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  .w-12, .h-12,
+  .w-14, .h-14 {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+}
+
+/* ==================== MOBILE CHARTS ==================== */
+@media (max-width: 768px) {
+  .recharts-wrapper,
+  [class*="chart"] {
+    max-height: 180px !important;
+  }
+}
+
+/* ==================== MOBILE SCROLL AREAS ==================== */
+@media (max-width: 768px) {
+  .overflow-y-auto,
+  .overflow-auto,
+  [class*="ScrollArea"] {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbars on mobile */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 2px;
+  }
+}
+
+/* ==================== MOBILE TOOLTIPS ==================== */
+@media (max-width: 768px) {
+  /* Disable tooltips on touch devices */
+  [role="tooltip"] {
+    display: none !important;
+  }
+}
+
+/* ==================== MOBILE SPECIFIC FIXES ==================== */
+/* Header elements */
+@media (max-width: 768px) {
+  /* Header container */
+  header .flex.items-center.justify-between {
+    gap: var(--space-xs);
+  }
+  
+  /* Header buttons group */
+  header .flex.items-center.gap-2,
+  header .flex.items-center.gap-3 {
+    gap: 2px !important;
+  }
+  
+  /* Notification bell */
+  [data-testid="notification-bell-btn"],
+  .notification-bell {
+    width: var(--touch-sm) !important;
+    height: var(--touch-sm) !important;
+    padding: var(--space-xs) !important;
+  }
+  
+  /* User switcher */
+  [data-testid="user-switcher-btn"] {
+    padding: var(--space-xs) !important;
+    gap: 2px !important;
+  }
+  
+  /* Hide user name */
+  [data-testid="user-switcher-btn"] > span {
+    display: none !important;
+  }
+  
+  /* User avatar */
+  [data-testid="user-switcher-btn"] > div:first-child {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.625rem !important;
+  }
+  
+  /* Menu button */
+  [data-testid="open-sidebar"] {
+    width: var(--touch-sm) !important;
+    height: var(--touch-sm) !important;
+    padding: var(--space-xs) !important;
+  }
+}
+
+/* ==================== DEVICE-SPECIFIC SAFE AREAS ==================== */
+/* iPhone X, XS, 11 Pro (375x812) */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 812px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 44px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone XR, 11 (414x896 @2x) */
+@media only screen 
+  and (device-width: 414px) 
+  and (device-height: 896px) 
+  and (-webkit-device-pixel-ratio: 2) {
+  .safe-header { padding-top: 48px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone XS Max, 11 Pro Max (414x896 @3x) */
+@media only screen 
+  and (device-width: 414px) 
+  and (device-height: 896px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 44px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone 12, 13, 14 (390x844) */
+@media only screen 
+  and (device-width: 390px) 
+  and (device-height: 844px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 47px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone 12/13/14 Pro (393x852) - Dynamic Island */
+@media only screen 
+  and (device-width: 393px) 
+  and (device-height: 852px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 59px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone 12/13/14 Plus (428x926) */
+@media only screen 
+  and (device-width: 428px) 
+  and (device-height: 926px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 47px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone 14 Pro Max, 15 Pro Max (430x932) - Dynamic Island */
+@media only screen 
+  and (device-width: 430px) 
+  and (device-height: 932px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 59px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* iPhone 15, 15 Plus (same as 14) */
+
+/* iPhone SE (375x667) - No notch */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 667px) 
+  and (-webkit-device-pixel-ratio: 2) {
+  .safe-header { padding-top: 20px !important; }
+  .mobile-nav { padding-bottom: 0 !important; }
+}
+
+/* ==================== TABLET STYLES ==================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Sidebar width */
+  aside.md\\:w-64 {
+    width: 220px;
+  }
+  
+  /* Content margin */
+  .md\\:ms-64 {
+    margin-inline-start: 220px;
+  }
+  
+  /* Grids - 3 columns */
+  .grid.grid-cols-4,
+  .grid.grid-cols-5,
+  .grid.grid-cols-6 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ==================== LANDSCAPE MOBILE ==================== */
+@media (max-width: 896px) and (orientation: landscape) {
+  .safe-header {
+    padding-top: 0 !important;
+    min-height: 44px !important;
+  }
+  
+  .mobile-nav {
+    height: 52px !important;
+    padding-bottom: 0 !important;
+  }
+  
+  /* Reduce modal heights */
+  [role="dialog"] > div {
+    max-height: 70vh !important;
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+@media (max-width: 768px) {
+  /* Focus states - larger */
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ==================== PRINT ==================== */
+@media print {
+  .safe-header,
+  header,
+  .mobile-nav,
+  nav,
+  aside {
+    display: none !important;
+  }
+  
+  main {
+    margin: 0 !important;
+    padding: 1rem !important;
+  }
+}
