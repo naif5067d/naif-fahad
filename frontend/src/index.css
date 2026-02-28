@@ -1095,6 +1095,26 @@ header .flex[style*="overflow: visible"] {
 /* تغطي جميع الصفحات تلقائياً */
 
 @media (max-width: 768px) {
+  /* ===== CLICKABLE ROWS - Make entire row clickable ===== */
+  tr[data-clickable="true"],
+  .clickable-row {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  tr[data-clickable="true"]:active,
+  .clickable-row:active {
+    background-color: hsl(var(--muted)) !important;
+  }
+  
+  /* Hide action buttons on mobile - make row clickable instead */
+  .action-cell-desktop,
+  td:last-child:has(button[title]),
+  th:last-child:has-text("إجراء"),
+  th:last-child:has-text("Action") {
+    /* Keep visible but smaller */
+  }
+  
   /* ===== ALL TABLES - Force horizontal scroll ===== */
   table {
     display: block;
@@ -1381,6 +1401,70 @@ header .flex[style*="overflow: visible"] {
     max-width: 200px !important;
     font-size: 0.75rem !important;
   }
+  
+  /* ===== MOBILE-FRIENDLY CARDS (Alternative to tables) ===== */
+  .mobile-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    transition: background-color 0.15s;
+  }
+  
+  .mobile-card:active {
+    background: hsl(var(--muted));
+  }
+  
+  .mobile-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-card-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  
+  .mobile-card-subtitle {
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .mobile-card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0;
+    font-size: 0.75rem;
+  }
+  
+  .mobile-card-row-label {
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .mobile-card-row-value {
+    font-weight: 500;
+  }
+  
+  .mobile-card-status {
+    height: 3px;
+    border-radius: 2px;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Status colors for mobile cards */
+  .mobile-card-status-present { background: hsl(var(--success)); }
+  .mobile-card-status-absent { background: hsl(var(--destructive)); }
+  .mobile-card-status-late { background: hsl(var(--warning)); }
+  .mobile-card-status-leave { background: hsl(var(--info)); }
+  .mobile-card-status-pending { background: hsl(var(--warning)); }
+  .mobile-card-status-approved { background: hsl(var(--success)); }
+  .mobile-card-status-rejected { background: hsl(var(--destructive)); }
 }
 
 /* ===== VERY SMALL SCREENS (iPhone SE, Small Android) ===== */
