@@ -28,12 +28,11 @@ async def nuclear_delete_all_transactions(current_user: dict = Depends(get_curre
     هذا الإجراء لا يمكن التراجع عنه!
     This action is IRREVERSIBLE!
     """
-    # التحقق من أن المستخدم sysadmin أو sultan
-    allowed_roles = ["stas", "sultan"]
-    if current_user.get("role") not in allowed_roles:
+    # التحقق من أن المستخدم stas فقط
+    if current_user.get("role") != "stas":
         raise HTTPException(
             status_code=403, 
-            detail="فقط مدير النظام أو السلطان يمكنه تنفيذ هذا الإجراء | Only SysAdmin or Sultan can perform this action"
+            detail="فقط STAS يمكنه تنفيذ هذا الإجراء | Only STAS can perform this action"
         )
     
     # المجموعات التي سيتم حذفها
