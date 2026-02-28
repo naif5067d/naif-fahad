@@ -531,57 +531,60 @@ export default function DeviceMonitoringPage() {
         </div>
       </div>
       
-      {/* ========== MAIN CONTENT ========== */}
-      <div className="max-w-7xl mx-auto px-6 pb-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-800 border border-slate-700 p-1 rounded-xl">
-            <TabsTrigger 
-              value="alerts" 
-              className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-lg px-4"
-            >
-              <AlertTriangle size={16} className="ml-2" />
-              تنبيهات الأمان
-              {alerts.length > 0 && (
-                <Badge variant="destructive" className="mr-2 text-[10px]">{alerts.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="sessions" 
-              className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white rounded-lg px-4"
-            >
-              <Activity size={16} className="ml-2" />
-              الجلسات النشطة
-            </TabsTrigger>
-            <TabsTrigger 
-              value="control" 
-              className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-4"
-            >
-              <UserCog size={16} className="ml-2" />
-              التحكم بالحسابات
-            </TabsTrigger>
-            <TabsTrigger 
-              value="suspended" 
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black rounded-lg px-4"
-            >
-              <Lock size={16} className="ml-2" />
-              المعطلين
-            </TabsTrigger>
-            <TabsTrigger 
-              value="log" 
-              className="data-[state=active]:bg-purple-500 data-[state=active]:text-white rounded-lg px-4"
-            >
-              <History size={16} className="ml-2" />
-              سجل الأمان
-            </TabsTrigger>
-          </TabsList>
+      {/* ========== MAIN CONTENT - MOBILE OPTIMIZED ========== */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          {/* Tabs - Horizontal Scroll on Mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="bg-slate-800 border border-slate-700 p-1 rounded-xl inline-flex min-w-max md:min-w-0 md:flex md:flex-wrap">
+              <TabsTrigger 
+                value="alerts" 
+                className="data-[state=active]:bg-red-500 data-[state=active]:text-white rounded-lg px-2.5 md:px-4 text-xs md:text-sm whitespace-nowrap"
+              >
+                <AlertTriangle size={14} className="ml-1 md:ml-2 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">تنبيهات </span>الأمان
+                {alerts.length > 0 && (
+                  <Badge variant="destructive" className="mr-1 md:mr-2 text-[9px] md:text-[10px] px-1.5">{alerts.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="sessions" 
+                className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white rounded-lg px-2.5 md:px-4 text-xs md:text-sm whitespace-nowrap"
+              >
+                <Activity size={14} className="ml-1 md:ml-2 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">الجلسات </span>النشطة
+              </TabsTrigger>
+              <TabsTrigger 
+                value="control" 
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg px-2.5 md:px-4 text-xs md:text-sm whitespace-nowrap"
+              >
+                <UserCog size={14} className="ml-1 md:ml-2 md:w-4 md:h-4" />
+                التحكم
+              </TabsTrigger>
+              <TabsTrigger 
+                value="suspended" 
+                className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black rounded-lg px-2.5 md:px-4 text-xs md:text-sm whitespace-nowrap"
+              >
+                <Lock size={14} className="ml-1 md:ml-2 md:w-4 md:h-4" />
+                المعطلين
+              </TabsTrigger>
+              <TabsTrigger 
+                value="log" 
+                className="data-[state=active]:bg-purple-500 data-[state=active]:text-white rounded-lg px-2.5 md:px-4 text-xs md:text-sm whitespace-nowrap"
+              >
+                <History size={14} className="ml-1 md:ml-2 md:w-4 md:h-4" />
+                السجل
+              </TabsTrigger>
+            </TabsList>
+          </div>
           
           {/* ========== ALERTS TAB ========== */}
           <TabsContent value="alerts" className="mt-0">
             <Card className="border-0 bg-slate-800/50 shadow-2xl">
-              <CardHeader className="border-b border-slate-700/50">
+              <CardHeader className="border-b border-slate-700/50 px-4 md:px-6 py-3 md:py-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <AlertTriangle className="text-red-500" size={20} />
+                  <CardTitle className="text-white flex items-center gap-2 text-sm md:text-base">
+                    <AlertTriangle className="text-red-500" size={18} />
                     تنبيهات الأمان النشطة
                   </CardTitle>
                   <Button 
@@ -589,7 +592,7 @@ export default function DeviceMonitoringPage() {
                     size="sm" 
                     onClick={fetchAlerts}
                     disabled={loadingAlerts}
-                    className="text-slate-400 hover:text-white"
+                    className="text-slate-400 hover:text-white h-8 w-8 p-0"
                   >
                     <RefreshCw size={14} className={loadingAlerts ? 'animate-spin' : ''} />
                   </Button>
@@ -597,28 +600,29 @@ export default function DeviceMonitoringPage() {
               </CardHeader>
               <CardContent className="p-0">
                 {loadingAlerts ? (
-                  <div className="py-20 text-center">
-                    <RefreshCw size={32} className="animate-spin text-slate-500 mx-auto" />
+                  <div className="py-16 md:py-20 text-center">
+                    <RefreshCw size={28} className="animate-spin text-slate-500 mx-auto" />
                   </div>
                 ) : alerts.length === 0 ? (
-                  <div className="py-20 text-center">
-                    <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                      <ShieldCheck size={40} className="text-emerald-500" />
+                  <div className="py-12 md:py-20 text-center px-4">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3 md:mb-4">
+                      <ShieldCheck size={32} className="md:hidden text-emerald-500" />
+                      <ShieldCheck size={40} className="hidden md:block text-emerald-500" />
                     </div>
-                    <p className="text-slate-400 text-lg">لا توجد تنبيهات أمنية</p>
-                    <p className="text-slate-500 text-sm mt-1">النظام آمن</p>
+                    <p className="text-slate-400 text-base md:text-lg">لا توجد تنبيهات أمنية</p>
+                    <p className="text-slate-500 text-xs md:text-sm mt-1">النظام آمن</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-700/50">
                     {alerts.map((alert, idx) => (
                       <div 
                         key={alert.id || idx}
-                        className={`p-5 hover:bg-slate-700/30 transition-colors ${
+                        className={`p-4 md:p-5 hover:bg-slate-700/30 transition-colors ${
                           alert.severity === 'critical' ? 'bg-red-500/10' : ''
                         }`}
                       >
-                        <div className="flex items-start gap-4">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        <div className="flex items-start gap-3 md:gap-4">
+                          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 ${
                             alert.severity === 'critical' ? 'bg-red-500/20' :
                             alert.severity === 'high' ? 'bg-orange-500/20' :
                             'bg-yellow-500/20'
@@ -627,12 +631,12 @@ export default function DeviceMonitoringPage() {
                               <Users className={
                                 alert.severity === 'critical' ? 'text-red-500' :
                                 alert.severity === 'high' ? 'text-orange-500' : 'text-yellow-500'
-                              } size={24} />
+                              } size={20} />
                             ) : (
                               <Activity className={
                                 alert.severity === 'critical' ? 'text-red-500' :
                                 alert.severity === 'high' ? 'text-orange-500' : 'text-yellow-500'
-                              } size={24} />
+                              } size={20} />
                             )}
                           </div>
                           
