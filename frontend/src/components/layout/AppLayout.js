@@ -380,13 +380,20 @@ export default function AppLayout({ children }) {
       {/* Main content */}
       <div className="md:ms-64 pb-20 md:pb-0">
         {/* Top header - with safe area for iPhone notch/Dynamic Island */}
-        <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header" style={{ overflow: 'visible' }}>
+        <header 
+          className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border safe-header" 
+          style={{ 
+            overflow: 'visible',
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 0px)'
+          }}
+        >
           <div className="flex items-center justify-between px-3 md:px-6 h-12 md:h-16" style={{ overflow: 'visible' }}>
             {/* Mobile menu button */}
             <button 
-              className="md:hidden p-2 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80 flex-shrink-0" 
+              className="md:hidden p-2 -ms-1 rounded-xl hover:bg-muted active:bg-muted/80 flex-shrink-0 touch-target" 
               onClick={() => setSidebarOpen(true)} 
               data-testid="open-sidebar"
+              aria-label="فتح القائمة"
             >
               <Menu size={20} />
             </button>
