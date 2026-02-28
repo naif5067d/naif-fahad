@@ -3,6 +3,22 @@
 ## Original Problem Statement
 نظام موارد بشرية شامل لشركة دار الكود للاستشارات الهندسية
 
+## COMPLETED: Nuclear Delete Feature (28/02/2026)
+
+### ما تم إنجازه:
+- **ميزة الحذف النووي**: زر لحذف جميع البيانات المعاملاتية مع الحفاظ على العقود والمستخدمين
+- **Backend API**: `/api/system/nuclear-delete` و `/api/system/collections-stats`
+- **نافذة تأكيد**: تعرض البيانات التي ستُحذف والبيانات المحفوظة مع عدد السجلات
+- **أمان**: متاح فقط لـ stas و sultan
+- **تأكيد**: يتطلب كتابة "حذف نهائي" للتنفيذ
+- **استجابة للجوال**: تعمل بشكل صحيح على جميع الشاشات
+
+### الملفات:
+1. /app/backend/routes/system.py (API الحذف النووي)
+2. /app/frontend/src/pages/TransactionsPage.js (الزر والنافذة)
+
+---
+
 ## COMPLETED: Mobile Responsiveness Overhaul (28/02/2026)
 
 ### ما تم إنجازه:
@@ -66,8 +82,15 @@
 - Fix MaintenanceTrackingPage stability
 - Refactor monolithic pages
 
+### P3 (Future)
+- In-Kind Custody Workflow
+- System Architecture View in STAS Mirror
+- Canva-like Smart Editor for Policies
+
 ---
 
 ## Credentials
 - SysAdmin: stas506 / 654321
 - Admin: sultan / 123456
+- CEO: mohammed / 12346
+- Supervisor: nayef / 123456
