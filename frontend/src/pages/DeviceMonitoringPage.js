@@ -444,36 +444,39 @@ export default function DeviceMonitoringPage() {
   
   return (
     <div className="min-h-screen bg-slate-900" data-testid="device-monitoring-page">
-      {/* ========== HEADER ========== */}
+      {/* ========== HEADER - MOBILE OPTIMIZED ========== */}
       <div className="bg-gradient-to-l from-slate-800 via-slate-900 to-black border-b border-slate-700/50">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/20">
-                <ShieldAlert size={28} className="text-white" />
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+            {/* Title Section */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/20 flex-shrink-0">
+                <ShieldAlert size={20} className="md:hidden text-white" />
+                <ShieldAlert size={28} className="hidden md:block text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">مركز قيادة الأمان</h1>
-                <p className="text-slate-400 text-sm">نظام متقدم لكشف التلاعب ومراقبة الأجهزة</p>
+              <div className="min-w-0">
+                <h1 className="text-lg md:text-2xl font-bold text-white truncate">مركز قيادة الأمان</h1>
+                <p className="text-slate-400 text-xs md:text-sm hidden md:block">نظام متقدم لكشف التلاعب ومراقبة الأجهزة</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            {/* Actions - Mobile: Full Width */}
+            <div className="flex items-center gap-2 md:gap-3">
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={refreshAll}
                 disabled={refreshing}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 flex-1 md:flex-none"
               >
-                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-                <span className="mr-2">تحديث</span>
+                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                <span className="mr-1.5 text-xs md:text-sm">تحديث</span>
               </Button>
               
               {stats.alerts_today > 0 && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/20 border border-red-500/30">
-                  <BellRing size={16} className="text-red-400 animate-pulse" />
-                  <span className="text-red-400 text-sm font-bold">{stats.alerts_today} تنبيه</span>
+                <div className="flex items-center gap-1.5 px-2 py-1.5 md:px-3 md:py-2 rounded-lg bg-red-500/20 border border-red-500/30">
+                  <BellRing size={14} className="text-red-400 animate-pulse" />
+                  <span className="text-red-400 text-xs md:text-sm font-bold">{stats.alerts_today} تنبيه</span>
                 </div>
               )}
             </div>
@@ -481,9 +484,9 @@ export default function DeviceMonitoringPage() {
         </div>
       </div>
       
-      {/* ========== STATS CARDS ========== */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* ========== STATS CARDS - MOBILE OPTIMIZED ========== */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mobile-keep-cols">
           <StatCard 
             icon={Activity} 
             label="جلسات نشطة" 
