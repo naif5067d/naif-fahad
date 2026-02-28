@@ -424,11 +424,10 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      // تحميل مباشر لتجنب حظر المتصفح
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.download = `custody-month-${selectedMonth}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -436,7 +435,7 @@ export default function FinancialCustodyPage() {
       // تنظيف الذاكرة بعد ثانية
       setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       
-      toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
+      toast.success(lang === 'ar' ? `تم تحميل تقرير شهر ${selectedMonth}` : `Downloaded ${selectedMonth} report`);
     } catch (e) {
       // محاولة قراءة رسالة الخطأ من blob
       if (e.response?.data instanceof Blob) {
