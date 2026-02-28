@@ -74,6 +74,7 @@ from routes.ats_public import router as ats_public_router
 from routes.policies import router as policies_router
 from routes.deduction_transactions import router as deduction_transactions_router
 from routes.security import router as security_router
+from routes.system import router as system_router
 from seed import seed_database
 from services.auto_sync import auto_sync_database
 
@@ -122,6 +123,7 @@ app.include_router(ats_public_router)
 app.include_router(policies_router)
 app.include_router(deduction_transactions_router)
 app.include_router(security_router)
+app.include_router(system_router)
 
 app.add_middleware(
     CORSMiddleware,
