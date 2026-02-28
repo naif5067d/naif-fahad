@@ -14,7 +14,7 @@ const NAV_ITEMS = {
   // المشرف - الأساسيات + متابعة الفريق
   supervisor: ['dashboard', 'transactions', 'leave', 'attendance', 'tasks', 'myFinances', 'attendancePenalties', 'policies'],
   
-  // سلطان - مدير العمليات
+  // سلطان - مدير العمليات (بدون مراقبة الأجهزة)
   sultan: [
     // 📌 الاستخدام اليومي
     'dashboard', 'transactions', 'leave', 'attendance', 'attendancePenalties', 'tasks',
@@ -24,19 +24,16 @@ const NAV_ITEMS = {
     'financialCustody', 'custody',
     // 📊 التقارير
     'executive', 'maintenanceTracking', 'ats',
-    // 🔐 مراقبة الأجهزة
-    'deviceMonitoring',
     // 📚 المرجع
     'policies'
   ],
   
-  // نايف - العمليات الاستراتيجية
+  // نايف - العمليات الاستراتيجية (بدون مراقبة الأجهزة)
   naif: [
     'dashboard', 'transactions', 'leave', 'attendancePenalties', 'tasks',
     'employees', 'contractsManagement', 'settlement', 'workLocations',
     'financialCustody', 'custody',
     'executive', 'maintenanceTracking', 'ats',
-    'deviceMonitoring',
     'policies'
   ],
   
