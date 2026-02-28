@@ -11,12 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Plus, CheckCircle, AlertCircle, ArrowLeft, Trash2, Send, Check, X, 
   Loader2, Clock, DollarSign, ChevronRight, FileText, AlertTriangle,
-  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download, Camera, Pencil, Eye
+  TrendingUp, TrendingDown, Wallet, Edit2, Save, Printer, Download, Camera, Pencil
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Html5Qrcode } from 'html5-qrcode';
-import PdfPreviewModal from '@/components/PdfPreviewModal';
 
 // ==================== CONSTANTS ====================
 
@@ -111,11 +110,6 @@ export default function FinancialCustodyPage() {
   });
   const [signaturesOpen, setSignaturesOpen] = useState(false);
   const [savingSignatures, setSavingSignatures] = useState(false);
-  
-  // PDF Preview state
-  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
-  const [pdfFileName, setPdfFileName] = useState('');
 
   // ==================== DATA FETCHING ====================
 
@@ -197,19 +191,24 @@ export default function FinancialCustodyPage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح المعاينة
-      setPdfPreviewUrl(url);
-      setPdfFileName(`custody_${custodyNumber}_${lang}.pdf`);
-      setPdfPreviewOpen(true);
+      // Open in new tab for printing
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+      
+      toast.success(lang === 'ar' ? 'جاري فتح الطباعة...' : 'Opening print...');
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
     } finally {
       setSubmitting(false);
     }
   };
-  
-  // تحميل PDF مباشرة
+
   const handleDownloadPdf = async (custodyId, custodyNumber) => {
+    setSubmitting(true);
     try {
       const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
         responseType: 'blob'
@@ -217,18 +216,19 @@ export default function FinancialCustodyPage() {
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      
       const link = document.createElement('a');
       link.href = url;
       link.download = `custody_${custodyNumber}_${lang}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
       
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+      toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في التحميل' : 'Download error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -420,11 +420,12 @@ export default function FinancialCustodyPage() {
       
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+      if (printWindow) {
+        printWindow.onload = () => printWindow.print();
+      }
       
-      // فتح المعاينة
-      setPdfPreviewUrl(url);
-      setPdfFileName(`custody-month-${selectedMonth}.pdf`);
-      setPdfPreviewOpen(true);
+      toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
     } catch (e) {
       // محاولة قراءة رسالة الخطأ من blob
       if (e.response?.data instanceof Blob) {
@@ -712,17 +713,17 @@ export default function FinancialCustodyPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Preview/Download Buttons */}
+              {/* Print/Download Buttons */}
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => handlePrintPdf(selected.id, selected.custody_number)}
                 disabled={submitting}
                 className="gap-1.5"
-                data-testid="preview-btn"
+                data-testid="print-btn"
               >
-                <Eye size={14} />
-                {lang === 'ar' ? 'معاينة' : 'Preview'}
+                <Printer size={14} />
+                {lang === 'ar' ? 'طباعة' : 'Print'}
               </Button>
               <Button 
                 variant="outline" 
@@ -733,7 +734,7 @@ export default function FinancialCustodyPage() {
                 data-testid="download-btn"
               >
                 <Download size={14} />
-                {lang === 'ar' ? 'تحميل' : 'Download'}
+                PDF
               </Button>
               
               {/* زر تعديل العهدة */}
@@ -1454,8 +1455,8 @@ export default function FinancialCustodyPage() {
                 <DialogHeader>
                   <DialogTitle>{lang === 'ar' ? 'قائمة الأكواد' : 'Codes List'}</DialogTitle>
                 </DialogHeader>
-                <div className="max-h-[60vh] overflow-y-auto overflow-x-auto">
-                  <table className="w-full text-sm min-w-[400px]">
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <table className="w-full text-sm">
                     <thead className="sticky top-0 bg-background">
                       <tr className="border-b">
                         <th className="text-start p-2 font-medium">{lang === 'ar' ? 'الكود' : 'Code'}</th>
@@ -1781,19 +1782,6 @@ export default function FinancialCustodyPage() {
           </table>
         </div>
       </div>
-
-      {/* PDF Preview Modal */}
-      <PdfPreviewModal
-        open={pdfPreviewOpen}
-        onClose={() => {
-          setPdfPreviewOpen(false);
-          setPdfPreviewUrl(null);
-        }}
-        pdfUrl={pdfPreviewUrl}
-        fileName={pdfFileName}
-        title={lang === 'ar' ? 'معاينة العهدة' : 'Custody Preview'}
-        lang={lang}
-      />
     </div>
   );
 }

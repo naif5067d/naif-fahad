@@ -189,10 +189,6 @@ export default function TeamAttendancePage() {
   // Print state
   const [isPrinting, setIsPrinting] = useState(false);
   
-  // PDF Preview state
-  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
-  
   // Check if user is supervisor
   const isSupervisor = user?.role === 'supervisor';
   const isSultan = ['sultan', 'naif'].includes(user?.role);
@@ -332,11 +328,33 @@ export default function TeamAttendancePage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح المعاينة في نافذة منبثقة داخلية
-      setPdfPreviewUrl(url);
-      setPdfPreviewOpen(true);
+      // فتح نافذة المعاينة
+      const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
       
-      toast.success(lang === 'ar' ? 'تم فتح المعاينة' : 'Preview opened');
+      if (previewWindow) {
+        // تنظيف الـ URL بعد إغلاق النافذة أو بعد فترة
+        const cleanup = () => {
+          try {
+            window.URL.revokeObjectURL(url);
+          } catch (e) { /* ignore */ }
+        };
+        
+        // تنظيف بعد 5 دقائق أو عند إغلاق النافذة
+        setTimeout(cleanup, 300000);
+        
+        toast.success(lang === 'ar' ? 'تم فتح معاينة التقرير' : 'Report preview opened');
+      } else {
+        // إذا تم حظر النافذة المنبثقة، قم بتحميل مباشر
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+        toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
+      }
     } catch (err) {
       console.error('Print error:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
@@ -2566,65 +2584,6 @@ export default function TeamAttendancePage() {
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* PDF Preview Modal */}
-      <Dialog open={pdfPreviewOpen} onOpenChange={(open) => {
-        if (!open && pdfPreviewUrl) {
-          window.URL.revokeObjectURL(pdfPreviewUrl);
-          setPdfPreviewUrl(null);
-        }
-        setPdfPreviewOpen(open);
-      }}>
-        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden">
-          <DialogHeader className="p-4 border-b flex flex-row items-center justify-between">
-            <DialogTitle>{lang === 'ar' ? 'معاينة التقرير' : 'Report Preview'}</DialogTitle>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (pdfPreviewUrl) {
-                    const link = document.createElement('a');
-                    link.href = pdfPreviewUrl;
-                    link.download = `attendance-report-${startDate}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
-                  }
-                }}
-              >
-                <FileDown size={16} className="me-2" />
-                {lang === 'ar' ? 'تحميل' : 'Download'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (pdfPreviewUrl) {
-                    const printWindow = window.open(pdfPreviewUrl);
-                    if (printWindow) {
-                      printWindow.onload = () => printWindow.print();
-                    }
-                  }
-                }}
-              >
-                <Printer size={16} className="me-2" />
-                {lang === 'ar' ? 'طباعة' : 'Print'}
-              </Button>
-            </div>
-          </DialogHeader>
-          <div className="flex-1 h-full bg-slate-100">
-            {pdfPreviewUrl && (
-              <iframe
-                src={pdfPreviewUrl}
-                className="w-full h-[calc(90vh-80px)] border-0"
-                title="PDF Preview"
-              />
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </div>
