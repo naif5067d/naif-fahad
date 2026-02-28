@@ -443,7 +443,7 @@ export default function AttendanceManagementPage() {
         toast.success('تم فتح التقرير');
       }
       setTimeout(() => window.URL.revokeObjectURL(url), 5000);
-      toast.success('تم تحميل التقرير');
+      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
