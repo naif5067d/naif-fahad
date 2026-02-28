@@ -158,91 +158,153 @@
 
 /* ==================== MOBILE TABLES → CARDS ==================== */
 @media (max-width: 768px) {
-  /* Hide table headers on mobile */
-  .mobile-cards thead,
-  .responsive-table thead {
-    display: none !important;
-  }
+  /* === AUTOMATIC TABLE TO CARD CONVERSION === */
+  /* This transforms ANY table into a mobile-friendly card layout */
   
-  /* Transform table to card layout */
-  .mobile-cards tbody,
-  .responsive-table tbody {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  
-  .mobile-cards tr,
-  .responsive-table tr {
-    display: flex;
-    flex-direction: column;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: 0.75rem;
-    padding: var(--space-md);
-    margin-bottom: var(--space-sm);
-    cursor: pointer;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
-    transition: background-color 0.15s;
-  }
-  
-  .mobile-cards tr:active,
-  .responsive-table tr:active {
-    background: hsl(var(--muted));
-  }
-  
-  .mobile-cards td,
-  .responsive-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-xs) 0;
-    border: none !important;
-  }
-  
-  /* Add label from data attribute */
-  .mobile-cards td::before,
-  .responsive-table td::before {
-    content: attr(data-label);
-    font-weight: 500;
-    font-size: 0.75rem;
-    color: hsl(var(--muted-foreground));
-    flex-shrink: 0;
-    margin-left: var(--space-md);
-  }
-  
-  /* Hide action column icon buttons, make row clickable */
-  .mobile-cards td:last-child button[class*="ghost"],
-  .responsive-table td:last-child button[class*="ghost"] {
-    display: none;
-  }
-  
-  /* Regular tables - horizontal scroll */
-  table:not(.mobile-cards):not(.responsive-table) {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
+  /* Table container - enable horizontal scroll as fallback */
+  .overflow-x-auto,
+  div:has(> table) {
+    overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
   }
   
-  table:not(.mobile-cards):not(.responsive-table) thead,
-  table:not(.mobile-cards):not(.responsive-table) tbody,
-  table:not(.mobile-cards):not(.responsive-table) tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
+  /* Table - display as block for better mobile layout */
+  table {
+    display: block !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
   }
   
-  /* Table cells - compact */
-  td, th {
-    padding: var(--space-sm) !important;
-    font-size: 0.75rem !important;
-    white-space: nowrap;
+  /* Hide table header on mobile */
+  table thead {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
   }
   
-  th {
-    font-size: 0.6875rem !important;
-    font-weight: 600;
+  /* Table body */
+  table tbody {
+    display: block !important;
+  }
+  
+  /* Each row becomes a card */
+  table tbody tr {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    background: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    margin-bottom: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    position: relative !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+  
+  table tbody tr:active {
+    background: hsl(var(--muted)) !important;
+    transform: scale(0.98);
+  }
+  
+  /* Table cells become flex items */
+  table tbody td {
+    display: flex !important;
+    align-items: center !important;
+    padding: 4px 0 !important;
+    border: none !important;
+    font-size: 13px !important;
+    width: 50% !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* First cell (usually name/title) - full width */
+  table tbody td:first-child {
+    width: 100% !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+    border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
+  }
+  
+  /* Last cell (usually actions) - full width at bottom */
+  table tbody td:last-child {
+    width: 100% !important;
+    justify-content: flex-end !important;
+    padding-top: 8px !important;
+    margin-top: 8px !important;
+    border-top: 1px solid hsl(var(--border) / 0.5) !important;
+  }
+  
+  /* Hide action buttons - row is clickable */
+  table tbody td:last-child button[class*="ghost"],
+  table tbody td:last-child button[class*="icon"] {
+    opacity: 0.5;
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  /* Status badges - make them stand out */
+  table tbody td .badge,
+  table tbody td [class*="Badge"] {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+  }
+  
+  /* Table footer */
+  table tfoot {
+    display: block !important;
+    background: hsl(var(--muted) / 0.5) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    margin-top: 8px !important;
+  }
+  
+  table tfoot tr {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  table tfoot td {
+    display: block !important;
+    padding: 4px !important;
+    font-size: 12px !important;
+  }
+  
+  /* === Specific table improvements === */
+  /* Employee name cell */
+  table tbody td:has(.font-medium),
+  table tbody td:has(.font-semibold) {
+    width: 100% !important;
+  }
+  
+  /* Time cells */
+  table tbody td:has(.text-green-),
+  table tbody td:has(.text-red-),
+  table tbody td:has(.text-emerald-) {
+    justify-content: center !important;
+    background: hsl(var(--muted) / 0.3) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    margin: 2px !important;
+    width: calc(50% - 4px) !important;
+  }
+  
+  /* Icons in cells */
+  table tbody td svg {
+    width: 16px !important;
+    height: 16px !important;
+    flex-shrink: 0 !important;
+    margin-left: 6px !important;
   }
 }
 
