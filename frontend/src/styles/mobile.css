@@ -650,6 +650,9 @@
 }
 
 /* ==================== DEVICE-SPECIFIC SAFE AREAS ==================== */
+
+/* ========== APPLE iPhone ========== */
+
 /* iPhone X, XS, 11 Pro (375x812) */
 @media only screen 
   and (device-width: 375px) 
@@ -722,6 +725,260 @@
   and (-webkit-device-pixel-ratio: 2) {
   .safe-header { padding-top: 20px !important; }
   .mobile-nav { padding-bottom: 0 !important; }
+}
+
+/* iPhone 12/13 mini (360x780) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 780px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  .safe-header { padding-top: 50px !important; }
+  .mobile-nav { padding-bottom: 34px !important; }
+}
+
+/* ========== SAMSUNG Galaxy ========== */
+
+/* Samsung Galaxy S21/S22/S23 (360x800) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Samsung Galaxy S21+/S22+/S23+ (384x854) */
+@media only screen 
+  and (device-width: 384px) 
+  and (device-height: 854px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Samsung Galaxy S21 Ultra/S22 Ultra/S23 Ultra (412x915) */
+@media only screen 
+  and (device-width: 412px) 
+  and (device-height: 915px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Samsung Galaxy S24/S24+ (360x780 - 412x883) */
+@media only screen 
+  and (min-device-width: 360px) 
+  and (max-device-width: 412px)
+  and (min-device-height: 780px)
+  and (max-device-height: 920px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Samsung Galaxy A series (360x800 common) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* Samsung Galaxy Fold (280x653 folded, 586x820 unfolded) */
+@media only screen 
+  and (device-width: 280px) 
+  and (device-height: 653px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+@media only screen 
+  and (device-width: 586px) 
+  and (device-height: 820px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* Samsung Galaxy Z Flip (412x915 main, 260x512 cover) */
+@media only screen 
+  and (device-width: 260px) 
+  and (device-height: 512px) {
+  .safe-header { padding-top: 20px !important; }
+  .mobile-nav { padding-bottom: 8px !important; }
+}
+
+/* ========== HUAWEI ========== */
+
+/* Huawei P30/P40/P50 (360x780) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 780px) {
+  .safe-header { padding-top: 30px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* Huawei P30 Pro/P40 Pro (360x780) with curved display */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 780px)
+  and (device-aspect-ratio: 18/37) {
+  .safe-header { padding-top: 34px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Huawei Mate 40/50 Pro (392x800) */
+@media only screen 
+  and (device-width: 392px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Huawei Nova series (360x760) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 760px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* ========== XIAOMI / REDMI / POCO ========== */
+
+/* Xiaomi Mi 11/12/13 (360x800) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Xiaomi Mi 11 Ultra/12 Ultra (412x915) */
+@media only screen 
+  and (device-width: 412px) 
+  and (device-height: 915px) {
+  .safe-header { padding-top: 36px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Redmi Note series (393x851) */
+@media only screen 
+  and (device-width: 393px) 
+  and (device-height: 851px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* Poco phones (395x880) */
+@media only screen 
+  and (device-width: 395px) 
+  and (device-height: 880px) {
+  .safe-header { padding-top: 30px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* ========== OPPO / REALME / ONEPLUS ========== */
+
+/* OnePlus 9/10/11 (412x915) */
+@media only screen 
+  and (device-width: 412px) 
+  and (device-height: 915px) {
+  .safe-header { padding-top: 36px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Oppo Find X series (360x800) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 14px !important; }
+}
+
+/* Realme series (360x800) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* ========== GOOGLE PIXEL ========== */
+
+/* Pixel 6/7/8 (412x915) */
+@media only screen 
+  and (device-width: 412px) 
+  and (device-height: 915px) {
+  .safe-header { padding-top: 36px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Pixel 6a/7a (412x892) */
+@media only screen 
+  and (device-width: 412px) 
+  and (device-height: 892px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 14px !important; }
+}
+
+/* Pixel Fold (841x701 unfolded) */
+@media only screen 
+  and (device-width: 841px) 
+  and (device-height: 701px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* ========== VIVO ========== */
+
+/* Vivo X series (360x800) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 800px) {
+  .safe-header { padding-top: 30px !important; }
+  .mobile-nav { padding-bottom: 14px !important; }
+}
+
+/* ========== SONY XPERIA ========== */
+
+/* Sony Xperia 1/5 (360x840 21:9) */
+@media only screen 
+  and (device-width: 360px) 
+  and (device-height: 840px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* ========== GENERIC ANDROID FALLBACKS ========== */
+
+/* Small Android phones (320-359px width) */
+@media only screen 
+  and (max-device-width: 359px)
+  and (max-device-height: 700px) {
+  .safe-header { padding-top: 24px !important; }
+  .mobile-nav { padding-bottom: 8px !important; }
+}
+
+/* Medium Android phones (360-399px width) */
+@media only screen 
+  and (min-device-width: 360px)
+  and (max-device-width: 399px)
+  and (min-device-height: 700px) {
+  .safe-header { padding-top: 28px !important; }
+  .mobile-nav { padding-bottom: 12px !important; }
+}
+
+/* Large Android phones (400-449px width) */
+@media only screen 
+  and (min-device-width: 400px)
+  and (max-device-width: 449px)
+  and (min-device-height: 800px) {
+  .safe-header { padding-top: 32px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
+}
+
+/* Extra large Android phones (450px+ width) */
+@media only screen 
+  and (min-device-width: 450px)
+  and (max-device-width: 600px)
+  and (min-device-height: 900px) {
+  .safe-header { padding-top: 36px !important; }
+  .mobile-nav { padding-bottom: 16px !important; }
 }
 
 /* ==================== TABLET STYLES ==================== */
