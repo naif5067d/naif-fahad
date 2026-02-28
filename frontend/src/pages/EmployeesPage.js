@@ -84,11 +84,12 @@ export default function EmployeesPage() {
     }
   }, [user?.role]);
 
-  // التحقق إذا كان الموظف لديه استدعاء نشط أو مع رد
+  // التحقق إذا كان الموظف لديه استدعاء نشط أو مع رد (غير مقروء من المدير)
   const getActiveSummon = (employeeId) => {
     return activeSummons.find(s => 
       s.notification_type === 'summon' && 
-      s.employee_id === employeeId
+      s.employee_id === employeeId &&
+      !s.manager_read_reply // إخفاء إذا قرأ المدير الرد
     );
   };
 
