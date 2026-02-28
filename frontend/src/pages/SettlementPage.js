@@ -233,7 +233,18 @@ export default function SettlementPage() {
     try {
       const res = await api.get(`/api/settlement/${settlementId}/pdf`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      
+      // استخدام رابط تحميل بدلاً من window.open لتجنب حظر popup
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // تنظيف الذاكرة بعد ثانية
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err) {
       toast.error('فشل تحميل PDF');
     }
