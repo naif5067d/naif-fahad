@@ -328,33 +328,16 @@ export default function TeamAttendancePage() {
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       
-      // فتح نافذة المعاينة
-      const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+      // تحميل مباشر أولاً (لتجنب حظر المتصفح)
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
-      if (previewWindow) {
-        // تنظيف الـ URL بعد إغلاق النافذة أو بعد فترة
-        const cleanup = () => {
-          try {
-            window.URL.revokeObjectURL(url);
-          } catch (e) { /* ignore */ }
-        };
-        
-        // تنظيف بعد 5 دقائق أو عند إغلاق النافذة
-        setTimeout(cleanup, 300000);
-        
-        toast.success(lang === 'ar' ? 'تم فتح معاينة التقرير' : 'Report preview opened');
-      } else {
-        // إذا تم حظر النافذة المنبثقة، قم بتحميل مباشر
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-        toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
-      }
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
     } catch (err) {
       console.error('Print error:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
