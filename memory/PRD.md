@@ -3,72 +3,62 @@
 ## Original Problem Statement
 نظام موارد بشرية شامل لشركة دار الكود للاستشارات الهندسية
 
+## COMPLETED: PDF Preview & Download System (28/02/2026)
+
+### ما تم إنجازه:
+- **PdfPreviewModal Component**: مكوّن مشترك لمعاينة PDF في كل التطبيق
+- **زران منفصلان**: "معاينة" (لفتح modal مع iframe) + "تحميل" (لتحميل مباشر)
+- **Fallback System**: إذا حُظر window.open من AdBlock، يتم التحميل المباشر
+- **تم تحديث الصفحات**:
+  - AttendanceManagementPage (تقرير الحضور)
+  - FinancialCustodyPage (العهد المالية)
+  - ContractsManagementPage (العقود)
+  - TransactionDetailPage (المعاملات)
+  - SettlementPage (المخالصات)
+
+### الملفات:
+1. /app/frontend/src/components/PdfPreviewModal.jsx (مكوّن جديد)
+2. جميع صفحات الطباعة المحدثة
+
+---
+
+## COMPLETED: Summon Reply Notification System (28/02/2026)
+
+### ما تم إنجازه:
+- **عرض الرد في جدول الموظفين**: يظهر نص الرد بدلاً من كلمة "رد" فقط
+- **إخفاء الاستدعاء بعد القراءة**: النقر على الاستدعاء المُرد يخفيه من الجدول
+- **APIs جديدة**:
+  - `POST /api/notifications/summons/{id}/mark-reply-read`: تأكيد قراءة الرد
+  - `DELETE /api/notifications/summons/{id}`: حذف الاستدعاء
+
+### الملفات:
+1. /app/backend/routes/notifications.py
+2. /app/frontend/src/pages/EmployeesPage.js
+
+---
+
+## COMPLETED: Security Restrictions (28/02/2026)
+
+### ما تم إنجازه:
+- **مراقبة الأجهزة**: حصرياً لـ STAS فقط
+- **الحذف النووي**: حصرياً لـ STAS فقط
+- أُزيلت الصلاحيات من sultan و naif
+
+---
+
 ## COMPLETED: Nuclear Delete Feature (28/02/2026)
 
 ### ما تم إنجازه:
-- **ميزة الحذف النووي**: زر لحذف جميع البيانات المعاملاتية مع الحفاظ على العقود والمستخدمين
-- **Backend API**: `/api/system/nuclear-delete` و `/api/system/collections-stats`
-- **نافذة تأكيد**: تعرض البيانات التي ستُحذف والبيانات المحفوظة مع عدد السجلات
-- **أمان**: متاح فقط لـ stas و sultan
-- **تأكيد**: يتطلب كتابة "حذف نهائي" للتنفيذ
-- **استجابة للجوال**: تعمل بشكل صحيح على جميع الشاشات
-
-### الملفات:
-1. /app/backend/routes/system.py (API الحذف النووي)
-2. /app/frontend/src/pages/TransactionsPage.js (الزر والنافذة)
+- **ميزة الحذف النووي**: زر لحذف جميع البيانات المعاملاتية
+- **أمان**: متاح فقط لـ STAS
 
 ---
 
-## COMPLETED: Mobile Responsiveness Overhaul (28/02/2026)
+## COMPLETED: Auto Attendance on Startup (28/02/2026)
 
 ### ما تم إنجازه:
-
-#### 1. دعم Safe Area لجميع أجهزة iPhone:
-- iPhone SE (375x667) - بدون notch
-- iPhone X, XS, 11 Pro (375x812) - notch 44pt
-- iPhone XR, 11 (414x896) - notch 48pt
-- iPhone 12/13 mini (360x780) - notch 50pt
-- iPhone 12, 13, 14 (390x844) - notch 47pt
-- iPhone 12/13/14 Pro (393x852) - Dynamic Island 59pt
-- iPhone 14 Pro Max, 15 Pro Max (430x932) - Dynamic Island 59pt
-
-#### 2. دعم أجهزة Android:
-- Samsung Galaxy S21/S22/S23/S24 series
-- Samsung Galaxy A series
-- Samsung Galaxy Fold/Z Flip
-- Huawei P30/P40/P50, Mate 40/50, Nova
-- Xiaomi Mi 11/12/13, Redmi Note, Poco
-- OnePlus 9/10/11, Oppo Find X, Realme
-- Google Pixel 6/7/8, Pixel Fold
-- Vivo X series, Sony Xperia
-
-#### 3. دعم Tablets:
-- iPad Mini, Air, Pro 11", Pro 12.9"
-- Samsung Galaxy Tab S7/S8/S9
-- Huawei MatePad
-
-#### 4. تحسينات الواجهة:
-- جميع الأزرار 44x44px (Apple HIG compliant)
-- الجداول قابلة للتمرير الأفقي
-- التبويبات قابلة للتمرير الأفقي
-- Safe Area للهيدر
-- Safe Area للـ Bottom Nav
-
-### الملفات:
-1. /app/frontend/src/styles/mobile.css (1150+ سطر)
-2. /app/frontend/public/index.html (Safe Area CSS)
-3. /app/frontend/src/components/layout/AppLayout.js
-4. /app/frontend/src/components/NotificationBell.js
-
----
-
-## Previous Completed Features
-
-### Advanced Security Command Center (27/02/2026)
-- مركز قيادة الأمان المتقدم
-- كشف التلاعب
-- تعطيل حسابات متعددة
-- سجل الأمان المفصل
+- **التحضير التلقائي عند بدء التشغيل**: إذا فات وقت التحضير (7 صباحاً) يتم التحضير فوراً
+- **الملف**: /app/backend/services/scheduler.py
 
 ---
 
@@ -85,7 +75,6 @@
 ### P3 (Future)
 - In-Kind Custody Workflow
 - System Architecture View in STAS Mirror
-- Canva-like Smart Editor for Policies
 
 ---
 
