@@ -74,22 +74,9 @@ export default function TransactionDetailPage() {
     try {
       const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `transaction-${tx.ref_no || tx.id}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      window.open(url, '_blank');
     } catch {
-      toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF');
+      toast.error(lang === 'ar' ? 'فشل معاينة PDF' : 'Failed to preview PDF');
     } finally {
       setPdfLoading(false);
     }
@@ -250,11 +237,6 @@ export default function TransactionDetailPage() {
       serial_number: { ar: 'الرقم التسلسلي', en: 'Serial Number' },
       estimatedvalue: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
       estimated_value: { ar: 'القيمة التقديرية', en: 'Estimated Value' },
-      // Attendance request fields
-      from_time: { ar: 'من الساعة', en: 'From Time' },
-      to_time: { ar: 'إلى الساعة', en: 'To Time' },
-      date: { ar: 'التاريخ', en: 'Date' },
-      request_type: { ar: 'نوع الطلب', en: 'Request Type' },
     };
     return labels[key] ? (lang === 'ar' ? labels[key].ar : labels[key].en) : key.replace(/_/g, ' ');
   };
@@ -269,17 +251,6 @@ export default function TransactionDetailPage() {
         bereavement: { ar: 'وفاة', en: 'Bereavement' },
         exam: { ar: 'اختبار', en: 'Exam' },
         unpaid: { ar: 'بدون راتب', en: 'Unpaid' },
-      };
-      return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
-    }
-    // ترجمة نوع طلب الحضور
-    if (key === 'request_type') {
-      const types = {
-        forget_checkin: { ar: 'نسيان بصمة', en: 'Forgot Check-in' },
-        field_work: { ar: 'مهمة خارجية', en: 'Field Work' },
-        early_leave_request: { ar: 'طلب خروج مبكر', en: 'Early Leave Request' },
-        late_excuse: { ar: 'تبرير تأخير', en: 'Late Excuse' },
-        admin_edit: { ar: 'تعديل إداري', en: 'Admin Edit' },
       };
       return types[value] ? (lang === 'ar' ? types[value].ar : types[value].en) : value;
     }
@@ -454,8 +425,6 @@ export default function TransactionDetailPage() {
               if (key === 'medical_file_url') return false;
               // Skip calculation_details - shown in separate section for STAS
               if (key === 'calculation_details') return false;
-              // Skip redundant request type fields - show only one
-              if (key === 'request_type_ar' || key === 'request_type_en') return false;
               // Skip objects (complex nested data)
               if (typeof value === 'object' && value !== null) return false;
               return true;
@@ -500,12 +469,18 @@ export default function TransactionDetailPage() {
           </div>
         )}
         
-        {/* Integrity ID only - without PDF hash */}
-        {tx.integrity_id && (
+        {/* PDF Hash Info */}
+        {tx.pdf_hash && (
           <div className="mt-6 pt-4 border-t border-border">
-            <div className="text-xs">
-              <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
-              <span className="font-mono">{tx.integrity_id}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'معرف السلامة:' : 'Integrity ID:'} </span>
+                <span className="font-mono">{tx.integrity_id}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">{lang === 'ar' ? 'تجزئة PDF:' : 'PDF Hash:'} </span>
+                <span className="font-mono text-[10px]">{tx.pdf_hash?.slice(0, 32)}...</span>
+              </div>
             </div>
           </div>
         )}
