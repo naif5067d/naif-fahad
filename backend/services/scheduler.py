@@ -179,6 +179,9 @@ def init_scheduler():
     
     scheduler.start()
     logger.info("✅ تم تشغيل جدولة المهام - التحضير الذاتي 7:00 صباحاً")
+    
+    # 🆕 التحقق من التحضير عند بدء التشغيل
+    asyncio.create_task(check_and_run_missed_attendance())
 
 
 def shutdown_scheduler():
