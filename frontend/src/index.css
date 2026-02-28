@@ -317,7 +317,10 @@ code { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
   justify-content: center;
 }
 
-/* iOS Safe Area Header - Enhanced for all devices */
+/* ==================== iOS Safe Area - COMPREHENSIVE FIX ==================== */
+/* Works on iPhone X, XS, XR, 11, 12, 13, 14, 15 (all variants with notch/Dynamic Island) */
+
+/* Base safe area support */
 @supports (padding-top: env(safe-area-inset-top)) {
   .safe-top {
     padding-top: env(safe-area-inset-top);
@@ -325,21 +328,59 @@ code { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
   .safe-header {
     padding-top: env(safe-area-inset-top);
   }
-}
-
-/* Mobile safe header - ensure content is visible */
-@media (max-width: 768px) {
-  .safe-header {
-    padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
-/* Force safe area on all iPhone models with notch/Dynamic Island */
+/* Mobile Header - Enhanced for all devices */
+@media (max-width: 768px) {
+  /* Safe header with proper padding */
+  .safe-header {
+    padding-top: max(env(safe-area-inset-top, 0px), 12px);
+    min-height: calc(56px + env(safe-area-inset-top, 0px));
+  }
+  
+  /* Compact header elements */
+  .mobile-header-compact {
+    height: auto;
+    min-height: 48px;
+  }
+  
+  /* Header icons - smaller on mobile */
+  .header-icon-mobile {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 6px !important;
+  }
+  
+  /* User avatar - smaller on mobile */
+  .mobile-avatar-sm {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+/* Force safe area on ALL iPhone models with notch/Dynamic Island */
+/* This targets iOS Safari specifically */
 @supports (-webkit-touch-callout: none) {
-  /* iOS detection */
   @media (max-width: 430px) and (min-height: 700px) {
     .safe-header {
       padding-top: max(env(safe-area-inset-top), 47px) !important;
+    }
+    
+    /* Additional padding for notch area */
+    .mobile-nav {
+      padding-bottom: max(env(safe-area-inset-bottom), 20px) !important;
+    }
+  }
+  
+  /* iPhone 14 Pro Max, 15 Pro Max (larger screens with Dynamic Island) */
+  @media (min-width: 428px) and (max-width: 500px) and (min-height: 900px) {
+    .safe-header {
+      padding-top: max(env(safe-area-inset-top), 59px) !important;
     }
   }
 }
