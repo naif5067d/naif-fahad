@@ -1007,3 +1007,43 @@ async def get_sent_summons(
         "count": len(summons)
     }
 
+
+@router.post("/summons/{summon_id}/mark-reply-read")
+async def mark_summon_reply_read(
+    summon_id: str,
+    user=Depends(get_current_user)
+):
+    """
+    تأكيد قراءة المدير للرد - يخفي الاستدعاء من جدول الموظفين
+    """
+    # تحديث الاستدعاء ليصبح مقروء من المدير
+    result = await db.notifications.update_one(
+        {"id": summon_id, "notification_type": "summon"},
+        {"$set": {"manager_read_reply": True, "manager_read_reply_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="الاستدعاء غير موجود")
+    
+    return {"success": True, "message": "تم تأكيد قراءة الرد"}
+
+
+@router.delete("/summons/{summon_id}")
+async def delete_summon(
+    summon_id: str,
+    user=Depends(get_current_user)
+):
+    """
+    حذف استدعاء (للمدراء فقط)
+    """
+    allowed_roles = ['stas', 'sultan', 'naif', 'supervisor']
+    if user.get('role') not in allowed_roles:
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    
+    result = await db.notifications.delete_one({"id": summon_id, "notification_type": "summon"})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="الاستدعاء غير موجود")
+    
+    return {"success": True, "message": "تم حذف الاستدعاء"}
+
