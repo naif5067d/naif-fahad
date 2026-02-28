@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   FileText, Check, X as XIcon, Search, Eye, Loader2, Filter, Clock, User, Camera, QrCode,
-  CalendarDays, Fingerprint, MapPin, ClockAlert, LogOut, Package, Wallet, FileSignature, AlertTriangle, Receipt
+  CalendarDays, Fingerprint, MapPin, ClockAlert, LogOut, Package, Wallet, FileSignature, AlertTriangle, Receipt,
+  Trash2, AlertOctagon, ShieldAlert
 } from 'lucide-react';
 import { formatSaudiDateTime } from '@/lib/dateUtils';
 import api from '@/lib/api';
