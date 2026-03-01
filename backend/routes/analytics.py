@@ -624,7 +624,7 @@ async def calculate_excuse_score(employee_id: str, month: str = None, year: int 
                 f_mins = int(f_parts[0]) * 60 + int(f_parts[1])
                 t_mins = int(t_parts[0]) * 60 + int(t_parts[1])
                 early_leave_minutes += (t_mins - f_mins)
-            except:
+            except Exception:
                 pass
     
     # حساب الدرجة
