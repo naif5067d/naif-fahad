@@ -1662,19 +1662,19 @@ export default function AttendanceManagementPage() {
           <div className="mt-4 p-3 bg-slate-50 rounded-lg grid grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-xs text-muted-foreground">إجمالي الموظفين</p>
-              <p className="text-lg font-bold">{deficitSummary.length}</p>
+              <p className="text-lg font-bold">{deficitFilteredData.length}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">لديهم عجز</p>
-              <p className="text-lg font-bold text-amber-600">{deficitSummary.filter(e => e.total_deficit_minutes > 0).length}</p>
+              <p className="text-lg font-bold text-amber-600">{deficitFilteredData.filter(e => e.total_deficit_minutes > 0).length}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">تم خصمهم</p>
-              <p className="text-lg font-bold text-green-600">{deficitSummary.filter(e => e.has_executed_deduction).length}</p>
+              <p className="text-lg font-bold text-green-600">{deficitFilteredData.filter(e => e.has_executed_deduction).length}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">يمكن تعويضهم</p>
-              <p className="text-lg font-bold text-[hsl(var(--navy))]">{deficitSummary.filter(e => e.can_compensate && e.total_deficit_minutes > 0).length}</p>
+              <p className="text-lg font-bold text-[hsl(var(--navy))]">{deficitFilteredData.filter(e => e.can_compensate && e.total_deficit_minutes > 0).length}</p>
             </div>
           </div>
           
