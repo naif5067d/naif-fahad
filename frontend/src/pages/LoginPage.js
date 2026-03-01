@@ -535,19 +535,19 @@ export default function LoginPage() {
           </div>
 
           {/* Language Toggle */}
-          <div className="mt-6 flex justify-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="mt-4 sm:mt-6 flex justify-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
             <button 
               data-testid="login-lang-toggle" 
               onClick={toggleLang} 
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
+              className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground hover:text-accent transition-colors"
             >
-              <Globe size={16} />
+              <Globe size={14} className="sm:w-4 sm:h-4" />
               {lang === 'ar' ? 'English' : 'العربية'}
             </button>
           </div>
 
           {/* Footer */}
-          <p className="text-xs text-center text-slate-400 mt-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+          <p className="text-[10px] sm:text-xs text-center text-slate-400 mt-4 sm:mt-6 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
             {lang === 'ar' 
               ? '© 2026 دار الكود. جميع الحقوق محفوظة'
               : '© 2026 DAR AL CODE. All rights reserved'
