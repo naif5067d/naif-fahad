@@ -714,11 +714,18 @@ class DayResolverV2:
     
     def _create_absent_result(self) -> dict:
         """9. إنشاء نتيجة الغياب"""
+        # جلب required_hours من موقع العمل
+        required_hours = None
+        if self.work_location:
+            required_hours = self.work_location.get('daily_hours', 8.0)
+        
         return self._create_result(
             status=DailyStatusEnum.ABSENT,
             reason="غياب بدون عذر",
             reason_ar="غياب - لا توجد إجازة أو مهمة أو بصمة أو عطلة",
-            source="absent"
+            source="absent",
+            required_hours=required_hours,
+            actual_hours=0
         )
     
     def _create_result(self, status: DailyStatusEnum, reason: str, reason_ar: str, 
