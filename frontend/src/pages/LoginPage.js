@@ -437,17 +437,17 @@ export default function LoginPage() {
 
           {/* Login Form */}
           <div 
-            className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-8 border border-slate-200/50 animate-fade-in-up"
+            className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-5 sm:p-8 border border-slate-200/50 animate-fade-in-up"
             style={{ animationDelay: '0.5s' }}
           >
-            <h2 className="text-lg font-semibold text-slate-700 mb-1" data-testid="login-title">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-700 mb-1" data-testid="login-title">
               {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
             </h2>
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-xs sm:text-sm text-slate-500 mb-4 sm:mb-6">
               {lang === 'ar' ? 'أدخل بيانات الدخول للوصول للنظام' : 'Enter your credentials to access the system'}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive animate-shake" data-testid="login-error">
                   <AlertCircle size={16} />
