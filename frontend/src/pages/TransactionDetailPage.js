@@ -36,6 +36,9 @@ export default function TransactionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  
+  // PDF Preview Hook
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
 
   useEffect(() => {
     const fetchTx = async () => {
