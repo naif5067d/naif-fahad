@@ -262,7 +262,9 @@ class DayResolverV2:
                 reason="عطلة رسمية",
                 reason_ar=f"عطلة رسمية: {holiday.get('name_ar', holiday.get('name', ''))}",
                 source="holiday",
-                holiday_id=holiday.get('id')
+                holiday_id=holiday.get('id'),
+                required_hours=0,
+                actual_hours=0
             )
         
         step.result = "not_found"
