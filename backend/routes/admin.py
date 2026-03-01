@@ -264,7 +264,7 @@ async def emergency_reset_stas_password(body: ResetStasPasswordRequest):
     import uuid as uuid_module
     
     # مفتاح الطوارئ
-    if body.emergency_key != "EMERGENCY_STAS_2026":
+    if body.emergency_key != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     # تشفير كلمة المرور
@@ -326,7 +326,7 @@ async def fix_company_branding(body: ResetStasPasswordRequest):
     """
     إصلاح إعدادات الشركة - تغيير دار الأركان إلى دار الكود
     """
-    if body.emergency_key != "EMERGENCY_STAS_2026":
+    if body.emergency_key != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     now = datetime.now(timezone.utc).isoformat()
@@ -452,7 +452,7 @@ async def system_reset_from_date(body: SystemResetFromDateRequest):
     - إعدادات الشركة
     """
     # التحقق من مفتاح الطوارئ
-    if body.emergency_key != "EMERGENCY_STAS_2026":
+    if body.emergency_key != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     if not body.confirm:
