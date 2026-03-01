@@ -418,12 +418,17 @@ class DayResolverV2:
                 "destination": mission.get('data', {}).get('destination', '')
             })
             
+            # جلب required_hours من موقع العمل
+            required_hours = self.work_location.get('daily_hours', 8.0) if self.work_location else 8.0
+            
             return self._create_result(
                 status=DailyStatusEnum.ON_MISSION,
                 reason="مهمة خارجية",
                 reason_ar=f"مهمة خارجية: {mission.get('data', {}).get('destination', '')}",
                 source="mission",
-                mission_id=mission.get('id')
+                mission_id=mission.get('id'),
+                required_hours=required_hours,
+                actual_hours=required_hours  # المهمة تُحتسب كيوم عمل كامل
             )
         
         step.result = "not_found"
