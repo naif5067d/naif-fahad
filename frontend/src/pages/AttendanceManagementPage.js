@@ -354,6 +354,7 @@ export default function AttendanceManagementPage() {
   };
 
   // طباعة التقرير
+  // طباعة التقرير (باستخدام Modal بدلاً من window.open)
   const handlePrint = async () => {
     try {
       const params = {
@@ -367,16 +368,14 @@ export default function AttendanceManagementPage() {
         params.employee_ids = selectedEmployees.join(',');
       }
       
-      const response = await api.get('/api/team-attendance/print-report', {
-        params,
-        responseType: 'blob'
-      });
+      await openPdf(async () => {
+        const response = await api.get('/api/team-attendance/print-report', {
+          params,
+          responseType: 'blob'
+        });
+        return new Blob([response.data], { type: 'application/pdf' });
+      }, 'تقرير الحضور');
       
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      
-      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
@@ -394,16 +393,14 @@ export default function AttendanceManagementPage() {
         params.employee_ids = selectedEmployees.join(',');
       }
       
-      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
-        params,
-        responseType: 'blob'
-      });
+      await openPdf(async () => {
+        const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+          params,
+          responseType: 'blob'
+        });
+        return new Blob([response.data], { type: 'application/pdf' });
+      }, 'تقرير خارج العمل');
       
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      
-      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
