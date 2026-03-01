@@ -831,7 +831,7 @@ async def resolve_and_save_v2(employee_id: str, date: str, force_update: bool = 
     
     if contract:
         # التحقق من وضع التجربة (Sandbox)
-        if contract.get('sandbox_mode') == True:
+        if contract.get('sandbox_mode') is True:
             return {
                 "employee_id": employee_id,
                 "date": date,
