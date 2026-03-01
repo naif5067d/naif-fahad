@@ -1026,7 +1026,7 @@ async def get_annual_evaluation(
                 "forget_checkin_count": eval_data['breakdown']['excuses']['details']['forget_checkin']['count'],
                 "late_excuse_count": eval_data['breakdown']['excuses']['details']['late_excuse']['count'],
             })
-        except:
+        except Exception:
             continue
     
     # حساب المتوسط السنوي
