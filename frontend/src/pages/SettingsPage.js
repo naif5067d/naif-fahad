@@ -52,6 +52,28 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+  
+  // Nuclear Reset Handler
+  const handleNuclearReset = async () => {
+    if (confirmText !== 'تصفير نووي') {
+      toast.error(lang === 'ar' ? 'يجب كتابة "تصفير نووي" بالضبط' : 'You must type "تصفير نووي" exactly');
+      return;
+    }
+    
+    setNuclearLoading(true);
+    try {
+      const res = await api.post('/api/admin/nuclear-reset', {
+        confirm_text: confirmText
+      });
+      toast.success(res.data.message_ar || 'تم التصفير بنجاح');
+      setNuclearOpen(false);
+      setConfirmText('');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل التصفير' : 'Reset failed'));
+    } finally {
+      setNuclearLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl" data-testid="settings-page">
