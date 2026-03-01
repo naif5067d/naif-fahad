@@ -459,13 +459,18 @@ class DayResolverV2:
                 "claimed_check_out": forgotten.get('data', {}).get('claimed_check_out')
             })
             
+            # جلب required_hours من موقع العمل
+            required_hours = self.work_location.get('daily_hours', 8.0) if self.work_location else 8.0
+            
             return self._create_result(
                 status=DailyStatusEnum.PRESENT,
                 reason="نسيان بصمة معتمد",
                 reason_ar="نسيان بصمة تم اعتماده",
                 source="forgotten_punch",
                 check_in_time=forgotten.get('data', {}).get('claimed_check_in'),
-                check_out_time=forgotten.get('data', {}).get('claimed_check_out')
+                check_out_time=forgotten.get('data', {}).get('claimed_check_out'),
+                required_hours=required_hours,
+                actual_hours=required_hours  # نسيان البصمة المعتمد يُحتسب كامل
             )
         
         step.result = "not_found"
