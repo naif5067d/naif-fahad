@@ -8,6 +8,7 @@ import { formatGregorianHijriDateTime } from '@/lib/dateUtils';
 import Timeline from '@/components/Timeline';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 
 // Status configuration
 const STATUS_CONFIG = {
