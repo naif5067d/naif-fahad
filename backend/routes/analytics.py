@@ -142,21 +142,27 @@ async def calculate_task_score(employee_id: str = None, month: str = None, year:
     }
 
 
-async def calculate_financial_score(employee_id: str = None, month: str = None) -> dict:
+async def calculate_financial_score(employee_id: str = None, month: str = None, year: int = None, use_yearly: bool = False) -> dict:
     """
     حساب مؤشر الانضباط المالي
     الصيغة: (العهد المعتمدة من أول مرة / الإجمالي) × 100
     """
+    now = datetime.now(timezone.utc)
     query = {"status": {"$in": ["approved", "executed", "closed"]}}
     if employee_id:
         query["created_by"] = employee_id
     
-    if month:
-        year, mon = int(month.split('-')[0]), int(month.split('-')[1])
-        start_date, end_date = get_month_range(year, mon)
+    if use_yearly:
+        if year is None:
+            year = now.year
+        start_date, end_date = get_year_range(year)
+        query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
+    elif month:
+        yr, mon = int(month.split('-')[0]), int(month.split('-')[1])
+        start_date, end_date = get_month_range(yr, mon)
         query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
     
-    custodies = await db.admin_custodies.find(query, {"_id": 0, "audit_status": 1, "returned_count": 1, "spent": 1, "created_by": 1, "created_at": 1}).to_list(500)
+    custodies = await db.admin_custodies.find(query, {"_id": 0, "audit_status": 1, "returned_count": 1, "spent": 1, "created_by": 1, "created_at": 1}).to_list(2000)
     
     if not custodies:
         return {"score": 0, "total_custodies": 0, "approved_first_time": 0, "returned": 0, "total_spent": 0, "no_data": True}
@@ -177,21 +183,27 @@ async def calculate_financial_score(employee_id: str = None, month: str = None) 
     }
 
 
-async def calculate_request_score(employee_id: str = None, month: str = None) -> dict:
+async def calculate_request_score(employee_id: str = None, month: str = None, year: int = None, use_yearly: bool = False) -> dict:
     """
     حساب مؤشر انضباط الطلبات
     الصيغة: (المقبولة / الإجمالي) × 100
     """
+    now = datetime.now(timezone.utc)
     query = {}
     if employee_id:
         query["employee_id"] = employee_id
     
-    if month:
-        year, mon = int(month.split('-')[0]), int(month.split('-')[1])
-        start_date, end_date = get_month_range(year, mon)
+    if use_yearly:
+        if year is None:
+            year = now.year
+        start_date, end_date = get_year_range(year)
+        query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
+    elif month:
+        yr, mon = int(month.split('-')[0]), int(month.split('-')[1])
+        start_date, end_date = get_month_range(yr, mon)
         query["created_at"] = {"$gte": f"{start_date}T00:00:00", "$lte": f"{end_date}T23:59:59"}
     
-    transactions = await db.transactions.find(query, {"_id": 0, "status": 1, "employee_id": 1, "created_at": 1}).to_list(2000)
+    transactions = await db.transactions.find(query, {"_id": 0, "status": 1, "employee_id": 1, "created_at": 1}).to_list(5000)
     
     if not transactions:
         return {"score": 0, "total_requests": 0, "approved": 0, "rejected": 0, "pending": 0, "no_data": True}
