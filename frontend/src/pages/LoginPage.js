@@ -414,23 +414,23 @@ export default function LoginPage() {
               <img 
                 src={settings.logo_url} 
                 alt="Company Logo" 
-                className="w-20 h-20 mx-auto mb-4 object-contain rounded-2xl animate-logo-float"
+                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 object-contain rounded-2xl animate-logo-float"
               />
             ) : (
               <div 
-                className="w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg animate-logo-float"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center shadow-lg animate-logo-float"
                 style={{ 
                   background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`,
                   boxShadow: `0 10px 40px -10px ${settings.primary_color}66`
                 }}
               >
-                <span className="text-3xl font-bold text-white">د</span>
+                <span className="text-2xl sm:text-3xl font-bold text-white">د</span>
               </div>
             )}
-            <h1 className="text-2xl font-bold text-slate-800 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               {lang === 'ar' ? settings.company_name_ar : settings.company_name_en}
             </h1>
-            <p className="text-sm text-slate-500 mt-1 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               {lang === 'ar' ? 'للاستشارات الهندسية' : 'Engineering Consultants'}
             </p>
           </div>
