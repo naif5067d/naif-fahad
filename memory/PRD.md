@@ -3,18 +3,35 @@
 ## Original Problem Statement
 نظام موارد بشرية شامل لشركة دار الكود للاستشارات الهندسية
 
-## COMPLETED: PDF Preview & Download System (28/02/2026)
+## COMPLETED: Mobile Login Page Fix (December 2025)
 
 ### ما تم إنجازه:
-- **PdfPreviewModal Component**: مكوّن مشترك لمعاينة PDF في كل التطبيق
-- **زران منفصلان**: "معاينة" (لفتح modal مع iframe) + "تحميل" (لتحميل مباشر)
-- **Fallback System**: إذا حُظر window.open من AdBlock، يتم التحميل المباشر
+- **إصلاح صفحة تسجيل الدخول للجوال**: تحسين CSS لدعم الشاشات الصغيرة
+- **تحسينات**:
+  - تغيير التخطيط من `flex` إلى `flex-col lg:flex-row`
+  - إضافة `min-h-screen` للقسم الرئيسي
+  - تقليل padding وحجم الخطوط للجوال
+  - دعم أفضل لشاشات iPhone الصغيرة
+
+### الملف:
+- /app/frontend/src/pages/LoginPage.js
+
+---
+
+## COMPLETED: PDF Preview Modal System (December 2025)
+
+### ما تم إنجازه:
+- **PdfPreviewModal Component**: مكوّن مشترك يحل مشكلة `ERR_BLOCKED_BY_CLIENT`
+- **usePdfPreview Hook**: لتسهيل الاستخدام في أي صفحة
+- **حل مشكلة AdBlock**: بدلاً من `window.open` نعرض PDF في modal داخل الصفحة
+- **fallback**: إذا فشل iframe يظهر زر تحميل مباشر
 - **تم تحديث الصفحات**:
   - AttendanceManagementPage (تقرير الحضور)
   - FinancialCustodyPage (العهد المالية)
   - ContractsManagementPage (العقود)
   - TransactionDetailPage (المعاملات)
   - SettlementPage (المخالصات)
+  - TeamAttendancePage (حضور الفريق)
 
 ### الملفات:
 1. /app/frontend/src/components/PdfPreviewModal.jsx (مكوّن جديد)
@@ -65,8 +82,8 @@
 ## Prioritized Backlog
 
 ### P1 (High)
+- إكمال سير عمل الاستدعاء والرد
 - Full system health check
-- Verify compensation business rules
 
 ### P2 (Medium)
 - Fix MaintenanceTrackingPage stability
