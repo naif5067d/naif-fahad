@@ -318,7 +318,9 @@ class DayResolverV2:
                 status=DailyStatusEnum.WEEKEND,
                 reason="عطلة نهاية أسبوع",
                 reason_ar=f"عطلة نهاية الأسبوع ({day_names.get(day_of_week, '')})",
-                source="weekend"
+                source="weekend",
+                required_hours=0,
+                actual_hours=0
             )
         
         step.result = "not_weekend"
