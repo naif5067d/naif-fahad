@@ -395,28 +395,21 @@ export default function FinancialCustodyPage() {
       return;
     }
     
-    setSubmitting(true);
     try {
-      const response = await api.get(`/api/admin-custody/print-month?month=${selectedMonth}&lang=${lang}`, {
-        responseType: 'blob'
-      });
-      
-      // التحقق من نوع الاستجابة - قد تكون خطأ JSON
-      if (response.data.type === 'application/json') {
-        const text = await response.data.text();
-        const error = JSON.parse(text);
-        toast.error(error.detail || 'خطأ في الطباعة');
-        return;
-      }
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const printWindow = window.open(url, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => printWindow.print();
-      }
-      
-      toast.success(lang === 'ar' ? `جاري طباعة شهر ${selectedMonth}` : `Printing ${selectedMonth}...`);
+      await openPdf(async () => {
+        const response = await api.get(`/api/admin-custody/print-month?month=${selectedMonth}&lang=${lang}`, {
+          responseType: 'blob'
+        });
+        
+        // التحقق من نوع الاستجابة - قد تكون خطأ JSON
+        if (response.data.type === 'application/json') {
+          const text = await response.data.text();
+          const error = JSON.parse(text);
+          throw new Error(error.detail || 'خطأ في الطباعة');
+        }
+        
+        return new Blob([response.data], { type: 'application/pdf' });
+      }, lang === 'ar' ? `عهد شهر ${selectedMonth}` : `Custodies ${selectedMonth}`);
     } catch (e) {
       // محاولة قراءة رسالة الخطأ من blob
       if (e.response?.data instanceof Blob) {
@@ -428,10 +421,8 @@ export default function FinancialCustodyPage() {
           toast.error(lang === 'ar' ? 'لا توجد عهد في هذا الشهر' : 'No custodies in this month');
         }
       } else {
-        toast.error(e.response?.data?.detail || (lang === 'ar' ? 'لا توجد عهد في هذا الشهر' : 'No custodies in this month'));
+        toast.error(e.message || e.response?.data?.detail || (lang === 'ar' ? 'لا توجد عهد في هذا الشهر' : 'No custodies in this month'));
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
