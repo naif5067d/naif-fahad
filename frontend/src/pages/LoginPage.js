@@ -460,15 +460,16 @@ export default function LoginPage() {
                   {lang === 'ar' ? 'اسم المستخدم' : 'Username'}
                 </Label>
                 <div className="relative group">
-                  <User size={18} className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent" />
+                  <User size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent pointer-events-none" />
                   <Input
                     id="username"
                     data-testid="login-username"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="ps-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all"
+                    className="w-full pr-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all text-right"
                     placeholder={lang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username'}
                     autoComplete="username"
+                    dir="auto"
                     required
                   />
                 </div>
@@ -479,22 +480,23 @@ export default function LoginPage() {
                   {lang === 'ar' ? 'كلمة المرور' : 'Password'}
                 </Label>
                 <div className="relative group">
-                  <Lock size={18} className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent" />
+                  <Lock size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent pointer-events-none" />
                   <Input
                     id="password"
                     data-testid="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="ps-10 pe-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all"
+                    className="w-full pr-10 pl-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all text-right"
                     placeholder={lang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password'}
                     autoComplete="current-password"
+                    dir="auto"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -503,16 +505,16 @@ export default function LoginPage() {
               </div>
 
               {/* Remember Me */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-row-reverse justify-end">
+                <Label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer">
+                  {lang === 'ar' ? 'تذكرني' : 'Remember me'}
+                </Label>
                 <Checkbox 
                   id="remember" 
                   checked={rememberMe} 
                   onCheckedChange={setRememberMe}
-                  className="border-slate-300 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+                  className="border-slate-300 data-[state=checked]:bg-accent data-[state=checked]:border-accent h-4 w-4"
                 />
-                <Label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer">
-                  {lang === 'ar' ? 'تذكرني' : 'Remember me'}
-                </Label>
               </div>
 
               <Button 
