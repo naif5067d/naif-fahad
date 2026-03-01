@@ -778,3 +778,112 @@ async def get_version_history(user=Depends(require_roles('stas'))):
     ).sort("created_at", -1).limit(20).to_list(20)
     
     return {"history": history}
+
+
+# ============================================================
+# التصفير النووي - حذف كل البيانات التجريبية
+# ============================================================
+
+class NuclearResetRequest(BaseModel):
+    confirm_text: str  # يجب كتابة "تصفير نووي"
+    
+@router.post("/nuclear-reset")
+async def nuclear_reset(
+    body: NuclearResetRequest,
+    user=Depends(require_roles('stas', 'sultan'))
+):
+    """
+    ⚠️ تحذير: حذف نووي!
+    
+    يحذف كل البيانات التجريبية ويُبقي فقط:
+    - الموظفين (employees)
+    - العقود (contracts_v2)
+    - مواقع العمل (work_locations)
+    - المستخدمين (users)
+    - إعدادات الشركة (company_settings, settings)
+    
+    يتطلب كتابة "تصفير نووي" للتأكيد
+    """
+    # التحقق من نص التأكيد
+    if body.confirm_text != "تصفير نووي":
+        raise HTTPException(
+            status_code=400, 
+            detail="يجب كتابة 'تصفير نووي' للتأكيد"
+        )
+    
+    now = datetime.now(timezone.utc).isoformat()
+    deleted_counts = {}
+    
+    # القوائم المحمية (لن تُحذف)
+    protected_collections = [
+        'employees', 'users', 'contracts_v2', 'work_locations',
+        'company_settings', 'settings', 'departments', 'positions',
+        'audit_log'  # نحافظ على سجل التدقيق
+    ]
+    
+    # القوائم التي ستُحذف بالكامل
+    collections_to_wipe = [
+        'daily_status',           # سجلات الحضور اليومية
+        'attendance_ledger',      # سجلات البصمة
+        'attendance',             # الحضور القديم
+        'transactions',           # المعاملات
+        'leave_ledger',           # سجلات الإجازات
+        'leave_requests',         # طلبات الإجازات
+        'penalties',              # العقوبات
+        'finance_entries',        # القيود المالية
+        'deduction_log',          # سجلات الخصم
+        'unsettled_absences',     # الغياب غير المسوى
+        'monthly_hours',          # الساعات الشهرية
+        'notifications',          # الإشعارات
+        'announcements',          # الإعلانات
+        'tasks',                  # المهام
+        'custody_transactions',   # معاملات العهد
+        'financial_custody_transactions',  # معاملات العهد المالية
+        'maintenance_records',    # سجلات الصيانة
+        'performance_reviews',    # تقييمات الأداء
+        'admin_overrides',        # تجاوزات الإدارة
+        'public_holidays',        # العطل (اختياري)
+    ]
+    
+    # حذف كل collection
+    for coll_name in collections_to_wipe:
+        try:
+            result = await db[coll_name].delete_many({})
+            deleted_counts[coll_name] = result.deleted_count
+        except Exception as e:
+            deleted_counts[coll_name] = f"خطأ: {str(e)}"
+    
+    # إعادة تعيين العدادات
+    try:
+        await db.counters.update_one(
+            {"name": "transaction"},
+            {"$set": {"seq": 0}},
+            upsert=True
+        )
+        deleted_counts["counters"] = "reset to 0"
+    except Exception as e:
+        deleted_counts["counters"] = f"خطأ: {str(e)}"
+    
+    # حساب إجمالي المحذوفات
+    total_deleted = sum(v for v in deleted_counts.values() if isinstance(v, int))
+    
+    # تسجيل في سجل التدقيق
+    await db.audit_log.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": "nuclear_reset",
+        "performed_by": user.get('username', user['user_id']),
+        "deleted_counts": deleted_counts,
+        "total_deleted": total_deleted,
+        "created_at": now,
+        "note": "تصفير نووي - حذف جميع البيانات التجريبية"
+    })
+    
+    return {
+        "success": True,
+        "message_ar": "تم التصفير النووي بنجاح! جميع البيانات التجريبية تم حذفها",
+        "message_en": "Nuclear reset completed! All test data has been deleted",
+        "deleted": deleted_counts,
+        "total_deleted": total_deleted,
+        "protected": protected_collections,
+        "timestamp": now
+    }
