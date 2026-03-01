@@ -2563,6 +2563,9 @@ export default function TeamAttendancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
