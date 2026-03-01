@@ -972,7 +972,13 @@ async def get_smart_monitor(
         })
     
     return {
-        "month": month,
+        "year": year,
+        "period": {
+            "type": "yearly",
+            "start_date": start_date,
+            "end_date": end_date,
+            "days_elapsed": (now - datetime(year, 1, 1, tzinfo=timezone.utc)).days + 1
+        },
         "total_employees": len(evaluations),
         "company_average": round(avg_score, 1),
         "distribution": {
