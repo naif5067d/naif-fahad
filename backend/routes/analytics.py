@@ -380,26 +380,29 @@ async def generate_executive_summary(health_data: dict, top_performers: list, bo
 
 @router.get("/executive/dashboard")
 async def get_executive_dashboard(
-    month: Optional[str] = None,
+    year: Optional[int] = None,
     user=Depends(require_roles('stas', 'sultan', 'naif', 'mohammed', 'salah'))
 ):
     """
-    لوحة المدير التنفيذي
-    البيانات الكاملة للعرض
+    لوحة المدير التنفيذي - الحوكمة السنوية
+    البيانات من أول يوم في السنة إلى اليوم الحالي
     """
-    # الشهر الحالي إذا لم يُحدد
-    if not month:
-        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    now = datetime.now(timezone.utc)
+    if not year:
+        year = now.year
     
-    # حساب المؤشرات
-    health_data = await calculate_company_health_score(month=month)
+    # نطاق السنة
+    start_date, end_date = get_year_range(year)
     
-    # أفضل وأسوأ الموظفين
-    top_performers = await get_top_performers(limit=5, month=month)
-    bottom_performers = await get_bottom_performers(limit=5, month=month)
+    # حساب المؤشرات سنوياً
+    health_data = await calculate_company_health_score()
     
-    # الاتجاه الشهري
-    monthly_trend = await get_monthly_trend(months=6)
+    # أفضل وأسوأ الموظفين سنوياً
+    top_performers = await get_top_performers(limit=5, year=year, use_yearly=True)
+    bottom_performers = await get_bottom_performers(limit=5, year=year, use_yearly=True)
+    
+    # الاتجاه الشهري (آخر 12 شهر)
+    monthly_trend = await get_monthly_trend(months=12)
     
     # الملخص التنفيذي
     summary = await generate_executive_summary(health_data, top_performers, bottom_performers)
@@ -411,7 +414,13 @@ async def get_executive_dashboard(
     active_tasks = await db.tasks.count_documents({"status": {"$in": ["active", "pending"]}})
     
     return {
-        "month": month,
+        "year": year,
+        "period": {
+            "type": "yearly",
+            "start_date": start_date,
+            "end_date": end_date,
+            "days_elapsed": (now - datetime(year, 1, 1, tzinfo=timezone.utc)).days + 1
+        },
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "health_score": health_data['health_score'],
         "metrics": {
