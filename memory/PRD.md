@@ -1,102 +1,101 @@
-# DAR AL CODE HR OS - Product Requirements Document
+# HR-OS System - Product Requirements Document
 
 ## Original Problem Statement
-نظام موارد بشرية شامل لشركة دار الكود للاستشارات الهندسية
+نظام إدارة الموارد البشرية متكامل لشركة دار الكود للاستشارات الهندسية يشمل:
+- إدارة الحضور والانصراف
+- إدارة الإجازات
+- إدارة العقود
+- إدارة العهد المالية والعينية
+- لوحة تحكم تنفيذية
+- نظام الإشعارات
 
-## COMPLETED: Mobile Login Page Fix (December 2025)
+## User Personas
+1. **STAS (System Admin):** صلاحيات كاملة على النظام
+2. **Sultan (مدير العمليات):** إدارة الموظفين والعمليات اليومية
+3. **Mohammed (CEO):** عرض اللوحات التنفيذية والتقارير
+4. **Nayef (مشرف):** إدارة فريقه
 
-### ما تم إنجازه:
-- **إصلاح صفحة تسجيل الدخول للجوال**: تحسين CSS لدعم الشاشات الصغيرة
-- **تحسينات**:
-  - تغيير التخطيط من `flex` إلى `flex-col lg:flex-row`
-  - إضافة `min-h-screen` للقسم الرئيسي
-  - تقليل padding وحجم الخطوط للجوال
-  - دعم أفضل لشاشات iPhone الصغيرة
+## Core Architecture
+```
+/app/
+├── backend/           # FastAPI
+│   ├── routes/        # API endpoints
+│   ├── services/      # Business logic
+│   └── database.py    # MongoDB connection
+└── frontend/          # React + Tailwind + Shadcn
+    ├── src/pages/     # Page components
+    ├── src/components/# Reusable components
+    └── src/contexts/  # React contexts
+```
 
-### الملف:
-- /app/frontend/src/pages/LoginPage.js
+## Key Features Implemented
 
----
+### 1. Authentication & Authorization
+- JWT-based auth with role-based access
+- Session management with device fingerprinting
 
-## COMPLETED: PDF Preview Modal System (December 2025)
+### 2. Attendance Management
+- Daily punch-in/out tracking
+- Deficit calculation
+- Monthly reports with PDF export
 
-### ما تم إنجازه:
-- **PdfPreviewModal Component**: مكوّن مشترك يحل مشكلة `ERR_BLOCKED_BY_CLIENT`
-- **usePdfPreview Hook**: لتسهيل الاستخدام في أي صفحة
-- **حل مشكلة AdBlock**: بدلاً من `window.open` نعرض PDF في modal داخل الصفحة
-- **fallback**: إذا فشل iframe يظهر زر تحميل مباشر
-- **تم تحديث الصفحات**:
-  - AttendanceManagementPage (تقرير الحضور)
-  - FinancialCustodyPage (العهد المالية)
-  - ContractsManagementPage (العقود)
-  - TransactionDetailPage (المعاملات)
-  - SettlementPage (المخالصات)
-  - TeamAttendancePage (حضور الفريق)
+### 3. Leave Management
+- Leave requests and approvals
+- Balance tracking via leave_ledger
 
-### الملفات:
-1. /app/frontend/src/components/PdfPreviewModal.jsx (مكوّن جديد)
-2. جميع صفحات الطباعة المحدثة
+### 4. PDF Preview System
+- In-page modal using PdfPreviewModal.jsx
+- Avoids ad-blocker conflicts
 
----
+### 5. Executive Dashboard
+- Yearly aggregated data (Jan 1 to current date)
 
-## COMPLETED: Summon Reply Notification System (28/02/2026)
+### 6. Nuclear Reset (NEW - March 1, 2026)
+- Full data wipe for test data
+- Preserves: employees, users, contracts, work_locations, settings
+- Requires typing "تصفير نووي" for confirmation
+- Available only to STAS and Sultan roles
 
-### ما تم إنجازه:
-- **عرض الرد في جدول الموظفين**: يظهر نص الرد بدلاً من كلمة "رد" فقط
-- **إخفاء الاستدعاء بعد القراءة**: النقر على الاستدعاء المُرد يخفيه من الجدول
-- **APIs جديدة**:
-  - `POST /api/notifications/summons/{id}/mark-reply-read`: تأكيد قراءة الرد
-  - `DELETE /api/notifications/summons/{id}`: حذف الاستدعاء
+## API Endpoints
 
-### الملفات:
-1. /app/backend/routes/notifications.py
-2. /app/frontend/src/pages/EmployeesPage.js
+### Admin Routes
+- `POST /api/admin/nuclear-reset` - Nuclear data reset
+- `POST /api/admin/reset-balances` - Reset leave balances
+- `POST /api/admin/system-reset-from-date` - Reset from specific date
 
----
+### Authentication
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
 
-## COMPLETED: Security Restrictions (28/02/2026)
+### Attendance
+- `GET /api/attendance/daily-status`
+- `POST /api/attendance/punch`
 
-### ما تم إنجازه:
-- **مراقبة الأجهزة**: حصرياً لـ STAS فقط
-- **الحذف النووي**: حصرياً لـ STAS فقط
-- أُزيلت الصلاحيات من sultan و naif
+## Database Schema
+- **employees:** Employee master data
+- **users:** Authentication data
+- **contracts_v2:** Contract information
+- **daily_status:** Daily attendance records
+- **leave_ledger:** Leave balance transactions
+- **transactions:** All request transactions
 
----
+## Test Credentials
+- Admin/Manager: `sultan` / `123456`
+- CEO: `mohammed` / `12346`
+- SysAdmin: `stas506` / `654321`
+- Supervisor: `nayef` / `123456`
 
-## COMPLETED: Nuclear Delete Feature (28/02/2026)
+## Pending Issues (P1-P2)
+1. Mobile login page UI broken
+2. Summon/Reply workflow incomplete
+3. Script error in Financial Custody page
+4. Auto-delete leave_ledger on cancelled leave
 
-### ما تم إنجازه:
-- **ميزة الحذف النووي**: زر لحذف جميع البيانات المعاملاتية
-- **أمان**: متاح فقط لـ STAS
+## Future Tasks
+- In-Kind Custody damage assessment
+- Smart Editor for Policies (Canva-like)
+- System Architecture View UI
+- Centralized RBAC refactor
 
----
-
-## COMPLETED: Auto Attendance on Startup (28/02/2026)
-
-### ما تم إنجازه:
-- **التحضير التلقائي عند بدء التشغيل**: إذا فات وقت التحضير (7 صباحاً) يتم التحضير فوراً
-- **الملف**: /app/backend/services/scheduler.py
-
----
-
-## Prioritized Backlog
-
-### P1 (High)
-- إكمال سير عمل الاستدعاء والرد
-- Full system health check
-
-### P2 (Medium)
-- Fix MaintenanceTrackingPage stability
-- Refactor monolithic pages
-
-### P3 (Future)
-- In-Kind Custody Workflow
-- System Architecture View in STAS Mirror
-
----
-
-## Credentials
-- SysAdmin: stas506 / 654321
-- Admin: sultan / 123456
-- CEO: mohammed / 12346
-- Supervisor: nayef / 123456
+## Last Updated
+March 1, 2026 - Added Nuclear Reset feature
