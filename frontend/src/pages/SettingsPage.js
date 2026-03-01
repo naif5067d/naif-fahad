@@ -22,6 +22,13 @@ export default function SettingsPage() {
     full_name_ar: user?.full_name_ar || ''
   });
   const [saving, setSaving] = useState(false);
+  
+  // Nuclear Reset State
+  const [nuclearOpen, setNuclearOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [nuclearLoading, setNuclearLoading] = useState(false);
+  
+  const canNuclearReset = user?.role === 'stas' || user?.role === 'sultan';
 
   const handleSaveName = async () => {
     if (!nameForm.full_name && !nameForm.full_name_ar) {
