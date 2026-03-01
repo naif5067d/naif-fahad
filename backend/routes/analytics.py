@@ -873,15 +873,19 @@ async def get_ai_employee_evaluation(
 
 @router.get("/ai/smart-monitor")
 async def get_smart_monitor(
-    month: Optional[str] = None,
+    year: Optional[int] = None,
     user=Depends(require_roles('stas', 'sultan', 'salah'))
 ):
     """
     المراقب الذكي - تقييم شامل لجميع الموظفين
+    يعمل سنوياً: من أول يوم في السنة إلى اليوم الحالي
     متاح لـ: سلطان، صلاح، ستاس
     """
-    if not month:
-        month = datetime.now(timezone.utc).strftime("%Y-%m")
+    now = datetime.now(timezone.utc)
+    if not year:
+        year = now.year
+    
+    start_date, end_date = get_year_range(year)
     
     # جلب الموظفين النشطين غير المستثنين من التقييم
     employees = await db.employees.find(
@@ -895,7 +899,7 @@ async def get_smart_monitor(
     evaluations = []
     for emp in employees:
         try:
-            eval_data = await calculate_ai_employee_score(emp['id'], month)
+            eval_data = await calculate_ai_employee_score(emp['id'], year=year, use_yearly=True)
             evaluations.append({
                 "employee_id": emp['id'],
                 "employee_name": emp.get('full_name_ar', emp.get('full_name', '')),
@@ -935,21 +939,21 @@ async def get_smart_monitor(
         avg_score = 0
         excellent_count = good_count = needs_improvement = 0
     
-    # تنبيهات المراقب الذكي
+    # تنبيهات المراقب الذكي (مُعدّلة للسنة)
     alerts = []
     
-    # موظفين بنسيان بصمة عالي
-    high_forget = [e for e in evaluations if e['forget_checkin_count'] >= 2]
+    # موظفين بنسيان بصمة عالي (أكثر من 6 مرات سنوياً = أكثر من مرة كل شهرين)
+    high_forget = [e for e in evaluations if e['forget_checkin_count'] >= 6]
     if high_forget:
         alerts.append({
             "type": "warning",
             "title": "نسيان بصمة متكرر",
-            "message": f"{len(high_forget)} موظف لديهم نسيان بصمة متكرر هذا الشهر",
+            "message": f"{len(high_forget)} موظف لديهم نسيان بصمة متكرر هذه السنة",
             "employees": [e['employee_name'] for e in high_forget[:3]]
         })
     
-    # موظفين بتأخير متكرر
-    high_late = [e for e in evaluations if e['late_excuse_count'] >= 3]
+    # موظفين بتأخير متكرر (أكثر من 10 مرات سنوياً)
+    high_late = [e for e in evaluations if e['late_excuse_count'] >= 10]
     if high_late:
         alerts.append({
             "type": "warning",
