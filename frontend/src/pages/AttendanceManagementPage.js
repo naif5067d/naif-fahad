@@ -366,17 +366,25 @@ export default function AttendanceManagementPage() {
       const [year, mon] = month.split('-');
       const params = { year: parseInt(year), month: parseInt(mon) };
       
-      // إضافة فلتر الموظفين إذا تم تحديدهم
-      if (deficitSelectedEmployees.length > 0) {
-        params.employee_ids = deficitSelectedEmployees.join(',');
+      // إضافة فلتر الموظف إذا تم تحديده (موظف واحد فقط)
+      if (deficitSelectedEmployees.length === 1) {
+        params.employee_id = deficitSelectedEmployees[0];
       }
       
       const res = await api.get('/api/team-attendance/employee-deficit-summary', { params });
       const data = res.data.employees || [];
       setDeficitSummary(data);
-      setDeficitFilteredData(data);
+      
+      // فلترة محلية إذا تم تحديد أكثر من موظف
+      if (deficitSelectedEmployees.length > 1) {
+        setDeficitFilteredData(data.filter(emp => deficitSelectedEmployees.includes(emp.employee_id)));
+      } else {
+        setDeficitFilteredData(data);
+      }
+      
       setShowDeficitDialog(true);
     } catch (err) {
+      console.error('Deficit error:', err);
       toast.error('خطأ في جلب بيانات العجز');
     } finally {
       setLoading(false);
