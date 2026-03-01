@@ -63,6 +63,7 @@ import {
 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 
 // الموظفون المستثنون من الحضور والعقوبات (ليسوا موظفين)
 const EXEMPT_ROLES = ['stas', 'mohammed', 'salah', 'naif'];
