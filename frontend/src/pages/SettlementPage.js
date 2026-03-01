@@ -1331,6 +1331,9 @@ export default function SettlementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
