@@ -74,28 +74,13 @@ export default function TransactionDetailPage() {
   };
 
   const previewPdf = async () => {
-    setPdfLoading(true);
     try {
-      const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `transaction-${tx.ref_no || tx.id}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(lang === 'ar' ? 'تم تحميل PDF' : 'PDF downloaded');
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      await openPdf(async () => {
+        const res = await api.get(`/api/transactions/${tx.id}/pdf?lang=${lang}`, { responseType: 'blob' });
+        return new Blob([res.data], { type: 'application/pdf' });
+      }, lang === 'ar' ? `معاملة ${tx.ref_no || tx.id}` : `Transaction ${tx.ref_no || tx.id}`);
     } catch {
       toast.error(lang === 'ar' ? 'فشل تحميل PDF' : 'Failed to download PDF');
-    } finally {
-      setPdfLoading(false);
     }
   };
 
