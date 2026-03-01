@@ -104,6 +104,9 @@ export default function AttendanceManagementPage() {
   // Employee deficit summary
   const [deficitSummary, setDeficitSummary] = useState([]);
   const [showDeficitDialog, setShowDeficitDialog] = useState(false);
+  const [deficitMonth, setDeficitMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [deficitSelectedEmployees, setDeficitSelectedEmployees] = useState([]);
+  const [deficitFilteredData, setDeficitFilteredData] = useState([]);
   
   // Dialogs
   const [showStatusDialog, setShowStatusDialog] = useState(false);
