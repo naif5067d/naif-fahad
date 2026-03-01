@@ -43,27 +43,35 @@ def get_year_range(year: int = None):
     return start_date, end_date
 
 
-async def calculate_attendance_score(employee_id: str = None, month: str = None) -> dict:
+async def calculate_attendance_score(employee_id: str = None, month: str = None, year: int = None, use_yearly: bool = False) -> dict:
     """
     حساب مؤشر الحضور
     الصيغة: (أيام الحضور / أيام العمل) × 100 - (دقائق التأخير × 0.05)
+    
+    use_yearly=True: يحسب من أول السنة إلى اليوم الحالي
     """
     now = datetime.now(timezone.utc)
-    if month:
-        year, mon = int(month.split('-')[0]), int(month.split('-')[1])
-    else:
-        year, mon = now.year, now.month
     
-    start_date, end_date = get_month_range(year, mon)
+    if use_yearly:
+        # النطاق السنوي
+        if year is None:
+            year = now.year
+        start_date, end_date = get_year_range(year)
+    elif month:
+        yr, mon = int(month.split('-')[0]), int(month.split('-')[1])
+        start_date, end_date = get_month_range(yr, mon)
+    else:
+        yr, mon = now.year, now.month
+        start_date, end_date = get_month_range(yr, mon)
     
     query = {"date": {"$gte": start_date, "$lte": end_date}}
     if employee_id:
         query["employee_id"] = employee_id
     
-    records = await db.daily_status.find(query, {"_id": 0, "final_status": 1, "late_minutes": 1, "date": 1, "employee_id": 1}).to_list(5000)
+    records = await db.daily_status.find(query, {"_id": 0, "final_status": 1, "late_minutes": 1, "date": 1, "employee_id": 1}).to_list(10000)
     
     if not records:
-        return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0}
+        return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0, "start_date": start_date, "end_date": end_date}
     
     # حساب الأيام
     present_statuses = ["PRESENT", "LATE", "LATE_EXCUSED", "EARLY_LEAVE", "EARLY_EXCUSED", "PERMISSION", "ON_MISSION"]
@@ -75,7 +83,7 @@ async def calculate_attendance_score(employee_id: str = None, month: str = None)
     total_late_minutes = sum(r.get('late_minutes', 0) for r in records)
     
     if work_days == 0:
-        return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0, "no_data": True}
+        return {"score": 0, "present_days": 0, "work_days": 0, "late_minutes": 0, "absent_days": 0, "no_data": True, "start_date": start_date, "end_date": end_date}
     
     # الصيغة
     presence_rate = (present_days / work_days) * 100
