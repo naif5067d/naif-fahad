@@ -54,6 +54,7 @@ import {
   Edit,
   ArrowRight
 } from 'lucide-react';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
