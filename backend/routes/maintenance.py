@@ -829,9 +829,38 @@ def _get_kubernetes_limits():
                         'throttle_behavior': 'العملية تُبطأ (Throttled) عند تجاوز الحد'
                     }
                 else:
-                    limits['cpu'] = {'limit_cores': 'unlimited'}
+                    # Fallback for unlimited CPU in container
+                    cpu_count = psutil.cpu_count()
+                    limits['cpu'] = {
+                        'limit_cores': cpu_count,
+                        'limit_millicores': cpu_count * 1000,
+                        'throttle_percent': 0,
+                        'throttle_behavior': 'No CPU limit set (unlimited)',
+                        'source': 'psutil'
+                    }
+        else:
+            # No cgroup - use psutil
+            cpu_count = psutil.cpu_count()
+            limits['cpu'] = {
+                'limit_cores': cpu_count,
+                'limit_millicores': cpu_count * 1000,
+                'throttle_percent': 0,
+                'throttle_behavior': 'System CPU (not containerized)',
+                'source': 'psutil'
+            }
     except Exception as e:
-        limits['cpu'] = {'error': str(e)}
+        # Fallback to psutil
+        try:
+            cpu_count = psutil.cpu_count()
+            limits['cpu'] = {
+                'limit_cores': cpu_count,
+                'limit_millicores': cpu_count * 1000,
+                'throttle_percent': 0,
+                'source': 'psutil_fallback',
+                'error': str(e)
+            }
+        except:
+            limits['cpu'] = {'error': str(e)}
     
     # Storage Limits (Ephemeral)
     try:
