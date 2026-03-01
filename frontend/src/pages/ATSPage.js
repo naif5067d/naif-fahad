@@ -895,10 +895,29 @@ export default function ATSPage() {
                           <span className="text-xs text-red-500">(Unreadable)</span>
                         )}
                       </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`${baseUrl}/api/upload/ats_cv/${file.saved_name}`} target="_blank" rel="noopener noreferrer">
-                          <Download size={14} />
-                        </a>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={async () => {
+                          try {
+                            const response = await api.get(`/api/upload/ats_cv/${file.saved_name}`, {
+                              responseType: 'blob'
+                            });
+                            const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+                            const url = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = file.original_name;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                          } catch (err) {
+                            toast.error(lang === 'ar' ? 'خطأ في تحميل الملف' : 'Error downloading file');
+                          }
+                        }}
+                      >
+                        <Download size={14} />
                       </Button>
                     </div>
                   ))}
