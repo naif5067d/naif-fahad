@@ -374,12 +374,17 @@ class DayResolverV2:
             
             status = DailyStatusEnum.ON_ADMIN_LEAVE if leave_type == 'admin' else DailyStatusEnum.ON_LEAVE
             
+            # جلب required_hours من موقع العمل
+            required_hours = self.work_location.get('daily_hours', 8.0) if self.work_location else 8.0
+            
             return self._create_result(
                 status=status,
                 reason=f"إجازة {leave_type_ar}",
                 reason_ar=f"إجازة {leave_type_ar} منفذة (رقم: {leave.get('ref_no', '')})",
                 source="leave",
-                leave_id=leave.get('id')
+                leave_id=leave.get('id'),
+                required_hours=required_hours,
+                actual_hours=required_hours  # الإجازة تُحتسب كيوم عمل كامل
             )
         
         step.result = "not_found"
