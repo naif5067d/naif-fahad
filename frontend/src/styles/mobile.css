@@ -1157,3 +1157,49 @@
     padding: 1rem !important;
   }
 }
+
+/* ==================== LOGIN PAGE SPECIFIC ==================== */
+/* Override mobile styles for login page to ensure proper display */
+@media (max-width: 768px) {
+  [data-testid="login-page"] {
+    padding: 1rem !important;
+  }
+  
+  [data-testid="login-page"] input[type="text"],
+  [data-testid="login-page"] input[type="password"],
+  [data-testid="login-page"] input[type="email"] {
+    width: 100% !important;
+    min-width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    padding: 0.75rem 2.75rem 0.75rem 1rem !important;
+    font-size: 16px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #e2e8f0 !important;
+    background: white !important;
+  }
+  
+  [data-testid="login-page"] .relative {
+    width: 100% !important;
+    display: block !important;
+  }
+  
+  [data-testid="login-page"] input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+  }
+  
+  [data-testid="login-page"] form {
+    width: 100% !important;
+  }
+  
+  [data-testid="login-page"] form > div {
+    width: 100% !important;
+  }
+}
