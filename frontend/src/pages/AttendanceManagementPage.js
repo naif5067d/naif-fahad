@@ -2,9 +2,9 @@
  * صفحة إدارة الحضور والعقوبات - النسخة المبسطة
  * 
  * 3 أقسام رئيسية:
- * 1. 🏢 جدول الدوام الرسمي
- * 2. 🟡 جدول خارج أوقات العمل
- * 3. 💰 معاملات الخصم
+ * 1. جدول الدوام الرسمي
+ * 2. جدول خارج العمل الرسمي
+ * 3. معاملات الخصم
  */
 import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -50,12 +50,10 @@ import {
   XCircle,
   Filter,
   Building,
-  Moon,
   DollarSign,
   Edit,
   ArrowRight
 } from 'lucide-react';
-import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -96,20 +94,33 @@ export default function AttendanceManagementPage() {
   
   // Outside hours data
   const [outsideHoursData, setOutsideHoursData] = useState([]);
+  const [selectedOutsideRows, setSelectedOutsideRows] = useState([]); // الصفوف المحددة للاحتساب
   
   // Deduction transactions
   const [deductionTransactions, setDeductionTransactions] = useState([]);
   
+  // Employee deficit summary
+  const [deficitSummary, setDeficitSummary] = useState([]);
+  const [showDeficitDialog, setShowDeficitDialog] = useState(false);
+  
   // Dialogs
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [statusForm, setStatusForm] = useState({ employee_id: '', date: '', status: '', reason: '' });
+  const [statusAcknowledged, setStatusAcknowledged] = useState(false); // تعهد المسؤولية
   const [showDeductionDialog, setShowDeductionDialog] = useState(false);
   const [deductionForm, setDeductionForm] = useState({ employee_id: '', amount: 0, reason: '', month: '' });
   const [showCompensateDialog, setShowCompensateDialog] = useState(false);
   const [compensateForm, setCompensateForm] = useState({ employee_id: '', date: '', hours: null, note: '' });
+  
+  // بحث الموظفين
+  const [employeeSearch, setEmployeeSearch] = useState('');
 
-  // PDF Preview State
-  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+  // التحقق من صلاحية عرض معاملات الخصم (للمدراء الرئيسيين فقط)
+  const canViewDeductions = useMemo(() => {
+    const allowedRoles = ['sultan', 'stas', 'naif', 'mohammed'];
+    return allowedRoles.includes(user?.role?.toLowerCase()) || 
+           allowedRoles.includes(user?.username?.toLowerCase());
+  }, [user]);
 
   // Fetch employees
   useEffect(() => {
@@ -269,7 +280,76 @@ export default function AttendanceManagementPage() {
     }
   };
 
-  // طباعة التقرير (باستخدام Modal بدلاً من window.open)
+  // القبول الجماعي للساعات المحددة
+  const handleBulkApprove = async () => {
+    if (selectedOutsideRows.length === 0) {
+      toast.error('يرجى تحديد سجلات للقبول');
+      return;
+    }
+    
+    try {
+      toast.info(`جاري قبول ${selectedOutsideRows.length} سجل...`);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const key of selectedOutsideRows) {
+        const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
+        if (!rec) continue;
+        
+        try {
+          await api.post('/api/team-attendance/outside-hours/count-as-attendance', {
+            employee_id: rec.employee_id,
+            date: rec.date,
+            hours_to_count: null, // احتساب كحضور كامل
+            note: 'قبول جماعي'
+          });
+          successCount++;
+        } catch (err) {
+          errorCount++;
+          console.error(`Error approving ${rec.employee_name_ar} - ${rec.date}:`, err);
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`تم قبول ${successCount} سجل بنجاح`);
+      }
+      if (errorCount > 0) {
+        toast.error(`فشل قبول ${errorCount} سجل`);
+      }
+      
+      // إعادة تعيين وإعادة جلب البيانات
+      setSelectedOutsideRows([]);
+      const params = { start_date: startDate, end_date: endDate };
+      const res = await api.get('/api/team-attendance/outside-hours', { params });
+      setOutsideHoursData(res.data.records || []);
+    } catch (err) {
+      toast.error('خطأ في القبول الجماعي');
+    }
+  };
+
+  // تشغيل التحضير التلقائي
+  const handleRunDailyProcess = async () => {
+    try {
+      toast.info('جاري تشغيل التحضير...');
+      const res = await api.post('/api/attendance-engine/jobs/daily', {
+        target_date: endDate
+      });
+      toast.success(res.data?.message || 'تم تشغيل التحضير بنجاح');
+      // إعادة جلب البيانات
+      setLoading(true);
+      const month = startDate.substring(0, 7);
+      const reportRes = await api.get('/api/penalties/monthly-report', {
+        params: { year: parseInt(month.split('-')[0]), month: parseInt(month.split('-')[1]) }
+      });
+      setAttendanceData(reportRes.data.employees || []);
+      setLoading(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'خطأ في تشغيل التحضير');
+    }
+  };
+
+  // طباعة التقرير
   const handlePrint = async () => {
     try {
       const params = {
@@ -283,14 +363,43 @@ export default function AttendanceManagementPage() {
         params.employee_ids = selectedEmployees.join(',');
       }
       
-      await openPdf(async () => {
-        const response = await api.get('/api/team-attendance/print-report', {
-          params,
-          responseType: 'blob'
-        });
-        return new Blob([response.data], { type: 'application/pdf' });
-      }, 'تقرير الحضور');
+      const response = await api.get('/api/team-attendance/print-report', {
+        params,
+        responseType: 'blob'
+      });
       
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      toast.success('تم فتح التقرير');
+    } catch (err) {
+      toast.error('خطأ في طباعة التقرير');
+    }
+  };
+
+  // طباعة تقرير خارج العمل الرسمي
+  const handlePrintOutsideHours = async () => {
+    try {
+      const params = {
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      
+      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      
+      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
@@ -313,73 +422,158 @@ export default function AttendanceManagementPage() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-3 items-end flex-wrap">
-            {/* Multi-select Employees */}
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-xs mb-1 block">الموظفين</Label>
-              <Select
-                value={selectedEmployees.length === 0 ? 'all' : selectedEmployees.length === 1 ? selectedEmployees[0] : 'multiple'}
-                onValueChange={(v) => {
-                  if (v === 'all') setSelectedEmployees([]);
-                  else if (v !== 'multiple') setSelectedEmployees([v]);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue>
-                    {selectedEmployees.length === 0 
-                      ? 'جميع الموظفين' 
-                      : selectedEmployees.length === 1 
-                        ? employees.find(e => e.id === selectedEmployees[0])?.full_name_ar || 'موظف محدد'
-                        : `${selectedEmployees.length} موظفين`}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع الموظفين</SelectItem>
-                  {employees.map(emp => (
-                    <SelectItem key={emp.id} value={emp.id}>
+          <div className="flex flex-col gap-4">
+            {/* Multi-select Employees with Search */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Label className="text-xs font-medium">تحديد الموظفين</Label>
+                <Input
+                  type="text"
+                  placeholder="بحث بالاسم..."
+                  value={employeeSearch}
+                  onChange={e => setEmployeeSearch(e.target.value)}
+                  className="h-7 text-xs w-[180px]"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/20 max-h-[200px] overflow-y-auto">
+                {/* Select All / Deselect All */}
+                <Button
+                  variant={selectedEmployees.length === 0 ? "default" : "outline"}
+                  size="sm"
+                  className={selectedEmployees.length === 0 ? "bg-[hsl(var(--navy))]" : ""}
+                  onClick={() => setSelectedEmployees([])}
+                >
+                  الكل
+                </Button>
+                
+                {employees
+                  .filter(emp => {
+                    if (!employeeSearch.trim()) return true;
+                    const search = employeeSearch.toLowerCase();
+                    const nameAr = (emp.full_name_ar || '').toLowerCase();
+                    const nameEn = (emp.full_name || '').toLowerCase();
+                    return nameAr.includes(search) || nameEn.includes(search);
+                  })
+                  .map((emp, idx) => {
+                  const isSelected = selectedEmployees.includes(emp.id);
+                  const selectionOrder = selectedEmployees.indexOf(emp.id) + 1;
+                  
+                  return (
+                    <Button
+                      key={emp.id}
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className={`relative ${isSelected ? "bg-[hsl(var(--navy))] pr-8" : ""}`}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedEmployees(prev => prev.filter(id => id !== emp.id));
+                        } else {
+                          setSelectedEmployees(prev => [...prev, emp.id]);
+                        }
+                      }}
+                    >
+                      {isSelected && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white text-[hsl(var(--navy))] text-xs font-bold flex items-center justify-center">
+                          {selectionOrder}
+                        </span>
+                      )}
                       {emp.full_name_ar || emp.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Button>
+                  );
+                })}
+                
+                {/* رسالة إذا لم يتم العثور على نتائج */}
+                {employeeSearch.trim() && employees.filter(emp => {
+                  const search = employeeSearch.toLowerCase();
+                  const nameAr = (emp.full_name_ar || '').toLowerCase();
+                  const nameEn = (emp.full_name || '').toLowerCase();
+                  return nameAr.includes(search) || nameEn.includes(search);
+                }).length === 0 && (
+                  <span className="text-sm text-muted-foreground">لا يوجد موظف بهذا الاسم</span>
+                )}
+              </div>
+              
+              {/* Selected Summary */}
+              {selectedEmployees.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1 items-center">
+                  <span className="text-xs text-muted-foreground">المحدد:</span>
+                  {selectedEmployees.map((empId, idx) => {
+                    const emp = employees.find(e => e.id === empId);
+                    return (
+                      <Badge 
+                        key={empId} 
+                        variant="secondary" 
+                        className="text-xs cursor-pointer hover:bg-red-100"
+                        onClick={() => setSelectedEmployees(prev => prev.filter(id => id !== empId))}
+                      >
+                        {idx + 1}. {emp?.full_name_ar || emp?.full_name} ×
+                      </Badge>
+                    );
+                  })}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-red-500 hover:text-red-700"
+                    onClick={() => setSelectedEmployees([])}
+                  >
+                    مسح الكل
+                  </Button>
+                </div>
+              )}
             </div>
             
-            {/* Date Range */}
-            <div className="flex gap-2">
-              <div>
-                <Label className="text-xs mb-1 block">من</Label>
-                <Input 
-                  type="date" 
-                  value={startDate} 
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-[130px]"
-                />
+            {/* Date Range and Actions */}
+            <div className="flex flex-col md:flex-row gap-3 items-end flex-wrap">
+              {/* Date Range */}
+              <div className="flex gap-2">
+                <div>
+                  <Label className="text-xs mb-1 block">من تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">إلى تاريخ</Label>
+                  <Input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)}
+                    className="w-[140px]"
+                  />
+                </div>
               </div>
-              <div>
-                <Label className="text-xs mb-1 block">إلى</Label>
-                <Input 
-                  type="date" 
-                  value={endDate} 
-                  onChange={e => setEndDate(e.target.value)}
-                  className="w-[130px]"
-                />
+              
+              <div className="flex-1" />
+              
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRunDailyProcess}
+                  title="تشغيل التحضير التلقائي لليوم المحدد"
+                >
+                  <RefreshCw size={16} className="ml-1" />
+                  تحضير
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Printer size={16} className="ml-1" />
+                  طباعة {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
+                </Button>
+                {canViewDeductions && (
+                  <Button 
+                    size="sm" 
+                    className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))]"
+                    onClick={() => setShowDeductionDialog(true)}
+                  >
+                    <Plus size={16} className="ml-1" />
+                    معاملة خصم
+                  </Button>
+                )}
               </div>
-            </div>
-            
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer size={16} className="ml-1" />
-                طباعة
-              </Button>
-              <Button 
-                size="sm" 
-                className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))]"
-                onClick={() => setShowDeductionDialog(true)}
-              >
-                <Plus size={16} className="ml-1" />
-                معاملة خصم
-              </Button>
             </div>
           </div>
         </CardContent>
@@ -387,22 +581,24 @@ export default function AttendanceManagementPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className={`grid w-full ${canViewDeductions ? 'grid-cols-3' : 'grid-cols-2'} mb-4`}>
           <TabsTrigger value="official" className="flex items-center gap-2">
             <Building size={16} />
             <span className="hidden sm:inline">الدوام الرسمي</span>
             <span className="sm:hidden">الرسمي</span>
           </TabsTrigger>
           <TabsTrigger value="outside" className="flex items-center gap-2">
-            <Moon size={16} className="text-yellow-500" />
-            <span className="hidden sm:inline">خارج الدوام</span>
+            <Clock size={16} className="text-[hsl(var(--navy))]" />
+            <span className="hidden sm:inline">خارج العمل الرسمي</span>
             <span className="sm:hidden">خارج</span>
           </TabsTrigger>
-          <TabsTrigger value="deductions" className="flex items-center gap-2">
-            <DollarSign size={16} />
-            <span className="hidden sm:inline">معاملات الخصم</span>
-            <span className="sm:hidden">الخصومات</span>
-          </TabsTrigger>
+          {canViewDeductions && (
+            <TabsTrigger value="deductions" className="flex items-center gap-2">
+              <DollarSign size={16} />
+              <span className="hidden sm:inline">معاملات الخصم</span>
+              <span className="sm:hidden">الخصومات</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Tab 1: Official Attendance */}
@@ -552,55 +748,80 @@ export default function AttendanceManagementPage() {
                               <table className="w-full text-sm">
                                 <thead className="bg-[hsl(var(--navy)/0.05)]">
                                   <tr>
-                                    <th className="text-start p-2 font-medium">التاريخ</th>
+                                    <th className="text-center p-2 font-medium">اليوم</th>
+                                    <th className="text-center p-2 font-medium">الدخول تاريخ</th>
+                                    <th className="text-center p-2 font-medium">الخروج تاريخ</th>
+                                    <th className="text-center p-2 font-medium">موقع البصمة</th>
                                     <th className="text-center p-2 font-medium">الحالة</th>
-                                    <th className="text-center p-2 font-medium">الدخول</th>
-                                    <th className="text-center p-2 font-medium">الخروج</th>
-                                    <th className="text-center p-2 font-medium">تأخير</th>
-                                    <th className="text-center p-2 font-medium">مبكر</th>
-                                    <th className="text-start p-2 font-medium">البيان</th>
+                                    <th className="text-center p-2 font-medium">التأخير</th>
+                                    <th className="text-center p-2 font-medium">سبب التعديل</th>
+                                    <th className="text-center p-2 font-medium">ملاحظات</th>
                                     <th className="text-center p-2 font-medium">تعديل</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {emp.daily_details.map((day, idx) => {
                                     const config = STATUS_CONFIG[day.status] || STATUS_CONFIG['PRESENT'];
-                                    const checkIn = day.check_in_time ? day.check_in_time.slice(11, 16) : '--:--';
-                                    const checkOut = day.check_out_time ? day.check_out_time.slice(11, 16) : '--:--';
+                                    
+                                    // استخراج التاريخ والوقت من بصمة الدخول
+                                    let checkInDateTime = '--/-- --:--';
+                                    if (day.check_in_time) {
+                                      const checkInParts = day.check_in_time.split('T');
+                                      if (checkInParts.length >= 2) {
+                                        const date = checkInParts[0]; // YYYY-MM-DD
+                                        const time = checkInParts[1].slice(0, 5); // HH:MM
+                                        checkInDateTime = `${date} ${time}`;
+                                      }
+                                    }
+                                    
+                                    // استخراج التاريخ والوقت من بصمة الخروج
+                                    let checkOutDateTime = '--/-- --:--';
+                                    if (day.check_out_time) {
+                                      const checkOutParts = day.check_out_time.split('T');
+                                      if (checkOutParts.length >= 2) {
+                                        const date = checkOutParts[0]; // YYYY-MM-DD
+                                        const time = checkOutParts[1].slice(0, 5); // HH:MM
+                                        checkOutDateTime = `${date} ${time}`;
+                                      }
+                                    }
+                                    
+                                    // حساب إجمالي التأخير
+                                    const totalLate = (day.late_minutes || 0) + (day.early_leave_minutes || 0);
                                     
                                     return (
                                       <tr key={idx} className={`border-t ${config.bg}`}>
-                                        <td className="p-2 font-mono text-xs">{day.date}</td>
+                                        <td className="p-2 text-center font-mono text-xs">{day.date}</td>
+                                        <td className="p-2 text-center">
+                                          <span className={`font-mono text-xs ${day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}`}>
+                                            {checkInDateTime}
+                                          </span>
+                                        </td>
+                                        <td className="p-2 text-center">
+                                          <span className={`font-mono text-xs ${day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}`}>
+                                            {checkOutDateTime}
+                                          </span>
+                                        </td>
+                                        <td className="p-2 text-center text-xs">
+                                          {day.work_location || '-'}
+                                        </td>
                                         <td className="p-2 text-center">
                                           <Badge variant="secondary" className={`text-xs ${config.text}`}>
-                                            {config.icon} {day.status_ar || config.label}
+                                            {day.status_ar || config.label}
                                           </Badge>
                                         </td>
-                                        <td className="p-2 text-center font-mono text-xs">
-                                          <span className={day.late_minutes > 0 ? 'text-amber-600 font-bold' : ''}>
-                                            {checkIn}
-                                          </span>
-                                        </td>
-                                        <td className="p-2 text-center font-mono text-xs">
-                                          <span className={day.early_leave_minutes > 0 ? 'text-orange-600 font-bold' : ''}>
-                                            {checkOut}
-                                          </span>
-                                        </td>
                                         <td className="p-2 text-center">
-                                          {day.late_minutes > 0 ? (
-                                            <span className="text-amber-600 font-bold">{day.late_minutes}د</span>
+                                          {totalLate > 0 ? (
+                                            <span className="text-red-600 font-bold">{totalLate}د</span>
                                           ) : '-'}
                                         </td>
-                                        <td className="p-2 text-center">
-                                          {day.early_leave_minutes > 0 ? (
-                                            <span className="text-orange-600 font-bold">{day.early_leave_minutes}د</span>
-                                          ) : '-'}
+                                        <td className="p-2 text-xs text-center">
+                                          {day.correction_reason || day.penalty_reason_ar || '-'}
                                         </td>
                                         <td className="p-2 text-xs">
-                                          {day.penalty_reason_ar || (
-                                            day.status === 'ABSENT' ? '⛔ غياب - خصم يوم' :
-                                            day.late_minutes > 0 || day.early_leave_minutes > 0 ? '⏰ نقص ساعات' :
-                                            '✅ لا خصم'
+                                          {day.notes || (
+                                            day.status === 'ABSENT' ? 'غياب - خصم يوم' :
+                                            totalLate > 0 ? 'نقص ساعات' :
+                                            '-'
                                           )}
                                         </td>
                                         <td className="p-2 text-center">
@@ -616,6 +837,7 @@ export default function AttendanceManagementPage() {
                                                 status: day.status,
                                                 reason: ''
                                               });
+                                              setStatusAcknowledged(false); // reset التعهد
                                               setShowStatusDialog(true);
                                             }}
                                           >
@@ -682,17 +904,58 @@ export default function AttendanceManagementPage() {
 
           {/* Outside Hours List */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Moon size={20} className="text-yellow-500" />
-                سجل خارج أوقات العمل
-                <Badge className="bg-yellow-100 text-yellow-700 mr-2">غير محتسب</Badge>
+                <Clock size={20} className="text-[hsl(var(--navy))]" />
+                سجل خارج العمل الرسمي
+                <Badge className="bg-slate-100 text-slate-700 mr-2">غير محتسب</Badge>
               </CardTitle>
+              <div className="flex gap-2 items-center">
+                {/* عرض الإجمالي المحدد */}
+                {selectedOutsideRows.length > 0 && (
+                  <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-1">
+                    <span className="text-sm text-green-700">
+                      محدد: {selectedOutsideRows.length} سجل | 
+                      {' '}{(() => {
+                        const totalMins = Math.round(selectedOutsideRows.reduce((sum, key) => {
+                          const rec = outsideHoursData.find(r => `${r.employee_id}_${r.date}` === key);
+                          return sum + ((rec?.total_hours || 0) * 60);
+                        }, 0));
+                        const hours = Math.floor(totalMins / 60);
+                        const mins = totalMins % 60;
+                        return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                      })()}
+                    </span>
+                    <Button
+                      size="sm"
+                      className="h-7 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={handleBulkApprove}
+                    >
+                      <CheckCircle size={14} className="ml-1" />
+                      قبول المحدد
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-red-500"
+                      onClick={() => setSelectedOutsideRows([])}
+                    >
+                      إلغاء
+                    </Button>
+                  </div>
+                )}
+                {outsideHoursData.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
+                    <Printer size={16} className="ml-1" />
+                    طباعة
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <RefreshCw className="animate-spin text-yellow-500" size={32} />
+                  <RefreshCw className="animate-spin text-[hsl(var(--navy))]" size={32} />
                 </div>
               ) : outsideHoursData.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -701,8 +964,22 @@ export default function AttendanceManagementPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-yellow-50">
+                    <thead className="bg-slate-50">
                       <tr>
+                        <th className="text-center p-3 font-medium w-10">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded"
+                            checked={selectedOutsideRows.length === outsideHoursData.length && outsideHoursData.length > 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedOutsideRows(outsideHoursData.map(r => `${r.employee_id}_${r.date}`));
+                              } else {
+                                setSelectedOutsideRows([]);
+                              }
+                            }}
+                          />
+                        </th>
                         <th className="text-start p-3 font-medium">الموظف</th>
                         <th className="text-center p-3 font-medium">التاريخ</th>
                         <th className="text-center p-3 font-medium">الدخول</th>
@@ -714,64 +991,112 @@ export default function AttendanceManagementPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {outsideHoursData.map((rec, idx) => (
-                        <tr key={idx} className={`border-t ${rec.category === 'weekend' ? 'bg-orange-50' : 'bg-yellow-50'}`}>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold text-xs">
-                                {rec.employee_name_ar?.[0] || '?'}
+                      {outsideHoursData.map((rec, idx) => {
+                        const rowKey = `${rec.employee_id}_${rec.date}`;
+                        const isSelected = selectedOutsideRows.includes(rowKey);
+                        
+                        return (
+                          <tr 
+                            key={idx} 
+                            className={`border-t cursor-pointer ${isSelected ? 'bg-green-100' : rec.category === 'weekend' ? 'bg-orange-50' : 'bg-amber-50'}`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedOutsideRows(prev => prev.filter(k => k !== rowKey));
+                              } else {
+                                setSelectedOutsideRows(prev => [...prev, rowKey]);
+                              }
+                            }}
+                          >
+                            <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedOutsideRows(prev => [...prev, rowKey]);
+                                  } else {
+                                    setSelectedOutsideRows(prev => prev.filter(k => k !== rowKey));
+                                  }
+                                }}
+                              />
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-[hsl(var(--navy)/0.1)] flex items-center justify-center text-[hsl(var(--navy))] font-bold text-xs">
+                                  {rec.employee_name_ar?.[0] || '?'}
+                                </div>
+                                <span className="font-medium">{rec.employee_name_ar}</span>
                               </div>
-                              <span className="font-medium">{rec.employee_name_ar}</span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-center font-mono">{rec.date}</td>
-                          <td className="p-3 text-center font-mono text-yellow-700 font-bold">
-                            {rec.check_in_time || '--:--'}
-                          </td>
-                          <td className="p-3 text-center font-mono text-yellow-700 font-bold">
-                            {rec.check_out_time || '--:--'}
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge className="bg-yellow-200 text-yellow-800">
-                              {rec.total_hours?.toFixed(1) || 0} س
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
-                          <td className="p-3 text-center">
-                            <Badge className={rec.category === 'weekend' ? 'bg-orange-200 text-orange-800' : 'bg-yellow-200 text-yellow-800'}>
-                              {rec.category === 'weekend' ? '🟠 ويكند' : '🟡 يوم عمل'}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 border-green-500 text-green-600 hover:bg-green-50"
-                              onClick={() => {
-                                setCompensateForm({
-                                  employee_id: rec.employee_id,
-                                  date: rec.date,
-                                  hours: rec.total_hours,
-                                  note: ''
-                                });
-                                setShowCompensateDialog(true);
-                              }}
-                            >
-                              <CheckCircle size={12} className="ml-1" />
-                              احتسب
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="p-3 text-center font-mono">{rec.date}</td>
+                            <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
+                              {rec.check_in_time || '--:--'}
+                            </td>
+                            <td className="p-3 text-center font-mono text-[hsl(var(--navy))] font-bold">
+                              {rec.check_out_time || '--:--'}
+                            </td>
+                            <td className="p-3 text-center">
+                              <Badge className={`${isSelected ? 'bg-green-200 text-green-800' : 'bg-[hsl(var(--navy)/0.1)] text-[hsl(var(--navy))]'}`}>
+                                {(() => {
+                                  const totalMins = Math.round((rec.total_hours || 0) * 60);
+                                  const hours = Math.floor(totalMins / 60);
+                                  const mins = totalMins % 60;
+                                  return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                                })()}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center text-xs">{rec.work_location || '-'}</td>
+                            <td className="p-3 text-center">
+                              <Badge className={rec.category === 'weekend' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}>
+                                {rec.category === 'weekend' ? 'نهاية أسبوع' : 'يوم عمل'}
+                              </Badge>
+                            </td>
+                            <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7 border-green-500 text-green-600 hover:bg-green-50"
+                                onClick={() => {
+                                  setCompensateForm({
+                                    employee_id: rec.employee_id,
+                                    date: rec.date,
+                                    hours: rec.total_hours,
+                                    note: ''
+                                  });
+                                  setShowCompensateDialog(true);
+                                }}
+                              >
+                                <CheckCircle size={12} className="ml-1" />
+                                احتسب
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
+                  
+                  {/* ملخص الإجمالي */}
+                  <div className="mt-4 p-3 bg-slate-50 rounded-lg flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      إجمالي السجلات: {outsideHoursData.length} | 
+                      إجمالي الوقت: {(() => {
+                        const totalMins = Math.round(outsideHoursData.reduce((sum, r) => sum + ((r.total_hours || 0) * 60), 0));
+                        const hours = Math.floor(totalMins / 60);
+                        const mins = totalMins % 60;
+                        return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+                      })()}
+                    </span>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Tab 3: Deduction Transactions */}
+        {/* Tab 3: Deduction Transactions - للمدراء الرئيسيين فقط */}
+        {canViewDeductions && (
         <TabsContent value="deductions">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mb-4">
@@ -871,6 +1196,7 @@ export default function AttendanceManagementPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Status Change Dialog */}
@@ -896,33 +1222,62 @@ export default function AttendanceManagementPage() {
                   <SelectValue placeholder="اختر الحالة" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PRESENT">✅ حاضر</SelectItem>
-                  <SelectItem value="EXCUSED">✔️ معذور</SelectItem>
-                  <SelectItem value="EXEMPTED">🆓 إعفاء</SelectItem>
-                  <SelectItem value="ON_LEAVE">🏖️ مجاز</SelectItem>
-                  <SelectItem value="ON_MISSION">🚗 مهمة</SelectItem>
-                  <SelectItem value="ABSENT">❌ غائب</SelectItem>
+                  <SelectItem value="PRESENT">حاضر</SelectItem>
+                  <SelectItem value="EXCUSED">معذور</SelectItem>
+                  <SelectItem value="EXEMPTED">إعفاء</SelectItem>
+                  <SelectItem value="ON_LEAVE">مجاز</SelectItem>
+                  <SelectItem value="ON_MISSION">مهمة</SelectItem>
+                  <SelectItem value="ABSENT">غائب</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <Label>السبب</Label>
+              <Label>السبب (إلزامي)</Label>
               <Textarea 
                 value={statusForm.reason}
                 onChange={e => setStatusForm(f => ({ ...f, reason: e.target.value }))}
                 placeholder="اكتب سبب التعديل..."
+                className="min-h-[80px]"
               />
             </div>
             
-            <div className="p-3 bg-amber-50 rounded-lg text-sm text-amber-700">
-              ⚠️ تعديل الحالة سيؤثر على حساب العقوبات. تأكد من السبب قبل الحفظ.
+            {/* تنبيه هام */}
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <strong>تنبيه هام:</strong> تعديل الحالة يؤثر على حساب العقوبات. 
+              لا يُسمح بتعديل وقت البصمة الفعلي أو موقعها - التزوير ممنوع.
+            </div>
+            
+            {/* تعهد المسؤولية */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statusAcknowledged}
+                  onChange={e => setStatusAcknowledged(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-slate-700">
+                  أتعهد بأن هذا التعديل صحيح ومبني على أساس موثق، وأتحمل كامل المسؤولية 
+                  عن أي تبعات تنتج عن هذا التعديل. وأقر بأن البصمات المسجلة في النظام 
+                  لا يمكن تعديلها وهذا التعديل للحالة فقط.
+                </span>
+              </label>
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>إلغاء</Button>
-            <Button className="bg-[hsl(var(--navy))]" onClick={handleStatusChange}>حفظ التعديل</Button>
+            <Button variant="outline" onClick={() => {
+              setShowStatusDialog(false);
+              setStatusAcknowledged(false);
+            }}>إلغاء</Button>
+            <Button 
+              className="bg-[hsl(var(--navy))]" 
+              onClick={handleStatusChange}
+              disabled={!statusAcknowledged || !statusForm.reason?.trim()}
+            >
+              حفظ التعديل
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -973,7 +1328,7 @@ export default function AttendanceManagementPage() {
             </div>
             
             <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              ℹ️ سيتم إرسال المعاملة لمحمد للموافقة، ثم لستاس للتنفيذ.
+              سيتم إرسال المعاملة لمحمد للموافقة، ثم لستاس للتنفيذ.
             </div>
           </div>
           
@@ -997,7 +1352,12 @@ export default function AttendanceManagementPage() {
           <div className="space-y-4">
             <div className="p-3 bg-yellow-50 rounded-lg">
               <p className="text-sm"><strong>التاريخ:</strong> {compensateForm.date}</p>
-              <p className="text-sm"><strong>الساعات:</strong> {compensateForm.hours?.toFixed(1) || 0} ساعة</p>
+              <p className="text-sm"><strong>الوقت:</strong> {(() => {
+                const totalMins = Math.round((compensateForm.hours || 0) * 60);
+                const hours = Math.floor(totalMins / 60);
+                const mins = totalMins % 60;
+                return hours > 0 ? `${hours}س ${mins}د` : `${mins}د`;
+              })()}</p>
             </div>
             
             <div>
@@ -1035,9 +1395,6 @@ export default function AttendanceManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* PDF Preview Modal */}
-      <PdfModal />
     </div>
   );
 }
