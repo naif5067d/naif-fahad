@@ -97,5 +97,13 @@
 - System Architecture View UI
 - Centralized RBAC refactor
 
+## System Monitoring Features (March 1, 2026)
+- Live system metrics via `/api/maintenance/system-metrics`
+- Real data from Kubernetes cgroup v2 (RAM, CPU, Storage)
+- Fallback to psutil for non-containerized environments
+- Auto-refresh every 30 seconds
+- Detailed resource limits table
+- File storage breakdown analysis
+
 ## Last Updated
-March 1, 2026 - Added Nuclear Reset feature
+March 1, 2026 - Added Nuclear Reset feature + Verified System Monitoring
