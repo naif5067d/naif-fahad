@@ -738,8 +738,10 @@ def _read_cgroup_file(path: str, default=None):
 def _get_kubernetes_limits():
     """
     الحصول على حدود Kubernetes الفعلية من cgroup v2
+    مع fallback لـ psutil في حالة عدم توفر cgroup (بيئات أخرى)
     """
     limits = {}
+    is_kubernetes = os.path.exists('/sys/fs/cgroup/memory.max')
     
     # Memory Limits
     try:
@@ -762,9 +764,34 @@ def _get_kubernetes_limits():
                 'oom_behavior': 'Pod يُقتل (OOMKilled) عند تجاوز الحد'
             }
         else:
-            limits['memory'] = {'limit_gb': 'unlimited', 'error': 'No cgroup limit set'}
+            # Fallback to psutil for non-Kubernetes environments
+            vm = psutil.virtual_memory()
+            limits['memory'] = {
+                'limit_bytes': vm.total,
+                'limit_gb': round(vm.total / (1024**3), 2),
+                'limit_mb': round(vm.total / (1024**2), 0),
+                'current_bytes': vm.used,
+                'current_mb': round(vm.used / (1024**2), 2),
+                'peak_mb': round(vm.used / (1024**2), 2),
+                'usage_percent': vm.percent,
+                'swap_max_bytes': psutil.swap_memory().total,
+                'oom_behavior': 'System RAM limit (not containerized)',
+                'source': 'psutil'
+            }
     except Exception as e:
-        limits['memory'] = {'error': str(e)}
+        # Final fallback
+        try:
+            vm = psutil.virtual_memory()
+            limits['memory'] = {
+                'limit_gb': round(vm.total / (1024**3), 2),
+                'limit_mb': round(vm.total / (1024**2), 0),
+                'current_mb': round(vm.used / (1024**2), 2),
+                'usage_percent': vm.percent,
+                'source': 'psutil_fallback',
+                'error': str(e)
+            }
+        except:
+            limits['memory'] = {'error': str(e)}
     
     # CPU Limits
     try:
