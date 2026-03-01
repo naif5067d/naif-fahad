@@ -77,6 +77,9 @@ export default function ContractsManagementPage() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
   
+  // PDF Preview Hook
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+  
   const [contracts, setContracts] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
