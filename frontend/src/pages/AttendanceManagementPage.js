@@ -1396,6 +1396,9 @@ export default function AttendanceManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
