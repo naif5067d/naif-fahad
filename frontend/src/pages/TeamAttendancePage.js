@@ -318,47 +318,20 @@ export default function TeamAttendancePage() {
       params.start_date = startDate;
       params.end_date = endDate;
       
-      const response = await api.get('/api/team-attendance/print-report', {
-        params,
-        responseType: 'blob'
-      });
-      
-      // التحقق من أن الرد ليس فارغاً أو خطأ
-      if (!response.data || response.data.size === 0) {
-        throw new Error('Empty PDF response');
-      }
-      
-      // إنشاء رابط للمعاينة
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // فتح نافذة المعاينة
-      const previewWindow = window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
-      
-      if (previewWindow) {
-        // تنظيف الـ URL بعد إغلاق النافذة أو بعد فترة
-        const cleanup = () => {
-          try {
-            window.URL.revokeObjectURL(url);
-          } catch (e) { /* ignore */ }
-        };
+      await openPdf(async () => {
+        const response = await api.get('/api/team-attendance/print-report', {
+          params,
+          responseType: 'blob'
+        });
         
-        // تنظيف بعد 5 دقائق أو عند إغلاق النافذة
-        setTimeout(cleanup, 300000);
+        // التحقق من أن الرد ليس فارغاً أو خطأ
+        if (!response.data || response.data.size === 0) {
+          throw new Error('Empty PDF response');
+        }
         
-        toast.success(lang === 'ar' ? 'تم فتح معاينة التقرير' : 'Report preview opened');
-      } else {
-        // إذا تم حظر النافذة المنبثقة، قم بتحميل مباشر
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `attendance-report-${startDate || date || 'report'}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-        toast.success(lang === 'ar' ? 'تم تحميل التقرير' : 'Report downloaded');
-      }
+        return new Blob([response.data], { type: 'application/pdf' });
+      }, lang === 'ar' ? 'تقرير الحضور' : 'Attendance Report');
+      
     } catch (err) {
       console.error('Print error:', err);
       const errorMsg = err.response?.data?.detail || err.message || 'Unknown error';
