@@ -553,20 +553,32 @@ async def get_executive_alerts(
 
 # ==================== AI SMART EVALUATION ====================
 
-async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
+async def calculate_excuse_score(employee_id: str, month: str = None, year: int = None, use_yearly: bool = False) -> dict:
     """
     حساب مؤشر الأعذار والاستئذان
-    - نسيان بصمة: الحد 3 مرات/شهر
-    - تبرير تأخير: الحد 5 مرات/شهر
+    - نسيان بصمة: الحد 3 مرات/شهر (أو 36 سنوياً)
+    - تبرير تأخير: الحد 5 مرات/شهر (أو 60 سنوياً)
     - خروج مبكر: رصيد الساعات
     """
     now = datetime.now(timezone.utc)
-    if month:
-        year, mon = int(month.split('-')[0]), int(month.split('-')[1])
-    else:
-        year, mon = now.year, now.month
     
-    start_date, end_date = get_month_range(year, mon)
+    if use_yearly:
+        if year is None:
+            year = now.year
+        start_date, end_date = get_year_range(year)
+        # تعديل الحدود للسنة
+        forget_limit = 36  # 3 × 12 شهر
+        late_limit = 60    # 5 × 12 شهر
+    elif month:
+        yr, mon = int(month.split('-')[0]), int(month.split('-')[1])
+        start_date, end_date = get_month_range(yr, mon)
+        forget_limit = 3
+        late_limit = 5
+    else:
+        yr, mon = now.year, now.month
+        start_date, end_date = get_month_range(yr, mon)
+        forget_limit = 3
+        late_limit = 5
     
     # نسيان البصمة
     forget_count = await db.transactions.count_documents({
@@ -590,7 +602,7 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
         "type": {"$in": ["early_leave_request", "early_leave", "permission"]},
         "status": {"$nin": ["rejected", "cancelled"]},
         "data.date": {"$gte": start_date, "$lte": end_date}
-    }, {"_id": 0, "data": 1}).to_list(50)
+    }, {"_id": 0, "data": 1}).to_list(200)
     
     early_leave_minutes = 0
     for el in early_leaves:
@@ -607,20 +619,18 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
                 pass
     
     # حساب الدرجة
-    # إذا لا يوجد أي أعذار = الموظف ملتزم 100%
-    # نسيان بصمة: كل مرة تخصم 10 نقاط (الحد 3)
-    forget_penalty = min(forget_count * 10, 30)
-    # تبرير تأخير: كل مرة تخصم 6 نقاط (الحد 5)
-    late_penalty = min(late_excuse_count * 6, 30)
+    # نسيان بصمة: كل مرة تخصم نقاط حسب الحد
+    forget_penalty = min((forget_count / forget_limit) * 30, 30) if forget_limit > 0 else 0
+    # تبرير تأخير
+    late_penalty = min((late_excuse_count / late_limit) * 30, 30) if late_limit > 0 else 0
     # خروج مبكر: كل 30 دقيقة تخصم 5 نقاط
     early_penalty = min((early_leave_minutes // 30) * 5, 40)
     
     total_penalty = forget_penalty + late_penalty + early_penalty
     
     # إذا لا يوجد أي استخدام للأعذار، الدرجة 0 (لم يبدأ التقييم بعد)
-    # إذا استخدم أعذار، يبدأ من 100 وتُخصم
     if forget_count == 0 and late_excuse_count == 0 and early_leave_minutes == 0:
-        score = 0  # لم يبدأ بعد
+        score = 0
         no_data = True
     else:
         score = max(0, 100 - total_penalty)
@@ -628,36 +638,41 @@ async def calculate_excuse_score(employee_id: str, month: str = None) -> dict:
     
     return {
         "score": round(score, 1),
-        "no_data": no_data if 'no_data' in dir() else False,
+        "no_data": no_data,
         "forget_checkin": {
             "count": forget_count,
-            "limit": 3,
-            "penalty": forget_penalty
+            "limit": forget_limit,
+            "penalty": round(forget_penalty, 1)
         },
         "late_excuse": {
             "count": late_excuse_count,
-            "limit": 5,
-            "penalty": late_penalty
+            "limit": late_limit,
+            "penalty": round(late_penalty, 1)
         },
         "early_leave": {
             "minutes": early_leave_minutes,
             "hours": round(early_leave_minutes / 60, 1),
-            "penalty": early_penalty
+            "penalty": round(early_penalty, 1)
         }
     }
 
 
-async def calculate_ai_employee_score(employee_id: str, month: str = None) -> dict:
+async def calculate_ai_employee_score(employee_id: str, month: str = None, year: int = None, use_yearly: bool = True) -> dict:
     """
     التقييم الذكي الشامل للموظف
     يجمع كل المؤشرات مع تحليل AI
+    يعمل سنوياً من أول السنة إلى اليوم الحالي
     """
-    # جمع كل المؤشرات
-    attendance = await calculate_attendance_score(employee_id=employee_id, month=month)
-    tasks = await calculate_task_score(employee_id=employee_id, month=month)
-    financial = await calculate_financial_score(employee_id=employee_id, month=month)
-    requests = await calculate_request_score(employee_id=employee_id, month=month)
-    excuses = await calculate_excuse_score(employee_id=employee_id, month=month)
+    now = datetime.now(timezone.utc)
+    if year is None:
+        year = now.year
+    
+    # جمع كل المؤشرات سنوياً
+    attendance = await calculate_attendance_score(employee_id=employee_id, year=year, use_yearly=use_yearly)
+    tasks = await calculate_task_score(employee_id=employee_id, year=year, use_yearly=use_yearly)
+    financial = await calculate_financial_score(employee_id=employee_id, year=year, use_yearly=use_yearly)
+    requests = await calculate_request_score(employee_id=employee_id, year=year, use_yearly=use_yearly)
+    excuses = await calculate_excuse_score(employee_id=employee_id, year=year, use_yearly=use_yearly)
     
     # التحقق من وجود بيانات
     has_attendance_data = not attendance.get('no_data', False) and attendance.get('work_days', 0) > 0
