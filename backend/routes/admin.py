@@ -587,7 +587,7 @@ async def force_full_sync_endpoint(body: dict):
     تزامن إجباري كامل
     يُعيد تعيين جميع البيانات الأساسية
     """
-    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+    if body.get("emergency_key") != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     result = await force_full_sync(db)
@@ -632,7 +632,7 @@ async def import_all_data(body: dict):
     """
     استيراد البيانات من بيئة أخرى
     """
-    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+    if body.get("emergency_key") != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     import_data = body.get("data", {})
