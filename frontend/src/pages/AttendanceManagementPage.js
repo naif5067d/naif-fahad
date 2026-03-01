@@ -108,6 +108,9 @@ export default function AttendanceManagementPage() {
   const [showCompensateDialog, setShowCompensateDialog] = useState(false);
   const [compensateForm, setCompensateForm] = useState({ employee_id: '', date: '', hours: null, note: '' });
 
+  // PDF Preview State
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+
   // Fetch employees
   useEffect(() => {
     const fetchEmployees = async () => {
