@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { formatGregorianHijri } from '@/lib/dateUtils';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 import { 
   FileSignature, 
   Plus, 
