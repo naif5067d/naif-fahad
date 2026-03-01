@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { formatGregorianHijri } from '@/lib/dateUtils';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 import { 
   Receipt, Plus, Search, Eye, Play, XCircle, CheckCircle, Clock, FileText,
   Users, Building2, Calendar, DollarSign, AlertTriangle, RefreshCw,
