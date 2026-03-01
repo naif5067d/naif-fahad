@@ -424,22 +424,10 @@ export default function ContractsManagementPage() {
 
   const handlePreviewPDF = async (contractId) => {
     try {
-      const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-      
-      // فتح PDF في تبويب جديد (fallback للتحميل)
-      const newWindow = window.open(url, '_blank');
-      if (!newWindow) {
-        // إذا حُظر، حمّل مباشرة
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `contract-${contractId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('تم تحميل العقد');
-      }
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      await openPdf(async () => {
+        const res = await api.get(`/api/contracts-v2/${contractId}/pdf?lang=ar`, { responseType: 'blob' });
+        return new Blob([res.data], { type: 'application/pdf' });
+      }, 'معاينة العقد');
     } catch (err) {
       toast.error('فشل تحميل PDF');
     }
