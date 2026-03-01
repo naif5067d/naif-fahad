@@ -41,6 +41,7 @@ import {
   TrendingDown,
   FileText,
   Printer,
+  Download,
   Bell,
   ChevronDown,
   ChevronUp,
@@ -54,9 +55,9 @@ import {
   Edit,
   ArrowRight
 } from 'lucide-react';
-import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import PdfPreviewModal from '@/components/PdfPreviewModal';
 
 // ألوان الحالات - باستخدام ألوان الشركة الرسمية فقط
 const STATUS_CONFIG = {
@@ -115,9 +116,11 @@ export default function AttendanceManagementPage() {
   
   // بحث الموظفين
   const [employeeSearch, setEmployeeSearch] = useState('');
-
-  // PDF Preview Hook
-  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+  
+  // PDF Preview state
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState('');
 
   // التحقق من صلاحية عرض معاملات الخصم (للمدراء الرئيسيين فقط)
   const canViewDeductions = useMemo(() => {
@@ -353,8 +356,24 @@ export default function AttendanceManagementPage() {
     }
   };
 
+  // جلب استعلام العجز
+  const fetchDeficitSummary = async () => {
+    try {
+      setLoading(true);
+      const [year, month] = startDate.substring(0, 7).split('-');
+      const res = await api.get('/api/team-attendance/employee-deficit-summary', {
+        params: { year: parseInt(year), month: parseInt(month) }
+      });
+      setDeficitSummary(res.data.employees || []);
+      setShowDeficitDialog(true);
+    } catch (err) {
+      toast.error('خطأ في جلب بيانات العجز');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // طباعة التقرير
-  // طباعة التقرير (باستخدام Modal بدلاً من window.open)
   const handlePrint = async () => {
     try {
       const params = {
@@ -368,16 +387,56 @@ export default function AttendanceManagementPage() {
         params.employee_ids = selectedEmployees.join(',');
       }
       
-      await openPdf(async () => {
-        const response = await api.get('/api/team-attendance/print-report', {
-          params,
-          responseType: 'blob'
-        });
-        return new Blob([response.data], { type: 'application/pdf' });
-      }, 'تقرير الحضور');
+      const response = await api.get('/api/team-attendance/print-report', {
+        params,
+        responseType: 'blob'
+      });
       
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // فتح المعاينة
+      setPdfPreviewUrl(url);
+      setPdfFileName(`attendance-report-${startDate}.pdf`);
+      setPdfPreviewOpen(true);
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
+    }
+  };
+  
+  // تحميل التقرير مباشرة
+  const handleDownload = async () => {
+    try {
+      const params = {
+        period: 'monthly',
+        month: startDate.substring(0, 7),
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      
+      const response = await api.get('/api/team-attendance/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `attendance-report-${startDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('تم تحميل التقرير');
+    } catch (err) {
+      toast.error('خطأ في تحميل التقرير');
     }
   };
 
@@ -393,14 +452,53 @@ export default function AttendanceManagementPage() {
         params.employee_ids = selectedEmployees.join(',');
       }
       
-      await openPdf(async () => {
-        const response = await api.get('/api/team-attendance/outside-hours/print-report', {
-          params,
-          responseType: 'blob'
-        });
-        return new Blob([response.data], { type: 'application/pdf' });
-      }, 'تقرير خارج العمل');
+      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+        params,
+        responseType: 'blob'
+      });
       
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      // فتح المعاينة
+      setPdfPreviewUrl(url);
+      setPdfFileName(`outside-hours-report-${startDate}.pdf`);
+      setPdfPreviewOpen(true);
+    } catch (err) {
+      toast.error('خطأ في طباعة التقرير');
+    }
+  };
+  
+  // تحميل تقرير خارج العمل
+  const handleDownloadOutsideHours = async () => {
+    try {
+      const params = {
+        start_date: startDate,
+        end_date: endDate
+      };
+      
+      if (selectedEmployees.length > 0) {
+        params.employee_ids = selectedEmployees.join(',');
+      }
+      
+      const response = await api.get('/api/team-attendance/outside-hours/print-report', {
+        params,
+        responseType: 'blob'
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `outside-hours-report-${startDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success('تم تحميل التقرير');
+      toast.success('تم فتح التقرير');
     } catch (err) {
       toast.error('خطأ في طباعة التقرير');
     }
@@ -550,7 +648,16 @@ export default function AttendanceManagementPage() {
               <div className="flex-1" />
               
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchDeficitSummary}
+                  title="استعلام عجز الموظفين"
+                >
+                  <AlertTriangle size={16} className="ml-1" />
+                  استعلام العجز
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -560,9 +667,13 @@ export default function AttendanceManagementPage() {
                   <RefreshCw size={16} className="ml-1" />
                   تحضير
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePrint}>
-                  <Printer size={16} className="ml-1" />
-                  طباعة {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
+                <Button variant="outline" size="sm" onClick={handlePrint} title="معاينة التقرير">
+                  <Eye size={16} className="ml-1" />
+                  معاينة
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleDownload} title="تحميل التقرير">
+                  <Download size={16} className="ml-1" />
+                  تحميل {selectedEmployees.length > 0 ? `(${selectedEmployees.length})` : ''}
                 </Button>
                 {canViewDeductions && (
                   <Button 
@@ -946,10 +1057,16 @@ export default function AttendanceManagementPage() {
                   </div>
                 )}
                 {outsideHoursData.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={handlePrintOutsideHours}>
-                    <Printer size={16} className="ml-1" />
-                    طباعة
-                  </Button>
+                  <>
+                    <Button variant="outline" size="sm" onClick={handlePrintOutsideHours} title="معاينة">
+                      <Eye size={16} className="ml-1" />
+                      معاينة
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleDownloadOutsideHours} title="تحميل">
+                      <Download size={16} className="ml-1" />
+                      تحميل
+                    </Button>
+                  </>
                 )}
               </div>
             </CardHeader>
@@ -1396,9 +1513,99 @@ export default function AttendanceManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog استعلام العجز */}
+      <Dialog open={showDeficitDialog} onOpenChange={setShowDeficitDialog}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-amber-600" size={20} />
+              استعلام عجز الموظفين - {startDate.substring(0, 7)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100 sticky top-0">
+                <tr>
+                  <th className="text-start p-2 font-medium">الموظف</th>
+                  <th className="text-center p-2 font-medium">حضور</th>
+                  <th className="text-center p-2 font-medium">غياب</th>
+                  <th className="text-center p-2 font-medium">إجازة</th>
+                  <th className="text-center p-2 font-medium">تأخير</th>
+                  <th className="text-center p-2 font-medium">خروج مبكر</th>
+                  <th className="text-center p-2 font-medium">إجمالي العجز</th>
+                  <th className="text-center p-2 font-medium">متاح للتعويض</th>
+                  <th className="text-center p-2 font-medium">مطلوب تعويض</th>
+                  <th className="text-center p-2 font-medium">الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deficitSummary.map((emp, idx) => (
+                  <tr key={emp.employee_id} className={`border-t ${emp.has_executed_deduction ? 'bg-green-50' : emp.total_deficit_minutes > 420 ? 'bg-red-50' : emp.total_deficit_minutes > 0 ? 'bg-amber-50' : ''}`}>
+                    <td className="p-2 font-medium">{emp.employee_name_ar}</td>
+                    <td className="p-2 text-center text-green-600 font-bold">{emp.present_days}</td>
+                    <td className="p-2 text-center text-red-600 font-bold">{emp.absent_days}</td>
+                    <td className="p-2 text-center text-blue-600">{emp.leave_days}</td>
+                    <td className="p-2 text-center">{emp.late_display}</td>
+                    <td className="p-2 text-center">{emp.early_leave_display}</td>
+                    <td className="p-2 text-center font-bold text-amber-600">{emp.total_deficit_display}</td>
+                    <td className="p-2 text-center text-[hsl(var(--navy))]">{emp.outside_hours_display}</td>
+                    <td className="p-2 text-center font-bold text-red-600">{emp.compensation_needed_display}</td>
+                    <td className="p-2 text-center">
+                      <Badge className={
+                        emp.has_executed_deduction ? 'bg-green-100 text-green-700' :
+                        emp.total_deficit_minutes > 420 ? 'bg-red-100 text-red-700' :
+                        emp.can_compensate && emp.total_deficit_minutes > 0 ? 'bg-amber-100 text-amber-700' :
+                        'bg-slate-100 text-slate-600'
+                      }>
+                        {emp.status_summary}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* ملخص */}
+          <div className="mt-4 p-3 bg-slate-50 rounded-lg grid grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-xs text-muted-foreground">إجمالي الموظفين</p>
+              <p className="text-lg font-bold">{deficitSummary.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">لديهم عجز</p>
+              <p className="text-lg font-bold text-amber-600">{deficitSummary.filter(e => e.total_deficit_minutes > 0).length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">تم خصمهم</p>
+              <p className="text-lg font-bold text-green-600">{deficitSummary.filter(e => e.has_executed_deduction).length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">يمكن تعويضهم</p>
+              <p className="text-lg font-bold text-[hsl(var(--navy))]">{deficitSummary.filter(e => e.can_compensate && e.total_deficit_minutes > 0).length}</p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeficitDialog(false)}>إغلاق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* PDF Preview Modal */}
-      <PdfModal />
+      <PdfPreviewModal
+        open={pdfPreviewOpen}
+        onClose={() => {
+          setPdfPreviewOpen(false);
+          setPdfPreviewUrl(null);
+        }}
+        pdfUrl={pdfPreviewUrl}
+        fileName={pdfFileName}
+        title={lang === 'ar' ? 'معاينة التقرير' : 'Report Preview'}
+        lang={lang}
+      />
     </div>
   );
 }
