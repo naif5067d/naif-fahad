@@ -186,28 +186,15 @@ export default function FinancialCustodyPage() {
   // ==================== PDF / PRINT ====================
 
   const handlePrintPdf = async (custodyId, custodyNumber) => {
-    setSubmitting(true);
     try {
-      const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
-        responseType: 'blob'
-      });
-      
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open in new tab for printing
-      const printWindow = window.open(url, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-        };
-      }
-      
-      toast.success(lang === 'ar' ? 'جاري فتح الطباعة...' : 'Opening print...');
+      await openPdf(async () => {
+        const response = await api.get(`/api/admin-custody/${custodyId}/pdf?lang=${lang}`, {
+          responseType: 'blob'
+        });
+        return new Blob([response.data], { type: 'application/pdf' });
+      }, lang === 'ar' ? `عهدة ${custodyNumber}` : `Custody ${custodyNumber}`);
     } catch (e) {
       toast.error(lang === 'ar' ? 'خطأ في إنشاء PDF' : 'Error generating PDF');
-    } finally {
-      setSubmitting(false);
     }
   };
 
