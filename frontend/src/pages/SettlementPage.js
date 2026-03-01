@@ -43,6 +43,9 @@ export default function SettlementPage() {
   const { user } = useAuth();
   const { lang } = useLanguage();
   
+  // PDF Preview Hook
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+  
   const [settlements, setSettlements] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [contracts, setContracts] = useState([]);
