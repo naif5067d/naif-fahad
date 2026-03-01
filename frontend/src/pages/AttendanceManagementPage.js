@@ -1541,9 +1541,78 @@ export default function AttendanceManagementPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="text-amber-600" size={20} />
-              استعلام عجز الموظفين - {startDate.substring(0, 7)}
+              استعلام عجز الموظفين - {deficitMonth}
             </DialogTitle>
           </DialogHeader>
+          
+          {/* فلاتر استعلام العجز */}
+          <div className="flex flex-wrap gap-3 p-3 bg-slate-50 rounded-lg mb-4">
+            {/* فلتر الشهر */}
+            <div className="flex-1 min-w-[150px]">
+              <Label className="text-xs text-muted-foreground mb-1 block">الشهر</Label>
+              <Input
+                type="month"
+                value={deficitMonth}
+                onChange={(e) => setDeficitMonth(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            
+            {/* فلتر الموظفين */}
+            <div className="flex-[2] min-w-[200px]">
+              <Label className="text-xs text-muted-foreground mb-1 block">الموظفين</Label>
+              <Select
+                value={deficitSelectedEmployees.length === 0 ? 'all' : deficitSelectedEmployees.length === 1 ? deficitSelectedEmployees[0] : 'multiple'}
+                onValueChange={(val) => {
+                  if (val === 'all') {
+                    setDeficitSelectedEmployees([]);
+                  } else if (val !== 'multiple') {
+                    setDeficitSelectedEmployees([val]);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="جميع الموظفين">
+                    {deficitSelectedEmployees.length === 0 
+                      ? 'جميع الموظفين' 
+                      : deficitSelectedEmployees.length === 1 
+                        ? employees.find(e => e.id === deficitSelectedEmployees[0])?.name_ar || 'موظف محدد'
+                        : `${deficitSelectedEmployees.length} موظفين محددين`
+                    }
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الموظفين</SelectItem>
+                  {employees.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.name_ar}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* أزرار التحديد المتعدد */}
+            <div className="flex items-end gap-2">
+              {deficitSelectedEmployees.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setDeficitSelectedEmployees([])}
+                  className="text-xs h-9"
+                >
+                  <XCircle size={14} className="ml-1" />
+                  إلغاء التحديد
+                </Button>
+              )}
+              <Button 
+                size="sm"
+                onClick={() => fetchDeficitSummary(deficitMonth)}
+                className="bg-[hsl(var(--navy))] hover:bg-[hsl(var(--navy-dark))] h-9"
+              >
+                <RefreshCw size={14} className="ml-1" />
+                تحديث
+              </Button>
+            </div>
+          </div>
           
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1562,7 +1631,7 @@ export default function AttendanceManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {deficitSummary.map((emp, idx) => (
+                {deficitFilteredData.map((emp, idx) => (
                   <tr key={emp.employee_id} className={`border-t ${emp.has_executed_deduction ? 'bg-green-50' : emp.total_deficit_minutes > 420 ? 'bg-red-50' : emp.total_deficit_minutes > 0 ? 'bg-amber-50' : ''}`}>
                     <td className="p-2 font-medium">{emp.employee_name_ar}</td>
                     <td className="p-2 text-center text-green-600 font-bold">{emp.present_days}</td>
