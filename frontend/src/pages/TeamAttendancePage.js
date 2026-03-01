@@ -109,6 +109,9 @@ export default function TeamAttendancePage() {
   const { lang } = useLanguage();
   const { user } = useAuth();
   
+  // PDF Preview Hook
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
+  
   // الأدوار الإدارية التي ترى قواعد الخصم
   const isAdmin = ['stas', 'sultan', 'naif', 'mohammed'].includes(user?.role);
   
