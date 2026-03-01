@@ -440,14 +440,14 @@ export default function LoginPage() {
             className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-5 sm:p-8 border border-slate-200/50 animate-fade-in-up"
             style={{ animationDelay: '0.5s' }}
           >
-            <h2 className="text-base sm:text-lg font-semibold text-slate-700 mb-1" data-testid="login-title">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-700 mb-1 text-center" data-testid="login-title">
               {lang === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm text-slate-500 mb-4 sm:mb-6 text-center">
               {lang === 'ar' ? 'أدخل بيانات الدخول للوصول للنظام' : 'Enter your credentials to access the system'}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive animate-shake" data-testid="login-error">
                   <AlertCircle size={16} />
@@ -455,48 +455,51 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-600">
+              {/* Username Field */}
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-slate-600 mb-2 text-right">
                   {lang === 'ar' ? 'اسم المستخدم' : 'Username'}
-                </Label>
-                <div className="relative group">
-                  <User size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent pointer-events-none" />
-                  <Input
+                </label>
+                <div className="relative">
+                  <input
                     id="username"
                     data-testid="login-username"
+                    type="text"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
-                    className="w-full pr-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all text-right"
+                    className="block w-full h-12 px-4 pr-11 text-base border border-slate-200 rounded-lg bg-white focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all placeholder:text-slate-400"
                     placeholder={lang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username'}
                     autoComplete="username"
                     dir="auto"
                     required
                   />
+                  <User size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-600">
+              {/* Password Field */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-600 mb-2 text-right">
                   {lang === 'ar' ? 'كلمة المرور' : 'Password'}
-                </Label>
-                <div className="relative group">
-                  <Lock size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-accent pointer-events-none" />
-                  <Input
+                </label>
+                <div className="relative">
+                  <input
                     id="password"
                     data-testid="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full pr-10 pl-10 h-12 border-slate-200 focus:border-accent focus:ring-accent transition-all text-right"
+                    className="block w-full h-12 px-4 pr-11 pl-11 text-base border border-slate-200 rounded-lg bg-white focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all placeholder:text-slate-400"
                     placeholder={lang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password'}
                     autoComplete="current-password"
                     dir="auto"
                     required
                   />
+                  <Lock size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -505,22 +508,23 @@ export default function LoginPage() {
               </div>
 
               {/* Remember Me */}
-              <div className="flex items-center gap-2 flex-row-reverse justify-end">
-                <Label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer">
-                  {lang === 'ar' ? 'تذكرني' : 'Remember me'}
-                </Label>
-                <Checkbox 
-                  id="remember" 
-                  checked={rememberMe} 
-                  onCheckedChange={setRememberMe}
-                  className="border-slate-300 data-[state=checked]:bg-accent data-[state=checked]:border-accent h-4 w-4"
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
                 />
+                <label htmlFor="remember" className="text-sm text-slate-600 cursor-pointer select-none">
+                  {lang === 'ar' ? 'تذكرني' : 'Remember me'}
+                </label>
               </div>
 
               <Button 
                 data-testid="login-submit" 
                 type="submit" 
-                className="w-full h-11 sm:h-12 text-sm sm:text-base text-white font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]" 
+                className="w-full h-12 text-base text-white font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]" 
                 style={{ 
                   background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`,
                   boxShadow: `0 10px 40px -10px ${settings.primary_color}66`
@@ -528,7 +532,7 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 {loading ? (
-                  <><Loader2 size={18} className="animate-spin mr-2" /> {lang === 'ar' ? 'جاري الدخول...' : 'Signing in...'}</>
+                  <><Loader2 size={18} className="animate-spin ml-2" /> {lang === 'ar' ? 'جاري الدخول...' : 'Signing in...'}</>
                 ) : (
                   lang === 'ar' ? 'دخول' : 'Sign In'
                 )}
