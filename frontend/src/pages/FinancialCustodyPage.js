@@ -1764,6 +1764,9 @@ export default function FinancialCustodyPage() {
           </table>
         </div>
       </div>
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
