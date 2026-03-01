@@ -75,6 +75,9 @@ export default function FinancialCustodyPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
   const codeInputRef = useRef(null);
+  
+  // PDF Preview Hook
+  const { pdfState, openPdf, closePdf, PdfModal } = usePdfPreview();
 
   const role = user?.role;
   const canCreate = ['sultan', 'mohammed'].includes(role);
