@@ -2481,6 +2481,9 @@ export default function ContractsManagementPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
