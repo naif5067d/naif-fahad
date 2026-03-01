@@ -518,7 +518,7 @@ export default function LoginPage() {
               <Button 
                 data-testid="login-submit" 
                 type="submit" 
-                className="w-full h-12 text-white font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]" 
+                className="w-full h-11 sm:h-12 text-sm sm:text-base text-white font-medium shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]" 
                 style={{ 
                   background: `linear-gradient(135deg, ${settings.primary_color}, ${settings.secondary_color})`,
                   boxShadow: `0 10px 40px -10px ${settings.primary_color}66`
