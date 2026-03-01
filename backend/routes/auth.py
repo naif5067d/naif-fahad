@@ -79,7 +79,7 @@ async def clear_all_blocks(request: Request):
     يتطلب مفتاح سري
     """
     body = await request.json()
-    if body.get("emergency_key") != "EMERGENCY_STAS_2026":
+    if body.get("emergency_key") != EMERGENCY_AUTH_KEY:
         raise HTTPException(status_code=403, detail="مفتاح غير صحيح")
     
     # مسح جميع الحظر
