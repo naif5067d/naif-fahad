@@ -1,6 +1,7 @@
 """
 Executive Analytics API
 لوحة الحوكمة الذكية - المؤشرات التنفيذية
+تعمل بشكل سنوي: من أول يوم في السنة إلى اليوم الحالي
 """
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional, List
@@ -19,6 +20,27 @@ def get_month_range(year: int, month: int):
     last_day = calendar.monthrange(year, month)[1]
     end = f"{year}-{month:02d}-{last_day}"
     return start, end
+
+
+def get_year_range(year: int = None):
+    """
+    الحصول على نطاق السنة
+    من أول يوم في السنة إلى اليوم الحالي (أو آخر يوم إذا كانت سنة سابقة)
+    """
+    now = datetime.now(timezone.utc)
+    if year is None:
+        year = now.year
+    
+    start_date = f"{year}-01-01"
+    
+    if year == now.year:
+        # السنة الحالية: من أول يوم إلى اليوم الحالي
+        end_date = now.strftime("%Y-%m-%d")
+    else:
+        # سنة سابقة: من أول يوم إلى آخر يوم
+        end_date = f"{year}-12-31"
+    
+    return start_date, end_date
 
 
 async def calculate_attendance_score(employee_id: str = None, month: str = None) -> dict:
