@@ -581,6 +581,9 @@ export default function TransactionDetailPage() {
           </div>
         </div>
       )}
+      
+      {/* PDF Preview Modal */}
+      <PdfModal />
     </div>
   );
 }
