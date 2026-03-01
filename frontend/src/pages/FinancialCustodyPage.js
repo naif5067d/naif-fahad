@@ -16,6 +16,7 @@ import {
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Html5Qrcode } from 'html5-qrcode';
+import PdfPreviewModal, { usePdfPreview } from '@/components/PdfPreviewModal';
 
 // ==================== CONSTANTS ====================
 
