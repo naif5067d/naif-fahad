@@ -229,11 +229,16 @@ async def calculate_company_health_score(month: str = None) -> dict:
     """
     حساب مؤشر صحة الشركة
     المتوسط المرجح للمؤشرات الأربعة
+    يعمل سنوياً من أول السنة إلى اليوم الحالي
     """
-    attendance = await calculate_attendance_score(month=month)
-    tasks = await calculate_task_score(month=month)
-    financial = await calculate_financial_score(month=month)
-    requests = await calculate_request_score(month=month)
+    now = datetime.now(timezone.utc)
+    use_yearly = True  # دائماً سنوي للوحة الحوكمة
+    year = now.year
+    
+    attendance = await calculate_attendance_score(year=year, use_yearly=use_yearly)
+    tasks = await calculate_task_score(year=year, use_yearly=use_yearly)
+    financial = await calculate_financial_score(year=year, use_yearly=use_yearly)
+    requests = await calculate_request_score(year=year, use_yearly=use_yearly)
     
     # الأوزان
     weights = {
@@ -250,18 +255,31 @@ async def calculate_company_health_score(month: str = None) -> dict:
         requests['score'] * weights['requests']
     )
     
+    # نطاق التقرير
+    start_date, end_date = get_year_range(year)
+    
     return {
         "health_score": round(health_score, 1),
         "attendance": attendance,
         "tasks": tasks,
         "financial": financial,
         "requests": requests,
-        "weights": weights
+        "weights": weights,
+        "period": {
+            "type": "yearly",
+            "year": year,
+            "start_date": start_date,
+            "end_date": end_date
+        }
     }
 
 
-async def get_top_performers(limit: int = 5, month: str = None) -> list:
+async def get_top_performers(limit: int = 5, month: str = None, year: int = None, use_yearly: bool = True) -> list:
     """أفضل الموظفين أداءً - باستثناء الإداريين"""
+    now = datetime.now(timezone.utc)
+    if year is None:
+        year = now.year
+        
     employees = await db.employees.find(
         {"status": "active", "exclude_from_evaluation": {"$ne": True}}, 
         {"_id": 0, "id": 1, "full_name": 1, "full_name_ar": 1, "department": 1}
@@ -269,9 +287,9 @@ async def get_top_performers(limit: int = 5, month: str = None) -> list:
     
     results = []
     for emp in employees:
-        attendance = await calculate_attendance_score(employee_id=emp['id'], month=month)
-        tasks = await calculate_task_score(employee_id=emp['id'], month=month)
-        excuses = await calculate_excuse_score(employee_id=emp['id'], month=month)
+        attendance = await calculate_attendance_score(employee_id=emp['id'], year=year, use_yearly=use_yearly)
+        tasks = await calculate_task_score(employee_id=emp['id'], year=year, use_yearly=use_yearly)
+        excuses = await calculate_excuse_score(employee_id=emp['id'], year=year, use_yearly=use_yearly)
         
         # حساب شامل مع الأعذار
         overall = (attendance['score'] * 0.35) + (tasks['score'] * 0.40) + (excuses['score'] * 0.25)
@@ -291,9 +309,9 @@ async def get_top_performers(limit: int = 5, month: str = None) -> list:
     return sorted(results, key=lambda x: x['score'], reverse=True)[:limit]
 
 
-async def get_bottom_performers(limit: int = 5, month: str = None) -> list:
+async def get_bottom_performers(limit: int = 5, month: str = None, year: int = None, use_yearly: bool = True) -> list:
     """الموظفون الذين يحتاجون متابعة"""
-    top = await get_top_performers(limit=100, month=month)
+    top = await get_top_performers(limit=100, year=year, use_yearly=use_yearly)
     return sorted(top, key=lambda x: x['score'])[:limit]
 
 
