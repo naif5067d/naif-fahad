@@ -360,14 +360,21 @@ export default function AttendanceManagementPage() {
   };
 
   // جلب استعلام العجز
-  const fetchDeficitSummary = async () => {
+  const fetchDeficitSummary = async (month = deficitMonth) => {
     try {
       setLoading(true);
-      const [year, month] = startDate.substring(0, 7).split('-');
-      const res = await api.get('/api/team-attendance/employee-deficit-summary', {
-        params: { year: parseInt(year), month: parseInt(month) }
-      });
-      setDeficitSummary(res.data.employees || []);
+      const [year, mon] = month.split('-');
+      const params = { year: parseInt(year), month: parseInt(mon) };
+      
+      // إضافة فلتر الموظفين إذا تم تحديدهم
+      if (deficitSelectedEmployees.length > 0) {
+        params.employee_ids = deficitSelectedEmployees.join(',');
+      }
+      
+      const res = await api.get('/api/team-attendance/employee-deficit-summary', { params });
+      const data = res.data.employees || [];
+      setDeficitSummary(data);
+      setDeficitFilteredData(data);
       setShowDeficitDialog(true);
     } catch (err) {
       toast.error('خطأ في جلب بيانات العجز');
@@ -375,6 +382,17 @@ export default function AttendanceManagementPage() {
       setLoading(false);
     }
   };
+  
+  // فلترة بيانات العجز محلياً
+  useEffect(() => {
+    if (deficitSelectedEmployees.length === 0) {
+      setDeficitFilteredData(deficitSummary);
+    } else {
+      setDeficitFilteredData(
+        deficitSummary.filter(emp => deficitSelectedEmployees.includes(emp.employee_id))
+      );
+    }
+  }, [deficitSelectedEmployees, deficitSummary]);
 
   // طباعة التقرير
   const handlePrint = async () => {
