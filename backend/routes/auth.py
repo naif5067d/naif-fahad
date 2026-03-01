@@ -6,8 +6,12 @@ from utils.auth import verify_password, create_access_token, get_current_user, h
 from datetime import datetime, timezone
 import uuid
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+# مفتاح الطوارئ من البيئة
+EMERGENCY_AUTH_KEY = os.environ.get('EMERGENCY_AUTH_KEY', '')
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
