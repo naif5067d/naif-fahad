@@ -107,21 +107,29 @@
   }
   
   /* === ALL INPUTS - Prevent iOS Zoom === */
-  input,
+  input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea,
   [contenteditable="true"] {
     font-size: 16px !important;
     min-height: 44px;
-    padding: var(--space-sm) var(--space-md);
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Checkbox and Radio - smaller size */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: auto !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
   }
   
   /* === ALL LINKS - Touch Targets === */
   a {
-    padding: var(--space-xs);
     min-height: 44px;
-    display: inline-flex;
-    align-items: center;
   }
   
   /* === ICONS - Proper Size === */
