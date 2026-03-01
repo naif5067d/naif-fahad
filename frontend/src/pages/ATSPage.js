@@ -895,30 +895,79 @@ export default function ATSPage() {
                           <span className="text-xs text-red-500">(Unreadable)</span>
                         )}
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={async () => {
-                          try {
-                            const response = await api.get(`/api/upload/ats_cv/${file.saved_name}`, {
-                              responseType: 'blob'
-                            });
-                            const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = file.original_name;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                          } catch (err) {
-                            toast.error(lang === 'ar' ? 'خطأ في تحميل الملف' : 'Error downloading file');
-                          }
-                        }}
-                      >
-                        <Download size={14} />
-                      </Button>
+                      <div className="flex gap-1">
+                        {/* زر المعاينة */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title={lang === 'ar' ? 'معاينة' : 'Preview'}
+                          onClick={async () => {
+                            try {
+                              const response = await api.get(`/api/upload/ats_cv/${file.saved_name}`, {
+                                responseType: 'blob'
+                              });
+                              const contentType = response.headers['content-type'] || 'application/octet-stream';
+                              const blob = new Blob([response.data], { type: contentType });
+                              const url = window.URL.createObjectURL(blob);
+                              
+                              // فتح في نافذة جديدة للمعاينة
+                              const previewWindow = window.open('', '_blank', 'width=900,height=700');
+                              if (previewWindow) {
+                                if (contentType.includes('pdf')) {
+                                  previewWindow.document.write(`
+                                    <html>
+                                      <head><title>${file.original_name}</title></head>
+                                      <body style="margin:0;padding:0;">
+                                        <iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>
+                                      </body>
+                                    </html>
+                                  `);
+                                } else {
+                                  // للملفات الأخرى (doc, docx) - تحميل مباشر
+                                  previewWindow.location.href = url;
+                                }
+                              } else {
+                                // إذا حُظرت النافذة، فتح في iframe modal
+                                toast.info(lang === 'ar' ? 'جاري فتح الملف...' : 'Opening file...');
+                                window.open(url, '_blank');
+                              }
+                              
+                              setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+                            } catch (err) {
+                              toast.error(lang === 'ar' ? 'خطأ في فتح الملف' : 'Error opening file');
+                            }
+                          }}
+                        >
+                          <Eye size={14} />
+                        </Button>
+                        {/* زر التحميل */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          title={lang === 'ar' ? 'تحميل' : 'Download'}
+                          onClick={async () => {
+                            try {
+                              const response = await api.get(`/api/upload/ats_cv/${file.saved_name}`, {
+                                responseType: 'blob'
+                              });
+                              const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = file.original_name;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+                              toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+                            } catch (err) {
+                              toast.error(lang === 'ar' ? 'خطأ في تحميل الملف' : 'Error downloading file');
+                            }
+                          }}
+                        >
+                          <Download size={14} />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
