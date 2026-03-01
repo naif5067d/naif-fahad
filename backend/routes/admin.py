@@ -21,6 +21,10 @@ from services.hr_policy import (
 )
 from services.auto_sync import auto_sync_database, force_full_sync
 import uuid
+import os
+
+# مفتاح الطوارئ من البيئة
+EMERGENCY_AUTH_KEY = os.environ.get('EMERGENCY_AUTH_KEY', '')
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
