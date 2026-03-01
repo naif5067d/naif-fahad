@@ -407,7 +407,7 @@ export default function LoginPage() {
     >
       {/* Left: Form */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-12 relative min-h-screen lg:min-h-0">
-        <div className={`w-full max-w-sm transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+        <div className={`w-full max-w-[340px] sm:max-w-sm transition-all duration-700 delay-200 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
           {/* Logo & Company Name */}
           <div className="mb-6 sm:mb-10 text-center">
             {settings.logo_url ? (
