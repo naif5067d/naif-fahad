@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { toast } from 'sonner';
+import PdfPreviewModal from '../components/PdfPreviewModal';
 
 export default function ATSPage() {
   const { t, lang } = useLanguage();
@@ -67,6 +68,9 @@ export default function ATSPage() {
   const [nuclearConfirmText, setNuclearConfirmText] = useState('');
   const [showEmbedDialog, setShowEmbedDialog] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  
+  // PDF Preview Modal
+  const [pdfPreview, setPdfPreview] = useState({ open: false, url: null, title: '' });
   
   const isAdmin = user?.role === 'admin' || ['stas', 'naif'].includes(user?.username);
   const canAccess = isAdmin || user?.role === 'hr' || ['sultan', 'mohammed'].includes(user?.username);
@@ -903,6 +907,7 @@ export default function ATSPage() {
                           title={lang === 'ar' ? 'معاينة' : 'Preview'}
                           onClick={async () => {
                             try {
+                              toast.info(lang === 'ar' ? 'جاري تحميل الملف...' : 'Loading file...');
                               const response = await api.get(`/api/upload/ats_cv/${file.saved_name}`, {
                                 responseType: 'blob'
                               });
@@ -910,30 +915,24 @@ export default function ATSPage() {
                               const blob = new Blob([response.data], { type: contentType });
                               const url = window.URL.createObjectURL(blob);
                               
-                              // فتح في نافذة جديدة للمعاينة
-                              const previewWindow = window.open('', '_blank', 'width=900,height=700');
-                              if (previewWindow) {
-                                if (contentType.includes('pdf')) {
-                                  previewWindow.document.write(`
-                                    <html>
-                                      <head><title>${file.original_name}</title></head>
-                                      <body style="margin:0;padding:0;">
-                                        <iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>
-                                      </body>
-                                    </html>
-                                  `);
-                                } else {
-                                  // للملفات الأخرى (doc, docx) - تحميل مباشر
-                                  previewWindow.location.href = url;
-                                }
+                              // استخدام Modal للعرض - يتجنب حظر Ad Blockers
+                              if (contentType.includes('pdf')) {
+                                setPdfPreview({ 
+                                  open: true, 
+                                  url: url, 
+                                  title: file.original_name 
+                                });
                               } else {
-                                // إذا حُظرت النافذة، فتح في iframe modal
-                                toast.info(lang === 'ar' ? 'جاري فتح الملف...' : 'Opening file...');
-                                window.open(url, '_blank');
+                                // للملفات الأخرى (doc, docx) - تحميل مباشر
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = file.original_name;
+                                link.click();
+                                toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
+                                setTimeout(() => window.URL.revokeObjectURL(url), 5000);
                               }
-                              
-                              setTimeout(() => window.URL.revokeObjectURL(url), 60000);
                             } catch (err) {
+                              console.error('File preview error:', err);
                               toast.error(lang === 'ar' ? 'خطأ في فتح الملف' : 'Error opening file');
                             }
                           }}
@@ -1167,6 +1166,19 @@ export default function ATSPage() {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* PDF Preview Modal */}
+      <PdfPreviewModal
+        open={pdfPreview.open}
+        onClose={() => {
+          if (pdfPreview.url) {
+            window.URL.revokeObjectURL(pdfPreview.url);
+          }
+          setPdfPreview({ open: false, url: null, title: '' });
+        }}
+        pdfUrl={pdfPreview.url}
+        title={pdfPreview.title}
+      />
     </div>
   );
 }
