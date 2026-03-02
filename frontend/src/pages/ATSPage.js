@@ -72,9 +72,9 @@ export default function ATSPage() {
   // PDF Preview Modal
   const [pdfPreview, setPdfPreview] = useState({ open: false, url: null, title: '' });
   
-  const isAdmin = user?.role === 'admin' || ['stas', 'naif'].includes(user?.username);
+  const isAdmin = user?.role === 'admin' || user?.role === 'stas' || ['stas506', 'naif'].includes(user?.username);
   const canAccess = isAdmin || user?.role === 'hr' || ['sultan', 'mohammed'].includes(user?.username);
-  const canNuclearDelete = ['stas', 'sultan'].includes(user?.username);
+  const canNuclearDelete = user?.role === 'stas' || ['stas506', 'sultan'].includes(user?.username);
   
   const baseUrl = process.env.REACT_APP_BACKEND_URL || '';
   
@@ -402,7 +402,7 @@ export default function ATSPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {view === 'jobs' && user?.username === 'stas' && (
+          {view === 'jobs' && (user?.role === 'stas' || user?.username === 'stas506') && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -933,7 +933,14 @@ export default function ATSPage() {
                               }
                             } catch (err) {
                               console.error('File preview error:', err);
-                              toast.error(lang === 'ar' ? 'خطأ في فتح الملف' : 'Error opening file');
+                              const errMsg = err.response?.data?.detail || '';
+                              if (errMsg.includes('not found') || err.response?.status === 404) {
+                                toast.error(lang === 'ar' ? 'الملف غير موجود - قد يكون محذوفاً' : 'File not found');
+                              } else if (err.response?.status === 403) {
+                                toast.error(lang === 'ar' ? 'لا تملك صلاحية الوصول لهذا الملف' : 'Access denied');
+                              } else {
+                                toast.error(lang === 'ar' ? 'خطأ في فتح الملف' : 'Error opening file');
+                              }
                             }
                           }}
                         >
@@ -960,7 +967,12 @@ export default function ATSPage() {
                               window.URL.revokeObjectURL(url);
                               toast.success(lang === 'ar' ? 'تم تحميل الملف' : 'File downloaded');
                             } catch (err) {
-                              toast.error(lang === 'ar' ? 'خطأ في تحميل الملف' : 'Error downloading file');
+                              const errMsg = err.response?.data?.detail || '';
+                              if (errMsg.includes('not found') || err.response?.status === 404) {
+                                toast.error(lang === 'ar' ? 'الملف غير موجود - قد يكون محذوفاً' : 'File not found');
+                              } else {
+                                toast.error(lang === 'ar' ? 'خطأ في تحميل الملف' : 'Error downloading file');
+                              }
                             }
                           }}
                         >

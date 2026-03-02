@@ -84,7 +84,11 @@ async def get_ats_cv_file(filename: str, user=Depends(get_current_user)):
     # Check if user has ATS access
     role = user.get('role', '')
     username = user.get('username', '')
-    if role not in ['admin', 'hr'] and username not in ['stas', 'naif', 'sultan', 'mohammed']:
+    # السماح لـ stas (role) أو usernames محددة
+    allowed_roles = ['admin', 'hr', 'stas', 'sultan']
+    allowed_usernames = ['stas506', 'naif', 'sultan', 'mohammed']
+    
+    if role not in allowed_roles and username not in allowed_usernames:
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Security: prevent path traversal attacks
@@ -93,7 +97,7 @@ async def get_ats_cv_file(filename: str, user=Depends(get_current_user)):
     
     file_path = os.path.join(ATS_UPLOAD_DIR, filename)
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail=f"File not found: {filename}")
     
     # Detect content type
     ext = filename.split('.')[-1].lower()
