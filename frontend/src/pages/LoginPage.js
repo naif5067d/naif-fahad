@@ -272,12 +272,14 @@ export default function LoginPage() {
   }, []);
 
   // مسح الجلسة السابقة عند فتح صفحة تسجيل الدخول مباشرة
+  // ملاحظة: لا نمسح بيانات "تذكرني" (dar_remember_*)
   useEffect(() => {
     const isDirectAccess = !document.referrer || 
                           !document.referrer.includes(window.location.host) ||
                           document.referrer.includes('/login');
     
     if (isDirectAccess) {
+      // مسح بيانات الجلسة فقط - نحافظ على بيانات "تذكرني"
       localStorage.removeItem('hr_token');
       localStorage.removeItem('hr_user');
       localStorage.removeItem('dar_token');
@@ -289,9 +291,18 @@ export default function LoginPage() {
   // تحميل بيانات "تذكرني" من localStorage
   useEffect(() => {
     const savedUsername = localStorage.getItem('dar_remember_username');
+    const savedPassword = localStorage.getItem('dar_remember_password');
     const savedRemember = localStorage.getItem('dar_remember_me');
     if (savedRemember === 'true' && savedUsername) {
       setUsername(savedUsername);
+      // فك تشفير كلمة المرور (base64 بسيط - للتسهيل على المستخدم)
+      if (savedPassword) {
+        try {
+          setPassword(atob(savedPassword));
+        } catch (e) {
+          // في حالة فشل فك التشفير
+        }
+      }
       setRememberMe(true);
     }
   }, []);
@@ -304,12 +315,15 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     
-    // حفظ "تذكرني"
+    // حفظ "تذكرني" - اسم المستخدم وكلمة المرور
     if (rememberMe) {
       localStorage.setItem('dar_remember_username', username);
+      // تشفير كلمة المرور (base64) - ليس أمان عالي لكن أفضل من النص الواضح
+      localStorage.setItem('dar_remember_password', btoa(password));
       localStorage.setItem('dar_remember_me', 'true');
     } else {
       localStorage.removeItem('dar_remember_username');
+      localStorage.removeItem('dar_remember_password');
       localStorage.removeItem('dar_remember_me');
     }
     
@@ -444,7 +458,11 @@ export default function LoginPage() {
               {lang === 'ar' ? 'أدخل بيانات الدخول للوصول للنظام' : 'Enter your credentials to access the system'}
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form 
+              onSubmit={handleSubmit} 
+              className="space-y-4"
+              autoComplete="on"
+            >
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive animate-shake" data-testid="login-error">
                   <AlertCircle size={16} />
@@ -460,13 +478,17 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     id="username"
+                    name="username"
                     data-testid="login-username"
                     type="text"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                     className="block w-full h-12 px-4 pr-11 text-base border border-slate-200 rounded-lg bg-white focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all placeholder:text-slate-400"
                     placeholder={lang === 'ar' ? 'أدخل اسم المستخدم' : 'Enter username'}
-                    autoComplete="username"
+                    autoComplete="username webauthn"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
                     dir="auto"
                     required
                   />
@@ -482,13 +504,14 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     id="password"
+                    name="password"
                     data-testid="login-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     className="block w-full h-12 px-4 pr-11 pl-11 text-base border border-slate-200 rounded-lg bg-white focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition-all placeholder:text-slate-400"
                     placeholder={lang === 'ar' ? 'أدخل كلمة المرور' : 'Enter password'}
-                    autoComplete="current-password"
+                    autoComplete="current-password webauthn"
                     dir="auto"
                     required
                   />
